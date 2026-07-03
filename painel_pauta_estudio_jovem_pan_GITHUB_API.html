@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pauta de Estúdio — Jovem Pan Floripa</title>
+<style>
+:root{
+  --red:#d54b67;
+  --red-past:#D46873;
+  --green-now:#66C991;
+  --orange-next:#E0A14A;
+  --ink:#171c26;
+  --muted:#667283;
+  --line:#dce2eb;
+  --panel:rgba(255,255,255,.92);
+  --panel-strong:rgba(255,255,255,.97);
+  --shadow:0 14px 34px rgba(17,23,34,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;
+  font:800 14px/1.35 Inter,Arial,sans-serif;
+  color:var(--ink);
+  background-image:linear-gradient(rgba(248,249,252,.76),rgba(248,249,252,.76)),url("assets/bg-estudio.jpg");
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+}
+.wrap{max-width:1420px;margin:0 auto;padding:12px}
+.hero{
+  position:relative;
+  min-height:76px;
+  padding:14px 62px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,.34);
+  border:1px solid rgba(255,255,255,.56);
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(4px);
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.08));
+  pointer-events:none;
+}
+.heroLogo{
+  position:relative;
+  z-index:1;
+  width:min(540px,52%);
+  height:auto;
+  display:block;
+  filter:drop-shadow(0 4px 10px rgba(255,255,255,.35)) drop-shadow(0 2px 8px rgba(0,0,0,.08));
+}
+.backIcon{
+  position:absolute;
+  right:18px;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:2;
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  border:1px solid rgba(115,124,138,.25);
+  background:rgba(255,255,255,.72);
+  color:#687281;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  font-size:16px;
+  font-weight:900;
+}
+.panel{
+  margin-top:12px;
+  min-height:420px;
+  background:var(--panel);
+  border:1px solid rgba(220,226,235,.82);
+  border-radius:26px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  backdrop-filter:blur(4px);
+  display:flex;
+  flex-direction:column;
+}
+.pautaHead{
+  position:relative;
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  padding:10px 22px;
+  background:#E9EDF2;
+  border-bottom:1px solid #D6DCE4;
+}
+.pautaTime{
+  width:128px;
+  flex:0 0 128px;
+  font-family:"Bahnschrift","Segoe UI Semibold","Segoe UI Variable Display","Segoe UI",Inter,Arial,sans-serif;
+  font-size:52px;
+  font-weight:900;
+  letter-spacing:-.025em;
+  line-height:1;
+  color:#5CCB91;
+  text-shadow:none;
+  -webkit-text-stroke:0;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.time-past{color:var(--red-past)}
+.time-now{color:var(--green-now)}
+.time-next{color:var(--orange-next)}
+.pautaProgram{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:calc(100% - 320px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-size:30px;
+  line-height:1.1;
+  font-weight:950;
+  letter-spacing:-.03em;
+  color:#5B6675;
+  -webkit-text-stroke:0;
+  text-shadow:
+    0 1px 1px rgba(49,58,72,.18),
+    0 2px 6px rgba(49,58,72,.12),
+    0 0 10px rgba(255,255,255,.18);
+  padding:0 8px;
+}
+.headNav{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.iconNav{
+  appearance:none;
+  border:0;
+  background:transparent;
+  padding:0;
+  color:#7f8898;
+  font:900 32px/1 Inter,Arial,sans-serif;
+  cursor:pointer;
+}
+.iconNav:hover{color:var(--red-past)}
+.pautaBody{
+  min-height:348px;
+  padding:28px 38px 30px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  gap:14px;
+}
+.titleBox{
+  width:min(1040px,100%);
+  background:#FFFFFF;
+  border:1px solid #E3E8EF;
+  border-left:5px solid #D94A64;
+  border-radius:18px;
+  padding:20px 24px;
+  box-shadow:0 8px 20px rgba(17,23,34,.035);
+}
+.descBox{
+  width:min(1040px,100%);
+  background:#F3F6FA;
+  border:1px solid #E1E7EE;
+  border-radius:18px;
+  padding:18px 24px;
+}
+.title{
+  font-size:38px;
+  line-height:1.06;
+  letter-spacing:-.06em;
+  margin:0;
+  max-width:980px;
+  margin-inline:auto;
+}
+.desc{
+  font-size:20px;
+  line-height:1.52;
+  font-weight:650;
+  color:#4D5868;
+  max-width:1020px;
+  margin:0 auto;
+  white-space:pre-wrap;
+  text-transform:none;
+}
+.winnerBox{
+  width:min(840px,100%);
+  margin-top:2px;
+  padding:16px 18px;
+  border-radius:16px;
+  border:1px solid #d8e6db;
+  background:#f4fbf7;
+  text-align:center;
+}
+.winnerLabel{
+  display:block;
+  font-size:12px;
+  letter-spacing:.08em;
+  color:#4a6b57;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.winnerName{
+  display:block;
+  font-size:26px;
+  line-height:1.15;
+  color:#17492d;
+  letter-spacing:-.03em;
+}
+.pautaActions{
+  width:min(1040px,100%);
+  display:flex;
+  justify-content:flex-end;
+  margin-top:2px;
+}
+.winnerBtn{
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:auto;
+  min-width:0;
+  height:auto;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#7a8494;
+  font-weight:900;
+  cursor:pointer;
+}
+.winnerBtn:hover{color:#8e1831}
+.winnerBtn .trophy{font-size:22px;line-height:1;filter:grayscale(1);opacity:.78}
+.promoFooter{
+  margin-top:auto;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 12px;
+  border-top:1px solid #f4d3a3;
+  background:#fff1df;
+}
+.promoFooterList{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  min-width:0;
+  overflow:hidden;
+}
+.promoPill{
+  appearance:none;
+  border:1px solid #b7cee8;
+  background:#eaf4ff;
+  color:#2d5f93;
+  min-height:17px;
+  max-width:230px;
+  border-radius:999px;
+  padding:0 9px;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.04em;
+  cursor:pointer;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.promoPill.pending{animation:promoBlueBlink 1.25s ease-in-out infinite}
+@keyframes promoBlueBlink{0%,100%{background:#eaf4ff;color:#2d5f93;box-shadow:0 0 0 rgba(95,147,200,0)}50%{background:#d9ecff;color:#1f4d7d;box-shadow:0 0 0 4px rgba(89,145,204,.13)}}
+.promoPill.read{
+  border-color:#badfc9;
+  background:#effaf4;
+  color:#1f7a49;
+  cursor:pointer;
+}
+.promoPill.read .marquee{
+  display:inline-grid;
+  grid-template-columns:1fr;
+  align-items:center;
+  min-width:130px;
+}
+.promoPill.read .marquee span{
+  grid-area:1/1;
+  opacity:0;
+  animation:promoMarquee 4s ease-in-out infinite;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.promoPill.read .marquee span:nth-child(2){animation-delay:2s}
+@keyframes promoMarquee{0%,44%{opacity:1;transform:translateY(0)}50%,94%{opacity:0;transform:translateY(-3px)}100%{opacity:0;transform:translateY(3px)}}
+.promoPill:hover{filter:brightness(.98)}
+.promoListWrap{position:relative;display:flex;align-items:center;order:0}
+.promoListBtn{
+  appearance:none;
+  border:0;
+  background:transparent;
+  padding:0 2px;
+  color:#9aa4b3;
+  font:900 20px/1 Inter,Arial,sans-serif;
+  cursor:pointer;
+}
+.promoListBtn:hover{color:#6f7988}
+.promoList{
+  display:none;
+  position:absolute;
+  right:0;
+  top:calc(100% + 10px);
+  z-index:20;
+  width:300px;
+  max-height:300px;
+  overflow:auto;
+  padding:8px;
+  border:1px solid #dfe5ec;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 16px 36px rgba(17,20,27,.14);
+}
+.promoList.show{display:grid;gap:6px}
+.promoListItem{
+  appearance:none;
+  border:1px solid #e5e9ef;
+  background:#f8f9fc;
+  color:#252c38;
+  border-radius:12px;
+  padding:9px 10px;
+  text-align:left;
+  font-size:11px;
+  line-height:1.25;
+  font-weight:900;
+  cursor:pointer;
+}
+.promoListItem small{display:block;margin-top:3px;color:#7a8494;font-size:9px}
+.promoListItem.read{opacity:.62;border-color:#badfc9;background:#f2fbf6}
+.hourReadList{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;width:100%}
+.hourReadList .promoListItem{min-height:44px}
+.promoReadCard{width:min(740px,100%)}
+.promoReadBanner{
+  aspect-ratio:4/1;
+  border:1px solid #e2e7ef;
+  border-radius:16px;
+  background:#eef1f5;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#7a8493;
+  font-size:11px;
+  margin-bottom:14px;
+}
+.promoReadBanner img{width:100%;height:100%;object-fit:cover;display:block}
+.promoReadMeta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:10px 0 14px;
+}
+.promoReadMeta span{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  background:#f7f8fb;
+  border:1px solid #e2e7ef;
+  color:#566171;
+  font-size:10px;
+  font-weight:900;
+}
+.promoReadDesc{
+  background:#f7f8fb;
+  border:1px solid #e2e7ef;
+  border-radius:14px;
+  padding:13px 14px;
+  color:#465161;
+  line-height:1.5;
+  font-size:13px;
+  white-space:pre-wrap;
+}
+.modalBackdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(17,20,27,.28);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:50;
+}
+.modalBackdrop.show{display:flex}
+.modalCard{
+  width:min(460px,100%);
+  background:#fff;
+  border:1px solid #dfe5ec;
+  border-radius:22px;
+  box-shadow:0 20px 50px rgba(17,20,27,.18);
+  padding:20px;
+}
+.modalCard h3{
+  margin:0 0 8px;
+  font-size:24px;
+  letter-spacing:-.03em;
+  color:#171c26;
+}
+.modalCard p{
+  margin:0 0 14px;
+  color:#5a6473;
+  font-size:13px;
+  line-height:1.45;
+}
+.modalField label{
+  display:block;
+  margin-bottom:8px;
+  font-size:11px;
+  letter-spacing:.08em;
+  color:#6b7482;
+  font-weight:900;
+}
+.modalField input{
+  width:100%;
+  min-height:48px;
+  border:1px solid #d8dee7;
+  border-radius:14px;
+  padding:0 14px;
+  font-size:16px;
+  font-weight:700;
+  color:#171c26;
+  outline:none;
+}
+.modalField input:focus{border-color:#c9002b;box-shadow:0 0 0 4px rgba(201,0,43,.08)}
+.modalActions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:16px;
+}
+.modalBtn{
+  min-height:42px;
+  padding:0 16px;
+  border-radius:12px;
+  border:1px solid #d8dee7;
+  background:#f5f7fa;
+  color:#171c26;
+  font-weight:900;
+  cursor:pointer;
+}
+.modalBtn.primary{
+  background:#c9002b;
+  border-color:#c9002b;
+  color:#fff;
+}
+.empty{
+  min-height:420px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:30px;
+  color:var(--muted);
+  font-size:18px;
+}
+@media (max-width:900px){
+  .wrap{padding:10px}
+  .hero{min-height:68px;padding:12px 56px}
+  .heroLogo{width:70%}
+  .panel{min-height:360px;border-radius:22px}
+  .pautaHead{min-height:62px;padding:10px 14px}
+  .pautaTime{width:92px;flex-basis:92px;font-size:34px}
+  .pautaProgram{width:calc(100% - 168px);font-size:23px;color:#5B6675;font-weight:950;text-shadow:0 1px 1px rgba(255,255,255,.20),0 2px 8px rgba(39,48,62,.08)}
+  .headNav{gap:10px}
+  .iconNav{font-size:26px}
+  .pautaBody{min-height:298px;padding:22px 20px;gap:12px}
+  .titleBox,.descBox,.winnerBox{padding:16px 18px;border-radius:16px}
+  .title{font-size:28px}
+  .desc{font-size:17px}
+  .winnerName{font-size:22px}
+  .pautaActions{justify-content:center}
+  .winnerBtn{justify-content:center}
+  .promoFooter{min-height:42px;padding:5px 8px}
+  .promoFooterList{width:100%}
+  .promoPill{max-width:100%}
+  .promoList{right:-40px;width:260px}
+}
+@media print{
+  body{background:#fff}
+  .hero,.backIcon,.headNav{display:none}
+  .panel{box-shadow:none;border:0;border-radius:0}
+}
+
+/* FONTE DE CABEÇALHOS — LEMON MILK */
+.pautaProgram,
+.modalCard h3,
+.promoListBtn,
+.winnerLabel,
+.promoFooter,
+.promoListItem{
+  font-family:"LEMON MILK Bold","LEMON MILK","LEMONMILK-Bold","Bahnschrift","Segoe UI",Arial,sans-serif;
+  font-weight:900;
+}
+
+
+/* AJUSTE FINAL VISÍVEL — CABEÇALHO ESTÚDIO */
+.pautaTime{
+  font-family:"LEMON MILK Bold","LEMON MILK","LEMONMILK-Bold","Bahnschrift","Segoe UI Semibold","Segoe UI",Arial,sans-serif !important;
+  font-weight:900 !important;
+  font-size:52px !important;
+  letter-spacing:-.025em !important;
+  color:#6ED7A0 !important;
+  text-shadow:none !important;
+  -webkit-text-stroke:0 !important;
+  -webkit-font-smoothing:antialiased !important;
+  -moz-osx-font-smoothing:grayscale !important;
+  text-rendering:geometricPrecision !important;
+  font-variant-numeric:lining-nums tabular-nums !important;
+}
+.pautaProgram{
+  font-family:"LEMON MILK Bold","LEMON MILK","LEMONMILK-Bold","Bahnschrift","Segoe UI",Arial,sans-serif !important;
+  font-weight:900 !important;
+  font-size:30px !important;
+  letter-spacing:-.02em !important;
+  color:#5B6675 !important;
+  -webkit-text-stroke:0 !important;
+  text-shadow:0 1px 1px rgba(255,255,255,.20), 0 2px 8px rgba(39,48,62,.08) !important;
+}
+@media (max-width:760px){
+  .pautaTime{font-size:36px !important}
+  .pautaProgram{font-size:23px !important}
+}
+
+
+/* AJUSTE FINAL — CORES DO CABEÇALHO */
+.pautaProgram{
+  color:#6A7481 !important;
+  text-shadow:0 1px 1px rgba(255,255,255,.22), 0 2px 8px rgba(39,48,62,.08) !important;
+}
+.pautaTime{
+  color:inherit !important;
+}
+.pautaTime.time-now{
+  color:#74D2A0 !important;
+}
+.pautaTime.time-past{
+  color:#D77983 !important;
+}
+.pautaTime.time-next{
+  color:#E2A455 !important;
+}
+
+
+/* AJUSTE — TELA DO ESTÚDIO +15% */
+.pautaHead{min-height:84px !important}
+.pautaTime{
+  width:148px !important;
+  flex-basis:148px !important;
+  font-size:60px !important;
+}
+.pautaProgram{
+  width:calc(100% - 360px) !important;
+  font-size:35px !important;
+}
+.pautaBody{
+  min-height:390px !important;
+  gap:18px !important;
+  padding:32px 42px 36px !important;
+}
+.titleBox,.descBox{
+  padding:23px 28px !important;
+}
+.title{
+  font-size:44px !important;
+  line-height:1.06 !important;
+}
+.desc{
+  font-size:23px !important;
+  line-height:1.52 !important;
+}
+.winnerLabel{font-size:14px !important}
+.winnerName{font-size:30px !important}
+.promoFooter{min-height:52px !important}
+.promoPill{
+  font-size:10.5px !important;
+  min-height:20px !important;
+}
+.navSmall{
+  font-size:13px !important;
+}
+@media (max-width:760px){
+  .pautaHead{min-height:78px !important}
+  .pautaTime{width:116px !important;flex-basis:116px !important;font-size:42px !important}
+  .pautaProgram{font-size:26px !important;width:calc(100% - 220px) !important}
+  .title{font-size:34px !important}
+  .desc{font-size:20px !important}
+}
+
+
+/* AJUSTE — HISTÓRICO, RESULTADO E LEITURA +15% */
+.pautaHead{min-height:92px !important}
+.pautaTime{width:156px !important;flex-basis:156px !important;font-size:64px !important}
+.pautaProgram{width:calc(100% - 410px) !important;font-size:39px !important}
+.title{font-size:48px !important;line-height:1.06 !important}
+.desc{font-size:25px !important;line-height:1.5 !important}
+.promoReadDesc{font-size:15px !important}
+.promoListBtn.history{color:#6c7481}
+.resultBox{
+  width:min(740px,100%);
+  display:grid;
+  gap:8px;
+  padding:14px;
+  border:1px solid #dfe5ec;
+  border-radius:16px;
+  background:#f7f8fb;
+}
+.resultBox label{
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  color:#5b6675;
+}
+.resultLine{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+}
+.resultLine input{
+  min-height:44px;
+  border:1px solid #d8dee7;
+  border-radius:13px;
+  padding:0 13px;
+  font-size:15px;
+  font-weight:900;
+  color:#171c26;
+  text-transform:uppercase;
+}
+.resultSaved{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  width:max-content;
+  max-width:100%;
+  border-radius:999px;
+  border:1px solid #ccefdc;
+  background:#effaf4;
+  color:#137947;
+  padding:0 10px;
+  font-size:11px;
+  font-weight:1000;
+}
+.historyCard{width:min(860px,100%)}
+.historyTop{
+  display:flex;
+  gap:10px;
+  align-items:end;
+  margin:12px 0 14px;
+}
+.historyTop .modalField{flex:0 0 180px}
+.historyList{
+  max-height:58vh;
+  overflow:auto;
+  display:grid;
+  gap:8px;
+}
+.historyItem{
+  border:1px solid #e2e7ef;
+  border-radius:15px;
+  background:#f8f9fc;
+  padding:11px 12px;
+  display:grid;
+  grid-template-columns:88px minmax(0,1fr);
+  gap:10px;
+}
+.historyTime{
+  font-size:24px;
+  font-weight:1000;
+  color:#697386;
+  display:flex;
+  align-items:center;
+}
+.historyInfo strong{
+  display:block;
+  color:#171c26;
+  font-size:14px;
+  font-weight:1000;
+  line-height:1.2;
+}
+.historyInfo span{
+  display:block;
+  margin-top:4px;
+  color:#5a6473;
+  font-size:11px;
+  font-weight:900;
+  line-height:1.35;
+}
+.historyInfo em{
+  display:inline-flex;
+  margin-top:7px;
+  border-radius:999px;
+  border:1px solid #ccefdc;
+  background:#effaf4;
+  color:#137947;
+  padding:4px 8px;
+  font-size:10px;
+  font-style:normal;
+  font-weight:1000;
+}
+@media (max-width:760px){
+  .pautaTime{width:124px !important;flex-basis:124px !important;font-size:45px !important}
+  .pautaProgram{width:calc(100% - 265px) !important;font-size:29px !important}
+  .title{font-size:37px !important}
+  .desc{font-size:22px !important}
+  .resultLine{grid-template-columns:1fr}
+}
+
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <img class="heroLogo" src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan Floripa">
+    </header>
+
+  <section class="panel" id="pautaPanel"></section>
+</div>
+
+<div class="modalBackdrop" id="winnerModal">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="winnerModalTitle">
+    <h3 id="winnerModalTitle">INDICAR GANHADOR</h3>
+    <p>DIGITE O NOME DO OUVINTE SORTEADO. AO SALVAR, A PAUTA FICA MARCADA COMO REALIZADA E O PAINEL PRINCIPAL RECEBE A INFORMAÇÃO.</p>
+    <div class="modalField">
+      <label for="winnerNameInput">NOME DO GANHADOR</label>
+      <input id="winnerNameInput" type="text" maxlength="120" autocomplete="off">
+    </div>
+    <div class="modalActions">
+      <button class="modalBtn" type="button" id="cancelWinnerBtn">CANCELAR</button>
+      <button class="modalBtn primary" type="button" id="saveWinnerBtn">SALVAR GANHADOR</button>
+    </div>
+  </div>
+</div>
+
+<div class="modalBackdrop" id="promoReadModal">
+  <div class="modalCard promoReadCard" role="dialog" aria-modal="true" aria-labelledby="promoReadTitle">
+    <div id="promoReadContent"></div>
+    <div class="modalActions">
+      <button class="modalBtn" type="button" id="cancelPromoReadBtn">FECHAR</button>
+      <button class="modalBtn primary" type="button" id="confirmPromoReadBtn">CONFIRMAR LEITURA</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="modalBackdrop" id="historyModal">
+  <div class="modalCard historyCard" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+    <h3 id="historyModalTitle">HISTÓRICO DE SORTEIOS</h3>
+    <p>CONSULTE OS HORÁRIOS, PRÊMIOS E RESULTADOS JÁ REGISTRADOS PARA A RECEPÇÃO.</p>
+    <div class="historyTop">
+      <div class="modalField">
+        <label for="historyDateInput">DATA</label>
+        <input id="historyDateInput" type="date">
+      </div>
+      <button class="modalBtn" type="button" id="historyTodayBtn">HOJE</button>
+    </div>
+    <div class="historyList" id="historyList"></div>
+    <div class="modalActions">
+      <button class="modalBtn primary" type="button" id="closeHistoryBtn">FECHAR</button>
+    </div>
+  </div>
+
+
+<script>
+const STORAGE_KEY='jp_programacao_brindes_distribuicao_v2';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'" :'&#39;','"':'&quot;'}[c]));
+const upper=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
+
+let state=loadState();
+let currentMonth=state.currentMonth||Object.keys(state.months||{})[0]||'';
+let selectedIndex=-1;
+let manual=false;
+let selectedPromoId=null;
+let currentDisplayItem=null;
+let manualHourDateMs=null;
+let lastHourKey=currentHourKey();
+let historyDate='';
+
+
+const FIREBASE_CONFIG = {
+  "apiKey": "AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE",
+  "authDomain": "jp-painel-brindes.firebaseapp.com",
+  "databaseURL": "https://jp-painel-brindes-default-rtdb.firebaseio.com",
+  "projectId": "jp-painel-brindes",
+  "storageBucket": "jp-painel-brindes.firebasestorage.app",
+  "messagingSenderId": "843544648278",
+  "appId": "1:843544648278:web:066c8e64e17da046cf79f7",
+  "measurementId": "G-VB6Y2TS796"
+};
+const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
+const LEGACY_API_URL = "https://script.google.com/macros/s/AKfycbzaeiSMNoo4miaB7ABVku3hxUsg5dr6egLE9-fltQaIUPzHr0RKFMR5nXr7ATbD4evJ/exec";
+
+let firebaseStarted=false;
+let firebaseReady=false;
+let firebaseRef=null;
+let firebaseSaveTimer=null;
+let firebaseApplyingRemote=false;
+let firebaseLastLocalWrite=0;
+let firebasePendingSave=false;
+
+function firebaseConfigReady(){
+  return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
+}
+function loadState(){
+  try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s&&s.months)return s;}catch(e){}
+  return {currentMonth:'',months:{}};
+}
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if(!firebaseApplyingRemote){
+    firebaseLastLocalWrite=Date.now();
+    firebasePendingSave=true;
+    queueApiSave(120);
+  }
+}
+function countStateRecords(data){
+  if(!data || !data.months) return 0;
+  return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0);
+}
+function apiJsonp(params={}){
+  return new Promise((resolve,reject)=>{
+    if(!LEGACY_API_URL) return reject(new Error('LEGACY_API_URL NÃO CONFIGURADA.'));
+    const callback='jpStudioLegacyApiCb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const query=new URLSearchParams({...params,callback,t:Date.now()});
+    const script=document.createElement('script');
+    let done=false;
+    const cleanup=()=>{try{delete window[callback];}catch(e){window[callback]=undefined;} script.remove();};
+    const timer=setTimeout(()=>{if(done)return;done=true;cleanup();reject(new Error('TEMPO ESGOTADO AO CARREGAR API LEGADA.'));},18000);
+    window[callback]=(payload)=>{if(done)return;done=true;clearTimeout(timer);cleanup();resolve(payload);};
+    script.onerror=()=>{if(done)return;done=true;clearTimeout(timer);cleanup();reject(new Error('FALHA AO CARREGAR API LEGADA.'));};
+    script.src=LEGACY_API_URL+'?'+query.toString();
+    document.head.appendChild(script);
+  });
+}
+async function importLegacyStateToFirebase(){
+  try{
+    const payload=await apiJsonp({action:'load'});
+    if(payload && payload.ok && payload.state && payload.state.months && countStateRecords(payload.state)>0){
+      state=payload.state;
+      selectStudioMonth();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render();
+      await saveStateToApi();
+      return true;
+    }
+  }catch(err){
+    console.warn('IMPORTAÇÃO LEGADA NÃO CONCLUÍDA',err);
+  }
+  return false;
+}
+function applyRemoteFirebaseState(remoteState){
+  if(!remoteState || !remoteState.months) return;
+  firebaseApplyingRemote=true;
+  state=remoteState;
+  selectStudioMonth();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if(!manual) selectedIndex=-1;
+  render();
+  firebaseApplyingRemote=false;
+}
+async function handleEmptyFirebase(){
+  const localCount=countStateRecords(state);
+  if(localCount>0){
+    await saveStateToApi();
+    return;
+  }
+  await importLegacyStateToFirebase();
+}
+function initFirebaseSync(){
+  if(firebaseStarted) return;
+  firebaseStarted=true;
+  if(!firebaseConfigReady()){
+    console.warn('Firebase ainda não configurado. Substitua FIREBASE_CONFIG nos arquivos HTML.');
+    return;
+  }
+  try{
+    const app=window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseRef=window.firebase.database(app).ref(FIREBASE_ROOT_PATH);
+    firebaseReady=true;
+    firebaseRef.on('value', async snapshot=>{
+      const payload=snapshot.val();
+      if(!payload || !payload.state){
+        await handleEmptyFirebase();
+        return;
+      }
+      if(firebasePendingSave && Date.now()-firebaseLastLocalWrite<1200) return;
+      applyRemoteFirebaseState(payload.state);
+      firebasePendingSave=false;
+    },err=>console.warn('FIREBASE LOAD ERROR',err));
+  }catch(err){
+    console.warn('FIREBASE INIT ERROR',err);
+  }
+}
+function syncStateFromApi(force=false){
+  initFirebaseSync();
+  if(force && firebaseReady && firebaseRef){
+    firebaseRef.get().then(snapshot=>{
+      const payload=snapshot.val();
+      if(payload && payload.state) applyRemoteFirebaseState(payload.state);
+    }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
+  }
+}
+function queueApiSave(delay=250){
+  clearTimeout(firebaseSaveTimer);
+  firebaseSaveTimer=setTimeout(saveStateToApi,delay);
+}
+async function saveStateToApi(){
+  if(!firebaseReady || !firebaseRef){
+    initFirebaseSync();
+    if(!firebaseReady || !firebaseRef) return;
+  }
+  try{
+    await firebaseRef.set({
+      state,
+      updatedAt: window.firebase.database.ServerValue.TIMESTAMP,
+      savedAt: new Date().toISOString(),
+      source: 'PAINEL_ESTUDIO',
+      user: 'JOVEM_PAN_FLORIPA',
+      version: 'FIREBASE_RTDB_V1'
+    });
+    firebasePendingSave=false;
+  }catch(err){
+    console.warn('FIREBASE SAVE ERROR',err);
+  }
+}
+
+function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
+function pad(n){return String(n).padStart(2,'0');}
+function formatBR(iso){if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
+function slotHour(slot){const m=String(slot||'').match(/(\d{1,2})/);return m?Number(m[1]):0;}
+function formatStudioTime(slot){const h=slotHour(slot);return h?`${pad(h)}H`:upper(slot||'--H');}
+function currentHourKey(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}`;}
+function dateISO(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function todayISO(){return dateISO(new Date());}
+function currentCalendarMonth(){
+  const d=new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+}
+function selectStudioMonth(){
+  const calendarMonth=currentCalendarMonth();
+  if(state.months && state.months[calendarMonth]){
+    currentMonth=calendarMonth;
+    state.currentMonth=calendarMonth;
+  }else{
+    currentMonth=state.currentMonth||Object.keys(state.months||{})[0]||currentMonth;
+  }
+}
+
+function hourDateFromItem(item){return itemDateTime(item);}
+function currentHourDate(){const d=new Date();d.setMinutes(0,0,0);return d;}
+function virtualItemFromDate(d){return {id:'__VIRTUAL__',date:dateISO(d),slot:`${pad(d.getHours())}:00`,program:'PROMOÇÕES',title:'PROMOÇÕES',notes:'',__virtual:true};}
+function virtualCurrentItem(){return virtualItemFromDate(currentHourDate());}
+function distributionById(id){return monthData().distributions?.find(d=>d.id===id)||null;}
+function safeFont(font){
+  const opts=['Segoe UI','Arial','Calibri','Tahoma','Verdana','Trebuchet MS','Times New Roman','Georgia','Courier New','Impact','Lucida Console'];
+  return opts.includes(font) ? font : 'Segoe UI';
+}
+function safeHex(value,fallback){return /^#[0-9A-Fa-f]{6}$/.test(String(value||'')) ? value : fallback;}
+function safeSize(value,min,max,fallback){const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
+function defaultTextStyle(type){return type==='title'?{font:'Segoe UI',size:38,color:'#171c26'}:{font:'Segoe UI',size:20,color:'#465161'};}
+function inlineTextStyle(style,type){
+  const d=defaultTextStyle(type), s=style||d;
+  return `font-family:'${safeFont(s.font||d.font)}', Arial, sans-serif;font-size:${safeSize(s.size,type==='title'?18:12,type==='title'?64:36,d.size)}px;color:${safeHex(s.color,d.color)}`;
+}
+function itemTitle(i){return upper(i.title||distributionById(i.distributionId)?.title||i.prize||'SEM TÍTULO CADASTRADO');}
+function itemDesc(i){return i.description||i.notes||distributionById(i.distributionId)?.description||'SEM DESCRIÇÃO CADASTRADA.';}
+function itemTitleStyle(i){return i.titleStyle||distributionById(i.distributionId)?.titleStyle||defaultTextStyle('title');}
+function itemDescStyle(i){return i.descriptionStyle||distributionById(i.distributionId)?.descriptionStyle||defaultTextStyle('desc');}
+function itemDateTime(i){
+  const date=i.date||'9999-12-31';
+  const hour=pad(slotHour(i.slot));
+  return new Date(`${date}T${hour}:00:00`);
+}
+function promoRefDate(p){return p.drawDate||p.startDate||'';}
+function promoHour(p){return slotHour(p.drawTime||'');}
+function isMerchan(p){
+  const k=upper(p.kind||p.promoKind||p.type||'');
+  const local=upper(p.local||'');
+  const name=upper(p.name||p.title||'');
+  return k==='MERCHAN' || k==='MERCHANDISING' || local.includes('MERCHAN') || name.includes('MERCHAN');
+}
+function readHourKey(item,promo){
+  const date=(item&&item.date)||promoRefDate(promo)||'';
+  const hour=item?pad(slotHour(item.slot)):pad(promoHour(promo));
+  return `${date}-${hour}`;
+}
+function readTimeLabel(value){
+  if(!value) return 'HORÁRIO NÃO REGISTRADO';
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime())) return 'HORÁRIO REGISTRADO';
+  return `FEITA ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function promoEligibleForItemHour(p,item){
+  if(!p || !item) return false;
+  const date=item.date||'';
+  const ref=promoRefDate(p);
+  if(ref && ref!==date) return false;
+  const hour=pad(slotHour(item.slot));
+  const mode=p.readMode||'all';
+  if(mode==='selected'){
+    const hours=Array.isArray(p.readHours)?p.readHours.map(String):[];
+    return hours.includes(hour);
+  }
+  return true;
+}
+function isPromoReadForHour(p,item){
+  const key=readHourKey(item,p);
+  return !!(p.readByHour && p.readByHour[key]);
+}
+function pautasForItemHour(item,includeRead=false,kind='all'){
+  return [...(monthData().promos||[])]
+    .filter(p=>promoEligibleForItemHour(p,item))
+    .filter(p=>kind==='all' || (kind==='merchan' ? isMerchan(p) : !isMerchan(p)))
+    .filter(p=>includeRead || !isPromoReadForHour(p,item))
+    .sort((a,b)=>(a.drawTime||'').localeCompare(b.drawTime||'')||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
+}
+function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
+function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
+function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
+function findPromoById(id){return monthData().promos?.find(p=>p.id===id)||null;}
+function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
+function buildPromoFooter(item){
+  const pautas=allPautasForItemHour(item,true);
+  return `<div class="promoFooter"><div class="promoFooterList">${pautas.map(p=>{
+    const key=readHourKey(item,p);
+    const done=!!(p.readByHour&&p.readByHour[key]);
+    const name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMO'));
+    if(done){
+      return `<button class="promoPill read" type="button" data-promo-id="${esc(p.id)}" title="${esc(name)}"><span class="marquee"><span>${esc(name)}</span><span>${esc(readTimeLabel(p.readByHour[key]))}</span></span></button>`;
+    }
+    return `<button class="promoPill pending" type="button" data-promo-id="${esc(p.id)}" title="${esc(name)}">${esc(name)}</button>`;
+  }).join('')}</div></div>`;
+}
+function buildPautaList(item,kind){
+  const pautas=pautasForItemHour(item,true,kind);
+  const emptyLabel=kind==='merchan'?'SEM MERCHAN CADASTRADO PARA ESTE HORÁRIO':'SEM PROMOÇÕES CADASTRADAS PARA ESTE HORÁRIO';
+  if(!pautas.length) return `<button class="promoListItem" type="button">${emptyLabel}</button>`;
+  return pautas.map(p=>{
+    const read=isPromoReadForHour(p,item);
+    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
+  }).join('');
+}
+function buildPromoList(item){return buildPautaList(item,'promo');}
+function buildMerchanList(item){return buildPautaList(item,'merchan');}
+function buildHourReadList(item){
+  const pautas=allPautasForItemHour(item,true);
+  if(!pautas.length) return `<div class="promoListItem" type="button">SEM PROMOÇÕES OU MERCHAN CADASTRADOS PARA ESTE HORÁRIO</div>`;
+  return `<div class="hourReadList">${pautas.map(p=>{
+    const read=isPromoReadForHour(p,item);
+    const label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';
+    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
+  }).join('')}</div>`;
+}
+
+function promoResultForHour(p,item){
+  if(!p) return '';
+  const key=item ? readHourKey(item,p) : '';
+  return (key && p.resultByHour && p.resultByHour[key]) || p.resultName || '';
+}
+function savePromoResultInline(){
+  const p=currentPromoForRead();
+  const item=currentDisplayItem || virtualCurrentItem();
+  if(!p || !item) return;
+  const input=$('promoResultInput');
+  const result=upper(input?.value||'');
+  if(!result){ if(input) input.focus(); return; }
+  const now=new Date();
+  const key=readHourKey(item,p);
+  p.resultByHour ||= {};
+  p.resultByHour[key]=result;
+  p.resultName=result;
+  p.resultAt=now.toISOString();
+  p.resultAtLabel=now.toLocaleString('pt-BR');
+  p.resultSlot=formatStudioTime(item.slot);
+  p.resultDate=item.date || todayISO();
+  saveState();
+  render();
+}
+function buildPromoResultBox(p,item){
+  const current=promoResultForHour(p,item);
+  const saved=current ? `<div class="resultSaved">RESULTADO REGISTRADO: ${esc(current)}</div>` : '';
+  return `<div class="resultBox">
+    <label for="promoResultInput">RESULTADO / GANHADOR DO SORTEIO</label>
+    <div class="resultLine"><input id="promoResultInput" type="text" maxlength="140" value="${esc(current)}" placeholder="NOME DO SORTEADO OU RESULTADO"><button class="modalBtn primary" id="savePromoResultInline" type="button">SALVAR RESULTADO</button></div>
+    ${saved}
+  </div>`;
+}
+function historyRowsForDate(date){
+  const prizeRows=(monthData().items||[])
+    .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || norm(i.winnerName)))
+    .map(i=>({type:'PRÊMIO',time:formatStudioTime(i.slot),sort:`${i.date}T${timeToHHMM(i.slot)}`,title:itemTitle(i),sub:i.program||'',result:i.winnerName||'REALIZADO'}));
+  const promoRows=(monthData().promos||[])
+    .filter(p=>(p.resultDate===date || (p.drawDate===date && norm(p.resultName))))
+    .map(p=>({type:isMerchan(p)?'MERCHAN':'PROMOÇÃO',time:p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${(p.drawTime||'23:59').slice(0,5)}`,title:upper(p.name||p.title||'PROMOÇÃO'),sub:p.local||'',result:p.resultName||'RESULTADO REGISTRADO'}));
+  return [...prizeRows,...promoRows].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title));
+}
+function renderHistoryList(){
+  const date=$('historyDateInput')?.value || historyDate || todayISO();
+  historyDate=date;
+  const rows=historyRowsForDate(date);
+  const box=$('historyList');
+  if(!box) return;
+  box.innerHTML=rows.length ? rows.map(r=>`<div class="historyItem"><div class="historyTime">${esc(r.time)}</div><div class="historyInfo"><strong>${esc(r.title)}</strong><span>${esc(r.type)}${r.sub?' · '+esc(upper(r.sub)):''}</span><em>${esc(r.result)}</em></div></div>`).join('') : '<div class="empty">NENHUM RESULTADO REGISTRADO PARA ESTA DATA.</div>';
+}
+function openHistoryModal(){
+  historyDate=(currentDisplayItem && currentDisplayItem.date) || todayISO();
+  if($('historyDateInput')) $('historyDateInput').value=historyDate;
+  renderHistoryList();
+  $('historyModal').classList.add('show');
+}
+function closeHistoryModal(){
+  $('historyModal').classList.remove('show');
+}
+
+function startPromoRead(promoId){
+  const p=findPromoById(promoId);
+  if(!p) return;
+  selectedPromoId=promoId;
+  render();
+}
+function closePromoReadModal(){
+  selectedPromoId=null;
+  render();
+}
+function confirmPromoRead(){
+  const p=currentPromoForRead();
+  const item=currentDisplayItem || virtualCurrentItem();
+  if(!p || !item) return;
+  const now=new Date();
+  const key=readHourKey(item,p);
+  p.readByHour ||= {};
+  p.readByHour[key]=now.toISOString();
+  p.readAt=now.toISOString();
+  p.readAtLabel=now.toLocaleString('pt-BR');
+  p.readSlot=formatStudioTime(item.slot);
+  saveState();
+  selectedPromoId=null;
+  render();
+}
+function allPrizeRows(){
+  return [...(monthData().items||[])]
+    .filter(i=>i && i.date)
+    .sort((a,b)=>itemDateTime(a)-itemDateTime(b)||upper(a.program).localeCompare(upper(b.program)));
+}
+function sameHour(a,b){
+  return a.getFullYear()===b.getFullYear() &&
+         a.getMonth()===b.getMonth() &&
+         a.getDate()===b.getDate() &&
+         a.getHours()===b.getHours();
+}
+function itemIndexForDate(rows,target){
+  return rows.findIndex(i=>sameHour(itemDateTime(i),target));
+}
+function itemForDate(rows,target){
+  const idx=itemIndexForDate(rows,target);
+  return {idx,item:idx>=0?rows[idx]:virtualItemFromDate(target)};
+}
+function currentHourIndex(rows){
+  return itemIndexForDate(rows,currentHourDate());
+}
+function autoIndex(rows){
+  if(!rows.length)return -1;
+  const now=new Date();
+  const current = rows.findIndex(i=>{
+    const dt=itemDateTime(i);
+    return dt.getFullYear()===now.getFullYear() &&
+           dt.getMonth()===now.getMonth() &&
+           dt.getDate()===now.getDate() &&
+           dt.getHours()===now.getHours();
+  });
+  if(current>=0)return current;
+  const upcoming=rows.findIndex(i=>itemDateTime(i)>=now);
+  if(upcoming>=0)return upcoming;
+  return rows.length-1;
+}
+function timeClass(item){
+  const now=new Date();
+  const dt=itemDateTime(item);
+  if(
+    dt.getFullYear()===now.getFullYear() &&
+    dt.getMonth()===now.getMonth() &&
+    dt.getDate()===now.getDate() &&
+    dt.getHours()===now.getHours()
+  ) return 'time-now';
+  if(dt < now) return 'time-past';
+  return 'time-next';
+}
+function currentItemRecord(){
+  if(!currentDisplayItem || currentDisplayItem.__virtual) return null;
+  return monthData().items?.find(i=>i.id===currentDisplayItem.id) || null;
+}
+function openWinnerModal(){
+  const item=currentItemRecord();
+  if(!item) return;
+  $('winnerNameInput').value=item.winnerName||'';
+  $('winnerModal').classList.add('show');
+  setTimeout(()=>{$('winnerNameInput').focus();$('winnerNameInput').select();},30);
+}
+function closeWinnerModal(){
+  $('winnerModal').classList.remove('show');
+}
+function saveWinner(){
+  const item=currentItemRecord();
+  if(!item) return;
+  const name=upper($('winnerNameInput').value);
+  if(!name){ $('winnerNameInput').focus(); return; }
+  item.winnerName=name;
+  item.status='REALIZADO';
+  saveState();
+  closeWinnerModal();
+  render();
+}
+function step(delta){
+  const base = manualHourDateMs !== null
+    ? new Date(manualHourDateMs)
+    : (currentDisplayItem ? hourDateFromItem(currentDisplayItem) : currentHourDate());
+  base.setHours(base.getHours()+delta,0,0,0);
+  manualHourDateMs=base.getTime();
+  manual=true;
+  selectedPromoId=null;
+  render();
+}
+function render(){
+  const rows=allPrizeRows();
+  let item=null;
+  if(!manual){
+    const target=currentHourDate();
+    const found=itemForDate(rows,target);
+    selectedIndex=found.idx;
+    manualHourDateMs=null;
+    item=found.item;
+  }else{
+    const target=manualHourDateMs!==null ? new Date(manualHourDateMs) : currentHourDate();
+    const found=itemForDate(rows,target);
+    selectedIndex=found.idx;
+    item=found.item;
+  }
+  currentDisplayItem=item;
+  const promo=currentPromoForRead();
+  const isVirtual=!!item.__virtual;
+  const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
+  const promoBody = promo ? `
+      <div class="promoReadBanner">${promo.imageData?`<img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO">`:'IMAGEM DA PROMOÇÃO'}</div>
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1></div>
+      <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
+      ${buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())}
+      <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button">CONFIRMAR LEITURA</button></div>
+    ` : isVirtual ? `
+      <div class="titleBox"><h1 class="title">PROMOÇÕES</h1></div>
+      <div class="descBox">${buildHourReadList(item)}</div>
+    ` : `
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(itemTitleStyle(item),'title')}">${esc(itemTitle(item))}</h1></div>
+      <div class="descBox"><p class="desc" style="${inlineTextStyle(itemDescStyle(item),'desc')}">${esc(itemDesc(item))}</p></div>
+      ${winnerBlock}
+      <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'EDITAR GANHADOR' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'EDITAR GANHADOR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
+    `;
+  $('pautaPanel').innerHTML=`
+    <div class="pautaHead">
+      <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
+      <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PAUTA PROMO') : isVirtual ? 'PROMOÇÕES' : esc(upper(item.program||'PROGRAMA'))}</div>
+      <div class="headNav">
+        <div class="promoListWrap">
+          <button class="promoListBtn" id="promoListBtn" type="button" aria-label="PROMOÇÕES" title="PROMOÇÕES">P</button>
+          <div class="promoList" id="promoList">${buildPromoList(item)}</div>
+        </div>
+        <div class="promoListWrap">
+          <button class="promoListBtn" id="merchanListBtn" type="button" aria-label="MERCHAN" title="MERCHAN">M</button>
+          <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
+        </div>
+        <button class="promoListBtn history" id="historyListBtn" type="button" aria-label="HISTÓRICO" title="HISTÓRICO">H</button>
+        <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
+        <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
+      </div>
+    </div>
+    <div class="pautaBody">${promoBody}</div>
+    ${buildPromoFooter(item)}`;
+  $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
+  $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
+  const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.addEventListener('click',openWinnerModal);
+  const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',closePromoReadModal);
+  const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.addEventListener('click',confirmPromoRead);
+  const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);
+  $('promoListBtn').addEventListener('click',()=>{$('promoList').classList.toggle('show');$('merchanList').classList.remove('show');});
+  $('merchanListBtn').addEventListener('click',()=>{$('merchanList').classList.toggle('show');$('promoList').classList.remove('show');});
+  const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList').classList.remove('show');$('merchanList').classList.remove('show');openHistoryModal();});
+  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.addEventListener('click',()=>startPromoRead(btn.dataset.promoId)));
+}
+$('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
+$('saveWinnerBtn').addEventListener('click',saveWinner);
+$('winnerModal').addEventListener('click',e=>{ if(e.target.id==='winnerModal') closeWinnerModal(); });
+$('winnerNameInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ e.preventDefault(); saveWinner(); }
+  if(e.key==='Escape'){ closeWinnerModal(); }
+});
+$('closeHistoryBtn').addEventListener('click',closeHistoryModal);
+$('historyTodayBtn').addEventListener('click',()=>{ $('historyDateInput').value=todayISO(); renderHistoryList(); });
+$('historyDateInput').addEventListener('change',renderHistoryList);
+$('historyModal').addEventListener('click',e=>{ if(e.target.id==='historyModal') closeHistoryModal(); });
+window.addEventListener('storage',()=>{state=loadState();selectStudioMonth();if(!manual)selectedIndex=-1;render();});
+window.addEventListener('focus',()=>syncStateFromApi(true));
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStateFromApi(true); });
+setInterval(()=>{
+  const hk=currentHourKey();
+  if(hk!==lastHourKey){
+    manual=false;
+    selectedIndex=-1;
+    selectedPromoId=null;
+    manualHourDateMs=null;
+    lastHourKey=hk;
+  }
+  if(!manual) selectedIndex=-1;
+  syncStateFromApi(false);
+},3000);
+selectStudioMonth();
+render();
+syncStateFromApi(true);
+setTimeout(()=>syncStateFromApi(true),1800);
+setTimeout(()=>syncStateFromApi(true),6000);
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recepção — Conferência de Sorteios</title>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<style>
+:root{--ink:#171c26;--muted:#697386;--line:#dfe5ec;--green:#137947;--red:#d7324e;--bg:#f4f6fa;--studioBg:url("assets/bg-estudio.jpg")}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;background:linear-gradient(180deg,rgba(246,248,252,.90),rgba(245,247,251,.95)),var(--studioBg) center/cover fixed no-repeat;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);text-transform:uppercase;font-weight:900}
+.top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:20px;background:rgba(255,255,255,.72);border:1px solid rgba(223,229,236,.9);border-radius:22px;padding:14px 16px;box-shadow:0 10px 26px rgba(16,24,40,.045);backdrop-filter:blur(8px)}
+.logoBar{width:min(560px,100%);display:flex;align-items:center;justify-content:center;padding:10px 18px;margin:0 auto 18px;border:1px solid rgba(223,229,236,.92);border-radius:20px;background:rgba(255,255,255,.86);box-shadow:0 10px 24px rgba(16,24,40,.055);backdrop-filter:blur(8px)}
+.logoBar img{display:block;width:min(100%,460px);max-height:58px;height:auto;object-fit:contain}
+.wrap{width:min(1180px,100%);margin:0 auto;padding:28px}
+
+.brand{display:flex;align-items:center;gap:14px}
+.brand h1{margin:0;font-size:25px;letter-spacing:-.04em}
+.brand span{display:block;margin-top:4px;color:#ff8200;font-size:12px;letter-spacing:.05em}
+.controls{display:flex;align-items:center;gap:10px}
+input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;padding:0 13px;font-size:14px;font-weight:1000;color:#171c26;text-transform:uppercase}
+.updated{color:#687385;font-size:11px}
+.hero{display:grid;gap:18px;margin-bottom:18px}
+.titleBox,.descBox{border:1px solid #dfe5ec;border-radius:22px;background:#fff;min-height:76px;display:grid;place-items:center;padding:18px 28px;box-shadow:0 10px 24px rgba(16,24,40,.04)}
+.titleBox{box-shadow:inset 5px 0 0 #d7324e,0 10px 24px rgba(16,24,40,.04)}
+.titleBox h2{margin:0;font-size:28px;letter-spacing:-.04em;text-align:center}
+.descBox p{margin:0;color:#5f6a7a;font-size:15px;text-align:center}
+.list{display:grid;gap:12px}
+.resultCard{display:grid;grid-template-columns:105px minmax(0,1fr) auto;gap:16px;align-items:center;border:1px solid #dfe5ec;border-radius:22px;background:rgba(255,255,255,.88);padding:18px 20px;box-shadow:0 8px 20px rgba(16,24,40,.05)}
+.time{font-size:36px;letter-spacing:-.08em;color:#667186}
+.info strong{display:block;font-size:20px;line-height:1.08}
+.info span{display:block;margin-top:7px;color:#5e6877;font-size:13px;line-height:1.35}
+.result{display:inline-flex;align-items:center;min-height:32px;border-radius:999px;border:1px solid #ccefdc;background:#effaf4;color:#137947;padding:0 12px;font-size:12px;font-weight:1000}
+.empty{padding:42px;text-align:center;border:1px dashed #cdd5df;border-radius:22px;background:rgba(255,255,255,.72);color:#697386}
+@media(max-width:760px){.wrap{padding:18px}.top{display:grid}.controls{justify-content:space-between}.resultCard{grid-template-columns:1fr}.time{font-size:30px}.titleBox h2{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logoBar"><img src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan Floripa"></div>
+  <header class="top">
+    <div class="brand"><div><h1>RECEPÇÃO</h1><span>CONFERÊNCIA DE SORTEIOS</span></div></div>
+    <div class="controls"><input id="dateFilter" type="date"><span class="updated" id="updated">CARREGANDO...</span></div>
+  </header>
+  <section class="hero">
+    <div class="titleBox"><h2>RESULTADOS DE SORTEIOS</h2></div>
+    <div class="descBox"><p>CONSULTE OS PRÊMIOS SORTEADOS, HORÁRIOS E GANHADORES REGISTRADOS NO ESTÚDIO.</p></div>
+  </section>
+  <main class="list" id="resultList"></main>
+</div>
+<script>
+
+const FIREBASE_CONFIG = {
+  "apiKey": "AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE",
+  "authDomain": "jp-painel-brindes.firebaseapp.com",
+  "databaseURL": "https://jp-painel-brindes-default-rtdb.firebaseio.com",
+  "projectId": "jp-painel-brindes",
+  "storageBucket": "jp-painel-brindes.firebasestorage.app",
+  "messagingSenderId": "843544648278",
+  "appId": "1:843544648278:web:066c8e64e17da046cf79f7",
+  "measurementId": "G-VB6Y2TS796"
+};
+const FIREBASE_ROOT_PATH='jp-painel-brindes/state';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const upper=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
+const pad=n=>String(n).padStart(2,'0');
+const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+const monthKey=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;}
+const formatBR=iso=>{if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
+const slotHour=slot=>{const m=String(slot||'').match(/(\d{1,2})/);return m?Number(m[1]):0;}
+const timeToHHMM=slot=>slotHour(slot)?`${pad(slotHour(slot))}:00`:String(slot||'23:59').slice(0,5);
+const formatTime=slot=>slotHour(slot)?`${pad(slotHour(slot))}H`:upper(slot||'--H');
+const statusBadge=s=>upper(s)==='REALIZADO'?'<span class="badge green">REALIZADO</span>':upper(s)==='NO AR'?'<span class="badge green">NO AR</span>':`<span class="badge">${esc(upper(s||'PENDENTE'))}</span>`;
+let state={months:{}}, currentMonth='';
+function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
+function availableMonths(){return Object.keys(state.months||{}).sort();}
+function selectMonthForDate(date){const m=String(date||todayISO()).slice(0,7); currentMonth=state.months?.[m]?m:(state.currentMonth||availableMonths().at(-1)||m);}
+function distributionById(id){return (monthData().distributions||[]).find(d=>d.id===id)||{};}
+function itemTitle(i){const d=distributionById(i.distributionId);return upper(i.title||d.title||i.prize||'SEM TÍTULO');}
+function itemDesc(i){const d=distributionById(i.distributionId);return i.notes||d.description||'';}
+function channelName(i){return upper(i.channel||'RÁDIO');}
+function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
+firebase.initializeApp(FIREBASE_CONFIG);
+
+function resultRowsForDate(date){
+  selectMonthForDate(date);
+  const items=(monthData().items||[])
+    .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || upper(i.winnerName)))
+    .map(i=>({time:formatTime(i.slot),sort:`${date}T${timeToHHMM(i.slot)}`,title:itemTitle(i),sub:`${upper(i.program||'')} · ${channelName(i)}`,result:upper(i.winnerName||'REALIZADO')}));
+  const promos=(monthData().promos||[])
+    .filter(p=>p.resultName && (p.resultDate===date || p.drawDate===date))
+    .map(p=>({time:p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${(p.drawTime||'23:59').slice(0,5)}`,title:promoTitle(p),sub:upper(p.local||p.type||'PROMOÇÃO'),result:upper(p.resultName)}));
+  return [...items,...promos].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title));
+}
+function render(){
+  const date=$('dateFilter').value||todayISO();
+  const rows=resultRowsForDate(date);
+  $('resultList').innerHTML=rows.length?rows.map(r=>`<article class="resultCard"><div class="time">${esc(r.time)}</div><div class="info"><strong>${esc(r.title)}</strong><span>${esc(r.sub)}</span></div><div class="result">${esc(r.result)}</div></article>`).join(''):'<div class="empty">NENHUM RESULTADO REGISTRADO PARA ESTA DATA.</div>';
+}
+$('dateFilter').value=todayISO();
+$('dateFilter').addEventListener('change',render);
+firebase.database().ref(FIREBASE_ROOT_PATH).on('value',snap=>{const payload=snap.val();if(payload&&payload.state){state=payload.state;selectMonthForDate($('dateFilter').value);render();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}});
+</script>
+</body>
+</html>

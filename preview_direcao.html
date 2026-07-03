@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direção — Preview Painel Principal</title>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<style>
+:root{--ink:#171c26;--muted:#657084;--line:#dfe5ec;--red:#c9002b;--green:#137947;--bg:#f6f7fa;--studioBg:url("assets/bg-estudio.jpg")}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,rgba(246,248,252,.90),rgba(245,247,251,.95)),var(--studioBg) center/cover fixed no-repeat;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);text-transform:uppercase;font-weight:900}
+.head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;background:rgba(255,255,255,.72);border:1px solid rgba(223,229,236,.9);border-radius:22px;padding:14px 16px;box-shadow:0 10px 26px rgba(16,24,40,.045);backdrop-filter:blur(8px)}
+.logoBar{width:min(560px,100%);display:flex;align-items:center;justify-content:center;padding:10px 18px;margin:0 auto 18px;border:1px solid rgba(223,229,236,.92);border-radius:20px;background:rgba(255,255,255,.86);box-shadow:0 10px 24px rgba(16,24,40,.055);backdrop-filter:blur(8px)}
+.logoBar img{display:block;width:min(100%,460px);max-height:58px;height:auto;object-fit:contain}
+.wrap{max-width:1320px;margin:0 auto;padding:24px}
+
+.head h1{margin:0;font-size:28px;letter-spacing:-.04em}
+.head span{color:var(--muted);font-size:11px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}.previewControls{justify-content:center}.updated{color:#657084;font-size:10px;font-weight:1000;letter-spacing:.04em}
+input,select,button{min-height:42px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:0 12px;font-weight:1000;color:var(--ink);text-transform:uppercase}
+button{cursor:pointer}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{background:#fff;color:#5a6474}
+.tab.active{background:#171c26;color:#fff;border-color:#171c26}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:0 8px 20px rgba(17,20,27,.04)}
+.kpi span{display:block;color:var(--muted);font-size:10px;margin-bottom:6px}
+.kpi strong{font-size:30px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:16px;box-shadow:0 8px 22px rgba(17,20,27,.04)}
+.panel h2{margin:0 0 12px;font-size:18px}
+.list{display:grid;gap:8px}
+.item{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid #e6eaf0;background:#fbfcff;border-radius:16px;padding:12px}
+.item.wide{grid-template-columns:minmax(0,1fr) auto}
+.time{font-size:26px;color:#697386}
+.info strong{display:block;font-size:14px;line-height:1.22}
+.info span{display:block;color:#5f6a7a;font-size:11px;margin-top:4px;line-height:1.35}
+.badge{display:inline-flex;align-items:center;min-height:26px;border-radius:999px;padding:0 9px;font-size:10px;border:1px solid #d9dee7;background:#f5f7fa;color:#566171}
+.badge.green{background:#effaf4;border-color:#ccefdc;color:#137947}
+.badge.red{background:#fff1f3;border-color:#f3b5c0;color:#a90d25}
+.empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed #cfd5df;border-radius:16px;background:#fbfcff}
+.hide{display:none!important}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.item{grid-template-columns:1fr}.head{display:grid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logoBar"><img src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan Floripa"></div>
+  <div class="controls previewControls"><input id="dateFilter" type="date"><select id="monthFilter"></select><span class="updated" id="updated">CARREGANDO...</span></div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="resumo">Resumo</button>
+    <button class="tab" data-tab="distribuicao">Distribuição</button>
+    <button class="tab" data-tab="programacao">Programação</button>
+    <button class="tab" data-tab="promocoes">Promoções</button>
+    <button class="tab" data-tab="estudio">Pauta de Estúdio</button>
+  </nav>
+  <section id="tab-resumo"></section>
+  <section id="tab-distribuicao" class="hide"></section>
+  <section id="tab-programacao" class="hide"></section>
+  <section id="tab-promocoes" class="hide"></section>
+  <section id="tab-estudio" class="hide"></section>
+</div>
+<script>
+
+const FIREBASE_CONFIG = {
+  "apiKey": "AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE",
+  "authDomain": "jp-painel-brindes.firebaseapp.com",
+  "databaseURL": "https://jp-painel-brindes-default-rtdb.firebaseio.com",
+  "projectId": "jp-painel-brindes",
+  "storageBucket": "jp-painel-brindes.firebasestorage.app",
+  "messagingSenderId": "843544648278",
+  "appId": "1:843544648278:web:066c8e64e17da046cf79f7",
+  "measurementId": "G-VB6Y2TS796"
+};
+const FIREBASE_ROOT_PATH='jp-painel-brindes/state';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const upper=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
+const pad=n=>String(n).padStart(2,'0');
+const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+const monthKey=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;}
+const formatBR=iso=>{if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
+const slotHour=slot=>{const m=String(slot||'').match(/(\d{1,2})/);return m?Number(m[1]):0;}
+const timeToHHMM=slot=>slotHour(slot)?`${pad(slotHour(slot))}:00`:String(slot||'23:59').slice(0,5);
+const formatTime=slot=>slotHour(slot)?`${pad(slotHour(slot))}H`:upper(slot||'--H');
+const statusBadge=s=>upper(s)==='REALIZADO'?'<span class="badge green">REALIZADO</span>':upper(s)==='NO AR'?'<span class="badge green">NO AR</span>':`<span class="badge">${esc(upper(s||'PENDENTE'))}</span>`;
+let state={months:{}}, currentMonth='';
+function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
+function availableMonths(){return Object.keys(state.months||{}).sort();}
+function selectMonthForDate(date){const m=String(date||todayISO()).slice(0,7); currentMonth=state.months?.[m]?m:(state.currentMonth||availableMonths().at(-1)||m);}
+function distributionById(id){return (monthData().distributions||[]).find(d=>d.id===id)||{};}
+function itemTitle(i){const d=distributionById(i.distributionId);return upper(i.title||d.title||i.prize||'SEM TÍTULO');}
+function itemDesc(i){const d=distributionById(i.distributionId);return i.notes||d.description||'';}
+function channelName(i){return upper(i.channel||'RÁDIO');}
+function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
+firebase.initializeApp(FIREBASE_CONFIG);
+
+let activeTab='resumo';
+function fillMonthFilter(){
+  const opts=availableMonths().map(m=>`<option value="${m}" ${m===currentMonth?'selected':''}>${m.split('-').reverse().join('/')}</option>`).join('');
+  $('monthFilter').innerHTML=opts || `<option value="${monthKey()}">${monthKey().split('-').reverse().join('/')}</option>`;
+}
+function distTitle(d){return upper(d.title||d.brinde||d.prize||d.name||'SEM TÍTULO');}
+function channelTotals(d){return ['ar','social','app','externa','promocao','reservado'].map(k=>Number(d[k]||0)).reduce((a,b)=>a+b,0);}
+function period(d){return `${formatBR(d.startDate||d.date||'')} A ${formatBR(d.endDate||d.startDate||d.date||'')}`;}
+function renderResumo(){
+  const m=monthData();
+  const date=$('dateFilter').value||todayISO();
+  const dayItems=(m.items||[]).filter(i=>i.date===date);
+  const results=[...dayItems.filter(i=>upper(i.status)==='REALIZADO'||i.winnerName),...(m.promos||[]).filter(p=>p.resultName&&(p.resultDate===date||p.drawDate===date))];
+  $('tab-resumo').innerHTML=`<div class="grid">
+    <div class="kpi"><span>Distribuições do mês</span><strong>${(m.distributions||[]).length}</strong></div>
+    <div class="kpi"><span>Pautas do dia</span><strong>${dayItems.length}</strong></div>
+    <div class="kpi"><span>Promoções do mês</span><strong>${(m.promos||[]).length}</strong></div>
+    <div class="kpi"><span>Resultados do dia</span><strong>${results.length}</strong></div>
+  </div>
+  <div class="panel"><h2>Agenda do dia</h2><div class="list">${renderProgramList(dayItems)}</div></div>`;
+}
+function renderProgramList(items){
+  const rows=[...items].sort((a,b)=>timeToHHMM(a.slot).localeCompare(timeToHHMM(b.slot)));
+  return rows.length?rows.map(i=>`<div class="item"><div class="time">${esc(formatTime(i.slot))}</div><div class="info"><strong>${esc(itemTitle(i))}</strong><span>${esc(upper(i.program||''))} · ${esc(channelName(i))}<br>${esc(itemDesc(i))}</span></div><div>${statusBadge(i.status)}</div></div>`).join(''):'<div class="empty">SEM PAUTAS PARA ESTA DATA.</div>';
+}
+function renderDistribuicao(){
+  const rows=[...(monthData().distributions||[])];
+  $('tab-distribuicao').innerHTML=`<div class="panel"><h2>Distribuição Geral</h2><div class="list">${rows.length?rows.map(d=>`<div class="item wide"><div class="info"><strong>${esc(distTitle(d))}</strong><span>PERÍODO: ${esc(period(d))}<br>TOTAL: ${Number(d.total||channelTotals(d)||0)} · RÁDIO: ${Number(d.ar||0)} · SOCIAL: ${Number(d.social||0)} · APP: ${Number(d.app||0)} · EXTERNA: ${Number(d.externa||0)} · PROMOÇÃO: ${Number(d.promocao||0)} · RESERVADO: ${Number(d.reservado||0)}</span></div><div><span class="badge">${esc(upper(d.status||'ATIVO'))}</span></div></div>`).join(''):'<div class="empty">SEM DISTRIBUIÇÕES NO MÊS.</div>'}</div></div>`;
+}
+function renderProgramacao(){
+  const date=$('dateFilter').value||todayISO();
+  $('tab-programacao').innerHTML=`<div class="panel"><h2>Programação — ${formatBR(date)}</h2><div class="list">${renderProgramList((monthData().items||[]).filter(i=>i.date===date))}</div></div>`;
+}
+function renderPromocoes(){
+  const rows=[...(monthData().promos||[])].sort((a,b)=>(a.drawDate||'').localeCompare(b.drawDate||'')||(a.drawTime||'').localeCompare(b.drawTime||''));
+  $('tab-promocoes').innerHTML=`<div class="panel"><h2>Promoções / Merchan</h2><div class="list">${rows.length?rows.map(p=>`<div class="item"><div class="time">${esc(formatBR(p.drawDate||p.startDate||''))}<br>${esc((p.drawTime||'').slice(0,5))}</div><div class="info"><strong>${esc(promoTitle(p))}</strong><span>${esc(upper(p.local||p.type||''))}<br>${esc(p.description||'')}</span></div><div>${p.resultName?`<span class="badge green">${esc(upper(p.resultName))}</span>`:'<span class="badge">ATIVA</span>'}</div></div>`).join(''):'<div class="empty">SEM PROMOÇÕES NO MÊS.</div>'}</div></div>`;
+}
+function renderEstudio(){
+  const date=$('dateFilter').value||todayISO();
+  const items=(monthData().items||[]).filter(i=>i.date===date&&channelName(i)==='RÁDIO');
+  $('tab-estudio').innerHTML=`<div class="panel"><h2>Pauta de Estúdio — ${formatBR(date)}</h2><div class="list">${renderProgramList(items)}</div></div>`;
+}
+function render(){
+  selectMonthForDate($('dateFilter').value||todayISO());
+  fillMonthFilter();
+  renderResumo();renderDistribuicao();renderProgramacao();renderPromocoes();renderEstudio();
+  document.querySelectorAll('[id^="tab-"]').forEach(s=>s.classList.toggle('hide',s.id!==`tab-${activeTab}`));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===activeTab));
+}
+$('dateFilter').value=todayISO();
+$('dateFilter').addEventListener('change',render);
+$('monthFilter').addEventListener('change',()=>{currentMonth=$('monthFilter').value;state.currentMonth=currentMonth;render();});
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{activeTab=b.dataset.tab;render();}));
+firebase.database().ref(FIREBASE_ROOT_PATH).on('value',snap=>{const payload=snap.val();if(payload&&payload.state){state=payload.state;selectMonthForDate($('dateFilter').value);render();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}});
+</script>
+</body>
+</html>
