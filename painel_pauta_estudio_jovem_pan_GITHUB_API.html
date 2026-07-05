@@ -282,8 +282,8 @@ body{
   overflow:hidden;
   text-overflow:ellipsis;
 }
-.promoPill.pending{animation:promoBlueBlink 1.25s ease-in-out infinite}
-@keyframes promoBlueBlink{0%,100%{background:#eaf4ff;color:#2d5f93;box-shadow:0 0 0 rgba(95,147,200,0)}50%{background:#d9ecff;color:#1f4d7d;box-shadow:0 0 0 4px rgba(89,145,204,.13)}}
+.promoPill.pending{border-color:#ffb45c;background:#fff3df;color:#a65300;animation:promoOrangeBlink 1.05s ease-in-out infinite}
+@keyframes promoOrangeBlink{0%,100%{background:#fff3df;color:#a65300;box-shadow:0 0 0 rgba(255,138,0,0)}50%{background:#ff8a00;color:#fff;box-shadow:0 0 0 5px rgba(255,138,0,.18)}}
 .promoPill.read{
   border-color:#badfc9;
   background:#effaf4;
@@ -726,6 +726,51 @@ body{
   .resultLine{grid-template-columns:1fr}
 }
 
+
+/* AJUSTE — MÚLTIPLOS GANHADORES DO SORTEIO */
+.resultWinnersList{
+  display:grid;
+  gap:8px;
+}
+.resultWinnerLine{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 44px;
+  gap:8px;
+}
+.resultWinnerLine input{
+  min-height:44px;
+  border:1px solid #d8dee7;
+  border-radius:13px;
+  padding:0 13px;
+  font-size:15px;
+  font-weight:900;
+  color:#171c26;
+  text-transform:uppercase;
+}
+.resultAddBtn,.resultRemoveBtn{
+  min-height:44px;
+  border:1px solid #d8dee7;
+  border-radius:13px;
+  background:#fff;
+  color:#171c26;
+  font-size:20px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.resultRemoveBtn{
+  color:#c9002b;
+  background:#fff5f7;
+  border-color:#f3b5c0;
+}
+.resultSavedList{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.resultSaved{
+  width:auto !important;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1082,18 +1127,66 @@ function promoResultForHour(p,item){
   const key=item ? readHourKey(item,p) : '';
   return (key && p.resultByHour && p.resultByHour[key]) || p.resultName || '';
 }
+function normalizeWinnerList(list){
+  if(!Array.isArray(list)) return [];
+  const seen=new Set();
+  return list.map(w=>typeof w==='string'?{name:upper(w)}:{...w,name:upper(w?.name||'')})
+    .filter(w=>w.name)
+    .filter(w=>{ if(seen.has(w.name)) return false; seen.add(w.name); return true; });
+}
+function promoWinnerList(p,item){
+  if(!p) return [];
+  const key=item ? readHourKey(item,p) : '';
+  const byHour = key && p.resultWinnersByHour && Array.isArray(p.resultWinnersByHour[key]) ? p.resultWinnersByHour[key] : null;
+  const base = byHour || p.resultWinners || [];
+  const list=normalizeWinnerList(base);
+  if(list.length) return list;
+  const current=promoResultForHour(p,item);
+  return current ? normalizeWinnerList(String(current).split(',').map(name=>({name}))) : [];
+}
+function mergeWinnerDelivery(previous,next){
+  const prev=normalizeWinnerList(previous);
+  const prevMap=new Map(prev.map(w=>[w.name,w]));
+  return normalizeWinnerList(next).map(w=>{
+    const old=prevMap.get(w.name);
+    return old ? {...w,registeredAt:old.registeredAt||w.registeredAt||'',registeredAtLabel:old.registeredAtLabel||w.registeredAtLabel||'',deliveredAt:old.deliveredAt||'',deliveredAtLabel:old.deliveredAtLabel||'',deliveredBy:old.deliveredBy||'',reuseStatus:old.reuseStatus||'',reuseAt:old.reuseAt||'',reuseAtLabel:old.reuseAtLabel||'',reusedItemId:old.reusedItemId||''} : w;
+  });
+}
+function collectPromoWinnerInputs(){
+  return Array.from(document.querySelectorAll('.promoResultWinnerInput'))
+    .map(input=>({name:upper(input.value||'')}))
+    .filter(w=>w.name);
+}
+function addPromoWinnerField(value=''){
+  const list=$('promoResultWinnersList');
+  if(!list) return;
+  const count=list.querySelectorAll('.resultWinnerLine').length;
+  list.insertAdjacentHTML('beforeend', `<div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(value)}" placeholder="NOME DO GANHADOR"><button class="${count?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${count?'REMOVER':'ADICIONAR GANHADOR'}">${count?'×':'+'}</button></div>`);
+  const last=list.querySelector('.resultWinnerLine:last-child input');
+  if(last) last.focus();
+}
 function savePromoResultInline(){
   const p=currentPromoForRead();
   const item=currentDisplayItem || virtualCurrentItem();
   if(!p || !item) return;
-  const input=$('promoResultInput');
-  const result=upper(input?.value||'');
-  if(!result){ if(input) input.focus(); return; }
+  const winners=collectPromoWinnerInputs();
+  if(!winners.length){
+    const first=document.querySelector('.promoResultWinnerInput');
+    if(first) first.focus();
+    return;
+  }
   const now=new Date();
   const key=readHourKey(item,p);
+  const previous=promoWinnerList(p,item);
+  const prepared=winners.map(w=>({...w,registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')}));
+  const merged=mergeWinnerDelivery(previous,prepared);
+  const joined=merged.map(w=>w.name).join(', ');
   p.resultByHour ||= {};
-  p.resultByHour[key]=result;
-  p.resultName=result;
+  p.resultByHour[key]=joined;
+  p.resultWinnersByHour ||= {};
+  p.resultWinnersByHour[key]=merged;
+  p.resultWinners=merged;
+  p.resultName=joined;
   p.resultAt=now.toISOString();
   p.resultAtLabel=now.toLocaleString('pt-BR');
   p.resultSlot=formatStudioTime(item.slot);
@@ -1102,21 +1195,24 @@ function savePromoResultInline(){
   render();
 }
 function buildPromoResultBox(p,item){
-  const current=promoResultForHour(p,item);
-  const saved=current ? `<div class="resultSaved">RESULTADO REGISTRADO: ${esc(current)}</div>` : '';
+  const winners=promoWinnerList(p,item);
+  const inputRows=(winners.length?winners:[{name:''}]).map((w,idx)=>`<div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(w.name||'')}" placeholder="NOME DO GANHADOR"><button class="${idx?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${idx?'REMOVER':'ADICIONAR GANHADOR'}">${idx?'×':'+'}</button></div>`).join('');
+  const saved=winners.length ? `<div class="resultSavedList">${winners.map(w=>`<div class="resultSaved">GANHADOR: ${esc(w.name)}${w.deliveredAtLabel?` · RETIRADO ${esc(w.deliveredAtLabel)}`:''}</div>`).join('')}</div>` : '';
   return `<div class="resultBox">
-    <label for="promoResultInput">RESULTADO / GANHADOR DO SORTEIO</label>
-    <div class="resultLine"><input id="promoResultInput" type="text" maxlength="140" value="${esc(current)}" placeholder="NOME DO SORTEADO OU RESULTADO"><button class="modalBtn primary" id="savePromoResultInline" type="button">SALVAR RESULTADO</button></div>
+    <label>RESULTADO / GANHADOR DO SORTEIO</label>
+    <div class="resultWinnersList" id="promoResultWinnersList">${inputRows}</div>
+    <div class="pautaActions" style="justify-content:flex-start;margin-top:4px"><button class="modalBtn primary" id="savePromoResultInline" type="button">SALVAR RESULTADO</button></div>
     ${saved}
   </div>`;
 }
+
 function historyRowsForDate(date){
   const prizeRows=(monthData().items||[])
     .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || norm(i.winnerName)))
     .map(i=>({type:'PRÊMIO',time:formatStudioTime(i.slot),sort:`${i.date}T${timeToHHMM(i.slot)}`,title:itemTitle(i),sub:i.program||'',result:i.winnerName||'REALIZADO'}));
   const promoRows=(monthData().promos||[])
     .filter(p=>(p.resultDate===date || (p.drawDate===date && norm(p.resultName))))
-    .map(p=>({type:isMerchan(p)?'MERCHAN':'PROMOÇÃO',time:p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${(p.drawTime||'23:59').slice(0,5)}`,title:upper(p.name||p.title||'PROMOÇÃO'),sub:p.local||'',result:p.resultName||'RESULTADO REGISTRADO'}));
+    .map(p=>{ const winners=promoWinnerList(p,null); return {type:isMerchan(p)?'MERCHAN':'PROMOÇÃO',time:p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${(p.drawTime||'23:59').slice(0,5)}`,title:upper(p.name||p.title||'PROMOÇÃO'),sub:p.local||'',result:(winners.map(w=>w.name).join(', ')||p.resultName||'RESULTADO REGISTRADO')}; });
   return [...prizeRows,...promoRows].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title));
 }
 function renderHistoryList(){
@@ -1305,6 +1401,13 @@ function render(){
   const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',closePromoReadModal);
   const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.addEventListener('click',confirmPromoRead);
   const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);
+  const resultList=$('promoResultWinnersList');
+  if(resultList) resultList.addEventListener('click',e=>{
+    const add=e.target.closest('.resultAddBtn');
+    const remove=e.target.closest('.resultRemoveBtn');
+    if(add) addPromoWinnerField('');
+    if(remove) remove.closest('.resultWinnerLine')?.remove();
+  });
   $('promoListBtn').addEventListener('click',()=>{$('promoList').classList.toggle('show');$('merchanList').classList.remove('show');});
   $('merchanListBtn').addEventListener('click',()=>{$('merchanList').classList.toggle('show');$('promoList').classList.remove('show');});
   const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList').classList.remove('show');$('merchanList').classList.remove('show');openHistoryModal();});

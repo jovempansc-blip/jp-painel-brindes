@@ -535,6 +535,236 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   .backupImportRow{grid-template-columns:1fr}
 }
 
+
+/* AJUSTE — INGRESSOS, PARES E CONSUMO DE SALDO */
+.distPairCell .ticketPairBadge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:24px;
+  min-width:44px;
+  border-radius:999px;
+  padding:0 8px;
+  border:1px solid #dfe5ec;
+  background:#f7f9fc;
+  color:#5a6474;
+  font-size:10px;
+  font-weight:1000;
+}
+.ticketOddBadge{
+  display:block;
+  margin-top:4px;
+  color:#9a5b00;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.04em;
+}
+.distNumStack{
+  display:grid;
+  gap:5px;
+  justify-items:center;
+}
+.distUnitSelect{
+  width:76px;
+  min-height:24px;
+  border:1px solid #dfe5ec;
+  border-radius:999px;
+  background:#fff;
+  color:#596476;
+  font-size:9px;
+  font-weight:1000;
+  text-align:center;
+  text-transform:uppercase;
+  padding:2px 6px;
+}
+.ticketConsumptionHint{
+  display:block;
+  color:#7a8493;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.04em;
+}
+.ticketFormHint{
+  display:block;
+  margin-top:6px;
+  color:#7a8493;
+  font-size:9px;
+  font-weight:900;
+  line-height:1.25;
+}
+
+
+/* AJUSTE — RETORNO, PRAZO E REAPROVEITAMENTO */
+.returnBellBtn{position:relative}
+.returnBellCount{
+  position:absolute;
+  right:-6px;
+  top:-7px;
+  min-width:18px;
+  height:18px;
+  border-radius:999px;
+  background:#c9002b;
+  color:#fff;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:0 5px;
+  font-size:10px;
+  font-weight:1000;
+  border:2px solid #fff;
+}
+.returnBellBtn.hasReturn .returnBellCount{display:flex}
+.returnCell .badge{margin:0 auto}
+.returnCell small{
+  display:block;
+  margin-top:4px;
+  font-size:8px;
+  color:#7a8493;
+  font-weight:1000;
+  letter-spacing:.04em;
+}
+.returnDrawerList{
+  display:grid;
+  gap:10px;
+}
+.returnAlertCard{
+  border:1px solid #e2e7ef;
+  border-radius:18px;
+  background:#fff;
+  padding:13px;
+  display:grid;
+  gap:10px;
+  box-shadow:0 8px 20px rgba(16,24,40,.045);
+}
+.returnAlertTop{
+  display:grid;
+  gap:4px;
+}
+.returnAlertTop strong{
+  font-size:14px;
+  color:#171c26;
+}
+.returnAlertTop span{
+  font-size:11px;
+  color:#5e6877;
+  line-height:1.35;
+  font-weight:900;
+}
+.returnAlertMeta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.returnAlertMeta em{
+  font-style:normal;
+  border:1px solid #ffd7a8;
+  background:#fff7ec;
+  color:#8a4b00;
+  border-radius:999px;
+  padding:5px 8px;
+  font-size:10px;
+  font-weight:1000;
+}
+.returnAlertActions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.returnAlertActions .btn{
+  min-height:34px;
+  font-size:10px;
+}
+.returnDrawerEmpty{
+  border:1px dashed #cdd5df;
+  border-radius:18px;
+  background:#f8fafc;
+  color:#697386;
+  padding:26px;
+  text-align:center;
+  font-size:12px;
+  font-weight:1000;
+}
+
+
+/* AJUSTE — ALERTAS DISCRETOS E AGENDAMENTO */
+.topTools #exportPdfBtn,.topTools #returnBellBtn{
+  min-width:30px;
+  width:30px;
+  min-height:30px;
+  padding:0;
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  color:#7a8493;
+}
+.topTools #exportPdfBtn:hover,.topTools #returnBellBtn:hover{
+  background:#f1f3f6;
+  color:#171c26;
+}
+.topTools #returnBellBtn .iconGlyph{font-size:16px}
+.topTools #exportPdfBtn .iconGlyph{font-size:10px}
+.miniAlertHost{
+  display:grid;
+  gap:8px;
+  margin:0 0 10px;
+}
+.miniAlert{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:10px;
+  align-items:center;
+  border:1px solid #ffd7a8;
+  border-left:5px solid #ff8a00;
+  border-radius:18px;
+  background:linear-gradient(90deg,#fff7ec,#fff);
+  padding:10px 12px;
+  box-shadow:0 10px 24px rgba(255,138,0,.10);
+  animation:miniAlertGlow 1.5s ease-in-out infinite;
+}
+@keyframes miniAlertGlow{
+  0%,100%{box-shadow:0 10px 24px rgba(255,138,0,.08)}
+  50%{box-shadow:0 10px 30px rgba(255,138,0,.20)}
+}
+.miniAlert strong{font-size:12px;color:#171c26;display:block}
+.miniAlert span{font-size:10px;color:#6b7280;display:block;margin-top:3px;line-height:1.35}
+.miniAlert .btn{min-height:30px;font-size:10px;padding:6px 9px}
+.miniAlertClose{
+  border:0;
+  background:transparent;
+  color:#8a4b00;
+  font-size:18px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.scheduleGrid{
+  display:grid;
+  grid-template-columns:140px minmax(180px,1fr) 140px 140px minmax(220px,1.4fr) auto;
+  gap:8px;
+  align-items:end;
+  margin-bottom:14px;
+}
+.scheduleGrid .field{min-width:0}
+.scheduleTable td{vertical-align:middle}
+.scheduleStatus{
+  display:inline-flex;
+  min-height:24px;
+  align-items:center;
+  border-radius:999px;
+  padding:0 8px;
+  border:1px solid #dfe5ec;
+  background:#f7f9fc;
+  color:#5a6474;
+  font-size:10px;
+  font-weight:1000;
+}
+.scheduleStatus.future{background:#fff7ec;border-color:#ffd7a8;color:#8a4b00}
+.scheduleStatus.active{background:#effaf4;border-color:#ccefdc;color:#137947}
+.scheduleStatus.done{background:#eef1f5;color:#6b7280}
+@media(max-width:980px){
+  .miniAlert{grid-template-columns:1fr}
+  .scheduleGrid{grid-template-columns:1fr}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -552,6 +782,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
       <div class="field"><label>MÊS</label><input class="control" type="month" id="monthInput" value="2026-06"></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
         <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="EXPORTAR PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
+        <button class="btn iconBtn returnBellBtn" id="returnBellBtn" title="RETORNOS / REAPROVEITAMENTO" aria-label="RETORNOS / REAPROVEITAMENTO" data-tip="RETORNOS"><span class="iconGlyph">🔔</span><span class="returnBellCount" id="returnBellCount">0</span><span class="visuallyHidden">RETORNOS</span></button>
       </div>
     </div>
   </header>
@@ -559,11 +790,13 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   <nav class="tabs" aria-label="NAVEGAÇÃO DO PAINEL">
     <button class="tabBtn active" data-view="distribuicao">DISTRIBUIÇÃO GERAL</button>
     <button class="tabBtn" data-view="programacao">PROGRAMAÇÃO</button>
-    <button class="tabBtn" data-view="digital">PROMOÇÕES</button>
+    <button class="tabBtn" data-view="digital">PROMO / MERCHAN</button>
     <button class="tabBtn" data-view="pauta">PAUTA DE ESTÚDIO</button>
+    <button class="tabBtn" data-view="agendamento">AGENDAMENTO</button>
     <button class="tabBtn" data-view="backup">BACKUP</button>
   </nav>
 
+  <div class="miniAlertHost" id="miniAlertHost"></div>
 
   <main>
     <section class="view" id="view-programacao">
@@ -597,7 +830,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             <div class="field"><label>ORDENAR NOMES</label><select class="control" id="distOrderFilter"><option value="alpha">ALFABÉTICA</option><option value="created">CADASTRO</option></select></div>
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
-          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVADO</th><th class="num">PROG.</th><th class="num">SALDO</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
+          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">PARES</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVADO</th><th class="num">PROG.</th><th class="num">SALDO</th><th class="num">RETORNO</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -605,7 +838,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
     <section class="view" id="view-digital">
       <div class="panel">
         <div class="panelHead">
-          <div><h2>PROMOÇÕES</h2><p>CONTROLE DAS PROMOÇÕES, SORTEIOS E PAUTA PROMOCIONAL PARA O LOCUTOR.</p></div>
+          <div><h2>PROMO / MERCHAN</h2><p>CONTROLE DAS PROMOÇÕES, MERCHANS, SORTEIOS E PAUTAS PROMOCIONAIS PARA O LOCUTOR.</p></div>
           <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" title="NOVA PROMOÇÃO" aria-label="NOVA PROMOÇÃO" data-tip="NOVA PROMOÇÃO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
         </div>
         <div class="panelBody"><div class="filterBar promoFilterBar"><div class="field"><label>ORDENAR NOMES</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div></div><div class="tableWrap"><table class="promoMainTable"><thead><tr><th>NOME</th><th>INÍCIO</th><th>SORTEIO</th><th>HORA</th><th>LOCAL</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div></div>
@@ -640,6 +873,27 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             <div class="studioSectionHead"><strong>PAUTA DE PROMOÇÕES</strong><span>PROMOÇÕES CADASTRADAS COM IMAGEM, DATA E LOCAL.</span></div>
             <div class="studioPromoGrid" id="studioPromoGrid"></div>
           </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="view" id="view-agendamento">
+      <div class="panel">
+        <div class="panelHead">
+          <div><h2>AGENDAMENTO</h2><p>RESERVA DE PROMOÇÕES, MERCHANS E PAUTAS FUTURAS OU DE LONGA DURAÇÃO.</p></div>
+        </div>
+        <div class="panelBody">
+          <form id="scheduleForm" class="scheduleGrid">
+            <input type="hidden" id="scheduleId">
+            <div class="field"><label>TIPO</label><select class="control" id="scheduleType"><option>PROMOÇÃO</option><option>MERCHAN</option><option>PAUTA ESPECIAL</option></select></div>
+            <div class="field"><label>NOME</label><input class="control" id="scheduleName" required></div>
+            <div class="field"><label>INÍCIO</label><input class="control" type="date" id="scheduleStart" required></div>
+            <div class="field"><label>TÉRMINO</label><input class="control" type="date" id="scheduleEnd" required></div>
+            <div class="field"><label>OBSERVAÇÃO / ESPECIFICAÇÃO</label><input class="control" id="scheduleNotes"></div>
+            <div class="field"><label>&nbsp;</label><button class="btn red" type="submit">SALVAR</button></div>
+          </form>
+          <div class="tableWrap"><table class="promoMainTable scheduleTable"><thead><tr><th>TIPO</th><th>NOME</th><th>INÍCIO</th><th>TÉRMINO</th><th>STATUS</th><th>OBSERVAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="scheduleTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -737,6 +991,9 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             </div>
           </div>
           <div class="field"><label>TOTAL</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"></div>
+          <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
+          <div class="field"><label>PADRÃO</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE COMO AS COLUNAS CONSUMEM O SALDO.</span></div>
+          <div class="field"><label>PARES AUTO.</label><input class="control" id="distPairsPreview" readonly value="0 PARES"></div>
           <div class="field full"><label>DESCRIÇÃO</label><textarea class="control" id="distDescription"></textarea>
             <div class="textStyleEditor" aria-label="EDITOR DA DESCRIÇÃO DA DISTRIBUIÇÃO">
               <label class="miniField"><span>FONTE DA DESCRIÇÃO</span><select id="distDescFont"></select></label>
@@ -777,6 +1034,20 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
         <div class="radioPlanHeader"><span></span><span>DATA</span><span>HORÁRIO</span><span>PROGRAMA</span><span>STATUS</span><span></span></div>
         <div class="radioPlannerList" id="radioPlannerSuggestions"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="drawer" id="returnDrawer" aria-hidden="true">
+  <div class="drawerCard">
+    <div class="drawerHead"><h3>RETORNOS / REAPROVEITAMENTO</h3><button class="btn small" data-close="returnDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <div class="backupInfoBox backupWarning" style="margin-bottom:12px">
+        <strong>ALERTA DE RETIRADA:</strong><br>
+        O SISTEMA CONTA 5 DIAS ÚTEIS A PARTIR DO REGISTRO DO GANHADOR. SE NÃO HOUVER BAIXA NA RECEPÇÃO, O PRÊMIO ENTRA NESTE PAINEL PARA REAPROVEITAMENTO OU SOBRA.
+      </div>
+      <div class="returnDrawerList" id="returnAlertList"></div>
     </div>
   </div>
 </div>
@@ -3192,6 +3463,7 @@ function normalizeChannel(value){
 }
 function normalizePanelState(data){
   if(!data || !data.months) return data;
+  data.schedules ||= [];
   Object.values(data.months).forEach(m=>{
     (m.items || []).forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
     (m.promos || []).forEach(p=>{ p.status = normalizeStatus(p.status); });
@@ -3275,8 +3547,47 @@ function distributionLabel(d){
   const prize = norm(d.prize || '');
   return prize || 'SEM PRÊMIO';
 }
-function allocated(d){ return CHANNELS.reduce((sum,[key]) => sum + num(d[key]), 0); }
-function leftTotal(d){ return num(d.total) - allocated(d); }
+function isTicketDist(d){
+  return !!d && (d.prizeType === 'ingresso' || d.ticketMode === 'ingresso' || d.isTicket === true);
+}
+function ticketUnit(d,key){
+  if(!isTicketDist(d)) return 'unit';
+  return (d.ticketUnits && d.ticketUnits[key]) || d.ticketDefaultUnit || 'unit';
+}
+function ticketMultiplier(d,key){
+  return isTicketDist(d) && ticketUnit(d,key)==='pair' ? 2 : 1;
+}
+function channelConsumed(d,key){
+  return num(d[key]) * ticketMultiplier(d,key);
+}
+function allocated(d){
+  return CHANNELS.reduce((sum,[key]) => sum + channelConsumed(d,key), 0);
+}
+function leftTotal(d){
+  return num(d.total) - allocated(d);
+}
+function ticketPairs(d){
+  return isTicketDist(d) ? Math.floor(num(d.total)/2) : '';
+}
+function ticketOdd(d){
+  return isTicketDist(d) ? num(d.total)%2 : 0;
+}
+function ticketPairsCell(d){
+  if(!isTicketDist(d)) return '<span class="ticketPairBadge">—</span>';
+  const odd=ticketOdd(d);
+  return `<span class="ticketPairBadge">${ticketPairs(d)} PAR${ticketPairs(d)===1?'':'ES'}</span>${odd?'<span class="ticketOddBadge">+1 AVULSO</span>':''}`;
+}
+function ticketUnitSelect(d,key){
+  if(!isTicketDist(d)) return '';
+  const selected=ticketUnit(d,key);
+  const qty=num(d[key]);
+  const consumed=channelConsumed(d,key);
+  return `<select class="distUnitSelect" data-dist-id="${esc(d.id)}" data-unit-key="${esc(key)}" title="TIPO DE DISTRIBUIÇÃO"><option value="unit" ${selected==='unit'?'selected':''}>IND.</option><option value="pair" ${selected==='pair'?'selected':''}>PAR</option></select><span class="ticketConsumptionHint">${consumed} ING.</span>`;
+}
+function ticketSummaryText(d){
+  if(!isTicketDist(d)) return '';
+  return ` | ${ticketPairs(d)} PAR${ticketPairs(d)===1?'':'ES'}${ticketOdd(d)?' + 1 AVULSO':''}`;
+}
 function programmed(distId, channel=''){
   const target = channel ? normalizeChannel(channel) : '';
   return monthData().items.filter(i => i.distributionId === distId && (!target || normalizeChannel(i.channel) === target)).reduce((sum,i)=> sum + num(i.qty),0);
@@ -3402,6 +3713,96 @@ function importManualBackupFile(file){
   reader.readAsText(file,'utf-8');
 }
 
+
+function scheduleItems(){ state.schedules ||= []; return state.schedules; }
+function scheduleStatus(item){
+  const now=todayISO();
+  if(item.endDate && item.endDate < now) return {label:'ENCERRADO',cls:'done'};
+  if(item.startDate && item.startDate > now) return {label:'RESERVADO',cls:'future'};
+  return {label:'EM ANDAMENTO',cls:'active'};
+}
+function clearScheduleForm(){
+  if($('scheduleForm')) $('scheduleForm').reset();
+  if($('scheduleId')) $('scheduleId').value='';
+  if($('scheduleStart')) $('scheduleStart').value=todayISO();
+  if($('scheduleEnd')) $('scheduleEnd').value=todayISO();
+}
+function renderSchedule(){
+  const tb=$('scheduleTable');
+  if(!tb) return;
+  const rows=[...scheduleItems()].sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.name).localeCompare(norm(b.name)));
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="7"><div class="empty">NENHUM AGENDAMENTO CADASTRADO.</div></td></tr>'; return; }
+  tb.innerHTML=rows.map(s=>{
+    const st=scheduleStatus(s);
+    return `<tr><td>${esc(s.type||'')}</td><td>${esc(s.name||'')}</td><td>${esc(formatBR(s.startDate||''))}</td><td>${esc(formatBR(s.endDate||''))}</td><td><span class="scheduleStatus ${st.cls}">${st.label}</span></td><td>${esc(s.notes||'')}</td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" onclick="editSchedule('${esc(s.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" onclick="deleteSchedule('${esc(s.id)}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
+  }).join('');
+}
+function editSchedule(idValue){
+  const s=scheduleItems().find(x=>x.id===idValue);
+  if(!s) return;
+  $('scheduleId').value=s.id;
+  $('scheduleType').value=s.type||'PROMOÇÃO';
+  $('scheduleName').value=s.name||'';
+  $('scheduleStart').value=s.startDate||todayISO();
+  $('scheduleEnd').value=s.endDate||todayISO();
+  $('scheduleNotes').value=s.notes||'';
+  setView('agendamento');
+}
+function deleteSchedule(idValue){
+  if(!confirm('EXCLUIR ESTE AGENDAMENTO?')) return;
+  state.schedules=scheduleItems().filter(s=>s.id!==idValue);
+  saveState(true); render(); toast('AGENDAMENTO EXCLUÍDO.');
+}
+function saveSchedule(e){
+  e.preventDefault();
+  const idVal=$('scheduleId').value||id('SCH');
+  const start=$('scheduleStart').value, end=$('scheduleEnd').value;
+  if(start && end && end<start){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR AO INÍCIO.'); return; }
+  const s={id:idVal,type:norm($('scheduleType').value),name:norm($('scheduleName').value),startDate:start,endDate:end,notes:norm($('scheduleNotes').value),createdAt:new Date().toISOString()};
+  const idx=scheduleItems().findIndex(x=>x.id===idVal);
+  if(idx>=0) state.schedules[idx]=s; else scheduleItems().push(s);
+  clearScheduleForm();
+  saveState(true); render(); toast('AGENDAMENTO SALVO.');
+}
+function promoEndingAlerts(){
+  const now=new Date(); now.setHours(0,0,0,0);
+  const limit=new Date(now); limit.setDate(limit.getDate()+7);
+  const out=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    (m.promos||[]).forEach(p=>{
+      const date=p.drawDate||p.endDate||'';
+      if(!date) return;
+      const dt=new Date(`${date}T12:00:00`);
+      if(Number.isNaN(dt.getTime())||dt<now||dt>limit) return;
+      out.push({id:`promo-end:${p.id}`,type:'promoEnd',title:`PROMOÇÃO PARA VENCER: ${norm(p.name||p.title||'PROMOÇÃO')}`,text:`TERMINA EM ${formatBR(date)}. FALTAM ATÉ 7 DIAS PARA O ENCERRAMENTO.`,promo:p});
+    });
+  });
+  return out;
+}
+function dismissedMiniAlerts(){
+  try{return JSON.parse(localStorage.getItem('jp_dismissed_mini_alerts')||'[]')}catch(e){return[]}
+}
+function dismissMiniAlert(idValue){
+  const list=[...new Set([...dismissedMiniAlerts(),idValue])];
+  localStorage.setItem('jp_dismissed_mini_alerts',JSON.stringify(list));
+  renderMiniAlerts();
+}
+function miniAlertItems(){
+  const returns=pendingReturnRecords().map(r=>({id:`return:${r.id}`,type:'return',title:`RETORNO DE PRÊMIO: ${r.prize}`,text:`${r.winner} NÃO RETIROU NO PRAZO. PRÊMIO DISPONÍVEL PARA REAPROVEITAMENTO.`,record:r}));
+  const promos=promoEndingAlerts();
+  const dismissed=new Set(dismissedMiniAlerts());
+  return [...returns,...promos].filter(a=>!dismissed.has(a.id)).slice(0,3);
+}
+function renderMiniAlerts(){
+  const host=$('miniAlertHost');
+  if(!host) return;
+  const alerts=miniAlertItems();
+  host.innerHTML=alerts.map(a=>{
+    const action=a.type==='return'?`<button class="btn red" onclick="reuseReturnedPrize('${esc(a.record.id)}')">REALOCAR</button>`:`<button class="btn flat" onclick="setView('digital')">VER PROMO / MERCHAN</button>`;
+    return `<div class="miniAlert"><div><strong>${esc(a.title)}</strong><span>${esc(a.text)}</span></div>${action}<button class="miniAlertClose" onclick="dismissMiniAlert('${esc(a.id)}')" title="FECHAR">×</button></div>`;
+  }).join('');
+}
+
 function render(){
   $('monthInput').value = state.currentMonth;
   renderFilters();
@@ -3409,8 +3810,11 @@ function render(){
   renderProgramacao();
   renderDistribuicao();
   renderPromos();
+  renderSchedule();
   renderStudioPauta();
   renderBackup();
+  renderReturnAlerts();
+  renderMiniAlerts();
   populateDatalists();
   populateDistributionSelect();
 }
@@ -3533,19 +3937,227 @@ function renderReservations(){
       <div class="reservationQty">${num(d.reservado)} RESERVADO(S)</div>
     </div>`).join('')}</div></details>`;
 }
+
+function addBusinessDaysFrom(dateValue,days=5){
+  const dt = dateValue instanceof Date ? new Date(dateValue) : new Date(dateValue);
+  if(Number.isNaN(dt.getTime())) return null;
+  let added=0;
+  dt.setHours(23,59,59,999);
+  while(added < days){
+    dt.setDate(dt.getDate()+1);
+    const dow=dt.getDay();
+    if(dow!==0 && dow!==6) added++;
+  }
+  return dt;
+}
+function returnRecordId(kind,promoId,index){
+  return `${kind}:${promoId}:${index}`;
+}
+function normalizeWinnerListForReturn(p){
+  const list=Array.isArray(p.resultWinners)?p.resultWinners:[];
+  if(list.length) return list.map((w,idx)=>typeof w==='string'?{name:norm(w),_idx:idx}:{...w,name:norm(w?.name||''),_idx:idx}).filter(w=>w.name);
+  if(p.resultName) return String(p.resultName).split(',').map((name,idx)=>({name:norm(name),_idx:idx})).filter(w=>w.name);
+  return [];
+}
+function winnerRegisteredDate(p,w){
+  const value = w.registeredAt || p.resultAt || (p.resultDate ? `${p.resultDate}T${(p.drawTime || '23:59').slice(0,5)}:00` : '') || (p.drawDate ? `${p.drawDate}T${(p.drawTime || '23:59').slice(0,5)}:00` : '');
+  const dt=new Date(value);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+function returnRecords(includeHandled=false){
+  const now=new Date();
+  const records=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    (m.promos||[]).forEach(p=>{
+      normalizeWinnerListForReturn(p).forEach(w=>{
+        if(w.deliveredAt) return;
+        const registered=winnerRegisteredDate(p,w);
+        const deadline=registered ? addBusinessDaysFrom(registered,5) : null;
+        if(!deadline || deadline > now) return;
+        const handled=!!w.reuseStatus;
+        if(handled && !includeHandled) return;
+        const dist=(m.distributions||[]).find(d=>d.id===p.distributionId) || {};
+        records.push({
+          kind:'promo',
+          monthKey,
+          promoId:p.id,
+          winnerIndex:w._idx,
+          id:returnRecordId('promo',p.id,w._idx),
+          distributionId:p.distributionId||'',
+          prize:norm(p.name||p.title||dist.prize||'PROMOÇÃO'),
+          winner:w.name,
+          deadline,
+          deadlineLabel:deadline.toLocaleDateString('pt-BR'),
+          registeredLabel:registered ? registered.toLocaleString('pt-BR') : '',
+          status:w.reuseStatus||'pendente',
+          source:p.local||'PROMOÇÃO',
+          promo:p
+        });
+      });
+    });
+    (m.items||[]).forEach(i=>{
+      if(!i.winnerName || i.deliveredAt) return;
+      const registered=new Date(i.resultAt || i.winnerAt || `${i.date || monthKey+'-01'}T${timeToHHMM(i.slot||'23:59')}:00`);
+      const deadline=Number.isNaN(registered.getTime()) ? null : addBusinessDaysFrom(registered,5);
+      if(!deadline || deadline > now) return;
+      if(i.reuseStatus && !includeHandled) return;
+      records.push({
+        kind:'item',
+        monthKey,
+        itemId:i.id,
+        id:returnRecordId('item',i.id,0),
+        distributionId:i.distributionId||'',
+        prize:itemTitle(i),
+        winner:norm(i.winnerName),
+        deadline,
+        deadlineLabel:deadline.toLocaleDateString('pt-BR'),
+        registeredLabel:registered.toLocaleString('pt-BR'),
+        status:i.reuseStatus||'pendente',
+        source:i.program||i.channel||'RÁDIO',
+        item:i
+      });
+    });
+  });
+  return records.sort((a,b)=>a.deadline-b.deadline || a.prize.localeCompare(b.prize));
+}
+function pendingReturnRecords(){ return returnRecords(false); }
+function returnCountsByDistribution(){
+  const counts={};
+  returnRecords(true).forEach(r=>{
+    if(!r.distributionId) return;
+    counts[r.distributionId] ||= {pending:0,sobra:0,realocado:0,total:0};
+    counts[r.distributionId].total++;
+    if(r.status==='sobra') counts[r.distributionId].sobra++;
+    else if(r.status==='realocado') counts[r.distributionId].realocado++;
+    else counts[r.distributionId].pending++;
+  });
+  return counts;
+}
+function returnCell(d){
+  const c=returnCountsByDistribution()[d.id] || {pending:0,sobra:0,realocado:0,total:0};
+  if(!c.total) return '<span class="badge">0</span>';
+  const cls=c.pending?'red':(c.sobra?'amber':'green');
+  const label=c.pending?`${c.pending} PEND.`:(c.sobra?`${c.sobra} SOBRA`:`${c.realocado} REAP.`);
+  return `<span class="badge ${cls}">${esc(label)}</span>${c.pending?'<small>VENCIDO</small>':''}`;
+}
+function updateReturnBell(){
+  const count=pendingReturnRecords().length;
+  const btn=$('returnBellBtn'), badge=$('returnBellCount');
+  if(btn) btn.classList.toggle('hasReturn',count>0);
+  if(badge) badge.textContent=count;
+}
+function updateReturnColumn(distId){
+  const cell=document.querySelector(`[data-return-id="${CSS.escape(distId)}"]`);
+  const d=distributionById(distId);
+  if(cell && d) cell.innerHTML=returnCell(d);
+}
+function renderReturnAlerts(){
+  updateReturnBell();
+  const box=$('returnAlertList');
+  if(!box) return;
+  const rows=pendingReturnRecords();
+  if(!rows.length){ box.innerHTML='<div class="returnDrawerEmpty">NENHUM PRÊMIO VENCIDO AGUARDANDO REAPROVEITAMENTO.</div>'; return; }
+  box.innerHTML=rows.map(r=>`<div class="returnAlertCard">
+    <div class="returnAlertTop"><strong>${esc(r.prize)}</strong><span>GANHADOR: ${esc(r.winner)}<br>ORIGEM: ${esc(r.source)}<br>REGISTRADO: ${esc(r.registeredLabel)} · PRAZO VENCEU: ${esc(r.deadlineLabel)}</span></div>
+    <div class="returnAlertMeta"><em>SEM RETIRADA APÓS 5 DIAS ÚTEIS</em><em>DISPONÍVEL PARA REAPROVEITAMENTO</em></div>
+    <div class="returnAlertActions"><button class="btn red small" onclick="reuseReturnedPrize('${esc(r.id)}')">CONFIRMAR REAPROVEITAMENTO</button><button class="btn ghost small" onclick="markReturnedAsSobra('${esc(r.id)}')">DEIXAR COMO SOBRA</button></div>
+  </div>`).join('');
+}
+function findReturnRecordById(idValue){
+  return returnRecords(false).find(r=>r.id===idValue) || returnRecords(true).find(r=>r.id===idValue);
+}
+function updateWinnerReuseStatus(record,status,extra={}){
+  if(!record) return false;
+  const month=state.months?.[record.monthKey];
+  if(!month) return false;
+  if(record.kind==='promo'){
+    const p=(month.promos||[]).find(x=>x.id===record.promoId);
+    if(!p) return false;
+    let winners=normalizeWinnerListForReturn(p);
+    const w=winners[record.winnerIndex];
+    if(!w) return false;
+    winners=mergeWinnerDelivery(winners,winners);
+    winners[record.winnerIndex]={...winners[record.winnerIndex],reuseStatus:status,reuseAt:new Date().toISOString(),reuseAtLabel:new Date().toLocaleString('pt-BR'),...extra};
+    p.resultWinners=winners;
+    p.resultName=winners.map(x=>x.name).join(', ');
+    return true;
+  }
+  if(record.kind==='item'){
+    const i=(month.items||[]).find(x=>x.id===record.itemId);
+    if(!i) return false;
+    i.reuseStatus=status;
+    i.reuseAt=new Date().toISOString();
+    i.reuseAtLabel=new Date().toLocaleString('pt-BR');
+    Object.assign(i,extra);
+    return true;
+  }
+  return false;
+}
+function suggestedReuseSlot(d){
+  if(!d) return null;
+  return findNextFreeRadioSlot(d,new Set()) || pickBestRadioSuggestions(d,1)[0] || null;
+}
+function reuseReturnedPrize(recordId){
+  const r=findReturnRecordById(recordId);
+  if(!r) return;
+  const d=distributionById(r.distributionId) || {id:r.distributionId,startDate:todayISO(),endDate:monthEndDate(),date:todayISO(),prize:r.prize};
+  const slot=suggestedReuseSlot(d);
+  if(!slot){ alert('NÃO HÁ HORÁRIO LIVRE PARA REAPROVEITAR ESTE PRÊMIO. AJUSTE A GRADE MANUALMENTE.'); return; }
+  if(!confirm(`REAPROVEITAR ESTE PRÊMIO?\n\n${r.prize}\nGANHADOR ORIGINAL: ${r.winner}\n\nSUGESTÃO: ${formatBR(slot.date)} ${slot.slot} · ${slot.program || programForSlot(slot.date,slot.slot)}`)) return;
+  const newItem={
+    id:id('BR'),
+    date:slot.date,
+    day:dayName(slot.date),
+    week:weekLabel(slot.date),
+    slot:slot.slot,
+    program:slot.program || programForSlot(slot.date,slot.slot),
+    distributionId:d.id||'',
+    prize:distributionLabel(d) || r.prize,
+    title:d.title || r.prize,
+    qty:1,
+    channel:'RÁDIO',
+    status:'NO AR',
+    notes:`REAPROVEITAMENTO: PRÊMIO NÃO RETIRADO POR ${r.winner}. PRAZO VENCIDO EM ${r.deadlineLabel}.`,
+    titleStyle:d.titleStyle || defaultPromoTextStyle('title'),
+    descriptionStyle:d.descriptionStyle || defaultPromoTextStyle('desc'),
+    returnedReuse:true,
+    returnedFrom:r.id,
+    createdAt:new Date().toISOString()
+  };
+  monthData().items.push(newItem);
+  updateWinnerReuseStatus(r,'realocado',{reusedItemId:newItem.id,reuseDecision:'REAPROVEITADO'});
+  saveState(true);
+  queueApiSave(80);
+  render();
+  renderReturnAlerts();
+  toast('PRÊMIO REAPROVEITADO E INSERIDO NA PROGRAMAÇÃO.');
+}
+function markReturnedAsSobra(recordId){
+  const r=findReturnRecordById(recordId);
+  if(!r) return;
+  if(!confirm(`MARCAR COMO SOBRA?\n\n${r.prize}\nGANHADOR ORIGINAL: ${r.winner}`)) return;
+  updateWinnerReuseStatus(r,'sobra',{reuseDecision:'SOBRA'});
+  saveState(true);
+  queueApiSave(80);
+  render();
+  renderReturnAlerts();
+  toast('PRÊMIO MARCADO COMO SOBRA.');
+}
+
 function renderDistribuicao(){
   const rows=filteredDistributions();
   const tb=$('distTable');
   renderReservations();
-  if(!rows.length){ tb.innerHTML=`<tr><td colspan="12"><div class="empty">NENHUMA DISTRIBUIÇÃO CADASTRADA PARA ESTE MÊS.</div></td></tr>`; return; }
-  const inlineNum = (d,key,label) => `<input class="distInlineNum" type="number" min="0" step="1" value="${num(d[key])}" data-dist-id="${esc(d.id)}" data-key="${esc(key)}" aria-label="${esc(label || key)}">`;
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="14"><div class="empty">NENHUMA DISTRIBUIÇÃO CADASTRADA PARA ESTE MÊS.</div></td></tr>`; return; }
+  const inlineNum = (d,key,label) => `<div class="distNumStack"><input class="distInlineNum" type="number" min="0" step="1" value="${num(d[key])}" data-dist-id="${esc(d.id)}" data-key="${esc(key)}" aria-label="${esc(label || key)}">${ticketUnitSelect(d,key)}</div>`;
   tb.innerHTML = rows.map(d=>{
     const left=leftTotal(d); const prog=programmed(d.id);
     const titleLine = norm(d.title || '') ? `<span>${esc(d.title)}</span>` : '';
-    const periodLine = `<em class="distPeriodLine">${esc(distPeriodLabel(d))}</em>`;
+    const periodLine = `<em class="distPeriodLine">${esc(distPeriodLabel(d))}${esc(ticketSummaryText(d))}</em>`;
     return `<tr data-dist-row="${esc(d.id)}">
       <td class="distPrizeCell"><div class="distPrizeWrap"><strong>${esc(distributionLabel(d))}</strong>${titleLine}${periodLine}</div></td>
       <td class="num">${num(d.total)}</td>
+      <td class="num distPairCell" data-pairs-id="${esc(d.id)}">${ticketPairsCell(d)}</td>
       <td class="num">${inlineNum(d,'app','APP')}</td>
       <td class="num">${inlineNum(d,'camarote','CAMAROTE')}</td>
       <td class="num">${inlineNum(d,'camarim','CAMARIM')}</td>
@@ -3555,6 +4167,7 @@ function renderDistribuicao(){
       <td class="num">${inlineNum(d,'reservado','RESERVADO')}</td>
       <td class="num" data-prog-id="${esc(d.id)}">${prog}</td>
       <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${balanceBadge(left)}</td>
+      <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d)}</td>
       <td class="distActionsCell"><div class="actions distActions"><button class="actionIcon ghost" title="PROGRAMAR" aria-label="PROGRAMAR" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
     </tr>`;
   }).join('');
@@ -4144,13 +4757,36 @@ function saveRadioPlanner(){
 
 function clearDistForm(){
   $('distForm').reset(); $('distId').value=''; $('distDrawerTitle').textContent='NOVA DISTRIBUIÇÃO'; $('distDate').value=''; $('distShow').value=''; $('distStartDate').value=monthStartDate(); $('distEndDate').value=monthEndDate(); $('distTotal').value=0; $('distTitle').value=''; $('distDescription').value='';
+  if($('distPrizeType')) $('distPrizeType').value='brinde';
+  if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value='unit';
+  updateDistPairsPreview();
   setPromoStyleControls('distTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('distDesc',defaultPromoTextStyle('desc'),'desc');
 }
+function updateDistPairsPreview(){
+  const total=num($('distTotal')?.value);
+  const isTicket=$('distPrizeType')?.value==='ingresso';
+  const target=$('distPairsPreview');
+  if(!target) return;
+  if(!isTicket){ target.value='NÃO É INGRESSO'; return; }
+  const pairs=Math.floor(total/2), odd=total%2;
+  target.value=`${pairs} PAR${pairs===1?'':'ES'}${odd?' + 1 AVULSO':''}`;
+}
+function autoDetectTicketType(){
+  const prize=norm($('distPrize')?.value);
+  if($('distPrizeType') && prize.includes('INGRESS') && $('distPrizeType').value!=='ingresso'){
+    $('distPrizeType').value='ingresso';
+    updateDistPairsPreview();
+  }
+}
+
 function updateDistributionRow(distId){
   const d=distributionById(distId); if(!d) return;
   const saldoCell = document.querySelector(`[data-saldo-id="${CSS.escape(distId)}"]`);
   if(saldoCell) saldoCell.innerHTML = balanceBadge(leftTotal(d));
+  updateReturnColumn(distId);
+  const pairCell = document.querySelector(`[data-pairs-id="${CSS.escape(distId)}"]`);
+  if(pairCell) pairCell.innerHTML = ticketPairsCell(d);
   renderReservations();
   renderStats();
   renderResumo();
@@ -4173,7 +4809,7 @@ function saveReserveNote(){
 }
 function editDist(distId){
   const d=distributionById(distId); if(!d) return;
-  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); openDrawer('distDrawer');
+  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; updateDistPairsPreview(); openDrawer('distDrawer');
 }
 function deleteDist(distId){
   if(programmed(distId)>0 && !confirm('ESTE BRINDE TEM ITENS NA PROGRAMAÇÃO. EXCLUIR MESMO ASSIM? OS ITENS FICARÃO SEM LINK.')) return;
@@ -4190,7 +4826,7 @@ $('distForm').addEventListener('submit',e=>{
   const startDate=$('distStartDate').value;
   const endDate=$('distEndDate').value;
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return; }
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value)};
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value)};
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
   syncDistributionToLinkedRadioItems(d);
@@ -4208,6 +4844,16 @@ $('distTable').addEventListener('input',e=>{
   updateDistributionRow(d.id);
 });
 $('distTable').addEventListener('change',e=>{
+  const unit=e.target.closest('.distUnitSelect');
+  if(unit){
+    const d=distributionById(unit.dataset.distId);
+    if(!d) return;
+    d.ticketUnits ||= {};
+    d.ticketUnits[unit.dataset.unitKey]=unit.value;
+    saveState(true);
+    renderDistribuicao();
+    return;
+  }
   const input=e.target.closest('.distInlineNum');
   if(!input) return;
   const d=distributionById(input.dataset.distId);
@@ -4238,6 +4884,10 @@ if($('radioPlannerSuggestions')) $('radioPlannerSuggestions').addEventListener('
   if(e.target.closest('.radioPlanRemove')){ e.target.closest('[data-plan-row]')?.remove(); refreshRadioPlannerRows(); }
 });
 if($('distStartDate')) $('distStartDate').addEventListener('change',()=>{ if($('distEndDate') && $('distEndDate').value < $('distStartDate').value) $('distEndDate').value=$('distStartDate').value; });
+if($('distTotal')) $('distTotal').addEventListener('input',updateDistPairsPreview);
+if($('distPrizeType')) $('distPrizeType').addEventListener('change',updateDistPairsPreview);
+if($('distPrize')) $('distPrize').addEventListener('input',autoDetectTicketType);
+
 
 const WINDOWS_FONT_OPTIONS = ['Segoe UI','Arial','Calibri','Tahoma','Verdana','Trebuchet MS','Times New Roman','Georgia','Courier New','Impact','Lucida Console'];
 function safePromoFont(font){ return WINDOWS_FONT_OPTIONS.includes(font) ? font : 'Segoe UI'; }
@@ -4427,6 +5077,8 @@ bind('studioPautaType','input',renderStudioPauta);
 bind('studioPrevDayBtn','click',()=>changeStudioDay(-1));
 bind('studioNextDayBtn','click',()=>changeStudioDay(1));
 bind('exportPdfBtn','click',()=>window.print());
+bind('scheduleForm','submit',saveSchedule);
+bind('returnBellBtn','click',()=>{ renderReturnAlerts(); openDrawer('returnDrawer'); });
 
 bind('exportBackupBtn','click',exportManualBackup);
 bind('chooseBackupBtn','click',()=>$('backupFileInput')?.click());

@@ -93,6 +93,16 @@ function itemTitle(i){const d=distributionById(i.distributionId);return upper(i.
 function itemDesc(i){const d=distributionById(i.distributionId);return i.notes||d.description||'';}
 function channelName(i){return upper(i.channel||'RÁDIO');}
 function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
+function promoWinnerList(p){
+  const list=Array.isArray(p.resultWinners)?p.resultWinners:[];
+  const names=list.map(w=>upper(w?.name||w)).filter(Boolean);
+  if(names.length) return names;
+  return p.resultName ? [upper(p.resultName)] : [];
+}
+function promoResultLabel(p){
+  return promoWinnerList(p).join(', ');
+}
+
 firebase.initializeApp(FIREBASE_CONFIG);
 
 let activeTab='resumo';
@@ -100,8 +110,12 @@ function fillMonthFilter(){
   const opts=availableMonths().map(m=>`<option value="${m}" ${m===currentMonth?'selected':''}>${m.split('-').reverse().join('/')}</option>`).join('');
   $('monthFilter').innerHTML=opts || `<option value="${monthKey()}">${monthKey().split('-').reverse().join('/')}</option>`;
 }
+function isTicketDist(d){return !!d&&(d.prizeType==='ingresso'||d.ticketMode==='ingresso'||d.isTicket===true);}
+function ticketUnit(d,key){return isTicketDist(d)?((d.ticketUnits&&d.ticketUnits[key])||d.ticketDefaultUnit||'unit'):'unit';}
+function ticketMultiplier(d,key){return isTicketDist(d)&&ticketUnit(d,key)==='pair'?2:1;}
+function channelConsumed(d,key){return Number(d?.[key]||0)*ticketMultiplier(d,key);}
 function distTitle(d){return upper(d.title||d.brinde||d.prize||d.name||'SEM TÍTULO');}
-function channelTotals(d){return ['ar','social','app','externa','promocao','reservado'].map(k=>Number(d[k]||0)).reduce((a,b)=>a+b,0);}
+function channelTotals(d){return ['app','camarote','camarim','rua','ar','rs','reservado'].map(k=>channelConsumed(d,k)).reduce((a,b)=>a+b,0);}
 function period(d){return `${formatBR(d.startDate||d.date||'')} A ${formatBR(d.endDate||d.startDate||d.date||'')}`;}
 function renderResumo(){
   const m=monthData();
@@ -122,7 +136,7 @@ function renderProgramList(items){
 }
 function renderDistribuicao(){
   const rows=[...(monthData().distributions||[])];
-  $('tab-distribuicao').innerHTML=`<div class="panel"><h2>Distribuição Geral</h2><div class="list">${rows.length?rows.map(d=>`<div class="item wide"><div class="info"><strong>${esc(distTitle(d))}</strong><span>PERÍODO: ${esc(period(d))}<br>TOTAL: ${Number(d.total||channelTotals(d)||0)} · RÁDIO: ${Number(d.ar||0)} · SOCIAL: ${Number(d.social||0)} · APP: ${Number(d.app||0)} · EXTERNA: ${Number(d.externa||0)} · PROMOÇÃO: ${Number(d.promocao||0)} · RESERVADO: ${Number(d.reservado||0)}</span></div><div><span class="badge">${esc(upper(d.status||'ATIVO'))}</span></div></div>`).join(''):'<div class="empty">SEM DISTRIBUIÇÕES NO MÊS.</div>'}</div></div>`;
+  $('tab-distribuicao').innerHTML=`<div class="panel"><h2>Distribuição Geral</h2><div class="list">${rows.length?rows.map(d=>`<div class="item wide"><div class="info"><strong>${esc(distTitle(d))}</strong><span>PERÍODO: ${esc(period(d))}<br>TOTAL: ${Number(d.total||0)}${isTicketDist(d)?' INGRESSOS · '+Math.floor(Number(d.total||0)/2)+' PARES'+(Number(d.total||0)%2?' + 1 AVULSO':''):''} · CONSUMIDO: ${channelTotals(d)} · RÁDIO: ${Number(d.ar||0)} ${isTicketDist(d)?(ticketUnit(d,'ar')==='pair'?'PARES':'IND.'):''} · APP: ${Number(d.app||0)} ${isTicketDist(d)?(ticketUnit(d,'app')==='pair'?'PARES':'IND.'):''} · REDES: ${Number(d.rs||0)} ${isTicketDist(d)?(ticketUnit(d,'rs')==='pair'?'PARES':'IND.'):''} · RESERVADO: ${Number(d.reservado||0)} ${isTicketDist(d)?(ticketUnit(d,'reservado')==='pair'?'PARES':'IND.'):''}</span></div><div><span class="badge">${esc(upper(d.status||'ATIVO'))}</span></div></div>`).join(''):'<div class="empty">SEM DISTRIBUIÇÕES NO MÊS.</div>'}</div></div>`;
 }
 function renderProgramacao(){
   const date=$('dateFilter').value||todayISO();
@@ -130,7 +144,7 @@ function renderProgramacao(){
 }
 function renderPromocoes(){
   const rows=[...(monthData().promos||[])].sort((a,b)=>(a.drawDate||'').localeCompare(b.drawDate||'')||(a.drawTime||'').localeCompare(b.drawTime||''));
-  $('tab-promocoes').innerHTML=`<div class="panel"><h2>Promoções / Merchan</h2><div class="list">${rows.length?rows.map(p=>`<div class="item"><div class="time">${esc(formatBR(p.drawDate||p.startDate||''))}<br>${esc((p.drawTime||'').slice(0,5))}</div><div class="info"><strong>${esc(promoTitle(p))}</strong><span>${esc(upper(p.local||p.type||''))}<br>${esc(p.description||'')}</span></div><div>${p.resultName?`<span class="badge green">${esc(upper(p.resultName))}</span>`:'<span class="badge">ATIVA</span>'}</div></div>`).join(''):'<div class="empty">SEM PROMOÇÕES NO MÊS.</div>'}</div></div>`;
+  $('tab-promocoes').innerHTML=`<div class="panel"><h2>Promoções / Merchan</h2><div class="list">${rows.length?rows.map(p=>`<div class="item"><div class="time">${esc(formatBR(p.drawDate||p.startDate||''))}<br>${esc((p.drawTime||'').slice(0,5))}</div><div class="info"><strong>${esc(promoTitle(p))}</strong><span>${esc(upper(p.local||p.type||''))}<br>${esc(p.description||'')}</span></div><div>${promoResultLabel(p)?`<span class="badge green">${esc(promoResultLabel(p))}</span>`:'<span class="badge">ATIVA</span>'}</div></div>`).join(''):'<div class="empty">SEM PROMOÇÕES NO MÊS.</div>'}</div></div>`;
 }
 function renderEstudio(){
   const date=$('dateFilter').value||todayISO();

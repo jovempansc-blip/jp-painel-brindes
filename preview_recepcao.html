@@ -35,6 +35,61 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
 .result{display:inline-flex;align-items:center;min-height:32px;border-radius:999px;border:1px solid #ccefdc;background:#effaf4;color:#137947;padding:0 12px;font-size:12px;font-weight:1000}
 .empty{padding:42px;text-align:center;border:1px dashed #cdd5df;border-radius:22px;background:rgba(255,255,255,.72);color:#697386}
 @media(max-width:760px){.wrap{padding:18px}.top{display:grid}.controls{justify-content:space-between}.resultCard{grid-template-columns:1fr}.time{font-size:30px}.titleBox h2{font-size:23px}}
+
+.pickupWrap{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.pickupBtn{
+  min-height:34px;
+  border:1px solid #d8dee7;
+  border-radius:999px;
+  background:#171c26;
+  color:#fff;
+  padding:0 13px;
+  font-size:11px;
+  font-weight:1000;
+  cursor:pointer;
+  text-transform:uppercase;
+}
+.pickupBtn.done{
+  background:#effaf4;
+  color:#137947;
+  border-color:#ccefdc;
+}
+.pickupHint{
+  color:#7a8493;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.04em;
+  text-align:right;
+}
+.resultNames{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.resultNameTag{
+  border:1px solid #dfe5ec;
+  border-radius:999px;
+  background:#fff;
+  color:#171c26;
+  padding:5px 8px;
+  font-size:11px;
+  font-weight:1000;
+}
+
+
+.expiredStamp{
+  min-height:42px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid #ffd7a8;
+  border-radius:14px;
+  background:#fff7ec;
+  color:#8a4b00;
+  padding:7px 11px;
+  font-size:10px;
+  font-weight:1000;
+  line-height:1.25;
+  text-align:center;
+  max-width:190px;
+}
+
 </style>
 </head>
 <body>
@@ -84,25 +139,130 @@ function itemDesc(i){const d=distributionById(i.distributionId);return i.notes||
 function channelName(i){return upper(i.channel||'RÁDIO');}
 function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
 firebase.initializeApp(FIREBASE_CONFIG);
+const firebaseRef=firebase.database().ref(FIREBASE_ROOT_PATH);
+function saveReceptionState(){
+  return firebaseRef.set({
+    state,
+    updatedAt:firebase.database.ServerValue.TIMESTAMP,
+    savedAt:new Date().toISOString(),
+    source:'PREVIEW_RECEPCAO',
+    user:'RECEPCAO',
+    version:'FIREBASE_RTDB_V1'
+  });
+}
 
+function normalizeWinnerList(list){
+  if(!Array.isArray(list)) return [];
+  const seen=new Set();
+  return list.map(w=>typeof w==='string'?{name:upper(w)}:{...w,name:upper(w?.name||'')})
+    .filter(w=>w.name)
+    .filter(w=>{ if(seen.has(w.name)) return false; seen.add(w.name); return true; });
+}
+function promoWinnerList(p){
+  const base=normalizeWinnerList(p.resultWinners||[]);
+  if(base.length) return base;
+  if(p.resultName) return normalizeWinnerList(String(p.resultName).split(',').map(name=>({name})));
+  return [];
+}
+function addBusinessDaysFrom(dateValue,days=5){
+  const dt=new Date(dateValue);
+  if(Number.isNaN(dt.getTime())) return null;
+  let added=0; dt.setHours(23,59,59,999);
+  while(added<days){ dt.setDate(dt.getDate()+1); const dow=dt.getDay(); if(dow!==0 && dow!==6) added++; }
+  return dt;
+}
+function registeredDateForPromo(p,w){
+  const value=w.registeredAt || p.resultAt || (p.resultDate?`${p.resultDate}T${(p.drawTime||'23:59').slice(0,5)}:00`:'') || (p.drawDate?`${p.drawDate}T${(p.drawTime||'23:59').slice(0,5)}:00`:'');
+  const dt=new Date(value);
+  return Number.isNaN(dt.getTime())?null:dt;
+}
+function isExpiredNoPickup(dateValue){
+  const deadline=addBusinessDaysFrom(dateValue,5);
+  return !!deadline && !Number.isNaN(deadline.getTime()) && deadline <= new Date();
+}
 function resultRowsForDate(date){
   selectMonthForDate(date);
   const items=(monthData().items||[])
     .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || upper(i.winnerName)))
-    .map(i=>({time:formatTime(i.slot),sort:`${date}T${timeToHHMM(i.slot)}`,title:itemTitle(i),sub:`${upper(i.program||'')} · ${channelName(i)}`,result:upper(i.winnerName||'REALIZADO')}));
-  const promos=(monthData().promos||[])
-    .filter(p=>p.resultName && (p.resultDate===date || p.drawDate===date))
-    .map(p=>({time:p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${(p.drawTime||'23:59').slice(0,5)}`,title:promoTitle(p),sub:upper(p.local||p.type||'PROMOÇÃO'),result:upper(p.resultName)}));
-  return [...items,...promos].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title));
+    .map(i=>{ const reg=i.resultAt || i.winnerAt || `${i.date||date}T${timeToHHMM(i.slot||'23:59')}:00`; return {source:'item',id:i.id,winnerIndex:-1,time:formatTime(i.slot),sort:`${date}T${timeToHHMM(i.slot)}`,title:itemTitle(i),sub:`${upper(i.program||'')} · ${channelName(i)}`,result:upper(i.winnerName||'REALIZADO'),deliveredAt:i.deliveredAt||'',deliveredAtLabel:i.deliveredAtLabel||'',expired:!i.deliveredAt && isExpiredNoPickup(reg)}; });
+  const promos=[];
+  (monthData().promos||[])
+    .filter(p=>promoWinnerList(p).length && (p.resultDate===date || p.drawDate===date))
+    .forEach(p=>{
+      promoWinnerList(p).forEach((w,idx)=>{
+        promos.push({source:'promo',id:p.id,winnerIndex:idx,time:p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${(p.drawTime||'23:59').slice(0,5)}`,title:promoTitle(p),sub:upper(p.local||p.type||'PROMOÇÃO'),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',expired:!w.deliveredAt && isExpiredNoPickup(registeredDateForPromo(p,w))});
+      });
+    });
+  return [...items,...promos].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title)||a.result.localeCompare(b.result));
+}
+function pickupButton(row){
+  if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">NÃO RETIRADO NO PRAZO<br>PRÊMIO VOLTOU À CIRCULAÇÃO</div></div>`;
+  const done=!!row.deliveredAt;
+  const label=done ? `RETIRADO ${row.deliveredAtLabel||''}` : 'CONFIRMAR RETIRADA';
+  return `<div class="pickupWrap"><button class="pickupBtn ${done?'done':''}" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}">${esc(label)}</button><span class="pickupHint">${done?'BOTÃO DIREITO CANCELA':'CLIQUE CONFIRMA'}</span></div>`;
+}
+function setPickup(row,undo=false){
+  selectMonthForDate($('dateFilter').value||todayISO());
+  const now=new Date();
+  if(row.source==='item'){
+    const item=(monthData().items||[]).find(i=>i.id===row.id);
+    if(!item) return;
+    if(undo){
+      item.deliveredAt='';
+      item.deliveredAtLabel='';
+      item.deliveredBy='';
+    }else{
+      item.deliveredAt=now.toISOString();
+      item.deliveredAtLabel=now.toLocaleString('pt-BR');
+      item.deliveredBy='RECEPCAO';
+    }
+  }else if(row.source==='promo'){
+    const promo=(monthData().promos||[]).find(p=>p.id===row.id);
+    if(!promo) return;
+    let winners=promoWinnerList(promo);
+    const idx=Number(row.winnerIndex);
+    if(!winners[idx]) return;
+    if(undo){
+      winners[idx].deliveredAt='';
+      winners[idx].deliveredAtLabel='';
+      winners[idx].deliveredBy='';
+    }else{
+      winners[idx].deliveredAt=now.toISOString();
+      winners[idx].deliveredAtLabel=now.toLocaleString('pt-BR');
+      winners[idx].deliveredBy='RECEPCAO';
+    }
+    promo.resultWinners=winners;
+    promo.resultName=winners.map(w=>w.name).join(', ');
+  }
+  saveReceptionState().then(()=>render()).catch(err=>{console.warn('PICKUP SAVE ERROR',err);alert('NÃO FOI POSSÍVEL SALVAR A RETIRADA. TENTE NOVAMENTE.');});
+}
+function rowFromButton(btn){
+  return {source:btn.dataset.source,id:btn.dataset.id,winnerIndex:btn.dataset.winnerIndex};
 }
 function render(){
   const date=$('dateFilter').value||todayISO();
   const rows=resultRowsForDate(date);
-  $('resultList').innerHTML=rows.length?rows.map(r=>`<article class="resultCard"><div class="time">${esc(r.time)}</div><div class="info"><strong>${esc(r.title)}</strong><span>${esc(r.sub)}</span></div><div class="result">${esc(r.result)}</div></article>`).join(''):'<div class="empty">NENHUM RESULTADO REGISTRADO PARA ESTA DATA.</div>';
+  $('resultList').innerHTML=rows.length?rows.map(r=>`<article class="resultCard"><div class="time">${esc(r.time)}</div><div class="info"><strong>${esc(r.title)}</strong><span>${esc(r.sub)}</span><div class="resultNames"><span class="resultNameTag">${esc(r.result)}</span></div></div>${pickupButton(r)}</article>`).join(''):'<div class="empty">NENHUM RESULTADO REGISTRADO PARA ESTA DATA.</div>';
 }
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('.pickupBtn');
+  if(!btn) return;
+  const row=rowFromButton(btn);
+  if(btn.classList.contains('done')) return;
+  if(confirm('CONFIRMAR RETIRADA DESTE PRÊMIO?')) setPickup(row,false);
+});
+document.addEventListener('contextmenu',e=>{
+  const btn=e.target.closest('.pickupBtn');
+  if(!btn) return;
+  e.preventDefault();
+  if(!btn.classList.contains('done')) return;
+  const row=rowFromButton(btn);
+  if(confirm('CANCELAR A CONFIRMAÇÃO DE RETIRADA?')) setPickup(row,true);
+});
+
 $('dateFilter').value=todayISO();
 $('dateFilter').addEventListener('change',render);
-firebase.database().ref(FIREBASE_ROOT_PATH).on('value',snap=>{const payload=snap.val();if(payload&&payload.state){state=payload.state;selectMonthForDate($('dateFilter').value);render();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}});
+firebaseRef.on('value',snap=>{const payload=snap.val();if(payload&&payload.state){state=payload.state;selectMonthForDate($('dateFilter').value);render();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}});
 </script>
 </body>
 </html>
