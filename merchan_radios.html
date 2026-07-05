@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merchan Rádios — Jovem Pan Floripa</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<style>
+:root{--red:#c9002b;--ink:#171c26;--muted:#667283;--line:#dce2eb;--shadow:0 16px 34px rgba(17,23,34,.08)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font:900 13px/1.35 Inter,Arial,sans-serif;color:var(--ink);background:#f5f7fb url("assets/bg-estudio.jpg") center/cover fixed}
+.wrap{max-width:980px;margin:0 auto;padding:18px}
+.logoBar{width:min(560px,100%);display:flex;align-items:center;justify-content:center;padding:10px 18px;margin:0 auto 18px;border:1px solid rgba(223,229,236,.92);border-radius:20px;background:rgba(255,255,255,.86);box-shadow:0 10px 24px rgba(16,24,40,.055);backdrop-filter:blur(8px)}
+.logoBar img{display:block;width:min(100%,460px);max-height:58px;height:auto;object-fit:contain}
+.panel{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}
+.head{padding:18px 22px;border-bottom:1px solid var(--line);background:#fff}h1{font-size:24px;margin:0;letter-spacing:-.04em}p{margin:6px 0 0;color:var(--muted)}
+.body{padding:18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:grid;gap:5px}.full{grid-column:1/-1}label{font-size:10px;color:#697386;letter-spacing:.06em}
+.control{min-height:42px;border:1px solid #dce2eb;border-radius:14px;background:#fff;padding:9px 12px;font:900 13px Inter,Arial;color:var(--ink);text-transform:uppercase}textarea.control{min-height:160px;text-transform:none;font-weight:750;line-height:1.45}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.btn{min-height:42px;border:1px solid #dce2eb;border-radius:14px;background:#fff;padding:9px 14px;font:1000 12px Inter,Arial;cursor:pointer}.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.table{width:100%;border-collapse:separate;border-spacing:0;margin-top:16px;font-size:12px}.table th,.table td{border-bottom:1px solid var(--line);padding:10px;text-align:left}.badge{border:1px solid #ccefdc;background:#effaf4;color:#137947;border-radius:999px;padding:4px 8px;font-size:10px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.wrap{padding:10px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logoBar"><img src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan"></div>
+  <div class="panel">
+    <div class="head"><h1>MERCHAN RÁDIOS</h1><p>CADASTRO DE MERCHANS DA OPEC PARA ENTRAR NO PAINEL DO ESTÚDIO.</p></div>
+    <div class="body">
+      <form id="merchanForm">
+        <input type="hidden" id="merchanId">
+        <div class="grid">
+          <div class="field"><label>EMISSORA</label><select class="control" id="station"><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
+          <div class="field"><label>PROGRAMA</label><select class="control" id="program"></select></div>
+          <div class="field"><label>INÍCIO</label><input class="control" type="date" id="startDate" required></div>
+          <div class="field"><label>FIM</label><input class="control" type="date" id="endDate" required></div>
+          <div class="field"><label>HORÁRIO INÍCIO</label><input class="control" type="time" id="startTime"></div>
+          <div class="field"><label>HORÁRIO FIM</label><input class="control" type="time" id="endTime"></div>
+          <div class="field full"><label>TÍTULO</label><input class="control" id="title" required></div>
+          <div class="field full"><label>TEXTO / PAUTA DO MERCHAN</label><textarea class="control" id="text" required></textarea></div>
+        </div>
+        <div class="actions"><button class="btn" type="reset">LIMPAR</button><button class="btn red" type="submit">SALVAR MERCHAN</button></div>
+      </form>
+      <table class="table"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>TÍTULO</th><th>PERÍODO</th></tr></thead><tbody id="list"></tbody></table>
+    </div>
+  </div>
+</div>
+<script>
+const FIREBASE_CONFIG={"apiKey":"AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE","authDomain":"jp-painel-brindes.firebaseapp.com","databaseURL":"https://jp-painel-brindes-default-rtdb.firebaseio.com","projectId":"jp-painel-brindes","storageBucket":"jp-painel-brindes.firebasestorage.app","messagingSenderId":"843544648278","appId":"1:843544648278:web:066c8e64e17da046cf79f7","measurementId":"G-VB6Y2TS796"};
+const FIREBASE_ROOT_PATH="jp-painel-brindes/state";
+firebase.initializeApp(FIREBASE_CONFIG);
+const ref=firebase.database().ref(FIREBASE_ROOT_PATH);
+const $=id=>document.getElementById(id);
+const norm=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+let state={currentMonth:today().slice(0,7),months:{},programSchedules:[]};
+function monthData(){state.months ||= {}; state.currentMonth ||= today().slice(0,7); state.months[state.currentMonth] ||= {label:state.currentMonth,items:[],promos:[],distributions:[]}; return state.months[state.currentMonth];}
+function stationLabel(v){return v==='JPNEWS983'?'JOVEM PAN NEWS - 98,3':'JOVEM PAN - 101,7'}
+function schedules(){return state.programSchedules||[]}
+function fillPrograms(){const st=$('station').value;const names=[...new Set(schedules().filter(p=>!p.station||p.station===st).map(p=>norm(p.name)).filter(Boolean))].sort();$('program').innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('')}
+function save(){return ref.set({state,updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'MERCHAN_RADIOS',user:'OPEC',version:'FIREBASE_RTDB_V1'})}
+function render(){fillPrograms();const rows=(monthData().promos||[]).filter(p=>norm(p.kind)==='MERCHAN').sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));$('list').innerHTML=rows.length?rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.program||'')}</td><td>${esc(p.name||p.title||'')}</td><td><span class="badge">${esc(p.startDate||'')} A ${esc(p.drawDate||p.endDate||'')}</span></td></tr>`).join(''):'<tr><td colspan="4">NENHUM MERCHAN CADASTRADO.</td></tr>'}
+$('station').addEventListener('change',fillPrograms);
+$('merchanForm').addEventListener('submit',e=>{e.preventDefault();const id='MR'+Date.now().toString(36).toUpperCase(); const start=$('startDate').value,end=$('endDate').value; state.currentMonth=start.slice(0,7)||state.currentMonth; monthData().promos.push({id,kind:'merchan',station:$('station').value,program:norm($('program').value),local:'MERCHAN',startDate:start,drawDate:end,endDate:end,drawTime:$('endTime').value||'23:59',readStartHour:$('startTime').value,readEndHour:$('endTime').value,name:norm($('title').value),title:norm($('title').value),description:$('text').value.trim(),readMode:'all',readHours:[],readByHour:{},createdAt:new Date().toISOString(),source:'MERCHAN_RADIOS'}); save().then(()=>{$('merchanForm').reset();$('startDate').value=today();$('endDate').value=today();render();alert('MERCHAN SALVO.');});});
+$('startDate').value=today();$('endDate').value=today();
+ref.on('value',snap=>{const payload=snap.val(); if(payload&&payload.state){state=payload.state; state.programSchedules ||= []; render();}});
+</script>
+</body>
+</html>

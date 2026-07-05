@@ -765,6 +765,46 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   .scheduleGrid{grid-template-columns:1fr}
 }
 
+
+/* AJUSTE — V14 HORÁRIOS, MERCHAN E FORMULÁRIOS COMPACTOS */
+#distDrawer .drawerCard{width:min(760px,94vw);border-radius:22px}
+#distDrawer .drawerHead{padding:12px 16px}
+#distDrawer .drawerHead h3{font-size:15px;letter-spacing:-.02em}
+#distDrawer .drawerBody{padding:12px 14px}
+#distDrawer .formGrid{gap:8px;grid-template-columns:repeat(4,minmax(0,1fr))}
+#distDrawer .field.wide{grid-column:span 2}
+#distDrawer .field.full{grid-column:1/-1}
+#distDrawer .field label{font-size:8.5px;letter-spacing:.05em;margin-bottom:4px}
+#distDrawer .control{min-height:34px;padding:7px 10px;border-radius:12px;font-size:12px}
+#distDrawer textarea.control{min-height:70px}
+#distDrawer .textStyleEditor{padding:6px;gap:5px;grid-template-columns:minmax(110px,1fr) 62px 42px}
+#distDrawer .textStyleEditor select,#distDrawer .textStyleEditor input{min-height:26px;font-size:9px;border-radius:8px;padding:4px 6px}
+#distDrawer .formActions{margin-top:12px;gap:8px}
+#distDrawer .formActions .btn{min-height:36px;padding:8px 12px;font-size:11px;border-radius:12px}
+.typeBadge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:24px;border-radius:999px;padding:0 8px;
+  border:1px solid #dfe5ec;background:#f7f9fc;color:#5a6474;
+  font-size:9px;font-weight:1000;letter-spacing:.04em
+}
+.typeBadge.promo{background:#fff7ec;border-color:#ffd7a8;color:#8a4b00}
+.typeBadge.merchan{background:#effaf4;border-color:#ccefdc;color:#137947}
+.promoMainTable tr.merchanRow td{background:#fbfffd}
+.promoMainTable tr.promoRow td{background:#fffdf9}
+.rotationBox{border:1px solid #e4e8ef;border-radius:14px;background:#f8f9fc;padding:9px}
+.rotationBoxTop{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:7px}
+.rotationBoxTop strong{font-size:9px;color:#667283;letter-spacing:.06em}
+.rotationHours{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
+.rotationHour{position:relative;display:flex}
+.rotationHour input{position:absolute;opacity:0;pointer-events:none}
+.rotationHour span{width:100%;min-height:25px;display:flex;align-items:center;justify-content:center;border-radius:9px;border:1px solid #dce2eb;background:#fff;color:#667283;font-size:9px;font-weight:1000;cursor:pointer}
+.rotationHour input:checked+span{background:#171c26;border-color:#171c26;color:#fff}
+.programGrid{display:grid;grid-template-columns:130px minmax(180px,1fr) 120px 120px 130px auto;gap:8px;align-items:end;margin-bottom:14px}
+.programTable td{vertical-align:middle}
+.merchanProgramField.hidden,.promoLocalField.hidden{display:none}
+.linkBtnLite{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+@media(max-width:900px){#distDrawer .formGrid,.programGrid{grid-template-columns:1fr}.rotationHours{grid-template-columns:repeat(4,1fr)}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -792,6 +832,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
     <button class="tabBtn" data-view="programacao">PROGRAMAÇÃO</button>
     <button class="tabBtn" data-view="digital">PROMO / MERCHAN</button>
     <button class="tabBtn" data-view="pauta">PAUTA DE ESTÚDIO</button>
+    <button class="tabBtn" data-view="horarios">HORÁRIOS</button>
     <button class="tabBtn" data-view="agendamento">AGENDAMENTO</button>
     <button class="tabBtn" data-view="backup">BACKUP</button>
   </nav>
@@ -841,7 +882,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div><h2>PROMO / MERCHAN</h2><p>CONTROLE DAS PROMOÇÕES, MERCHANS, SORTEIOS E PAUTAS PROMOCIONAIS PARA O LOCUTOR.</p></div>
           <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" title="NOVA PROMOÇÃO" aria-label="NOVA PROMOÇÃO" data-tip="NOVA PROMOÇÃO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
         </div>
-        <div class="panelBody"><div class="filterBar promoFilterBar"><div class="field"><label>ORDENAR NOMES</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div></div><div class="tableWrap"><table class="promoMainTable"><thead><tr><th>NOME</th><th>INÍCIO</th><th>SORTEIO</th><th>HORA</th><th>LOCAL</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div></div>
+        <div class="panelBody"><div class="filterBar promoFilterBar"><div class="field"><label>ORDENAR NOMES</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div></div><div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>NOME</th><th>INÍCIO</th><th>FIM / SORTEIO</th><th>HORA</th><th>LOCAL / PROGRAMA</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div></div>
       </div>
     </section>
 
@@ -849,7 +890,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
       <div class="panel">
         <div class="panelHead pautaHeroHead">
           <img class="pautaHeroLogo" src="assets/logo-workspace-jp.png" alt="Workspace e Jovem Pan Floripa">
-          <div class="panelActions pautaHeroActions"><a class="btn iconBtn pautaHeroLink" id="studioLinkBtn" href="painel_pauta_estudio_jovem_pan_GITHUB_API.html" target="_blank" rel="noopener" aria-label="LINK DO ESTÚDIO" title="LINK DO ESTÚDIO" data-tip="LINK DO ESTÚDIO"><span class="iconGlyph">↗</span><span class="visuallyHidden">LINK DO ESTÚDIO</span></a></div>
+          <div class="panelActions pautaHeroActions"><a class="btn iconBtn pautaHeroLink" id="studioLinkBtn" href="painel_pauta_estudio_jovem_pan_GITHUB_API.html" target="_blank" rel="noopener" aria-label="LINK DO ESTÚDIO" title="LINK DO ESTÚDIO" data-tip="LINK DO ESTÚDIO"><span class="iconGlyph">↗</span><span class="visuallyHidden">LINK DO ESTÚDIO</span></a><a class="btn iconBtn pautaHeroLink" href="painel_pauta_estudio_jovem_pan_news.html" target="_blank" rel="noopener" aria-label="LINK ESTÚDIO NEWS" title="LINK ESTÚDIO NEWS" data-tip="ESTÚDIO NEWS"><span class="iconGlyph">N</span><span class="visuallyHidden">LINK ESTÚDIO NEWS</span></a></div>
         </div>
         <div class="panelBody">
           <div class="studioPautaTop">
@@ -877,6 +918,27 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
       </div>
     </section>
 
+
+
+    <section class="view" id="view-horarios">
+      <div class="panel">
+        <div class="panelHead">
+          <div><h2>HORÁRIOS</h2><p>CADASTRO DOS PROGRAMAS E HORÁRIOS DE EXIBIÇÃO USADOS NAS SELEÇÕES, CABEÇALHOS E MERCHANS.</p></div>
+        </div>
+        <div class="panelBody">
+          <form id="programScheduleForm" class="programGrid">
+            <input type="hidden" id="programScheduleId">
+            <div class="field"><label>EMISSORA</label><select class="control" id="programStation"><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
+            <div class="field"><label>PROGRAMA</label><input class="control" id="programName" required></div>
+            <div class="field"><label>INÍCIO</label><input class="control" type="time" id="programStartTime" required></div>
+            <div class="field"><label>TÉRMINO</label><input class="control" type="time" id="programEndTime" required></div>
+            <div class="field"><label>DIAS</label><select class="control" id="programDays"><option value="mon-fri">SEG A SEX</option><option value="mon-sat">SEG A SÁB</option><option value="sat">SÁBADO</option><option value="sun">DOMINGO</option><option value="all">TODOS</option></select></div>
+            <div class="field"><label>&nbsp;</label><button class="btn red" type="submit">SALVAR</button></div>
+          </form>
+          <div class="tableWrap"><table class="promoMainTable programTable"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>DIAS</th><th>INÍCIO</th><th>TÉRMINO</th><th>AÇÕES</th></tr></thead><tbody id="programScheduleTable"></tbody></table></div>
+        </div>
+      </div>
+    </section>
 
     <section class="view" id="view-agendamento">
       <div class="panel">
@@ -957,6 +1019,13 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div class="field"><label>QTD</label><input class="control" type="number" min="0" step="1" id="itemQty" value="1"></div>
           <div class="field"><label>CANAL</label><select class="control" id="itemChannel"><option>RÁDIO</option><option>REDES SOCIAIS</option><option>APP</option><option>CAMAROTE</option><option>CAMARIM</option><option>EXTERNA</option><option>RESERVADO</option></select></div>
           <div class="field"><label>STATUS</label><select class="control" id="itemStatus"><option>NO AR</option><option>REALIZADO</option><option>ENTREGUE</option></select></div>
+          
+          <div class="field full">
+            <label>RODÍZIO INTELIGENTE</label>
+            <div class="rotationBox">
+              <div class="rotationBoxTop"><strong>HORÁRIOS PREFERENCIAIS PARA SUGESTÕES DE RÁDIO</strong><label class="promoReadAll"><input type="checkbox" id="itemRotationUseDistribution" checked> USAR HORÁRIOS DA DISTRIBUIÇÃO</label></div>
+            </div>
+          </div>
           <div class="field full"><label>DESCRIÇÃO</label><textarea class="control" id="itemNotes"></textarea>
             <div class="textStyleEditor" aria-label="EDITOR DA DESCRIÇÃO DA PAUTA">
               <label class="miniField"><span>FONTE DA DESCRIÇÃO</span><select id="itemDescFont"></select></label>
@@ -994,6 +1063,14 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
           <div class="field"><label>PADRÃO</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE COMO AS COLUNAS CONSUMEM O SALDO.</span></div>
           <div class="field"><label>PARES AUTO.</label><input class="control" id="distPairsPreview" readonly value="0 PARES"></div>
+          
+          <div class="field full">
+            <label>HORÁRIOS DO RODÍZIO INTELIGENTE</label>
+            <div class="rotationBox">
+              <div class="rotationBoxTop"><strong>ESCOLHA OS PRINCIPAIS HORÁRIOS PARA ESCALAR ESTE PRÊMIO</strong><label class="promoReadAll"><input type="checkbox" id="distRotationAll" checked> TODOS</label></div>
+              <div class="rotationHours" id="distRotationHours"></div>
+            </div>
+          </div>
           <div class="field full"><label>DESCRIÇÃO</label><textarea class="control" id="distDescription"></textarea>
             <div class="textStyleEditor" aria-label="EDITOR DA DESCRIÇÃO DA DISTRIBUIÇÃO">
               <label class="miniField"><span>FONTE DA DESCRIÇÃO</span><select id="distDescFont"></select></label>
@@ -1080,7 +1157,8 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
               <div class="field"><label>DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate" required></div>
               <div class="field"><label>HORA</label><input class="control" type="time" id="promoDrawTime" required></div>
               <div class="field"><label>TIPO DA PAUTA</label><select class="control" id="promoKind"><option value="promo">PROMOÇÃO</option><option value="merchan">MERCHAN</option></select></div>
-              <div class="field"><label>LOCAL</label><select class="control" id="promoLocal" required></select></div>
+              <div class="field promoLocalField" id="promoLocalField"><label>LOCAL</label><select class="control" id="promoLocal"></select></div>
+              <div class="field merchanProgramField hidden" id="promoProgramField"><label>PROGRAMA DO MERCHAN</label><select class="control" id="promoProgram"></select></div>
               <div class="field full">
                 <label>HORÁRIOS DE LEITURA DA PAUTA</label>
                 <div class="promoReadSchedule" id="promoReadScheduleBox">
@@ -1107,10 +1185,10 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
               </div>
               <div class="field full"><label>IMAGEM 1600 X 400 — 4:1</label><input class="control" type="file" id="promoImage" accept="image/*"><div class="uploadHint">FORMATO IDEAL: 1600 PX DE LARGURA POR 400 PX DE ALTURA.</div></div>
             </div>
-            <div class="formActions"><button class="btn red" type="submit">SALVAR PROMOÇÃO</button><button class="btn" type="button" data-close="promoDrawer">CANCELAR</button></div>
+            <div class="formActions"><button class="btn red" type="submit">SALVAR PROMO / MERCHAN</button><button class="btn" type="button" data-close="promoDrawer">CANCELAR</button></div>
           </div>
           <aside class="promoPreviewBox">
-            <div class="promoPreviewLabel">PREVIEW DA PAUTA PROMO PARA O LOCUTOR</div>
+            <div class="promoPreviewLabel">PREVIEW DA PAUTA PARA O LOCUTOR</div>
             <div class="promoPreviewCard">
               <div class="promoPreviewImage" id="promoPreviewImage">IMAGEM 1600 X 400</div>
               <div class="promoPreviewContent">
@@ -3464,6 +3542,7 @@ function normalizeChannel(value){
 function normalizePanelState(data){
   if(!data || !data.months) return data;
   data.schedules ||= [];
+  data.programSchedules ||= [];
   Object.values(data.months).forEach(m=>{
     (m.items || []).forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
     (m.promos || []).forEach(p=>{ p.status = normalizeStatus(p.status); });
@@ -3774,7 +3853,7 @@ function promoEndingAlerts(){
       if(!date) return;
       const dt=new Date(`${date}T12:00:00`);
       if(Number.isNaN(dt.getTime())||dt<now||dt>limit) return;
-      out.push({id:`promo-end:${p.id}`,type:'promoEnd',title:`PROMOÇÃO PARA VENCER: ${norm(p.name||p.title||'PROMOÇÃO')}`,text:`TERMINA EM ${formatBR(date)}. FALTAM ATÉ 7 DIAS PARA O ENCERRAMENTO.`,promo:p});
+      out.push({id:`promo-end:${p.id}`,type:'promoEnd',title:`${isMerchanMain(p)?'MERCHAN':'PROMOÇÃO'} PARA VENCER: ${norm(p.name||p.title||'PROMOÇÃO')}`,text:`TERMINA EM ${formatBR(date)}. FALTAM ATÉ 7 DIAS PARA O ENCERRAMENTO.`,promo:p});
     });
   });
   return out;
@@ -3803,6 +3882,117 @@ function renderMiniAlerts(){
   }).join('');
 }
 
+
+function stationLabel(v){
+  return v==='JPNEWS983' ? 'JOVEM PAN NEWS - 98,3' : 'JOVEM PAN - 101,7';
+}
+function programSchedules(){ state.programSchedules ||= []; return state.programSchedules; }
+function dayRuleLabel(rule){
+  return {all:'TODOS', 'mon-fri':'SEG A SEX','mon-sat':'SEG A SÁB',sat:'SÁBADO',sun:'DOMINGO'}[rule||'mon-fri'] || rule;
+}
+function dayMatchesRule(date,rule){
+  const d=new Date(`${date}T12:00:00`).getDay();
+  if(rule==='all') return true;
+  if(rule==='sat') return d===6;
+  if(rule==='sun') return d===0;
+  if(rule==='mon-sat') return d>=1 && d<=6;
+  return d>=1 && d<=5;
+}
+function minutesOf(value){
+  const m=String(value||'').match(/(\d{1,2})(?::?(\d{2}))?/);
+  if(!m) return 0;
+  return Number(m[1])*60+Number(m[2]||0);
+}
+function hourInProgram(date,slot,program,station='JP1017'){
+  const h=Number(String(normalizeSlot(slot)).replace('H',''));
+  const min=h*60;
+  return programSchedules().some(p=> (!p.station || p.station===station) && dayMatchesRule(date,p.days) && norm(p.name)===norm(program) && min>=minutesOf(p.startTime) && min<minutesOf(p.endTime));
+}
+function programFromSchedule(date,slot,station='JP1017'){
+  const h=Number(String(normalizeSlot(slot)).replace('H',''));
+  const min=h*60;
+  const found=programSchedules().find(p=> (!p.station || p.station===station) && dayMatchesRule(date,p.days) && min>=minutesOf(p.startTime) && min<minutesOf(p.endTime));
+  return found ? norm(p.name) : '';
+}
+function renderProgramSchedules(){
+  const tb=$('programScheduleTable');
+  if(!tb) return;
+  const rows=[...programSchedules()].sort((a,b)=>stationLabel(a.station).localeCompare(stationLabel(b.station)) || minutesOf(a.startTime)-minutesOf(b.startTime) || norm(a.name).localeCompare(norm(b.name)));
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="6"><div class="empty">NENHUM HORÁRIO CADASTRADO. O SISTEMA USA A GRADE PADRÃO ATÉ VOCÊ CADASTRAR.</div></td></tr>'; return; }
+  tb.innerHTML=rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.name||'')}</td><td>${esc(dayRuleLabel(p.days))}</td><td>${esc(p.startTime||'')}</td><td>${esc(p.endTime||'')}</td><td><div class="promoActions"><button class="actionIcon" onclick="editProgramSchedule('${esc(p.id)}')" title="EDITAR"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" onclick="deleteProgramSchedule('${esc(p.id)}')" title="EXCLUIR"><span class="iconGlyph">🗑</span></button></div></td></tr>`).join('');
+}
+function clearProgramScheduleForm(){
+  if($('programScheduleForm')) $('programScheduleForm').reset();
+  if($('programScheduleId')) $('programScheduleId').value='';
+}
+function editProgramSchedule(idValue){
+  const p=programSchedules().find(x=>x.id===idValue);
+  if(!p) return;
+  $('programScheduleId').value=p.id;
+  $('programStation').value=p.station||'JP1017';
+  $('programName').value=p.name||'';
+  $('programStartTime').value=p.startTime||'';
+  $('programEndTime').value=p.endTime||'';
+  $('programDays').value=p.days||'mon-fri';
+  setView('horarios');
+}
+function deleteProgramSchedule(idValue){
+  if(!confirm('EXCLUIR ESTE HORÁRIO?')) return;
+  state.programSchedules=programSchedules().filter(p=>p.id!==idValue);
+  saveState(true); render(); toast('HORÁRIO EXCLUÍDO.');
+}
+function saveProgramSchedule(e){
+  e.preventDefault();
+  const idVal=$('programScheduleId').value || id('HR');
+  const rec={id:idVal,station:$('programStation').value,name:norm($('programName').value),startTime:$('programStartTime').value,endTime:$('programEndTime').value,days:$('programDays').value,createdAt:new Date().toISOString()};
+  const idx=programSchedules().findIndex(p=>p.id===idVal);
+  if(idx>=0) programSchedules()[idx]=rec; else programSchedules().push(rec);
+  clearProgramScheduleForm();
+  saveState(true); render(); toast('HORÁRIO SALVO.');
+}
+function populateProgramSelects(){
+  const names=[...new Set([...programSchedules().map(p=>norm(p.name)),...monthData().items.map(i=>norm(i.program))].filter(Boolean))].sort();
+  const promoProgram=$('promoProgram');
+  if(promoProgram){
+    const current=promoProgram.value;
+    promoProgram.innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');
+    if(names.includes(current)) promoProgram.value=current;
+  }
+}
+function selectedRotationSlots(prefix){
+  const all=$(`${prefix}RotationAll`)?.checked;
+  if(all) return [];
+  return Array.from(document.querySelectorAll(`#${prefix}RotationHours input:checked`)).map(i=>i.value);
+}
+function setRotationControls(prefix,slots=[]){
+  const box=$(`${prefix}RotationHours`);
+  if(!box) return;
+  if(box.dataset.ready!=='1'){
+    box.innerHTML=RADIO_PLANNER_SLOTS.map(s=>`<label class="rotationHour"><input type="checkbox" value="${s}"><span>${s}</span></label>`).join('');
+    box.dataset.ready='1';
+  }
+  const all=$(`${prefix}RotationAll`);
+  if(all) all.checked=!(Array.isArray(slots)&&slots.length);
+  const set=new Set((slots||[]).map(normalizeSlot));
+  box.querySelectorAll('input').forEach(i=>i.checked=set.has(normalizeSlot(i.value)));
+}
+function rotationAllowedSlots(d){
+  const slots=(d&&Array.isArray(d.rotationSlots)&&d.rotationSlots.length)?d.rotationSlots.map(normalizeSlot):RADIO_PLANNER_SLOTS;
+  return slots;
+}
+function isMerchanMain(p){
+  const k=norm(p.kind||p.promoKind||p.type||'');
+  return k==='MERCHAN' || k==='MERCHANDISING';
+}
+function updatePromoKindMode(){
+  const isM=$('promoKind')?.value==='merchan';
+  const lf=$('promoLocalField'), pf=$('promoProgramField');
+  if(lf) lf.classList.toggle('hidden',isM);
+  if(pf) pf.classList.toggle('hidden',!isM);
+  if($('promoLocal')) $('promoLocal').required=!isM;
+  if($('promoProgram')) $('promoProgram').required=isM;
+}
+
 function render(){
   $('monthInput').value = state.currentMonth;
   renderFilters();
@@ -3811,11 +4001,13 @@ function render(){
   renderDistribuicao();
   renderPromos();
   renderSchedule();
+  renderProgramSchedules();
   renderStudioPauta();
   renderBackup();
   renderReturnAlerts();
   renderMiniAlerts();
   populateDatalists();
+  populateProgramSelects();
   populateDistributionSelect();
 }
 function renderFilters(){
@@ -4186,10 +4378,14 @@ function renderPromos(){
   const rows=[...monthData().promos];
   if(order==='alpha') rows.sort((a,b)=> norm(a.name || a.title || '').localeCompare(norm(b.name || b.title || '')));
   const tb=$('promoTable');
-  if(!rows.length){ tb.innerHTML=`<tr><td colspan="7"><div class="empty">NENHUMA PROMOÇÃO CADASTRADA.</div></td></tr>`; return; }
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="8"><div class="empty">NENHUMA PROMOÇÃO / MERCHAN CADASTRADO.</div></td></tr>`; return; }
   tb.innerHTML = rows.map(p=>{
     const st = promoStatusData(p);
-    return `<tr><td>${esc(p.name || p.title || '')}</td><td>${esc(formatBR(p.startDate || ''))}</td><td>${esc(formatBR(p.drawDate))}</td><td>${esc(p.drawTime || '')}</td><td>${esc(p.local || '')}</td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
+    const isM=isMerchanMain(p);
+    const typeLabel=isM?'MERCHAN':'PROMOÇÃO';
+    const typeClass=isM?'merchan':'promo';
+    const localProgram=isM ? norm(p.program||p.programName||'') : norm(p.local||'');
+    return `<tr class="${typeClass}Row"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td>${esc(p.name || p.title || '')}</td><td>${esc(formatBR(p.startDate || ''))}</td><td>${esc(formatBR(p.drawDate || p.endDate || ''))}</td><td>${esc(p.drawTime || '')}</td><td>${esc(localProgram)}</td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
   }).join('');
 }
 function formatStudioTime(slot){
@@ -4362,7 +4558,7 @@ function renderResumo(){
   $('alertList').innerHTML = alerts.length ? alerts.map(a=>`<div class="alert">${esc(a)}</div>`).join('') : `<div class="alert" style="background:#effaf4;border-color:#ccefdc;color:#0f7a46">SEM ALERTAS CRÍTICOS NESTE MÊS.</div>`;
 }
 function populateDatalists(){
-  const programs=[...new Set(monthData().items.map(i=>norm(i.program)).filter(Boolean))].sort();
+  const programs=[...new Set([...monthData().items.map(i=>norm(i.program)),...programSchedules().map(p=>norm(p.name))].filter(Boolean))].sort();
   $('programDatalist').innerHTML=programs.map(p=>`<option value="${esc(p)}"></option>`).join('');
 }
 function populateDistributionSelect(){
@@ -4496,6 +4692,8 @@ function normalizeSlot(slot){
 }
 function radioSlotKey(date,slot){ return `${date}|${normalizeSlot(slot)}`; }
 function programFallbackForSlot(date,slot){
+  const scheduled=programFromSchedule(date,slot,'JP1017');
+  if(scheduled) return scheduled;
   const h=Number(normalizeSlot(slot).replace('H',''));
   const day=new Date(`${date}T12:00:00`).getDay();
   if(h===7) return day===6 ? 'ROCK AND POP' : 'JORNAL DA MANHÃ LOCAL';
@@ -4558,7 +4756,8 @@ function radioPlannerCandidates(d,excludeId=''){
   const occupied=occupiedRadioMap(start,end,excludeId);
   const dates=dateRangeBetween(start,end).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const candidates=[];
-  dates.forEach(date=>RADIO_PLANNER_SLOTS.forEach(slot=>{
+  const allowedSlots=rotationAllowedSlots(d);
+  dates.forEach(date=>allowedSlots.forEach(slot=>{
     const key=radioSlotKey(date,slot);
     const occ=occupied.get(key)||[];
     candidates.push({date,slot,program:programForSlot(date,slot),occupied:occ.length>0,occupiedItems:occ,key});
@@ -4760,6 +4959,7 @@ function clearDistForm(){
   if($('distPrizeType')) $('distPrizeType').value='brinde';
   if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value='unit';
   updateDistPairsPreview();
+  setRotationControls('dist',[]);
   setPromoStyleControls('distTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('distDesc',defaultPromoTextStyle('desc'),'desc');
 }
@@ -4809,7 +5009,7 @@ function saveReserveNote(){
 }
 function editDist(distId){
   const d=distributionById(distId); if(!d) return;
-  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; updateDistPairsPreview(); openDrawer('distDrawer');
+  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
 }
 function deleteDist(distId){
   if(programmed(distId)>0 && !confirm('ESTE BRINDE TEM ITENS NA PROGRAMAÇÃO. EXCLUIR MESMO ASSIM? OS ITENS FICARÃO SEM LINK.')) return;
@@ -4826,7 +5026,7 @@ $('distForm').addEventListener('submit',e=>{
   const startDate=$('distStartDate').value;
   const endDate=$('distEndDate').value;
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return; }
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value)};
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value)};
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
   syncDistributionToLinkedRadioItems(d);
@@ -4985,6 +5185,8 @@ function clearPromoForm(){
   $('promoImageData').value='';
   if($('promoKind')) $('promoKind').value='promo';
   populatePromoLocalSelect();
+  populateProgramSelects();
+  updatePromoKindMode();
   setPromoReadControls({readMode:'all',readHours:[]});
   setPromoStyleControls('promoTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('promoDesc',defaultPromoTextStyle('desc'),'desc');
@@ -5001,6 +5203,8 @@ function editPromo(pid){
   $('promoDrawTime').value=p.drawTime||'';
   if($('promoKind')) $('promoKind').value=p.kind||p.promoKind||p.type||'promo';
   $('promoLocal').value=p.local||'';
+  if($('promoProgram')) $('promoProgram').value=p.program||p.programName||'';
+  updatePromoKindMode();
   setPromoReadControls(p);
   $('promoName').value=p.name||p.title||'';
   $('promoDescription').value=p.description||'';
@@ -5040,7 +5244,9 @@ $('promoForm').addEventListener('submit',e=>{
     drawDate:$('promoDrawDate').value,
     drawTime:$('promoDrawTime').value,
     kind:$('promoKind')?.value || 'promo',
-    local:norm($('promoLocal').value),
+    local:$('promoKind')?.value==='merchan' ? 'MERCHAN' : norm($('promoLocal').value),
+    program:$('promoProgram') ? norm($('promoProgram').value) : '',
+    station:'JP1017',
     name:norm($('promoName').value),
     title:norm($('promoName').value),
     description:$('promoDescription').value.trim(),
@@ -5078,6 +5284,9 @@ bind('studioPrevDayBtn','click',()=>changeStudioDay(-1));
 bind('studioNextDayBtn','click',()=>changeStudioDay(1));
 bind('exportPdfBtn','click',()=>window.print());
 bind('scheduleForm','submit',saveSchedule);
+bind('programScheduleForm','submit',saveProgramSchedule);
+bind('promoKind','change',()=>{updatePromoKindMode(); updatePromoPreview();});
+bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotationSlots('dist')));
 bind('returnBellBtn','click',()=>{ renderReturnAlerts(); openDrawer('returnDrawer'); });
 
 bind('exportBackupBtn','click',exportManualBackup);
