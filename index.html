@@ -805,6 +805,106 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 .linkBtnLite{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
 @media(max-width:900px){#distDrawer .formGrid,.programGrid{grid-template-columns:1fr}.rotationHours{grid-template-columns:repeat(4,1fr)}}
 
+
+/* AJUSTE — PROGRAMAÇÃO COMPACTA E LIMPEZA DA GRADE */
+.programFilterBar{
+  grid-template-columns:minmax(150px,280px) minmax(150px,280px) minmax(130px,260px) auto;
+  gap:7px;
+  align-items:end;
+  margin-bottom:7px;
+}
+.programFilterBar .control{
+  min-height:30px;
+  padding:5px 9px;
+  border-radius:10px;
+  font-size:11px;
+}
+.programFilterBar .field label{
+  font-size:8px;
+  margin-bottom:3px;
+}
+.programFilterActions{
+  display:flex;
+  gap:6px;
+  align-items:center;
+  justify-content:flex-end;
+}
+.programFilterActions .btn.red{
+  min-height:30px;
+  padding:6px 11px;
+  border-radius:10px;
+  font-size:10px;
+}
+.clearProgramBtn{
+  width:30px;
+  min-width:30px;
+  min-height:30px;
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  color:#7a8493;
+  box-shadow:none;
+  padding:0;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.clearProgramBtn:hover{
+  background:#f1f3f6;
+  color:#c9002b;
+}
+.clearProgramBtn .iconGlyph{
+  font-size:14px;
+  filter:grayscale(1);
+}
+.clearProgramOptions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.clearProgramOption{
+  border:1px solid #dfe5ec;
+  background:#fff;
+  border-radius:18px;
+  padding:16px;
+  text-align:left;
+  cursor:pointer;
+  box-shadow:0 8px 20px rgba(17,23,34,.04);
+}
+.clearProgramOption:hover{
+  border-color:#ffc0cc;
+  background:#fff8fa;
+}
+.clearProgramOption strong{
+  display:block;
+  font-size:14px;
+  color:#171c26;
+  margin-bottom:6px;
+}
+.clearProgramOption span{
+  display:block;
+  color:#657084;
+  font-size:11px;
+  line-height:1.35;
+  font-weight:900;
+}
+.clearProgramWarning{
+  margin-bottom:12px;
+  border:1px solid #ffd7a8;
+  background:#fff7ec;
+  color:#8a4b00;
+  border-radius:16px;
+  padding:12px;
+  font-size:11px;
+  line-height:1.45;
+  font-weight:900;
+}
+@media(max-width:900px){
+  .programFilterBar{grid-template-columns:1fr}
+  .programFilterActions{justify-content:flex-start}
+  .clearProgramOptions{grid-template-columns:1fr}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -843,11 +943,11 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
     <section class="view" id="view-programacao">
       <div class="panel">
         <div class="panelBody">
-          <div class="filterBar">
+          <div class="filterBar programFilterBar">
             <div class="field"><label>CANAL</label><select class="control" id="channelFilter"><option value="">TODOS</option></select></div>
             <div class="field"><label>SEMANA</label><select class="control" id="weekFilter"><option value="">TODAS</option></select></div>
             <div class="field"><label>STATUS</label><select class="control" id="statusFilter"><option value="">TODOS</option><option>NO AR</option><option>REALIZADO</option><option>ENTREGUE</option></select></div>
-            <div class="filterAction"><button class="btn red" id="addProgramBtn">+ NOVO ITEM</button></div>
+            <div class="programFilterActions"><button class="btn red" id="addProgramBtn">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
           </div>
           <div class="weeklyHeader">
             <div><strong>PROGRAMAÇÃO SEMANAL</strong><span id="weeklyRangeLabel">SEMANA SELECIONADA</span></div>
@@ -995,6 +1095,28 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
     </section>
 
   </main>
+</div>
+
+
+<div class="drawer" id="clearProgramDrawer" aria-hidden="true">
+  <div class="drawerCard" style="width:min(560px,94vw)">
+    <div class="drawerHead"><h3>LIMPAR PROGRAMAÇÃO</h3><button class="btn small" data-close="clearProgramDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <div class="clearProgramWarning">
+        ESTA AÇÃO REMOVE APENAS ITENS DA ABA PROGRAMAÇÃO. NÃO APAGA DISTRIBUIÇÃO, PROMO / MERCHAN, AGENDAMENTO, GANHADORES OU RETIRADAS.
+      </div>
+      <div class="clearProgramOptions">
+        <button class="clearProgramOption" type="button" id="deleteProgramWeekBtn">
+          <strong>EXCLUIR SEMANA</strong>
+          <span id="deleteProgramWeekLabel">SEMANA SELECIONADA</span>
+        </button>
+        <button class="clearProgramOption" type="button" id="deleteProgramMonthBtn">
+          <strong>EXCLUIR MÊS</strong>
+          <span id="deleteProgramMonthLabel">MÊS ATUAL</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="drawer" id="itemDrawer" aria-hidden="true">
@@ -3994,6 +4116,47 @@ function updatePromoKindMode(){
   if($('promoProgram')) $('promoProgram').required=isM;
 }
 
+
+function selectedWeekDatesForClear(){
+  const week=$('weekFilter')?.value || '';
+  return week ? new Set(weekDatesForLabel(week)) : new Set();
+}
+function countProgramItemsForWeek(){
+  const dates=selectedWeekDatesForClear();
+  if(!dates.size) return 0;
+  return monthData().items.filter(i=>dates.has(i.date)).length;
+}
+function renderClearProgramDrawer(){
+  const week=$('weekFilter')?.value || '';
+  const weekCount=countProgramItemsForWeek();
+  const monthCount=monthData().items.length;
+  const wl=$('deleteProgramWeekLabel');
+  const ml=$('deleteProgramMonthLabel');
+  if(wl) wl.textContent = week ? `${week} · ${weekCount} ITEM(NS)` : 'SELECIONE UMA SEMANA NO FILTRO';
+  if(ml) ml.textContent = `${labelMonth(state.currentMonth)} · ${monthCount} ITEM(NS)`;
+}
+function clearProgramScope(scope){
+  const m=monthData();
+  if(scope==='week'){
+    const week=$('weekFilter')?.value || '';
+    if(!week){ alert('SELECIONE UMA SEMANA ANTES DE EXCLUIR.'); return; }
+    const dates=selectedWeekDatesForClear();
+    const total=m.items.filter(i=>dates.has(i.date)).length;
+    if(!total){ toast('NÃO HÁ ITENS NESSA SEMANA.'); return; }
+    if(!confirm(`EXCLUIR TODA A PROGRAMAÇÃO DA SEMANA ${week}?\n\n${total} ITEM(NS) SERÃO REMOVIDOS.`)) return;
+    m.items=m.items.filter(i=>!dates.has(i.date));
+  }else if(scope==='month'){
+    const total=m.items.length;
+    if(!total){ toast('NÃO HÁ ITENS NESTE MÊS.'); return; }
+    if(!confirm(`EXCLUIR TODA A PROGRAMAÇÃO DO MÊS ${labelMonth(state.currentMonth)}?\n\n${total} ITEM(NS) SERÃO REMOVIDOS.`)) return;
+    m.items=[];
+  }
+  saveState(true);
+  closeDrawer('clearProgramDrawer');
+  render();
+  toast('PROGRAMAÇÃO REMOVIDA.');
+}
+
 function render(){
   $('monthInput').value = state.currentMonth;
   renderFilters();
@@ -5276,9 +5439,12 @@ $('promoForm').addEventListener('submit',e=>{
 function bind(id,event,handler){ const el=$(id); if(el) el.addEventListener(event,handler); }
 bind('addDistBtn','click',()=>{ clearDistForm(); openDrawer('distDrawer'); });
 bind('addProgramBtn','click',()=>{ clearItemForm(); openDrawer('itemDrawer'); });
+bind('clearProgramBtn','click',()=>{ renderClearProgramDrawer(); openDrawer('clearProgramDrawer'); });
+bind('deleteProgramWeekBtn','click',()=>clearProgramScope('week'));
+bind('deleteProgramMonthBtn','click',()=>clearProgramScope('month'));
 bind('addPromoBtn','click',()=>{ clearPromoForm(); openDrawer('promoDrawer'); });
 bind('clearDistFiltersBtn','click',()=>{ $('distSearchInput').value=''; $('distStatusFilter').value=''; renderDistribuicao(); });
-['weekFilter','channelFilter','statusFilter'].forEach(id=>bind(id,'input',renderProgramacao));
+['weekFilter','channelFilter','statusFilter'].forEach(id=>bind(id,'input',()=>{ renderProgramacao(); renderClearProgramDrawer(); }));
 ['distSearchInput','distStatusFilter','distOrderFilter'].forEach(id=>bind(id,'input',renderDistribuicao));
 bind('promoOrderFilter','input',renderPromos);
 bind('studioDateFilter','input',renderStudioPauta);
