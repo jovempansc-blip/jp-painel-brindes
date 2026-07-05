@@ -882,7 +882,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div><h2>PROMO / MERCHAN</h2><p>CONTROLE DAS PROMOÇÕES, MERCHANS, SORTEIOS E PAUTAS PROMOCIONAIS PARA O LOCUTOR.</p></div>
           <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" title="NOVA PROMOÇÃO" aria-label="NOVA PROMOÇÃO" data-tip="NOVA PROMOÇÃO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
         </div>
-        <div class="panelBody"><div class="filterBar promoFilterBar"><div class="field"><label>ORDENAR NOMES</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div></div><div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>NOME</th><th>INÍCIO</th><th>FIM / SORTEIO</th><th>HORA</th><th>LOCAL / PROGRAMA</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div></div>
+        <div class="panelBody"><div class="filterBar promoFilterBar"><div class="field"><label>ORDENAR NOMES</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div></div><div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>INÍCIO</th><th>FIM / SORTEIO</th><th>HORA</th><th>LOCAL / PROGRAMA</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div></div>
       </div>
     </section>
 
@@ -1157,6 +1157,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
               <div class="field"><label>DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate" required></div>
               <div class="field"><label>HORA</label><input class="control" type="time" id="promoDrawTime" required></div>
               <div class="field"><label>TIPO DA PAUTA</label><select class="control" id="promoKind"><option value="promo">PROMOÇÃO</option><option value="merchan">MERCHAN</option></select></div>
+              <div class="field"><label>RÁDIO</label><select class="control" id="promoStation"><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option><option value="ALL">AMBOS</option></select></div>
               <div class="field promoLocalField" id="promoLocalField"><label>LOCAL</label><select class="control" id="promoLocal"></select></div>
               <div class="field merchanProgramField hidden" id="promoProgramField"><label>PROGRAMA DO MERCHAN</label><select class="control" id="promoProgram"></select></div>
               <div class="field full">
@@ -4378,14 +4379,14 @@ function renderPromos(){
   const rows=[...monthData().promos];
   if(order==='alpha') rows.sort((a,b)=> norm(a.name || a.title || '').localeCompare(norm(b.name || b.title || '')));
   const tb=$('promoTable');
-  if(!rows.length){ tb.innerHTML=`<tr><td colspan="8"><div class="empty">NENHUMA PROMOÇÃO / MERCHAN CADASTRADO.</div></td></tr>`; return; }
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="9"><div class="empty">NENHUMA PROMOÇÃO / MERCHAN CADASTRADO.</div></td></tr>`; return; }
   tb.innerHTML = rows.map(p=>{
     const st = promoStatusData(p);
     const isM=isMerchanMain(p);
     const typeLabel=isM?'MERCHAN':'PROMOÇÃO';
     const typeClass=isM?'merchan':'promo';
     const localProgram=isM ? norm(p.program||p.programName||'') : norm(p.local||'');
-    return `<tr class="${typeClass}Row"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td>${esc(p.name || p.title || '')}</td><td>${esc(formatBR(p.startDate || ''))}</td><td>${esc(formatBR(p.drawDate || p.endDate || ''))}</td><td>${esc(p.drawTime || '')}</td><td>${esc(localProgram)}</td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
+    return `<tr class="${typeClass}Row"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td>${esc(stationLabel(p.station||'JP1017'))}</td><td>${esc(p.name || p.title || '')}</td><td>${esc(formatBR(p.startDate || ''))}</td><td>${esc(formatBR(p.drawDate || p.endDate || ''))}</td><td>${esc(p.drawTime || '')}</td><td>${esc(localProgram)}</td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
   }).join('');
 }
 function formatStudioTime(slot){
@@ -5184,6 +5185,7 @@ function clearPromoForm(){
   $('promoId').value='';
   $('promoImageData').value='';
   if($('promoKind')) $('promoKind').value='promo';
+  if($('promoStation')) $('promoStation').value='JP1017';
   populatePromoLocalSelect();
   populateProgramSelects();
   updatePromoKindMode();
@@ -5202,6 +5204,7 @@ function editPromo(pid){
   $('promoDrawDate').value=p.drawDate||'';
   $('promoDrawTime').value=p.drawTime||'';
   if($('promoKind')) $('promoKind').value=p.kind||p.promoKind||p.type||'promo';
+  if($('promoStation')) $('promoStation').value=p.station||'JP1017';
   $('promoLocal').value=p.local||'';
   if($('promoProgram')) $('promoProgram').value=p.program||p.programName||'';
   updatePromoKindMode();
@@ -5246,7 +5249,7 @@ $('promoForm').addEventListener('submit',e=>{
     kind:$('promoKind')?.value || 'promo',
     local:$('promoKind')?.value==='merchan' ? 'MERCHAN' : norm($('promoLocal').value),
     program:$('promoProgram') ? norm($('promoProgram').value) : '',
-    station:'JP1017',
+    station:$('promoStation')?.value || 'JP1017',
     name:norm($('promoName').value),
     title:norm($('promoName').value),
     description:$('promoDescription').value.trim(),

@@ -9,39 +9,52 @@
 <style>
 :root{--red:#c9002b;--ink:#171c26;--muted:#667283;--line:#dce2eb;--shadow:0 16px 34px rgba(17,23,34,.08)}
 *{box-sizing:border-box}body{margin:0;min-height:100vh;font:900 13px/1.35 Inter,Arial,sans-serif;color:var(--ink);background:#f5f7fb url("assets/bg-estudio.jpg") center/cover fixed}
-.wrap{max-width:980px;margin:0 auto;padding:18px}
+.wrap{max-width:1180px;margin:0 auto;padding:18px}
 .logoBar{width:min(560px,100%);display:flex;align-items:center;justify-content:center;padding:10px 18px;margin:0 auto 18px;border:1px solid rgba(223,229,236,.92);border-radius:20px;background:rgba(255,255,255,.86);box-shadow:0 10px 24px rgba(16,24,40,.055);backdrop-filter:blur(8px)}
 .logoBar img{display:block;width:min(100%,460px);max-height:58px;height:auto;object-fit:contain}
 .panel{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}
 .head{padding:18px 22px;border-bottom:1px solid var(--line);background:#fff}h1{font-size:24px;margin:0;letter-spacing:-.04em}p{margin:6px 0 0;color:var(--muted)}
-.body{padding:18px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:grid;gap:5px}.full{grid-column:1/-1}label{font-size:10px;color:#697386;letter-spacing:.06em}
-.control{min-height:42px;border:1px solid #dce2eb;border-radius:14px;background:#fff;padding:9px 12px;font:900 13px Inter,Arial;color:var(--ink);text-transform:uppercase}textarea.control{min-height:160px;text-transform:none;font-weight:750;line-height:1.45}
-.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.btn{min-height:42px;border:1px solid #dce2eb;border-radius:14px;background:#fff;padding:9px 14px;font:1000 12px Inter,Arial;cursor:pointer}.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.body{padding:18px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:18px;align-items:start}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:grid;gap:5px}.full{grid-column:1/-1}label{font-size:10px;color:#697386;letter-spacing:.06em}
+.control{min-height:40px;border:1px solid #dce2eb;border-radius:14px;background:#fff;padding:8px 11px;font:900 13px Inter,Arial;color:var(--ink);text-transform:uppercase}textarea.control{min-height:150px;text-transform:none;font-weight:750;line-height:1.45}
+.readHours{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.readHour{position:relative}.readHour input{position:absolute;opacity:0}.readHour span{min-height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #dce2eb;background:#fff;border-radius:10px;color:#667283;font-size:10px;font-weight:1000;cursor:pointer}.readHour input:checked+span{background:var(--red);border-color:var(--red);color:#fff}
+.styleGrid{display:grid;grid-template-columns:minmax(0,1fr) 80px 54px 80px;gap:7px;align-items:end;padding:8px;border:1px solid #e4e8ef;background:#f8f9fc;border-radius:12px}.styleGrid .control{min-height:32px;font-size:11px;padding:6px 8px}.styleGrid input[type=color]{padding:3px}
+.preview{position:sticky;top:18px;border:1px solid #dfe5ec;border-radius:20px;background:#f8f9fc;padding:12px}.previewLabel{font-size:10px;color:#697386;letter-spacing:.06em;margin-bottom:8px}.previewCard{background:#fff;border:1px solid #e3e8ef;border-radius:18px;overflow:hidden;box-shadow:0 8px 20px rgba(17,23,34,.04)}.previewTitle{border-left:5px solid var(--red);padding:16px 18px;font-size:28px;line-height:1.08;letter-spacing:-.04em}.previewDesc{background:#f3f6fa;border-top:1px solid #e1e7ee;padding:16px 18px;font-size:17px;line-height:1.45;text-transform:none;font-weight:650;white-space:pre-wrap}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.btn{min-height:40px;border:1px solid #dce2eb;border-radius:14px;background:#fff;padding:9px 14px;font:1000 12px Inter,Arial;cursor:pointer}.btn.red{background:var(--red);border-color:var(--red);color:#fff}
 .table{width:100%;border-collapse:separate;border-spacing:0;margin-top:16px;font-size:12px}.table th,.table td{border-bottom:1px solid var(--line);padding:10px;text-align:left}.badge{border:1px solid #ccefdc;background:#effaf4;color:#137947;border-radius:999px;padding:4px 8px;font-size:10px}
-@media(max-width:760px){.grid{grid-template-columns:1fr}.wrap{padding:10px}}
+@media(max-width:900px){.layout,.grid{grid-template-columns:1fr}.preview{position:relative;top:auto}.readHours{grid-template-columns:repeat(4,1fr)}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="logoBar"><img src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan"></div>
   <div class="panel">
-    <div class="head"><h1>MERCHAN RÁDIOS</h1><p>CADASTRO DE MERCHANS DA OPEC PARA ENTRAR NO PAINEL DO ESTÚDIO.</p></div>
+    <div class="head"><h1>MERCHAN RÁDIOS</h1><p>CADASTRO DA OPEC PARA ENTRADA DIRETA NOS PAINÉIS DE ESTÚDIO.</p></div>
     <div class="body">
-      <form id="merchanForm">
-        <input type="hidden" id="merchanId">
-        <div class="grid">
-          <div class="field"><label>EMISSORA</label><select class="control" id="station"><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
-          <div class="field"><label>PROGRAMA</label><select class="control" id="program"></select></div>
-          <div class="field"><label>INÍCIO</label><input class="control" type="date" id="startDate" required></div>
-          <div class="field"><label>FIM</label><input class="control" type="date" id="endDate" required></div>
-          <div class="field"><label>HORÁRIO INÍCIO</label><input class="control" type="time" id="startTime"></div>
-          <div class="field"><label>HORÁRIO FIM</label><input class="control" type="time" id="endTime"></div>
-          <div class="field full"><label>TÍTULO</label><input class="control" id="title" required></div>
-          <div class="field full"><label>TEXTO / PAUTA DO MERCHAN</label><textarea class="control" id="text" required></textarea></div>
-        </div>
-        <div class="actions"><button class="btn" type="reset">LIMPAR</button><button class="btn red" type="submit">SALVAR MERCHAN</button></div>
-      </form>
-      <table class="table"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>TÍTULO</th><th>PERÍODO</th></tr></thead><tbody id="list"></tbody></table>
+      <div class="layout">
+        <form id="merchanForm">
+          <input type="hidden" id="merchanId">
+          <div class="grid">
+            <div class="field"><label>EMISSORA</label><select class="control" id="station"><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
+            <div class="field"><label>PROGRAMA</label><select class="control" id="program"></select></div>
+            <div class="field"><label>INÍCIO</label><input class="control" type="date" id="startDate" required></div>
+            <div class="field"><label>FIM</label><input class="control" type="date" id="endDate" required></div>
+            <div class="field full"><label>HORÁRIOS DE LEITURA DA PAUTA</label><div class="readHours" id="readHours"></div></div>
+            <div class="field full"><label>TÍTULO</label><input class="control" id="title" required></div>
+            <div class="field full"><label>ESTILO DO TÍTULO</label><div class="styleGrid"><select class="control" id="titleFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option><option>Impact</option></select><input class="control" type="number" id="titleSize" min="18" max="54" value="32"><input class="control" type="color" id="titleColor" value="#171c26"><select class="control" id="titleBold"><option value="1">NEGRITO</option><option value="0">NORMAL</option></select></div></div>
+            <div class="field full"><label>TEXTO / PAUTA DO MERCHAN</label><textarea class="control" id="text" required></textarea></div>
+            <div class="field full"><label>ESTILO DA DESCRIÇÃO</label><div class="styleGrid"><select class="control" id="descFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option></select><input class="control" type="number" id="descSize" min="12" max="36" value="18"><input class="control" type="color" id="descColor" value="#465161"><select class="control" id="descBold"><option value="0">NORMAL</option><option value="1">NEGRITO</option></select></div></div>
+          </div>
+          <div class="actions"><button class="btn" type="reset">LIMPAR</button><button class="btn red" type="submit">SALVAR MERCHAN</button></div>
+        </form>
+        <aside class="preview">
+          <div class="previewLabel">PREVIEW NO PAINEL DO ESTÚDIO</div>
+          <div class="previewCard">
+            <div class="previewTitle" id="previewTitle">TÍTULO DO MERCHAN</div>
+            <div class="previewDesc" id="previewDesc">TEXTO DO MERCHAN PARA LEITURA NO AR.</div>
+          </div>
+        </aside>
+      </div>
+      <table class="table"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>TÍTULO</th><th>PERÍODO</th><th>HORÁRIOS</th></tr></thead><tbody id="list"></tbody></table>
     </div>
   </div>
 </div>
@@ -55,16 +68,23 @@ const norm=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
+const HOURS=Array.from({length:17},(_,i)=>String(i+6).padStart(2,'0'));
 let state={currentMonth:today().slice(0,7),months:{},programSchedules:[]};
 function monthData(){state.months ||= {}; state.currentMonth ||= today().slice(0,7); state.months[state.currentMonth] ||= {label:state.currentMonth,items:[],promos:[],distributions:[]}; return state.months[state.currentMonth];}
 function stationLabel(v){return v==='JPNEWS983'?'JOVEM PAN NEWS - 98,3':'JOVEM PAN - 101,7'}
 function schedules(){return state.programSchedules||[]}
-function fillPrograms(){const st=$('station').value;const names=[...new Set(schedules().filter(p=>!p.station||p.station===st).map(p=>norm(p.name)).filter(Boolean))].sort();$('program').innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('')}
+function fillPrograms(){const st=$('station').value;const current=$('program').value;const names=[...new Set(schedules().filter(p=>!p.station||p.station===st).map(p=>norm(p.name)).filter(Boolean))].sort();$('program').innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');if(names.includes(current))$('program').value=current}
+function fillHours(){const box=$('readHours');box.innerHTML=HOURS.map(h=>`<label class="readHour"><input type="checkbox" value="${h}" ${['07','08','09','10','11','14','15','16','17','20'].includes(h)?'checked':''}><span>${h}H</span></label>`).join('')}
+function selectedHours(){return Array.from(document.querySelectorAll('#readHours input:checked')).map(i=>i.value)}
+function styleFrom(prefix){return {font:$(prefix+'Font').value,size:Number($(prefix+'Size').value),color:$(prefix+'Color').value,bold:$(prefix+'Bold').value==='1'}}
+function applyStyle(el,style,type){el.style.fontFamily=`'${style.font}', Arial, sans-serif`;el.style.fontSize=(style.size|| (type==='title'?32:18))+'px';el.style.color=style.color;el.style.fontWeight=style.bold?'1000':(type==='title'?'950':'650')}
+function updatePreview(){const title=norm($('title').value)||'TÍTULO DO MERCHAN';const desc=$('text').value.trim()||'TEXTO DO MERCHAN PARA LEITURA NO AR.';$('previewTitle').textContent=title;$('previewDesc').textContent=desc;applyStyle($('previewTitle'),styleFrom('title'),'title');applyStyle($('previewDesc'),styleFrom('desc'),'desc')}
 function save(){return ref.set({state,updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'MERCHAN_RADIOS',user:'OPEC',version:'FIREBASE_RTDB_V1'})}
-function render(){fillPrograms();const rows=(monthData().promos||[]).filter(p=>norm(p.kind)==='MERCHAN').sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));$('list').innerHTML=rows.length?rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.program||'')}</td><td>${esc(p.name||p.title||'')}</td><td><span class="badge">${esc(p.startDate||'')} A ${esc(p.drawDate||p.endDate||'')}</span></td></tr>`).join(''):'<tr><td colspan="4">NENHUM MERCHAN CADASTRADO.</td></tr>'}
+function render(){fillPrograms();const rows=(monthData().promos||[]).filter(p=>norm(p.kind)==='MERCHAN').sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));$('list').innerHTML=rows.length?rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.program||'')}</td><td>${esc(p.name||p.title||'')}</td><td><span class="badge">${esc(p.startDate||'')} A ${esc(p.drawDate||p.endDate||'')}</span></td><td>${esc((p.readHours||[]).map(h=>h+'H').join(', '))}</td></tr>`).join(''):'<tr><td colspan="5">NENHUM MERCHAN CADASTRADO.</td></tr>'}
 $('station').addEventListener('change',fillPrograms);
-$('merchanForm').addEventListener('submit',e=>{e.preventDefault();const id='MR'+Date.now().toString(36).toUpperCase(); const start=$('startDate').value,end=$('endDate').value; state.currentMonth=start.slice(0,7)||state.currentMonth; monthData().promos.push({id,kind:'merchan',station:$('station').value,program:norm($('program').value),local:'MERCHAN',startDate:start,drawDate:end,endDate:end,drawTime:$('endTime').value||'23:59',readStartHour:$('startTime').value,readEndHour:$('endTime').value,name:norm($('title').value),title:norm($('title').value),description:$('text').value.trim(),readMode:'all',readHours:[],readByHour:{},createdAt:new Date().toISOString(),source:'MERCHAN_RADIOS'}); save().then(()=>{$('merchanForm').reset();$('startDate').value=today();$('endDate').value=today();render();alert('MERCHAN SALVO.');});});
-$('startDate').value=today();$('endDate').value=today();
+['title','text','titleFont','titleSize','titleColor','titleBold','descFont','descSize','descColor','descBold'].forEach(id=>$(id).addEventListener('input',updatePreview));
+$('merchanForm').addEventListener('submit',e=>{e.preventDefault();const start=$('startDate').value,end=$('endDate').value;if(end<start){alert('A DATA FINAL NÃO PODE SER ANTERIOR AO INÍCIO.');return;}const id='MR'+Date.now().toString(36).toUpperCase(); state.currentMonth=start.slice(0,7)||state.currentMonth; monthData().promos.push({id,kind:'merchan',station:$('station').value,program:norm($('program').value),local:'MERCHAN',startDate:start,drawDate:end,endDate:end,drawTime:'23:59',name:norm($('title').value),title:norm($('title').value),description:$('text').value.trim(),titleStyle:styleFrom('title'),descriptionStyle:styleFrom('desc'),readMode:'selected',readHours:selectedHours(),readByHour:{},createdAt:new Date().toISOString(),source:'MERCHAN_RADIOS'}); save().then(()=>{$('merchanForm').reset();$('startDate').value=today();$('endDate').value=today();fillHours();updatePreview();render();alert('MERCHAN SALVO.');});});
+$('startDate').value=today();$('endDate').value=today();fillHours();updatePreview();
 ref.on('value',snap=>{const payload=snap.val(); if(payload&&payload.state){state=payload.state; state.programSchedules ||= []; render();}});
 </script>
 </body>

@@ -866,6 +866,7 @@ let manualHourDateMs=null;
 let lastHourKey=currentHourKey();
 let historyDate='';
 const STUDIO_STATION='JPNEWS983';
+const ALLOW_PROMO_SHORTCUT=false;
 
 
 const FIREBASE_CONFIG = {
@@ -1039,7 +1040,7 @@ function selectStudioMonth(){
 
 function hourDateFromItem(item){return itemDateTime(item);}
 function currentHourDate(){const d=new Date();d.setMinutes(0,0,0);return d;}
-function virtualItemFromDate(d){return {id:'__VIRTUAL__',date:dateISO(d),slot:`${pad(d.getHours())}:00`,program:'PROMOÇÕES',title:'PROMOÇÕES',notes:'',__virtual:true};}
+function virtualItemFromDate(d){return {id:'__VIRTUAL__',date:dateISO(d),slot:`${pad(d.getHours())}:00`,program:'',title:'',notes:'',__virtual:true};}
 function virtualCurrentItem(){return virtualItemFromDate(currentHourDate());}
 function distributionById(id){return monthData().distributions?.find(d=>d.id===id)||null;}
 function safeFont(font){
@@ -1051,7 +1052,7 @@ function safeSize(value,min,max,fallback){const n=Number(value);return Number.is
 function defaultTextStyle(type){return type==='title'?{font:'Segoe UI',size:38,color:'#171c26'}:{font:'Segoe UI',size:20,color:'#465161'};}
 function inlineTextStyle(style,type){
   const d=defaultTextStyle(type), s=style||d;
-  return `font-family:'${safeFont(s.font||d.font)}', Arial, sans-serif;font-size:${safeSize(s.size,type==='title'?18:12,type==='title'?64:36,d.size)}px;color:${safeHex(s.color,d.color)}`;
+  return `font-family:'${safeFont(s.font||d.font)}', Arial, sans-serif;font-size:${safeSize(s.size,type==='title'?18:12,type==='title'?64:36,d.size)}px;color:${safeHex(s.color,d.color)};font-weight:${s.bold?1000:(type==='title'?950:650)}`;
 }
 function itemTitle(i){return upper(i.title||distributionById(i.distributionId)?.title||i.prize||'SEM TÍTULO CADASTRADO');}
 function itemDesc(i){return i.description||i.notes||distributionById(i.distributionId)?.description||'SEM DESCRIÇÃO CADASTRADA.';}
@@ -1171,7 +1172,7 @@ function buildPromoList(item){return buildPautaList(item,'promo');}
 function buildMerchanList(item){return buildPautaList(item,'merchan');}
 function buildHourReadList(item){
   const pautas=allPautasForItemHour(item,true);
-  if(!pautas.length) return `<div class="promoListItem" type="button">SEM PROMOÇÕES OU MERCHAN CADASTRADOS PARA ESTE HORÁRIO</div>`;
+  if(!pautas.length) return ``;
   return `<div class="hourReadList">${pautas.map(p=>{
     const read=isPromoReadForHour(p,item);
     const label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';
@@ -1424,10 +1425,9 @@ function render(){
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${isMerchan(promo)?'':buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())}
       <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button">CONFIRMAR LEITURA</button></div>
-    ` : isVirtual ? `
-      <div class="titleBox"><h1 class="title">PROMOÇÕES</h1></div>
+    ` : isVirtual ? (buildHourReadList(item) ? `
       <div class="descBox">${buildHourReadList(item)}</div>
-    ` : `
+    ` : '') : `
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(itemTitleStyle(item),'title')}">${esc(itemTitle(item))}</h1></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(itemDescStyle(item),'desc')}">${esc(itemDesc(item))}</p></div>
       ${winnerBlock}
@@ -1438,10 +1438,6 @@ function render(){
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
       <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PAUTA PROMO') : isVirtual ? 'PROMOÇÕES' : esc(upper(item.program||'PROGRAMA'))}</div>
       <div class="headNav">
-        <div class="promoListWrap">
-          <button class="promoListBtn" id="promoListBtn" type="button" aria-label="PROMOÇÕES" title="PROMOÇÕES">P</button>
-          <div class="promoList" id="promoList">${buildPromoList(item)}</div>
-        </div>
         <div class="promoListWrap">
           <button class="promoListBtn" id="merchanListBtn" type="button" aria-label="MERCHAN" title="MERCHAN">M</button>
           <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
@@ -1466,7 +1462,7 @@ function render(){
     if(add) addPromoWinnerField('');
     if(remove) remove.closest('.resultWinnerLine')?.remove();
   });
-  $('promoListBtn').addEventListener('click',()=>{$('promoList').classList.toggle('show');$('merchanList').classList.remove('show');});
+  const promoBtn=$('promoListBtn'); if(promoBtn) promoBtn.addEventListener('click',()=>{$('promoList').classList.toggle('show');$('merchanList').classList.remove('show');});
   $('merchanListBtn').addEventListener('click',()=>{$('merchanList').classList.toggle('show');$('promoList').classList.remove('show');});
   const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList').classList.remove('show');$('merchanList').classList.remove('show');openHistoryModal();});
   document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.addEventListener('click',()=>startPromoRead(btn.dataset.promoId)));

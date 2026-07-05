@@ -1051,7 +1051,7 @@ function safeSize(value,min,max,fallback){const n=Number(value);return Number.is
 function defaultTextStyle(type){return type==='title'?{font:'Segoe UI',size:38,color:'#171c26'}:{font:'Segoe UI',size:20,color:'#465161'};}
 function inlineTextStyle(style,type){
   const d=defaultTextStyle(type), s=style||d;
-  return `font-family:'${safeFont(s.font||d.font)}', Arial, sans-serif;font-size:${safeSize(s.size,type==='title'?18:12,type==='title'?64:36,d.size)}px;color:${safeHex(s.color,d.color)}`;
+  return `font-family:'${safeFont(s.font||d.font)}', Arial, sans-serif;font-size:${safeSize(s.size,type==='title'?18:12,type==='title'?64:36,d.size)}px;color:${safeHex(s.color,d.color)};font-weight:${s.bold?1000:(type==='title'?950:650)}`;
 }
 function itemTitle(i){return upper(i.title||distributionById(i.distributionId)?.title||i.prize||'SEM TÍTULO CADASTRADO');}
 function itemDesc(i){return i.description||i.notes||distributionById(i.distributionId)?.description||'SEM DESCRIÇÃO CADASTRADA.';}
