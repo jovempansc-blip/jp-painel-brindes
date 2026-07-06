@@ -4562,6 +4562,13 @@ function selectedRotationSlots(prefix){
   if(all) return [];
   return Array.from(document.querySelectorAll(`#${prefix}RotationHours input:checked`)).map(i=>i.value);
 }
+function syncRotationAllFromHours(prefix){
+  const all=$(`${prefix}RotationAll`);
+  const box=$(`${prefix}RotationHours`);
+  if(!all || !box) return;
+  const checked=Array.from(box.querySelectorAll('input:checked'));
+  all.checked = checked.length===0;
+}
 function setRotationControls(prefix,slots=[]){
   const box=$(`${prefix}RotationHours`);
   if(!box) return;
@@ -5526,20 +5533,31 @@ function buildSmartRadioPlans(d){
   const allowed=rotationAllowedSlots(d);
   const maxPerDay=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1));
   const dates=dateRangeBetween(distStartDate(d),distEndDate(d)).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
+  const existingRadio=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
+  const existingByDay=new Map();
+  existingRadio.forEach(i=>{
+    if(!existingByDay.has(i.date)) existingByDay.set(i.date,{count:0,periods:new Set()});
+    const info=existingByDay.get(i.date);
+    info.count++;
+    info.periods.add(periodKey(i.slot));
+  });
   const plans=[];
+  const plannedByDay=new Map();
   for(const date of dates){
     if(plans.length>=needed) break;
-    const usedPeriods=new Set();
-    let usedToday=0;
+    const existing=existingByDay.get(date) || {count:0,periods:new Set()};
+    const planned=plannedByDay.get(date) || {count:0,periods:new Set()};
     for(const slot of allowed){
-      if(plans.length>=needed || usedToday>=maxPerDay) break;
+      if(plans.length>=needed) break;
+      if(existing.count + planned.count >= maxPerDay) break;
       const ns=normalizeSlot(slot);
       const period=periodKey(ns);
-      if(usedPeriods.has(period)) continue; // não repete no mesmo período do dia
-      if(radioSlotConflicts(date,ns).length) continue;
+      if(existing.periods.has(period) || planned.periods.has(period)) continue; // não repete no mesmo período do dia
+      if(radioSlotConflicts(date,ns).length) continue; // não ocupa horário já usado
       plans.push({date,slot:ns,program:programForSlot(date,ns),key:radioSlotKey(date,ns),period});
-      usedPeriods.add(period);
-      usedToday++;
+      planned.count++;
+      planned.periods.add(period);
+      plannedByDay.set(date,planned);
     }
   }
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
@@ -5580,17 +5598,15 @@ function confirmSmartRadioReport(){
   saveState(true);
   queueApiSave(80);
   closeDrawer('smartRadioReportDrawer');
-  if(validPlans[0]){
-    if($('weekFilter')) $('weekFilter').value=weekLabel(validPlans[0].date);
-    if($('channelFilter')) $('channelFilter').value='';
-    if($('statusFilter')) $('statusFilter').value='';
-  }
+  activeDistributionFilter='';
+  const targetWeek=validPlans[0] ? weekLabel(validPlans[0].date) : '';
+  if($('channelFilter')) $('channelFilter').value='';
+  if($('statusFilter')) $('statusFilter').value='';
   setView('programacao');
-  render();
-  if(validPlans[0]){
-    if($('weekFilter')) $('weekFilter').value=weekLabel(validPlans[0].date);
-    renderProgramacao();
-  }
+  if(targetWeek && $('weekFilter')) $('weekFilter').value=targetWeek;
+  if($('channelFilter')) $('channelFilter').value='';
+  if($('statusFilter')) $('statusFilter').value='';
+  renderProgramacao();
   toast(`${newItems.length} HORÁRIO(S) LANÇADO(S) NA PROGRAMAÇÃO.`);
 }
 function redoSmartRadioReport(){
@@ -5691,14 +5707,13 @@ function saveRadioPlanner(){
   saveState(true);
   queueApiSave(80);
   closeDrawer('radioPlannerDrawer');
-  render();
-  if(plans[0]){
-    if($('weekFilter')) $('weekFilter').value=weekLabel(plans[0].date);
-    if($('channelFilter')) $('channelFilter').value='';
-    if($('statusFilter')) $('statusFilter').value='';
-    renderProgramacao();
-    setView('programacao');
-  }
+  activeDistributionFilter='';
+  const targetWeek=plans[0] ? weekLabel(plans[0].date) : '';
+  setView('programacao');
+  if(targetWeek && $('weekFilter')) $('weekFilter').value=targetWeek;
+  if($('channelFilter')) $('channelFilter').value='';
+  if($('statusFilter')) $('statusFilter').value='';
+  renderProgramacao();
   toast(`${newItems.length} HORÁRIO(S) DE RÁDIO ADICIONADO(S) À GRADE E À PAUTA DE ESTÚDIO.`);
 }
 
@@ -5905,10 +5920,14 @@ $('distForm').addEventListener('submit',e=>{
   saveState(true);
   closeDrawer('distDrawer');
   render();
-  const openedReport=handleRadioScheduleAfterSave(d);
-  if(!openedReport){
-    if(num(d.ar)>0) alert('DISTRIBUIÇÃO SALVA, MAS O RELATÓRIO NÃO FOI GERADO. VERIFIQUE DATA DE INÍCIO, DATA DE TÉRMINO E HORÁRIOS DO RODÍZIO.');
-    else toast('DISTRIBUIÇÃO SALVA. SEM DESTINO RÁDIO PARA GERAR PROGRAMAÇÃO.');
+  if(num(d.ar)>0){
+    setTimeout(()=>{
+      const saved=distributionById(d.id) || d;
+      const openedReport=handleRadioScheduleAfterSave(saved);
+      if(!openedReport) alert('DISTRIBUIÇÃO SALVA, MAS O RELATÓRIO NÃO FOI GERADO. VERIFIQUE DATA DE INÍCIO, DATA DE TÉRMINO E HORÁRIOS DO RODÍZIO.');
+    },30);
+  }else{
+    toast('DISTRIBUIÇÃO SALVA. SEM DESTINO RÁDIO PARA GERAR PROGRAMAÇÃO.');
   }
 });
 $('distTable').addEventListener('input',e=>{
@@ -6183,6 +6202,12 @@ bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotation
 bind('distTitle','blur',()=>applyDistributionTemplateFromTitle(false));
 bind('distTitle','change',()=>applyDistributionTemplateFromTitle(false));
 bind('distPrize','blur',()=>{ if(!norm($('distTitle')?.value)) applyDistributionTemplateFromTitle(false); });
+
+if($('distRotationHours')) $('distRotationHours').addEventListener('change',()=>syncRotationAllFromHours('dist'));
+if($('distRotationAll')) $('distRotationAll').addEventListener('change',()=>{
+  if($('distRotationAll').checked) setRotationControls('dist',[]);
+});
+
 
 
 if($('addDistDestBtn')) $('addDistDestBtn').addEventListener('click',()=>addDistributionDestination());
