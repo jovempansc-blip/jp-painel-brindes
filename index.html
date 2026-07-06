@@ -5551,59 +5551,145 @@ function smartRadioSeed(text){
   String(text||'').split('').forEach(ch=>{ h=((h<<5)-h)+ch.charCodeAt(0); h|=0; });
   return Math.abs(h);
 }
+function seededScore(text){
+  let h=2166136261;
+  String(text||'').split('').forEach(ch=>{ h^=ch.charCodeAt(0); h=Math.imul(h,16777619); });
+  return (h>>>0)/4294967295;
+}
 function rotateList(list,offset){
   const arr=[...(list||[])];
   if(!arr.length) return arr;
   const n=((offset%arr.length)+arr.length)%arr.length;
   return arr.slice(n).concat(arr.slice(0,n));
 }
+function pickEvenly(list,count,seedText=''){
+  const arr=[...(list||[])];
+  if(count>=arr.length) return arr;
+  const picked=[];
+  const used=new Set();
+  for(let i=0;i<count;i++){
+    const base=Math.floor(((i+0.5)*arr.length)/count);
+    const jitter=Math.floor(seededScore(`${seedText}|${i}`)*3)-1;
+    let idx=Math.max(0,Math.min(arr.length-1,base+jitter));
+    let guard=0;
+    while(used.has(idx) && guard<arr.length){ idx=(idx+1)%arr.length; guard++; }
+    used.add(idx);
+    picked.push(arr[idx]);
+  }
+  return picked.sort((a,b)=>String(a).localeCompare(String(b)));
+}
+function nearestPreviousPlan(plans,date,period){
+  const rows=plans.filter(p=>p.period===period && p.date<date).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  return rows[0]||null;
+}
 function buildSmartRadioPlans(d){
   const needed=radioPlannerNeeded(d);
   if(needed<=0) return {needed:0,plans:[],missing:0};
+
   const allowed=[...new Set(rotationAllowedSlots(d).map(normalizeSlot))].sort((a,b)=>slotOrder(a)-slotOrder(b));
   const maxPerDay=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1));
   const dates=dateRangeBetween(distStartDate(d),distEndDate(d)).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
+  const seed=smartRadioSeed(`${d.id}|${distributionLabel(d)}|${distStartDate(d)}|${distEndDate(d)}|${allowed.join(',')}`);
+
   const existingRadio=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
   const existingByDay=new Map();
+  const existingPlans=[];
   existingRadio.forEach(i=>{
     if(!existingByDay.has(i.date)) existingByDay.set(i.date,{count:0,periods:new Set()});
     const info=existingByDay.get(i.date);
     info.count++;
     info.periods.add(periodKey(i.slot));
+    existingPlans.push({date:i.date,slot:normalizeSlot(i.slot),period:periodKey(i.slot)});
   });
 
-  const slotsByPeriod={manha:[],tarde:[],noite:[]};
-  allowed.forEach(slot=>{
-    const period=periodKey(slot);
-    if(slotsByPeriod[period]) slotsByPeriod[period].push(slot);
+  const slotUsage=new Map();
+  existingPlans.forEach(p=>{
+    const key=`${p.period}|${p.slot}`;
+    slotUsage.set(key,(slotUsage.get(key)||0)+1);
   });
-  const periodBase=['manha','tarde','noite'].filter(p=>(slotsByPeriod[p]||[]).length);
-  const seed=smartRadioSeed(`${d.id}|${distributionLabel(d)}|${distStartDate(d)}|${distEndDate(d)}`);
+
+  const candidatesByDay=new Map();
+  dates.forEach((date,dayIndex)=>{
+    const dayCandidates=[];
+    allowed.forEach(slot=>{
+      const period=periodKey(slot);
+      if(radioSlotConflicts(date,slot).length) return;
+      dayCandidates.push({
+        date,
+        slot,
+        period,
+        score: seededScore(`${seed}|${date}|${slot}|${dayIndex}`)
+      });
+    });
+    if(dayCandidates.length) candidatesByDay.set(date,dayCandidates);
+  });
+
   const plans=[];
   const plannedByDay=new Map();
 
-  dates.forEach((date,dayIndex)=>{
-    if(plans.length>=needed) return;
-    const existing=existingByDay.get(date) || {count:0,periods:new Set()};
-    const planned=plannedByDay.get(date) || {count:0,periods:new Set()};
-    const periodOrder=rotateList(periodBase,dayIndex+seed);
+  for(let pass=0; pass<maxPerDay && plans.length<needed; pass++){
+    const eligibleDates=dates.filter(date=>{
+      const existing=existingByDay.get(date) || {count:0,periods:new Set()};
+      const planned=plannedByDay.get(date) || {count:0,periods:new Set()};
+      if(existing.count + planned.count >= maxPerDay) return false;
+      const rows=candidatesByDay.get(date)||[];
+      return rows.some(c=>!existing.periods.has(c.period) && !planned.periods.has(c.period));
+    });
 
-    for(const period of periodOrder){
-      if(plans.length>=needed) break;
-      if(existing.count + planned.count >= maxPerDay) break;
-      if(existing.periods.has(period) || planned.periods.has(period)) continue;
+    if(!eligibleDates.length) continue;
 
-      const slotOrderForPeriod=rotateList(slotsByPeriod[period],dayIndex+Math.floor(seed/7)+planned.count);
-      const freeSlot=slotOrderForPeriod.find(slot=>!radioSlotConflicts(date,slot).length);
-      if(!freeSlot) continue;
+    const remaining=needed-plans.length;
+    const take=Math.min(remaining,eligibleDates.length);
+    const selectedDates=pickEvenly(eligibleDates,take,`${seed}|PASS|${pass}|${remaining}`);
 
-      plans.push({date,slot:freeSlot,program:programForSlot(date,freeSlot),key:radioSlotKey(date,freeSlot),period});
+    selectedDates.forEach((date,idx)=>{
+      if(plans.length>=needed) return;
+      const existing=existingByDay.get(date) || {count:0,periods:new Set()};
+      const planned=plannedByDay.get(date) || {count:0,periods:new Set()};
+      if(existing.count + planned.count >= maxPerDay) return;
+
+      let rows=(candidatesByDay.get(date)||[])
+        .filter(c=>!existing.periods.has(c.period) && !planned.periods.has(c.period));
+
+      if(!rows.length) return;
+
+      rows=rows.map(c=>{
+        const previous=nearestPreviousPlan([...existingPlans,...plans],date,c.period);
+        const repeatedPrevious=previous && previous.slot===c.slot;
+        const periodOptions=(candidatesByDay.get(date)||[]).filter(x=>x.period===c.period);
+        const hasAlternative=periodOptions.some(x=>x.slot!==c.slot && !radioSlotConflicts(date,x.slot).length);
+        const usage=slotUsage.get(`${c.period}|${c.slot}`)||0;
+        return {
+          ...c,
+          repeatedPrevious,
+          hasAlternative,
+          usage,
+          finalScore:
+            (repeatedPrevious && hasAlternative ? 1000 : 0) +
+            usage*10 +
+            seededScore(`${seed}|${pass}|${idx}|${date}|${c.slot}`)
+        };
+      }).sort((a,b)=>a.finalScore-b.finalScore || slotOrder(a.slot)-slotOrder(b.slot));
+
+      const chosen=rows[0];
+      if(!chosen) return;
+
+      plans.push({
+        date:chosen.date,
+        slot:chosen.slot,
+        program:programForSlot(chosen.date,chosen.slot),
+        key:radioSlotKey(chosen.date,chosen.slot),
+        period:chosen.period
+      });
+
       planned.count++;
-      planned.periods.add(period);
+      planned.periods.add(chosen.period);
       plannedByDay.set(date,planned);
-    }
-  });
+      slotUsage.set(`${chosen.period}|${chosen.slot}`,(slotUsage.get(`${chosen.period}|${chosen.slot}`)||0)+1);
+    });
+  }
 
+  plans.sort((a,b)=>String(a.date).localeCompare(String(b.date)) || slotOrder(a.slot)-slotOrder(b.slot));
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
 }
 function renderSmartRadioReport(report){
@@ -5612,7 +5698,7 @@ function renderSmartRadioReport(report){
   const d=distributionById(report.distId);
   summary.classList.toggle('warn',report.missing>0 || !report.plans.length);
   const maxPerDay=Math.max(1,Math.min(3,num(d?.radioDailyLimit)||1));
-  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, COM ALTERNÂNCIA INTELIGENTE DOS HORÁRIOS PERMITIDOS E SEM REPETIR NO MESMO PERÍODO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
+  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, COM DISTRIBUIÇÃO UNIFORME DO INÍCIO AO FIM DO PERÍODO, ESCOLHA ALEATÓRIA ENTRE OS HORÁRIOS PERMITIDOS, EQUILÍBRIO DE USO DOS HORÁRIOS E SEM REPETIR O MESMO HORÁRIO NA SEQUÊNCIA DO MESMO PERÍODO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
   summary.innerHTML = report.missing>0
     ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`
     : `<strong>RELATÓRIO GERADO.</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`;
