@@ -1560,7 +1560,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
       <div id="smartRadioReportList" class="smartReportList"></div>
       <div class="smartReportActions">
         <button class="btn" type="button" id="redoSmartRadioBtn" onclick="redoSmartRadioReport()">REFAZER / AJUSTAR HORÁRIOS</button>
-        <button class="btn red" type="button" id="confirmSmartRadioBtn" onclick="confirmSmartRadioReport()">CONFIRMAR E ENVIAR PARA PROGRAMAÇÃO</button>
+        <button class="btn red" type="button" id="confirmSmartRadioBtn" onclick="confirmSmartRadioReport()">CONFIRMAR E LANÇAR NA PROGRAMAÇÃO</button>
       </div>
     </div>
   </div>
@@ -5448,49 +5448,71 @@ function addRadioPlanRow(candidate=null, checked=true){
 }
 
 
+
 let radioPlannerWarningText='';
 let pendingSmartRadioReport=null;
 function radioPlannerNeeded(d){ return Math.max(0, num(d?.ar) - programmed(d?.id,'RÁDIO')); }
 function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
-  return {id:id('BR'),date:plan.date,day:dayName(plan.date),week:weekLabel(plan.date),slot:normalizeSlot(plan.slot),program:plan.program||programForSlot(plan.date,plan.slot),distributionId:d.id,prize:distributionLabel(d),title:d.title||distributionLabel(d),qty:1,channel:'RÁDIO',status:'NO AR',notes:d.description||d.notes||'',titleStyle:d.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:d.descriptionStyle||defaultPromoTextStyle('desc'),autoRadioPlanner:true,generatedBy:source,sourceDistributionId:d.id,sourcePeriodStart:distStartDate(d),sourcePeriodEnd:distEndDate(d),createdAt:new Date().toISOString()};
+  return {
+    id:id('BR'),
+    date:plan.date,
+    day:dayName(plan.date),
+    week:weekLabel(plan.date),
+    slot:normalizeSlot(plan.slot),
+    program:plan.program||programForSlot(plan.date,plan.slot),
+    distributionId:d.id,
+    prize:distributionLabel(d),
+    title:d.title||distributionLabel(d),
+    qty:1,
+    channel:'RÁDIO',
+    status:'NO AR',
+    notes:d.description||d.notes||'',
+    titleStyle:d.titleStyle||defaultPromoTextStyle('title'),
+    descriptionStyle:d.descriptionStyle||defaultPromoTextStyle('desc'),
+    autoRadioPlanner:true,
+    generatedBy:source,
+    sourceDistributionId:d.id,
+    sourcePeriodStart:distStartDate(d),
+    sourcePeriodEnd:distEndDate(d),
+    createdAt:new Date().toISOString()
+  };
 }
 function buildSmartRadioPlans(d){
   const needed=radioPlannerNeeded(d);
   if(needed<=0) return {needed:0,plans:[],missing:0};
-  const free=radioPlannerCandidates(d).filter(c=>!c.occupied);
-  const byDate=new Map();
-  free.forEach(c=>{
-    if(!byDate.has(c.date)) byDate.set(c.date,[]);
-    byDate.get(c.date).push(c);
-  });
+  const allowed=rotationAllowedSlots(d);
+  const dates=dateRangeBetween(distStartDate(d),distEndDate(d)).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const plans=[];
-  // Geração automática: no máximo 1 entrada por dia para o mesmo prêmio.
-  // Se precisar repetir no mesmo dia/período, isso fica para ajuste manual.
-  Array.from(byDate.keys()).sort().forEach(date=>{
-    if(plans.length>=needed) return;
-    const options=byDate.get(date)||[];
-    if(options.length){
-      const pick=options[0];
-      plans.push({date:pick.date,slot:pick.slot,program:pick.program||programForSlot(pick.date,pick.slot),key:pick.key});
+  const usedDays=new Set();
+  for(const date of dates){
+    if(plans.length>=needed) break;
+    if(usedDays.has(date)) continue;
+    for(const slot of allowed){
+      if(radioSlotConflicts(date,slot).length) continue;
+      plans.push({date,slot:normalizeSlot(slot),program:programForSlot(date,slot),key:radioSlotKey(date,slot)});
+      usedDays.add(date);
+      break;
     }
-  });
+  }
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
 }
 function renderSmartRadioReport(report){
-  const summary=$('smartRadioReportSummary'), list=$('smartRadioReportList');
+  const summary=$('smartRadioReportSummary'), list=$('smartRadioReportList'), confirmBtn=$('confirmSmartRadioBtn');
   if(!summary||!list) return;
   const d=distributionById(report.distId);
-  summary.classList.toggle('warn',report.missing>0);
+  summary.classList.toggle('warn',report.missing>0 || !report.plans.length);
+  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
   summary.innerHTML = report.missing>0
-    ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> O SISTEMA ENCONTROU ${report.plans.length} HORÁRIO(S) LIVRE(S) PARA ${esc(distributionLabel(d))}. CONFIRME O QUE FOI GERADO OU REFAÇA PARA ESCOLHER OUTROS HORÁRIOS.`
-    : `<strong>RODÍZIO PRONTO PARA CONFIRMAÇÃO.</strong> ${report.plans.length} HORÁRIO(S) GERADO(S) PARA ${esc(distributionLabel(d))}. CONFIRME PARA ENVIAR À ABA PROGRAMAÇÃO. A GERAÇÃO AUTOMÁTICA NÃO REPETE O MESMO PRÊMIO NO MESMO DIA; REPETIÇÕES FICAM PARA AJUSTE MANUAL.`;
+    ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`
+    : `<strong>RELATÓRIO GERADO.</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`;
   list.innerHTML = report.plans.length
     ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(p.program||programForSlot(p.date,p.slot))}</span></div>`).join('')
-    : '<div class="smartReportEmpty">NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.</div>';
+    : '<div class="smartReportEmpty">USE “REFAZER / AJUSTAR HORÁRIOS” PARA ESCOLHER OUTROS HORÁRIOS OU LANÇAR MANUALMENTE.</div>';
+  if(confirmBtn) confirmBtn.disabled=!report.plans.length;
 }
 function openSmartRadioReport(d){
+  if(!d || num(d.ar)<=0) return false;
   const built=buildSmartRadioPlans(d);
-  if(!built.needed) return false;
   pendingSmartRadioReport={distId:d.id,plans:built.plans,missing:built.missing,needed:built.needed,createdAt:new Date().toISOString()};
   renderSmartRadioReport(pendingSmartRadioReport);
   openDrawer('smartRadioReportDrawer');
@@ -5498,31 +5520,39 @@ function openSmartRadioReport(d){
 }
 function confirmSmartRadioReport(){
   const report=pendingSmartRadioReport;
-  if(!report){ closeDrawer('smartRadioReportDrawer'); return; }
+  if(!report){ alert('NENHUM RELATÓRIO GERADO.'); return; }
   const d=distributionById(report.distId);
-  if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA.'); return; }
+  if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA. SALVE A DISTRIBUIÇÃO NOVAMENTE.'); return; }
   const validPlans=(report.plans||[]).filter(p=>!radioSlotConflicts(p.date,p.slot).length);
-  if(validPlans.length !== (report.plans||[]).length){ alert('ALGUNS HORÁRIOS GERADOS FORAM OCUPADOS ENQUANTO A TELA ESTAVA ABERTA. CLIQUE EM REFAZER PARA ATUALIZAR.'); return; }
+  if(!validPlans.length){ alert('NENHUM HORÁRIO LIVRE PARA LANÇAR. CLIQUE EM REFAZER / AJUSTAR HORÁRIOS.'); return; }
   const newItems=validPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
-  if(newItems.length) monthData().items.push(...newItems);
+  monthData().items.push(...newItems);
   pendingSmartRadioReport=null;
-  saveState(true); queueApiSave(80); closeDrawer('smartRadioReportDrawer'); render();
+  saveState(true);
+  queueApiSave(80);
+  closeDrawer('smartRadioReportDrawer');
   if(validPlans[0]){
-    if($('monthInput')) $('monthInput').value=state.currentMonth;
-    setView('programacao');
     if($('weekFilter')) $('weekFilter').value=weekLabel(validPlans[0].date);
     if($('channelFilter')) $('channelFilter').value='';
     if($('statusFilter')) $('statusFilter').value='';
-    renderProgramacao();
-  }else{
-    setView('programacao');
   }
-  toast(`${newItems.length} HORÁRIO(S) CONFIRMADO(S) E ENVIADO(S) PARA A PROGRAMAÇÃO.`);
+  setView('programacao');
+  render();
+  if(validPlans[0]){
+    if($('weekFilter')) $('weekFilter').value=weekLabel(validPlans[0].date);
+    renderProgramacao();
+  }
+  toast(`${newItems.length} HORÁRIO(S) LANÇADO(S) NA PROGRAMAÇÃO.`);
 }
 function redoSmartRadioReport(){
-  const report=pendingSmartRadioReport; closeDrawer('smartRadioReportDrawer'); if(!report) return;
-  const d=distributionById(report.distId); if(!d) return;
-  radioPlannerWarningText = report.missing>0 ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> AJUSTE OS HORÁRIOS MANUALMENTE OU ADICIONE NOVAS OPÇÕES PARA COMPLETAR A PROGRAMAÇÃO.` : '<strong>REFAÇA O RODÍZIO.</strong> AJUSTE DATA, HORÁRIO OU PROGRAMA ANTES DE SALVAR.';
+  const report=pendingSmartRadioReport;
+  closeDrawer('smartRadioReportDrawer');
+  if(!report) return;
+  const d=distributionById(report.distId);
+  if(!d) return;
+  radioPlannerWarningText = report.missing>0
+    ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> AJUSTE OS HORÁRIOS MANUALMENTE OU ESCOLHA OUTRAS OPÇÕES.`
+    : '<strong>REFAÇA O RODÍZIO.</strong> AJUSTE DATA, HORÁRIO OU PROGRAMA ANTES DE SALVAR.';
   openRadioPlanner(d.id);
 }
 function handleRadioScheduleAfterSave(d){ return openSmartRadioReport(d); }
@@ -5627,7 +5657,7 @@ function clearDistForm(){
   $('distForm').reset(); $('distId').value=''; $('distDrawerTitle').textContent='NOVA DISTRIBUIÇÃO'; $('distDate').value=''; $('distShow').value=''; $('distStartDate').value=monthStartDate(); $('distEndDate').value=monthEndDate(); $('distTotal').value=0; $('distTitle').value=''; $('distDescription').value='';
   if($('distPrizeType')) $('distPrizeType').value='brinde';
   if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value='unit';
-  renderDistDestinations([]);
+  renderDistDestinations([{key:'ar',qty:0,unit:$('distTicketDefaultUnit')?.value||'unit',note:''}]);
   updateDistPairsPreview();
   setRotationControls('dist',[]);
   setPromoStyleControls('distTitle',defaultPromoTextStyle('title'),'title');
@@ -5679,7 +5709,7 @@ function renderDistDestinations(rows=[]){
   const list=$('distDestList');
   if(!list) return;
   const isTicket=distributionFormIsTicket();
-  const clean=(rows||[]).filter(r=>r && r.key && num(r.qty)>0);
+  const clean=(rows||[]).filter(r=>r && r.key);
   list.innerHTML=clean.map(r=>{
     const key=r.key;
     const label=DESTINATION_LABELS[key]||key;
@@ -5826,7 +5856,10 @@ $('distForm').addEventListener('submit',e=>{
   closeDrawer('distDrawer');
   render();
   const openedReport=handleRadioScheduleAfterSave(d);
-  if(!openedReport) toast('DISTRIBUIÇÃO SALVA E PAUTAS VINCULADAS ATUALIZADAS.');
+  if(!openedReport){
+    if(num(d.ar)>0) alert('DISTRIBUIÇÃO SALVA, MAS O RELATÓRIO NÃO FOI GERADO. VERIFIQUE DATA DE INÍCIO, DATA DE TÉRMINO E HORÁRIOS DO RODÍZIO.');
+    else toast('DISTRIBUIÇÃO SALVA. SEM DESTINO RÁDIO PARA GERAR PROGRAMAÇÃO.');
+  }
 });
 $('distTable').addEventListener('input',e=>{
   const input=e.target.closest('.distInlineNum');
