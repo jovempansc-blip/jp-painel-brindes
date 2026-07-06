@@ -955,6 +955,109 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   .weekdayPicker{grid-template-columns:repeat(4,1fr)}
 }
 
+
+/* AJUSTE — HORÁRIOS LIMPO, FILTRO VISUAL E CADASTRO EM JANELA */
+.scheduleToolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.stationTabs{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px;
+  border:1px solid #dfe5ec;
+  border-radius:999px;
+  background:#f5f7fb;
+}
+.stationTab{
+  appearance:none;
+  border:1px solid transparent;
+  border-radius:999px;
+  background:transparent;
+  color:#5f6876;
+  min-height:30px;
+  padding:0 14px;
+  font-size:10px;
+  font-weight:1000;
+  cursor:pointer;
+  letter-spacing:.03em;
+}
+.stationTab.active{
+  background:#171c26;
+  color:#fff;
+  border-color:#171c26;
+}
+.scheduleToolbar .btn{
+  min-height:34px;
+  border-radius:12px;
+  padding:8px 12px;
+  font-size:11px;
+}
+.programTable.cleanScheduleTable th,
+.programTable.cleanScheduleTable td{
+  text-align:center;
+}
+.programTable.cleanScheduleTable th:first-child,
+.programTable.cleanScheduleTable td:first-child{
+  text-align:left;
+  padding-left:18px;
+}
+.dayChips{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:4px;
+}
+.dayChip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:20px;
+  min-width:34px;
+  padding:0 7px;
+  border-radius:999px;
+  border:1px solid #dfe5ec;
+  background:#f8fafc;
+  color:#5f6876;
+  font-size:9px;
+  font-weight:1000;
+}
+#programScheduleDrawer .drawerCard{
+  width:min(680px,94vw);
+  border-radius:22px;
+}
+#programScheduleDrawer .drawerHead{
+  padding:13px 16px;
+}
+#programScheduleDrawer .drawerHead h3{
+  font-size:15px;
+}
+#programScheduleDrawer .drawerBody{
+  padding:14px;
+}
+#programScheduleDrawer .programGrid{
+  grid-template-columns:130px minmax(0,1fr) 120px 120px;
+  gap:9px;
+}
+#programScheduleDrawer .programGrid .daysField{
+  grid-column:1/-1;
+}
+#programScheduleDrawer .weekdayPicker{
+  grid-template-columns:repeat(7,minmax(0,1fr));
+}
+#programScheduleDrawer .formActions{
+  margin-top:14px;
+}
+@media(max-width:760px){
+  .scheduleToolbar{align-items:flex-start;flex-direction:column}
+  #programScheduleDrawer .programGrid{grid-template-columns:1fr}
+  #programScheduleDrawer .weekdayPicker{grid-template-columns:repeat(4,1fr)}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1070,37 +1173,26 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 
 
 
-    <section class="view" id="view-horarios">
-      <div class="panel">
-        <div class="panelHead">
-          <div><h2>HORÁRIOS</h2><p>CADASTRO DOS PROGRAMAS E HORÁRIOS DE EXIBIÇÃO USADOS NAS SELEÇÕES, CABEÇALHOS E MERCHANS.</p></div>
+    
+<section class="view" id="view-horarios">
+  <div class="panel">
+    <div class="panelHead">
+      <div><h2>HORÁRIOS</h2><p>GRADE OFICIAL DE PROGRAMAS USADA NAS SELEÇÕES, CABEÇALHOS E MERCHANS.</p></div>
+    </div>
+    <div class="panelBody">
+      <div class="scheduleToolbar">
+        <div class="stationTabs" id="programStationFilterTabs">
+          <button class="stationTab active" type="button" data-station="JP1017">JOVEMPAN</button>
+          <button class="stationTab" type="button" data-station="JPNEWS983">JPNEWS</button>
         </div>
-        <div class="panelBody">
-          <form id="programScheduleForm" class="programGrid">
-            <input type="hidden" id="programScheduleId">
-            <div class="field"><label>EMISSORA</label><select class="control" id="programStation"><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option></select></div>
-            <div class="field"><label>PROGRAMA</label><input class="control" id="programName" required></div>
-            <div class="field"><label>INÍCIO</label><input class="control" type="time" id="programStartTime" required></div>
-            <div class="field"><label>TÉRMINO</label><input class="control" type="time" id="programEndTime" required></div>
-            <div class="field"><label>DIAS</label>
-              <div class="weekdayPicker" id="programDaysBox">
-                <label><input type="checkbox" value="1"><span>SEG</span></label>
-                <label><input type="checkbox" value="2"><span>TER</span></label>
-                <label><input type="checkbox" value="3"><span>QUA</span></label>
-                <label><input type="checkbox" value="4"><span>QUI</span></label>
-                <label><input type="checkbox" value="5"><span>SEX</span></label>
-                <label><input type="checkbox" value="6"><span>SÁB</span></label>
-                <label><input type="checkbox" value="0"><span>DOM</span></label>
-              </div>
-            </div>
-            <div class="field"><label>&nbsp;</label><button class="btn red" type="submit">SALVAR</button></div>
-          </form>
-          <div class="tableWrap"><table class="promoMainTable programTable"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>DIAS</th><th>INÍCIO</th><th>TÉRMINO</th><th>AÇÕES</th></tr></thead><tbody id="programScheduleTable"></tbody></table></div>
-        </div>
+        <button class="btn red" id="addProgramScheduleBtn" type="button">+ NOVO PROGRAMA</button>
       </div>
-    </section>
+      <div class="tableWrap"><table class="promoMainTable programTable cleanScheduleTable"><thead><tr><th>PROGRAMA</th><th>DIAS</th><th>INÍCIO</th><th>TÉRMINO</th><th>AÇÕES</th></tr></thead><tbody id="programScheduleTable"></tbody></table></div>
+    </div>
+  </div>
+</section>
 
-    <section class="view" id="view-agendamento">
+<section class="view" id="view-agendamento">
       <div class="panel">
         <div class="panelHead">
           <div><h2>AGENDAMENTO</h2><p>RESERVA DE PROMOÇÕES, MERCHANS E PAUTAS FUTURAS OU DE LONGA DURAÇÃO.</p></div>
@@ -1157,6 +1249,36 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   </main>
 </div>
 
+
+
+<div class="drawer" id="programScheduleDrawer" aria-hidden="true">
+  <div class="drawerCard">
+    <div class="drawerHead"><h3 id="programScheduleDrawerTitle">NOVO PROGRAMA</h3><button class="btn small" data-close="programScheduleDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <form id="programScheduleForm">
+        <input type="hidden" id="programScheduleId">
+        <div class="programGrid">
+          <div class="field"><label>EMISSORA</label><select class="control" id="programStation"><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option></select></div>
+          <div class="field"><label>PROGRAMA</label><input class="control" id="programName" required></div>
+          <div class="field"><label>INÍCIO</label><input class="control" type="time" id="programStartTime" required></div>
+          <div class="field"><label>TÉRMINO</label><input class="control" type="time" id="programEndTime" required></div>
+          <div class="field daysField"><label>DIAS</label>
+            <div class="weekdayPicker" id="programDaysBox">
+              <label><input type="checkbox" value="1"><span>SEG</span></label>
+              <label><input type="checkbox" value="2"><span>TER</span></label>
+              <label><input type="checkbox" value="3"><span>QUA</span></label>
+              <label><input type="checkbox" value="4"><span>QUI</span></label>
+              <label><input type="checkbox" value="5"><span>SEX</span></label>
+              <label><input type="checkbox" value="6"><span>SÁB</span></label>
+              <label><input type="checkbox" value="0"><span>DOM</span></label>
+            </div>
+          </div>
+        </div>
+        <div class="formActions"><button class="btn red" type="submit">SALVAR PROGRAMA</button><button class="btn" type="button" data-close="programScheduleDrawer">CANCELAR</button></div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <div class="drawer" id="clearProgramDrawer" aria-hidden="true">
   <div class="drawerCard" style="width:min(560px,94vw)">
@@ -4113,24 +4235,64 @@ function programFromSchedule(date,slot,station='JP1017'){
   const found=programSchedules().find(p=> (!p.station || p.station===station) && dayMatchesRule(date,p.days) && min>=minutesOf(p.startTime) && min<minutesOf(p.endTime));
   return found ? norm(p.name) : '';
 }
+
+let activeProgramStationFilter = localStorage.getItem('jp_program_station_filter') || 'JP1017';
+function activeProgramStation(){
+  return activeProgramStationFilter || 'JP1017';
+}
+function setProgramStationFilter(station){
+  activeProgramStationFilter=station || 'JP1017';
+  localStorage.setItem('jp_program_station_filter', activeProgramStationFilter);
+  $$('#programStationFilterTabs .stationTab').forEach(btn=>btn.classList.toggle('active',btn.dataset.station===activeProgramStationFilter));
+  renderProgramSchedules();
+}
+function dayChips(rule){
+  const names={0:'DOM',1:'SEG',2:'TER',3:'QUA',4:'QUI',5:'SEX',6:'SÁB'};
+  return `<div class="dayChips">${dayValuesFromRule(rule).map(v=>`<span class="dayChip">${names[v]}</span>`).join('')}</div>`;
+}
+function openProgramScheduleForm(idValue=''){
+  clearProgramScheduleForm();
+  if(idValue) editProgramSchedule(idValue);
+  else{
+    $('programScheduleDrawerTitle').textContent='NOVO PROGRAMA';
+    $('programStation').value=activeProgramStation();
+    openDrawer('programScheduleDrawer');
+  }
+}
+function programTimeConflict(rec){
+  const days=new Set(dayValuesFromRule(rec.days));
+  const start=minutesOf(rec.startTime), end=minutesOf(rec.endTime);
+  return programSchedules().find(p=>{
+    if(p.id===rec.id) return false;
+    if((p.station||'JP1017') !== (rec.station||'JP1017')) return false;
+    const otherDays=dayValuesFromRule(p.days);
+    if(!otherDays.some(d=>days.has(d))) return false;
+    const os=minutesOf(p.startTime), oe=minutesOf(p.endTime);
+    return start < oe && end > os;
+  });
+}
+
 function renderProgramSchedules(){
   const tb=$('programScheduleTable');
   if(!tb) return;
-  const selectedStation=$('programStation')?.value || 'JP1017';
+  $$('#programStationFilterTabs .stationTab').forEach(btn=>btn.classList.toggle('active',btn.dataset.station===activeProgramStation()));
+  const selectedStation=activeProgramStation();
   const rows=[...programSchedules()]
     .filter(p=>(p.station||'JP1017')===selectedStation)
     .sort((a,b)=>minutesOf(a.startTime)-minutesOf(b.startTime) || norm(a.name).localeCompare(norm(b.name)));
-  if(!rows.length){ tb.innerHTML=`<tr><td colspan="6"><div class="empty">NENHUM HORÁRIO CADASTRADO PARA ${esc(stationLabel(selectedStation))}.</div></td></tr>`; return; }
-  tb.innerHTML=rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.name||'')}</td><td>${esc(dayRuleLabel(p.days))}</td><td>${esc(p.startTime||'')}</td><td>${esc(p.endTime||'')}</td><td><div class="promoActions"><button class="actionIcon" onclick="editProgramSchedule('${esc(p.id)}')" title="EDITAR"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" onclick="deleteProgramSchedule('${esc(p.id)}')" title="EXCLUIR"><span class="iconGlyph">🗑</span></button></div></td></tr>`).join('');
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="5"><div class="empty">NENHUM HORÁRIO CADASTRADO PARA ${esc(stationLabel(selectedStation))}.</div></td></tr>`; return; }
+  tb.innerHTML=rows.map(p=>`<tr><td><strong>${esc(p.name||'')}</strong></td><td>${dayChips(p.days)}</td><td>${esc(p.startTime||'')}</td><td>${esc(p.endTime||'')}</td><td><div class="promoActions"><button class="actionIcon" onclick="openProgramScheduleForm('${esc(p.id)}')" title="EDITAR"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" onclick="deleteProgramSchedule('${esc(p.id)}')" title="EXCLUIR"><span class="iconGlyph">🗑</span></button></div></td></tr>`).join('');
 }
 function clearProgramScheduleForm(){
   if($('programScheduleForm')) $('programScheduleForm').reset();
   if($('programScheduleId')) $('programScheduleId').value='';
+  if($('programScheduleDrawerTitle')) $('programScheduleDrawerTitle').textContent='NOVO PROGRAMA';
   setProgramDaysControls([1,2,3,4,5]);
 }
 function editProgramSchedule(idValue){
   const p=programSchedules().find(x=>x.id===idValue);
   if(!p) return;
+  $('programScheduleDrawerTitle').textContent='EDITAR PROGRAMA';
   $('programScheduleId').value=p.id;
   $('programStation').value=p.station||'JP1017';
   $('programName').value=p.name||'';
@@ -4138,6 +4300,7 @@ function editProgramSchedule(idValue){
   $('programEndTime').value=p.endTime||'';
   setProgramDaysControls(p.days||[1,2,3,4,5]);
   setView('horarios');
+  openDrawer('programScheduleDrawer');
 }
 function deleteProgramSchedule(idValue){
   if(!confirm('EXCLUIR ESTE HORÁRIO?')) return;
@@ -4147,10 +4310,21 @@ function deleteProgramSchedule(idValue){
 function saveProgramSchedule(e){
   e.preventDefault();
   const idVal=$('programScheduleId').value || id('HR');
-  const rec={id:idVal,station:$('programStation').value,name:norm($('programName').value),startTime:$('programStartTime').value,endTime:$('programEndTime').value,days:collectProgramDays(),createdAt:new Date().toISOString()};
+  const days=collectProgramDays();
+  if(!days.length){ alert('SELECIONE PELO MENOS UM DIA DA SEMANA.'); return; }
+  const rec={id:idVal,station:$('programStation').value,name:norm($('programName').value),startTime:$('programStartTime').value,endTime:$('programEndTime').value,days,createdAt:new Date().toISOString()};
+  if(minutesOf(rec.endTime)<=minutesOf(rec.startTime)){ alert('O HORÁRIO DE TÉRMINO DEVE SER MAIOR QUE O INÍCIO.'); return; }
+  const conflict=programTimeConflict(rec);
+  if(conflict){
+    const ok=confirm(`HORÁRIO CONFLITANTE.\n\n${stationLabel(conflict.station)} · ${conflict.name}\n${dayRuleLabel(conflict.days)} · ${conflict.startTime} A ${conflict.endTime}\n\nDESEJA SALVAR MESMO ASSIM?`);
+    if(!ok) return;
+  }
   const idx=programSchedules().findIndex(p=>p.id===idVal);
   if(idx>=0) programSchedules()[idx]=rec; else programSchedules().push(rec);
+  activeProgramStationFilter=rec.station;
+  localStorage.setItem('jp_program_station_filter', activeProgramStationFilter);
   clearProgramScheduleForm();
+  closeDrawer('programScheduleDrawer');
   saveState(true); render(); toast('HORÁRIO SALVO.');
 }
 function populateProgramSelects(){
@@ -5535,7 +5709,9 @@ bind('studioNextDayBtn','click',()=>changeStudioDay(1));
 bind('exportPdfBtn','click',()=>window.print());
 bind('scheduleForm','submit',saveSchedule);
 bind('programScheduleForm','submit',saveProgramSchedule);
-bind('programStation','change',()=>{ renderProgramSchedules(); populateProgramSelects(); });
+bind('addProgramScheduleBtn','click',()=>openProgramScheduleForm());
+document.addEventListener('click',e=>{ const btn=e.target.closest('#programStationFilterTabs .stationTab'); if(btn) setProgramStationFilter(btn.dataset.station); });
+bind('programStation','change',()=>{ populateProgramSelects(); });
 bind('promoKind','change',()=>{updatePromoKindMode(); updatePromoPreview();});
 bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotationSlots('dist')));
 bind('returnBellBtn','click',()=>{ renderReturnAlerts(); openDrawer('returnDrawer'); });
@@ -5556,6 +5732,7 @@ function toCsv(){
   monthData().promos.forEach(p=>lines.push(['PROMOÇÕES',p.name||p.title||'',formatBR(p.startDate||''),formatBR(p.drawDate),p.drawTime||'',p.local||'',p.description||'',p.imageData ? 'COM IMAGEM' : 'SEM IMAGEM'].map(csvCell).join(';')));
   return '\ufeff'+lines.join('\n');
 }
+window.openProgramScheduleForm=openProgramScheduleForm;
 window.editItem=editItem; window.duplicateItem=duplicateItem; window.deleteItem=deleteItem; window.programFromDist=programFromDist; window.filterProgramByDist=filterProgramByDist; window.editDist=editDist; window.deleteDist=deleteDist; window.editPromo=editPromo; window.deletePromo=deletePromo;
 window.addEventListener('storage',()=>{
   state = loadState();
