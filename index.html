@@ -5546,10 +5546,21 @@ function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
     createdAt:new Date().toISOString()
   };
 }
+function smartRadioSeed(text){
+  let h=0;
+  String(text||'').split('').forEach(ch=>{ h=((h<<5)-h)+ch.charCodeAt(0); h|=0; });
+  return Math.abs(h);
+}
+function rotateList(list,offset){
+  const arr=[...(list||[])];
+  if(!arr.length) return arr;
+  const n=((offset%arr.length)+arr.length)%arr.length;
+  return arr.slice(n).concat(arr.slice(0,n));
+}
 function buildSmartRadioPlans(d){
   const needed=radioPlannerNeeded(d);
   if(needed<=0) return {needed:0,plans:[],missing:0};
-  const allowed=rotationAllowedSlots(d);
+  const allowed=[...new Set(rotationAllowedSlots(d).map(normalizeSlot))].sort((a,b)=>slotOrder(a)-slotOrder(b));
   const maxPerDay=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1));
   const dates=dateRangeBetween(distStartDate(d),distEndDate(d)).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const existingRadio=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
@@ -5560,25 +5571,39 @@ function buildSmartRadioPlans(d){
     info.count++;
     info.periods.add(periodKey(i.slot));
   });
+
+  const slotsByPeriod={manha:[],tarde:[],noite:[]};
+  allowed.forEach(slot=>{
+    const period=periodKey(slot);
+    if(slotsByPeriod[period]) slotsByPeriod[period].push(slot);
+  });
+  const periodBase=['manha','tarde','noite'].filter(p=>(slotsByPeriod[p]||[]).length);
+  const seed=smartRadioSeed(`${d.id}|${distributionLabel(d)}|${distStartDate(d)}|${distEndDate(d)}`);
   const plans=[];
   const plannedByDay=new Map();
-  for(const date of dates){
-    if(plans.length>=needed) break;
+
+  dates.forEach((date,dayIndex)=>{
+    if(plans.length>=needed) return;
     const existing=existingByDay.get(date) || {count:0,periods:new Set()};
     const planned=plannedByDay.get(date) || {count:0,periods:new Set()};
-    for(const slot of allowed){
+    const periodOrder=rotateList(periodBase,dayIndex+seed);
+
+    for(const period of periodOrder){
       if(plans.length>=needed) break;
       if(existing.count + planned.count >= maxPerDay) break;
-      const ns=normalizeSlot(slot);
-      const period=periodKey(ns);
-      if(existing.periods.has(period) || planned.periods.has(period)) continue; // não repete no mesmo período do dia
-      if(radioSlotConflicts(date,ns).length) continue; // não ocupa horário já usado
-      plans.push({date,slot:ns,program:programForSlot(date,ns),key:radioSlotKey(date,ns),period});
+      if(existing.periods.has(period) || planned.periods.has(period)) continue;
+
+      const slotOrderForPeriod=rotateList(slotsByPeriod[period],dayIndex+Math.floor(seed/7)+planned.count);
+      const freeSlot=slotOrderForPeriod.find(slot=>!radioSlotConflicts(date,slot).length);
+      if(!freeSlot) continue;
+
+      plans.push({date,slot:freeSlot,program:programForSlot(date,freeSlot),key:radioSlotKey(date,freeSlot),period});
       planned.count++;
       planned.periods.add(period);
       plannedByDay.set(date,planned);
     }
-  }
+  });
+
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
 }
 function renderSmartRadioReport(report){
@@ -5587,7 +5612,7 @@ function renderSmartRadioReport(report){
   const d=distributionById(report.distId);
   summary.classList.toggle('warn',report.missing>0 || !report.plans.length);
   const maxPerDay=Math.max(1,Math.min(3,num(d?.radioDailyLimit)||1));
-  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, SEM REPETIR NO MESMO PERÍODO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
+  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, COM ALTERNÂNCIA INTELIGENTE DOS HORÁRIOS PERMITIDOS E SEM REPETIR NO MESMO PERÍODO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
   summary.innerHTML = report.missing>0
     ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`
     : `<strong>RELATÓRIO GERADO.</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`;
