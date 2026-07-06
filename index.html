@@ -1198,6 +1198,42 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   .destActions{align-items:stretch;flex-direction:column}
 }
 
+
+/* AJUSTE — LIMITE DE VEZES POR DIA NO RODÍZIO */
+.rotationLimitRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  border:1px solid #dde5ee;
+  background:#fff;
+  border-radius:14px;
+  padding:9px 11px;
+  margin:9px 0 8px;
+}
+.rotationLimitRow span{
+  color:#667283;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:.05em;
+}
+.rotationLimitRow input{
+  width:78px;
+  min-height:32px;
+  border:1px solid #ccd6e1;
+  border-radius:10px;
+  text-align:center;
+  color:#171c26;
+  font-size:13px;
+  font-weight:1000;
+}
+.rotationLimitHint{
+  color:#667283;
+  font-size:9px;
+  font-weight:900;
+  line-height:1.35;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1533,6 +1569,13 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             <label>HORÁRIOS DO RODÍZIO INTELIGENTE</label>
             <div class="rotationBox">
               <div class="rotationBoxTop"><strong>ESCOLHA OS PRINCIPAIS HORÁRIOS PARA ESCALAR ESTE PRÊMIO</strong><label class="promoReadAll"><input type="checkbox" id="distRotationAll" checked> TODOS</label></div>
+              <div class="rotationLimitRow">
+                <div>
+                  <span>QUANTAS VEZES POR DIA?</span>
+                  <div class="rotationLimitHint">O SISTEMA PODE USAR OUTROS HORÁRIOS NO MESMO DIA, MAS NÃO REPETE NO MESMO PERÍODO.</div>
+                </div>
+                <input type="number" min="1" max="3" step="1" id="distDailyLimit" value="1">
+              </div>
               <div class="rotationHours" id="distRotationHours"></div>
             </div>
           </div>
@@ -5481,17 +5524,22 @@ function buildSmartRadioPlans(d){
   const needed=radioPlannerNeeded(d);
   if(needed<=0) return {needed:0,plans:[],missing:0};
   const allowed=rotationAllowedSlots(d);
+  const maxPerDay=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1));
   const dates=dateRangeBetween(distStartDate(d),distEndDate(d)).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const plans=[];
-  const usedDays=new Set();
   for(const date of dates){
     if(plans.length>=needed) break;
-    if(usedDays.has(date)) continue;
+    const usedPeriods=new Set();
+    let usedToday=0;
     for(const slot of allowed){
-      if(radioSlotConflicts(date,slot).length) continue;
-      plans.push({date,slot:normalizeSlot(slot),program:programForSlot(date,slot),key:radioSlotKey(date,slot)});
-      usedDays.add(date);
-      break;
+      if(plans.length>=needed || usedToday>=maxPerDay) break;
+      const ns=normalizeSlot(slot);
+      const period=periodKey(ns);
+      if(usedPeriods.has(period)) continue; // não repete no mesmo período do dia
+      if(radioSlotConflicts(date,ns).length) continue;
+      plans.push({date,slot:ns,program:programForSlot(date,ns),key:radioSlotKey(date,ns),period});
+      usedPeriods.add(period);
+      usedToday++;
     }
   }
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
@@ -5501,7 +5549,8 @@ function renderSmartRadioReport(report){
   if(!summary||!list) return;
   const d=distributionById(report.distId);
   summary.classList.toggle('warn',report.missing>0 || !report.plans.length);
-  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
+  const maxPerDay=Math.max(1,Math.min(3,num(d?.radioDailyLimit)||1));
+  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, SEM REPETIR NO MESMO PERÍODO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
   summary.innerHTML = report.missing>0
     ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`
     : `<strong>RELATÓRIO GERADO.</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`;
@@ -5659,6 +5708,7 @@ function clearDistForm(){
   if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value='unit';
   renderDistDestinations([{key:'ar',qty:0,unit:$('distTicketDefaultUnit')?.value||'unit',note:''}]);
   updateDistPairsPreview();
+  if($('distDailyLimit')) $('distDailyLimit').value=1;
   setRotationControls('dist',[]);
   setPromoStyleControls('distTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('distDesc',defaultPromoTextStyle('desc'),'desc');
@@ -5828,7 +5878,7 @@ function saveReserveNote(){
 }
 function editDist(distId){
   const d=distributionById(distId); if(!d) return;
-  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; renderDistDestinations(destinationsFromDistribution(d)); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
+  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; renderDistDestinations(destinationsFromDistribution(d)); if($('distDailyLimit')) $('distDailyLimit').value=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1)); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
 }
 function deleteDist(distId){
   if(programmed(distId)>0 && !confirm('ESTE BRINDE TEM ITENS NA PROGRAMAÇÃO. EXCLUIR MESMO ASSIM? OS ITENS FICARÃO SEM LINK.')) return;
@@ -5846,7 +5896,7 @@ $('distForm').addEventListener('submit',e=>{
   const endDate=$('distEndDate').value;
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return; }
   const destValues=collectDistDestinationValues(existing);
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   const distributedTotal=Object.entries(destValues).filter(([k])=>['app','camarote','camarim','rua','ar','rs','reservado'].includes(k)).reduce((sum,[k,v])=>sum+destinationConsumed(v,(destValues.ticketUnits||{})[k]||d.ticketDefaultUnit,isTicketDist(d)),0);
   if(num(d.total)>0 && distributedTotal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.\n\nTOTAL: ${num(d.total)}\nDISTRIBUÍDO: ${distributedTotal}`); return; }
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
