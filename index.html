@@ -5365,8 +5365,23 @@ function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
 function buildSmartRadioPlans(d){
   const needed=radioPlannerNeeded(d);
   if(needed<=0) return {needed:0,plans:[],missing:0};
-  const candidates=pickBestRadioSuggestions(d,needed).filter(c=>!c.occupied);
-  const plans=candidates.slice(0,needed).map(c=>({date:c.date,slot:c.slot,program:c.program||programForSlot(c.date,c.slot),key:c.key}));
+  const free=radioPlannerCandidates(d).filter(c=>!c.occupied);
+  const byDate=new Map();
+  free.forEach(c=>{
+    if(!byDate.has(c.date)) byDate.set(c.date,[]);
+    byDate.get(c.date).push(c);
+  });
+  const plans=[];
+  // Geração automática: no máximo 1 entrada por dia para o mesmo prêmio.
+  // Se precisar repetir no mesmo dia/período, isso fica para ajuste manual.
+  Array.from(byDate.keys()).sort().forEach(date=>{
+    if(plans.length>=needed) return;
+    const options=byDate.get(date)||[];
+    if(options.length){
+      const pick=options[0];
+      plans.push({date:pick.date,slot:pick.slot,program:pick.program||programForSlot(pick.date,pick.slot),key:pick.key});
+    }
+  });
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
 }
 function renderSmartRadioReport(report){
@@ -5376,7 +5391,7 @@ function renderSmartRadioReport(report){
   summary.classList.toggle('warn',report.missing>0);
   summary.innerHTML = report.missing>0
     ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> O SISTEMA ENCONTROU ${report.plans.length} HORÁRIO(S) LIVRE(S) PARA ${esc(distributionLabel(d))}. CONFIRME O QUE FOI GERADO OU REFAÇA PARA ESCOLHER OUTROS HORÁRIOS.`
-    : `<strong>RODÍZIO PRONTO PARA CONFIRMAÇÃO.</strong> ${report.plans.length} HORÁRIO(S) GERADO(S) PARA ${esc(distributionLabel(d))}. CONFIRME PARA ENVIAR À ABA PROGRAMAÇÃO.`;
+    : `<strong>RODÍZIO PRONTO PARA CONFIRMAÇÃO.</strong> ${report.plans.length} HORÁRIO(S) GERADO(S) PARA ${esc(distributionLabel(d))}. CONFIRME PARA ENVIAR À ABA PROGRAMAÇÃO. A GERAÇÃO AUTOMÁTICA NÃO REPETE O MESMO PRÊMIO NO MESMO DIA; REPETIÇÕES FICAM PARA AJUSTE MANUAL.`;
   list.innerHTML = report.plans.length
     ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(p.program||programForSlot(p.date,p.slot))}</span></div>`).join('')
     : '<div class="smartReportEmpty">NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.</div>';
@@ -5399,7 +5414,14 @@ function confirmSmartRadioReport(){
   const newItems=validPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
   if(newItems.length) monthData().items.push(...newItems);
   pendingSmartRadioReport=null;
-  saveState(true); queueApiSave(80); closeDrawer('smartRadioReportDrawer'); render(); setView('programacao');
+  saveState(true); queueApiSave(80); closeDrawer('smartRadioReportDrawer'); render();
+  if(validPlans[0]){
+    if($('weekFilter')) $('weekFilter').value=weekLabel(validPlans[0].date);
+    if($('channelFilter')) $('channelFilter').value='';
+    if($('statusFilter')) $('statusFilter').value='';
+    renderProgramacao();
+  }
+  setView('programacao');
   toast(`${newItems.length} HORÁRIO(S) CONFIRMADO(S) E ENVIADO(S) PARA A PROGRAMAÇÃO.`);
 }
 function redoSmartRadioReport(){
@@ -5496,6 +5518,13 @@ function saveRadioPlanner(){
   queueApiSave(80);
   closeDrawer('radioPlannerDrawer');
   render();
+  if(plans[0]){
+    if($('weekFilter')) $('weekFilter').value=weekLabel(plans[0].date);
+    if($('channelFilter')) $('channelFilter').value='';
+    if($('statusFilter')) $('statusFilter').value='';
+    renderProgramacao();
+    setView('programacao');
+  }
   toast(`${newItems.length} HORÁRIO(S) DE RÁDIO ADICIONADO(S) À GRADE E À PAUTA DE ESTÚDIO.`);
 }
 
