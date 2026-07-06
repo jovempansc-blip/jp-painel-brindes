@@ -5382,6 +5382,36 @@ function clearDistForm(){
   setPromoStyleControls('distTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('distDesc',defaultPromoTextStyle('desc'),'desc');
 }
+
+function allDistributionsAcrossMonths(){
+  return Object.values(state.months || {}).flatMap(m => m.distributions || []);
+}
+function findDistributionTemplateByTitle(title, excludeId=''){
+  const target=norm(title);
+  if(!target || target.length < 4) return null;
+  const rows=allDistributionsAcrossMonths()
+    .filter(d=>d && d.id!==excludeId)
+    .filter(d=>norm(d.title || '') === target || norm(d.prize || '') === target)
+    .filter(d=>norm(d.description || d.notes || ''))
+    .sort((a,b)=>String(b.createdAt||b.startDate||b.date||'').localeCompare(String(a.createdAt||a.startDate||a.date||'')));
+  return rows[0] || null;
+}
+function applyDistributionTemplateFromTitle(force=false){
+  const title=$('distTitle')?.value || '';
+  const currentId=$('distId')?.value || '';
+  const found=findDistributionTemplateByTitle(title,currentId);
+  if(!found) return;
+  const currentDesc=norm($('distDescription')?.value || '');
+  const incomingDesc=found.description || found.notes || '';
+  if(!incomingDesc) return;
+  if(currentDesc && !force) return;
+  $('distDescription').value=incomingDesc;
+  if(found.descriptionStyle) setPromoStyleControls('distDesc', found.descriptionStyle, 'desc');
+  if(found.titleStyle && !$('distId')?.value) setPromoStyleControls('distTitle', found.titleStyle, 'title');
+  updateDistPairsPreview();
+  toast('DESCRIÇÃO REAPROVEITADA DO CADASTRO ANTERIOR.');
+}
+
 function updateDistPairsPreview(){
   const total=num($('distTotal')?.value);
   const isTicket=$('distPrizeType')?.value==='ingresso';
@@ -5445,7 +5475,7 @@ $('distForm').addEventListener('submit',e=>{
   const startDate=$('distStartDate').value;
   const endDate=$('distEndDate').value;
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return; }
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value)};
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
   syncDistributionToLinkedRadioItems(d);
@@ -5714,6 +5744,11 @@ document.addEventListener('click',e=>{ const btn=e.target.closest('#programStati
 bind('programStation','change',()=>{ populateProgramSelects(); });
 bind('promoKind','change',()=>{updatePromoKindMode(); updatePromoPreview();});
 bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotationSlots('dist')));
+
+bind('distTitle','blur',()=>applyDistributionTemplateFromTitle(false));
+bind('distTitle','change',()=>applyDistributionTemplateFromTitle(false));
+bind('distPrize','blur',()=>{ if(!norm($('distTitle')?.value)) applyDistributionTemplateFromTitle(false); });
+
 bind('returnBellBtn','click',()=>{ renderReturnAlerts(); openDrawer('returnDrawer'); });
 
 bind('exportBackupBtn','click',exportManualBackup);
