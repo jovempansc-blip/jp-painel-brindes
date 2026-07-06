@@ -1092,6 +1092,24 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   margin-bottom:4px;
 }
 
+
+/* AJUSTE — DISTRIBUIÇÃO NO CADASTRO E RELATÓRIO DO RODÍZIO */
+.distAllocBox{border:1px solid #e4e8ef;border-radius:16px;background:#f8f9fc;padding:10px}
+.distAllocTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;color:#667283;font-size:9px;font-weight:1000;letter-spacing:.06em}
+.distAllocGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:7px}
+.distAllocField{display:grid;gap:4px}
+.distAllocField span{color:#667283;font-size:8px;font-weight:1000;letter-spacing:.04em}
+.distAllocField input{width:100%;min-height:32px;border:1px solid #dce2eb;border-radius:10px;background:#fff;color:#171c26;text-align:center;font-size:12px;font-weight:1000;padding:6px}
+.smartReportSummary{border:1px solid #dfe5ec;border-radius:18px;background:#f8fafc;padding:13px;margin-bottom:12px;font-size:12px;line-height:1.45;color:#4f5b6c;font-weight:900}
+.smartReportSummary strong{color:#171c26}
+.smartReportSummary.warn{border-color:#ffd7a8;background:#fff7ec;color:#8a4b00}
+.smartReportList{display:grid;gap:8px;max-height:430px;overflow:auto;padding-right:4px}
+.smartReportRow{display:grid;grid-template-columns:120px 90px minmax(180px,1fr) minmax(220px,1.2fr);gap:8px;align-items:center;border:1px solid #e1e7ee;background:#fff;border-radius:15px;padding:10px;box-shadow:0 8px 18px rgba(17,23,34,.035)}
+.smartReportRow span{font-size:11px;color:#667283;font-weight:1000}.smartReportRow strong{font-size:12px;color:#171c26}
+.smartReportEmpty{border:1px dashed #ccd5df;border-radius:16px;padding:20px;background:#fff;color:#667283;font-size:12px;text-align:center;font-weight:1000}
+.smartReportActions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;margin-top:14px}
+@media(max-width:900px){.distAllocGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.smartReportRow{grid-template-columns:1fr}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1401,8 +1419,24 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
           <div class="field"><label>PADRÃO</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE COMO AS COLUNAS CONSUMEM O SALDO.</span></div>
           <div class="field"><label>PARES AUTO.</label><input class="control" id="distPairsPreview" readonly value="0 PARES"></div>
-          <div class="field"><label>QTD RÁDIO</label><input class="control" type="number" min="0" step="1" id="distRadioQty" value="0"><span class="smartRadioHint">GERA O RODÍZIO INTELIGENTE AO SALVAR.</span></div>
+
           
+
+          <div class="field full">
+            <label>DISTRIBUIÇÃO ENTRE OS SEGMENTOS</label>
+            <div class="distAllocBox">
+              <div class="distAllocTitle"><strong>INFORME A QUANTIDADE PARA CADA MEIO</strong><span>O CAMPO RÁDIO GERA O RODÍZIO INTELIGENTE.</span></div>
+              <div class="distAllocGrid">
+                <label class="distAllocField"><span>APP</span><input type="number" min="0" step="1" id="distAllocApp" value="0"></label>
+                <label class="distAllocField"><span>CAMAROTE</span><input type="number" min="0" step="1" id="distAllocCamarote" value="0"></label>
+                <label class="distAllocField"><span>CAMARIM</span><input type="number" min="0" step="1" id="distAllocCamarim" value="0"></label>
+                <label class="distAllocField"><span>EXTERNA</span><input type="number" min="0" step="1" id="distAllocRua" value="0"></label>
+                <label class="distAllocField"><span>RÁDIO</span><input type="number" min="0" step="1" id="distRadioQty" value="0"></label>
+                <label class="distAllocField"><span>REDES</span><input type="number" min="0" step="1" id="distAllocRs" value="0"></label>
+                <label class="distAllocField"><span>RESERVADO</span><input type="number" min="0" step="1" id="distAllocReservado" value="0"></label>
+              </div>
+            </div>
+          </div>
           <div class="field full">
             <label>HORÁRIOS DO RODÍZIO INTELIGENTE</label>
             <div class="rotationBox">
@@ -1424,6 +1458,21 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   </div>
 </div>
 
+
+
+<div class="drawer" id="smartRadioReportDrawer" aria-hidden="true">
+  <div class="drawerCard" style="width:min(920px,96vw)">
+    <div class="drawerHead"><h3>RELATÓRIO DO RODÍZIO GERADO</h3><button class="btn small" data-close="smartRadioReportDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <div id="smartRadioReportSummary" class="smartReportSummary"></div>
+      <div id="smartRadioReportList" class="smartReportList"></div>
+      <div class="smartReportActions">
+        <button class="btn" type="button" id="redoSmartRadioBtn">REFAZER / AJUSTAR HORÁRIOS</button>
+        <button class="btn red" type="button" id="confirmSmartRadioBtn">CONFIRMAR E ENVIAR PARA PROGRAMAÇÃO</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="drawer" id="radioPlannerDrawer" aria-hidden="true">
   <div class="drawerCard">
@@ -3999,8 +4048,9 @@ function ticketPairsCell(d){
 }
 function ticketUnitSelect(d,key){
   if(!isTicketDist(d)) return '';
-  const selected=ticketUnit(d,key);
   const qty=num(d[key]);
+  if(qty<=0) return '';
+  const selected=ticketUnit(d,key);
   const consumed=channelConsumed(d,key);
   return `<select class="distUnitSelect" data-dist-id="${esc(d.id)}" data-unit-key="${esc(key)}" title="TIPO DE DISTRIBUIÇÃO"><option value="unit" ${selected==='unit'?'selected':''}>IND.</option><option value="pair" ${selected==='pair'?'selected':''}>PAR</option></select><span class="ticketConsumptionHint">${consumed} ING.</span>`;
 }
@@ -5305,62 +5355,60 @@ function addRadioPlanRow(candidate=null, checked=true){
   refreshRadioPlannerRows();
 }
 
+
 let radioPlannerWarningText='';
-function radioPlannerNeeded(d){
-  return Math.max(0, num(d?.ar) - programmed(d?.id,'RÁDIO'));
-}
+let pendingSmartRadioReport=null;
+function radioPlannerNeeded(d){ return Math.max(0, num(d?.ar) - programmed(d?.id,'RÁDIO')); }
 function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
-  return {
-    id:id('BR'),
-    date:plan.date,
-    day:dayName(plan.date),
-    week:weekLabel(plan.date),
-    slot:normalizeSlot(plan.slot),
-    program:plan.program || programForSlot(plan.date,plan.slot),
-    distributionId:d.id,
-    prize:distributionLabel(d),
-    title:d.title || distributionLabel(d),
-    qty:1,
-    channel:'RÁDIO',
-    status:'NO AR',
-    notes:d.description || d.notes || '',
-    titleStyle:d.titleStyle || defaultPromoTextStyle('title'),
-    descriptionStyle:d.descriptionStyle || defaultPromoTextStyle('desc'),
-    autoRadioPlanner:true,
-    generatedBy:source,
-    sourceDistributionId:d.id,
-    sourcePeriodStart:distStartDate(d),
-    sourcePeriodEnd:distEndDate(d),
-    createdAt:new Date().toISOString()
-  };
+  return {id:id('BR'),date:plan.date,day:dayName(plan.date),week:weekLabel(plan.date),slot:normalizeSlot(plan.slot),program:plan.program||programForSlot(plan.date,plan.slot),distributionId:d.id,prize:distributionLabel(d),title:d.title||distributionLabel(d),qty:1,channel:'RÁDIO',status:'NO AR',notes:d.description||d.notes||'',titleStyle:d.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:d.descriptionStyle||defaultPromoTextStyle('desc'),autoRadioPlanner:true,generatedBy:source,sourceDistributionId:d.id,sourcePeriodStart:distStartDate(d),sourcePeriodEnd:distEndDate(d),createdAt:new Date().toISOString()};
 }
-function autoCreateRadioSchedule(d,options={}){
-  if(!d || !d.id) return {created:0,missing:0,needed:0};
+function buildSmartRadioPlans(d){
   const needed=radioPlannerNeeded(d);
-  if(needed<=0) return {created:0,missing:0,needed:0};
-  const picks=pickBestRadioSuggestions(d,needed).filter(c=>!c.occupied);
-  const plans=picks.slice(0,needed).map(c=>({date:c.date,slot:c.slot,program:c.program || programForSlot(c.date,c.slot)}));
-  const newItems=plans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_ROTATION'));
+  if(needed<=0) return {needed:0,plans:[],missing:0};
+  const candidates=pickBestRadioSuggestions(d,needed).filter(c=>!c.occupied);
+  const plans=candidates.slice(0,needed).map(c=>({date:c.date,slot:c.slot,program:c.program||programForSlot(c.date,c.slot),key:c.key}));
+  return {needed,plans,missing:Math.max(0,needed-plans.length)};
+}
+function renderSmartRadioReport(report){
+  const summary=$('smartRadioReportSummary'), list=$('smartRadioReportList');
+  if(!summary||!list) return;
+  const d=distributionById(report.distId);
+  summary.classList.toggle('warn',report.missing>0);
+  summary.innerHTML = report.missing>0
+    ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> O SISTEMA ENCONTROU ${report.plans.length} HORÁRIO(S) LIVRE(S) PARA ${esc(distributionLabel(d))}. CONFIRME O QUE FOI GERADO OU REFAÇA PARA ESCOLHER OUTROS HORÁRIOS.`
+    : `<strong>RODÍZIO PRONTO PARA CONFIRMAÇÃO.</strong> ${report.plans.length} HORÁRIO(S) GERADO(S) PARA ${esc(distributionLabel(d))}. CONFIRME PARA ENVIAR À ABA PROGRAMAÇÃO.`;
+  list.innerHTML = report.plans.length
+    ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(p.program||programForSlot(p.date,p.slot))}</span></div>`).join('')
+    : '<div class="smartReportEmpty">NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.</div>';
+}
+function openSmartRadioReport(d){
+  const built=buildSmartRadioPlans(d);
+  if(!built.needed) return false;
+  pendingSmartRadioReport={distId:d.id,plans:built.plans,missing:built.missing,needed:built.needed,createdAt:new Date().toISOString()};
+  renderSmartRadioReport(pendingSmartRadioReport);
+  openDrawer('smartRadioReportDrawer');
+  return true;
+}
+function confirmSmartRadioReport(){
+  const report=pendingSmartRadioReport;
+  if(!report){ closeDrawer('smartRadioReportDrawer'); return; }
+  const d=distributionById(report.distId);
+  if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA.'); return; }
+  const validPlans=(report.plans||[]).filter(p=>!radioSlotConflicts(p.date,p.slot).length);
+  if(validPlans.length !== (report.plans||[]).length){ alert('ALGUNS HORÁRIOS GERADOS FORAM OCUPADOS ENQUANTO A TELA ESTAVA ABERTA. CLIQUE EM REFAZER PARA ATUALIZAR.'); return; }
+  const newItems=validPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
   if(newItems.length) monthData().items.push(...newItems);
-  const missing=Math.max(0,needed-newItems.length);
-  return {created:newItems.length,missing,needed,plans};
+  pendingSmartRadioReport=null;
+  saveState(true); queueApiSave(80); closeDrawer('smartRadioReportDrawer'); render(); setView('programacao');
+  toast(`${newItems.length} HORÁRIO(S) CONFIRMADO(S) E ENVIADO(S) PARA A PROGRAMAÇÃO.`);
 }
-function handleRadioScheduleAfterSave(d,showOkToast=true){
-  const result=autoCreateRadioSchedule(d);
-  if(result.created || result.missing){
-    saveState(true);
-    updateDistributionRow(d.id);
-  }
-  if(result.missing>0){
-    radioPlannerWarningText=`<strong>AINDA FALTAM ${result.missing} HORÁRIO(S).</strong> O SISTEMA PREENCHEU ${result.created} HORÁRIO(S) LIVRE(S), MAS NÃO ENCONTROU ESPAÇO SUFICIENTE DENTRO DOS HORÁRIOS SELECIONADOS. ESCOLHA OUTROS HORÁRIOS, CRIE HORÁRIOS MANUAIS OU AJUSTE O RODÍZIO.`;
-    openRadioPlanner(d.id);
-    return result;
-  }
-  if(result.created && showOkToast){
-    toast(`${result.created} HORÁRIO(S) DE RÁDIO PROGRAMADO(S) AUTOMATICAMENTE.`);
-  }
-  return result;
+function redoSmartRadioReport(){
+  const report=pendingSmartRadioReport; closeDrawer('smartRadioReportDrawer'); if(!report) return;
+  const d=distributionById(report.distId); if(!d) return;
+  radioPlannerWarningText = report.missing>0 ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> AJUSTE OS HORÁRIOS MANUALMENTE OU ADICIONE NOVAS OPÇÕES PARA COMPLETAR A PROGRAMAÇÃO.` : '<strong>REFAÇA O RODÍZIO.</strong> AJUSTE DATA, HORÁRIO OU PROGRAMA ANTES DE SALVAR.';
+  openRadioPlanner(d.id);
 }
+function handleRadioScheduleAfterSave(d){ return openSmartRadioReport(d); }
 
 function openRadioPlanner(distId){
   const d=distributionById(distId); if(!d) return;
@@ -5455,7 +5503,13 @@ function clearDistForm(){
   $('distForm').reset(); $('distId').value=''; $('distDrawerTitle').textContent='NOVA DISTRIBUIÇÃO'; $('distDate').value=''; $('distShow').value=''; $('distStartDate').value=monthStartDate(); $('distEndDate').value=monthEndDate(); $('distTotal').value=0; $('distTitle').value=''; $('distDescription').value='';
   if($('distPrizeType')) $('distPrizeType').value='brinde';
   if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value='unit';
+  if($('distAllocApp')) $('distAllocApp').value=0;
+  if($('distAllocCamarote')) $('distAllocCamarote').value=0;
+  if($('distAllocCamarim')) $('distAllocCamarim').value=0;
+  if($('distAllocRua')) $('distAllocRua').value=0;
   if($('distRadioQty')) $('distRadioQty').value=0;
+  if($('distAllocRs')) $('distAllocRs').value=0;
+  if($('distAllocReservado')) $('distAllocReservado').value=0;
   updateDistPairsPreview();
   setRotationControls('dist',[]);
   setPromoStyleControls('distTitle',defaultPromoTextStyle('title'),'title');
@@ -5537,7 +5591,7 @@ function saveReserveNote(){
 }
 function editDist(distId){
   const d=distributionById(distId); if(!d) return;
-  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; if($('distRadioQty')) $('distRadioQty').value=num(d.ar); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
+  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; if($('distAllocApp')) $('distAllocApp').value=num(d.app); if($('distAllocCamarote')) $('distAllocCamarote').value=num(d.camarote); if($('distAllocCamarim')) $('distAllocCamarim').value=num(d.camarim); if($('distAllocRua')) $('distAllocRua').value=num(d.rua); if($('distRadioQty')) $('distRadioQty').value=num(d.ar); if($('distAllocRs')) $('distAllocRs').value=num(d.rs); if($('distAllocReservado')) $('distAllocReservado').value=num(d.reservado); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
 }
 function deleteDist(distId){
   if(programmed(distId)>0 && !confirm('ESTE BRINDE TEM ITENS NA PROGRAMAÇÃO. EXCLUIR MESMO ASSIM? OS ITENS FICARÃO SEM LINK.')) return;
@@ -5554,16 +5608,15 @@ $('distForm').addEventListener('submit',e=>{
   const startDate=$('distStartDate').value;
   const endDate=$('distEndDate').value;
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return; }
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:$('distRadioQty') ? num($('distRadioQty').value) : num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),app:$('distAllocApp') ? num($('distAllocApp').value) : num(existing.app),camarote:$('distAllocCamarote') ? num($('distAllocCamarote').value) : num(existing.camarote),camarim:$('distAllocCamarim') ? num($('distAllocCamarim').value) : num(existing.camarim),rua:$('distAllocRua') ? num($('distAllocRua').value) : num(existing.rua),ar:$('distRadioQty') ? num($('distRadioQty').value) : num(existing.ar),rs:$('distAllocRs') ? num($('distAllocRs').value) : num(existing.rs),reservado:$('distAllocReservado') ? num($('distAllocReservado').value) : num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
   syncDistributionToLinkedRadioItems(d);
   saveState(true);
   closeDrawer('distDrawer');
   render();
-  const radioResult=handleRadioScheduleAfterSave(d,false);
-  if(!radioResult.created && !radioResult.missing) toast('DISTRIBUIÇÃO SALVA E PAUTAS VINCULADAS ATUALIZADAS.');
-  else if(radioResult.created && !radioResult.missing) toast(`DISTRIBUIÇÃO SALVA. ${radioResult.created} HORÁRIO(S) PROGRAMADO(S) AUTOMATICAMENTE.`);
+  const openedReport=handleRadioScheduleAfterSave(d);
+  if(!openedReport) toast('DISTRIBUIÇÃO SALVA E PAUTAS VINCULADAS ATUALIZADAS.');
 });
 $('distTable').addEventListener('input',e=>{
   const input=e.target.closest('.distInlineNum');
@@ -5593,8 +5646,8 @@ $('distTable').addEventListener('change',e=>{
   if(!d) return;
   if(input.dataset.key === 'ar'){
     if(num(input.value) > 0){
-      const result=handleRadioScheduleAfterSave(d,true);
-      if(!result.created && !result.missing && radioPlannerNeeded(d)>0) openRadioPlanner(d.id);
+      const openedReport=handleRadioScheduleAfterSave(d);
+      if(!openedReport && radioPlannerNeeded(d)>0) openRadioPlanner(d.id);
     }
     return;
   }
@@ -5604,6 +5657,8 @@ $('distTable').addEventListener('change',e=>{
 });
 $('saveReserveNoteBtn').addEventListener('click',saveReserveNote);
 if($('saveRadioPlannerBtn')) $('saveRadioPlannerBtn').addEventListener('click',saveRadioPlanner);
+bind('confirmSmartRadioBtn','click',confirmSmartRadioReport);
+bind('redoSmartRadioBtn','click',redoSmartRadioReport);
 if($('addRadioPlannerRowBtn')) $('addRadioPlannerRowBtn').addEventListener('click',()=>{
   const d=distributionById(radioPlannerDistId);
   const first=pickBestRadioSuggestions(d,1)[0] || {date:distStartDate(d),slot:'09H',program:programFallbackForSlot(distStartDate(d),'09H')};
