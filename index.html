@@ -164,7 +164,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 .distMainTable th,.distMainTable td{vertical-align:middle;text-align:center;padding:10px 6px}
 .distMainTable th{line-height:1.12;text-align:center;font-size:10px}
 .distMainTable td.num,.distMainTable th.num{text-align:center}
-.distPrizeCol{width:310px}.distTinyCol{width:48px}.distSmallCol{width:55px}.distMidCol{width:66px}.distWideCol{width:76px}.distActionCol{width:82px}
+.distPrizeCol{width:310px}.distTinyCol{width:48px}.distSmallCol{width:55px}.distMidCol{width:66px}.distWideCol{width:76px}.distGenerateCol{width:74px}.distActionCol{width:112px}
 .distPrizeCell{vertical-align:middle!important;text-align:left!important;padding-left:12px!important;padding-right:12px!important;background:#f8f9fc;border-right:1px solid #dde3ea}
 .distPrizeWrap{display:flex;flex-direction:column;justify-content:center;min-height:100%;text-align:left;padding-right:8px}
 .distPrizeCell strong{display:block;font-size:12px;color:#232833;line-height:1.24;white-space:normal;word-break:normal;overflow-wrap:break-word;max-width:100%}
@@ -1234,6 +1234,24 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   line-height:1.35;
 }
 
+
+/* AJUSTE — COLUNA GERAR SEPARADA DA COLUNA AÇÕES */
+.distGenerateCell{text-align:center;vertical-align:middle!important;white-space:nowrap}
+.distGenerateBtn{
+  min-height:30px;
+  height:30px;
+  padding:0 10px;
+  border-radius:12px;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.02em;
+}
+.distActionsCell{min-width:112px}
+.distActions .actionIcon{width:23px;min-width:23px;min-height:23px}
+@media(max-width:980px){
+  .distGenerateBtn{min-width:58px}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1300,7 +1318,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             <div class="field"><label>ORDENAR NOMES</label><select class="control" id="distOrderFilter"><option value="alpha">ALFABÉTICA</option><option value="created">CADASTRO</option></select></div>
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
-          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">PARES</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVADO</th><th class="num">PROG.</th><th class="num">SALDO</th><th class="num">RETORNO</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
+          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">PARES</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVADO</th><th class="num">PROG.</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -5007,7 +5025,8 @@ function renderDistribuicao(){
       <td class="num" data-prog-id="${esc(d.id)}">${prog}</td>
       <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${balanceBadge(left)}</td>
       <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d)}</td>
-      <td class="distActionsCell"><div class="actions distActions"><button class="btn small" type="button" title="GERAR RODÍZIO" aria-label="GERAR RODÍZIO" onclick="generateRadioFromDist('${d.id}')">GERAR</button><button class="actionIcon ghost" title="PROGRAMAR MANUAL" aria-label="PROGRAMAR MANUAL" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
+      <td class="distGenerateCell"><button class="btn small distGenerateBtn" type="button" title="GERAR RODÍZIO" aria-label="GERAR RODÍZIO" onclick="generateRadioFromDist('${d.id}')">GERAR</button></td>
+      <td class="distActionsCell"><div class="actions distActions"><button class="actionIcon ghost" title="PROGRAMAR MANUAL" aria-label="PROGRAMAR MANUAL" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
     </tr>`;
   }).join('');
 }
@@ -5932,7 +5951,11 @@ function generateRadioFromDist(distId){
   if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA.'); return false; }
   if(num(d.ar)<=0){ alert('O DESTINO RÁDIO ESTÁ ZERADO. INFORME A QUANTIDADE DE RÁDIO PARA GERAR A PROGRAMAÇÃO.'); return false; }
   const needed=radioPlannerNeeded(d);
-  if(needed<=0){ alert('ESSA DISTRIBUIÇÃO JÁ TEM TODOS OS HORÁRIOS DE RÁDIO PROGRAMADOS.'); return false; }
+  if(needed<=0){
+    filterProgramByDist(d.id);
+    alert('ESSA DISTRIBUIÇÃO JÁ TEM TODOS OS HORÁRIOS DE RÁDIO PROGRAMADOS. A GRADE FOI ABERTA PARA CONFERÊNCIA.');
+    return false;
+  }
   const openedReport=handleRadioScheduleAfterSave(d);
   if(!openedReport){ alert('NÃO FOI POSSÍVEL GERAR O RELATÓRIO. VERIFIQUE DATA DE INÍCIO, DATA DE TÉRMINO E HORÁRIOS DO RODÍZIO.'); return false; }
   return true;
