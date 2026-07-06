@@ -1058,6 +1058,40 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   #programScheduleDrawer .weekdayPicker{grid-template-columns:repeat(4,1fr)}
 }
 
+
+/* AJUSTE — RODÍZIO INTELIGENTE AUTOMÁTICO */
+.smartRadioHint{
+  display:block;
+  margin-top:5px;
+  color:#7a8493;
+  font-size:8.5px;
+  font-weight:1000;
+  line-height:1.25;
+  letter-spacing:.04em;
+}
+.radioPlannerWarning{
+  display:none;
+  margin:0 0 12px;
+  border:1px solid #ffd7a8;
+  background:#fff7ec;
+  color:#8a4b00;
+  border-radius:16px;
+  padding:12px;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:1000;
+  text-transform:uppercase;
+}
+.radioPlannerWarning.show{
+  display:block;
+}
+.radioPlannerWarning strong{
+  display:block;
+  color:#171c26;
+  font-size:13px;
+  margin-bottom:4px;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1367,6 +1401,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
           <div class="field"><label>PADRÃO</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE COMO AS COLUNAS CONSUMEM O SALDO.</span></div>
           <div class="field"><label>PARES AUTO.</label><input class="control" id="distPairsPreview" readonly value="0 PARES"></div>
+          <div class="field"><label>QTD RÁDIO</label><input class="control" type="number" min="0" step="1" id="distRadioQty" value="0"><span class="smartRadioHint">GERA O RODÍZIO INTELIGENTE AO SALVAR.</span></div>
           
           <div class="field full">
             <label>HORÁRIOS DO RODÍZIO INTELIGENTE</label>
@@ -1395,6 +1430,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
     <div class="drawerHead"><h3>ASSISTENTE DE DISTRIBUIÇÃO RÁDIO</h3><button class="btn small" data-close="radioPlannerDrawer">FECHAR</button></div>
     <div class="drawerBody">
       <input type="hidden" id="radioPlannerDistId">
+      <div class="radioPlannerWarning" id="radioPlannerWarning"></div>
       <div class="radioPlannerIntro">
         <div class="radioPlannerBox">
           <strong id="radioPlannerPrize">PRÊMIO</strong>
@@ -5268,9 +5304,73 @@ function addRadioPlanRow(candidate=null, checked=true){
   list.insertAdjacentHTML('beforeend', radioPlanRowHtml(candidate || {}, checked));
   refreshRadioPlannerRows();
 }
+
+let radioPlannerWarningText='';
+function radioPlannerNeeded(d){
+  return Math.max(0, num(d?.ar) - programmed(d?.id,'RÁDIO'));
+}
+function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
+  return {
+    id:id('BR'),
+    date:plan.date,
+    day:dayName(plan.date),
+    week:weekLabel(plan.date),
+    slot:normalizeSlot(plan.slot),
+    program:plan.program || programForSlot(plan.date,plan.slot),
+    distributionId:d.id,
+    prize:distributionLabel(d),
+    title:d.title || distributionLabel(d),
+    qty:1,
+    channel:'RÁDIO',
+    status:'NO AR',
+    notes:d.description || d.notes || '',
+    titleStyle:d.titleStyle || defaultPromoTextStyle('title'),
+    descriptionStyle:d.descriptionStyle || defaultPromoTextStyle('desc'),
+    autoRadioPlanner:true,
+    generatedBy:source,
+    sourceDistributionId:d.id,
+    sourcePeriodStart:distStartDate(d),
+    sourcePeriodEnd:distEndDate(d),
+    createdAt:new Date().toISOString()
+  };
+}
+function autoCreateRadioSchedule(d,options={}){
+  if(!d || !d.id) return {created:0,missing:0,needed:0};
+  const needed=radioPlannerNeeded(d);
+  if(needed<=0) return {created:0,missing:0,needed:0};
+  const picks=pickBestRadioSuggestions(d,needed).filter(c=>!c.occupied);
+  const plans=picks.slice(0,needed).map(c=>({date:c.date,slot:c.slot,program:c.program || programForSlot(c.date,c.slot)}));
+  const newItems=plans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_ROTATION'));
+  if(newItems.length) monthData().items.push(...newItems);
+  const missing=Math.max(0,needed-newItems.length);
+  return {created:newItems.length,missing,needed,plans};
+}
+function handleRadioScheduleAfterSave(d,showOkToast=true){
+  const result=autoCreateRadioSchedule(d);
+  if(result.created || result.missing){
+    saveState(true);
+    updateDistributionRow(d.id);
+  }
+  if(result.missing>0){
+    radioPlannerWarningText=`<strong>AINDA FALTAM ${result.missing} HORÁRIO(S).</strong> O SISTEMA PREENCHEU ${result.created} HORÁRIO(S) LIVRE(S), MAS NÃO ENCONTROU ESPAÇO SUFICIENTE DENTRO DOS HORÁRIOS SELECIONADOS. ESCOLHA OUTROS HORÁRIOS, CRIE HORÁRIOS MANUAIS OU AJUSTE O RODÍZIO.`;
+    openRadioPlanner(d.id);
+    return result;
+  }
+  if(result.created && showOkToast){
+    toast(`${result.created} HORÁRIO(S) DE RÁDIO PROGRAMADO(S) AUTOMATICAMENTE.`);
+  }
+  return result;
+}
+
 function openRadioPlanner(distId){
   const d=distributionById(distId); if(!d) return;
   radioPlannerDistId=distId;
+  const warn=$('radioPlannerWarning');
+  if(warn){
+    warn.innerHTML=radioPlannerWarningText || '';
+    warn.classList.toggle('show', !!radioPlannerWarningText);
+    radioPlannerWarningText='';
+  }
   if($('radioPlannerDistId')) $('radioPlannerDistId').value=distId;
   const start=distStartDate(d), end=distEndDate(d);
   const radioTotal=num(d.ar);
@@ -5342,29 +5442,7 @@ function saveRadioPlanner(){
     return;
   }
   if(!plans.length){ toast('PREENCHA DATA, HORÁRIO E PROGRAMA.'); return; }
-  const newItems=plans.map(plan=>({
-    id:id('BR'),
-    date:plan.date,
-    day:dayName(plan.date),
-    week:weekLabel(plan.date),
-    slot:plan.slot,
-    program:plan.program,
-    distributionId:d.id,
-    prize:distributionLabel(d),
-    title:d.title || distributionLabel(d),
-    qty:1,
-    channel:'RÁDIO',
-    status:'NO AR',
-    notes:d.description || d.notes || '',
-    titleStyle:d.titleStyle || defaultPromoTextStyle('title'),
-    descriptionStyle:d.descriptionStyle || defaultPromoTextStyle('desc'),
-    autoRadioPlanner:true,
-    generatedBy:'RADIO_PLANNER',
-    sourceDistributionId:d.id,
-    sourcePeriodStart:distStartDate(d),
-    sourcePeriodEnd:distEndDate(d),
-    createdAt:new Date().toISOString()
-  }));
+  const newItems=plans.map(plan=>makeRadioScheduleItem(d,plan,'RADIO_PLANNER'));
   monthData().items.push(...newItems);
   saveState(true);
   queueApiSave(80);
@@ -5377,6 +5455,7 @@ function clearDistForm(){
   $('distForm').reset(); $('distId').value=''; $('distDrawerTitle').textContent='NOVA DISTRIBUIÇÃO'; $('distDate').value=''; $('distShow').value=''; $('distStartDate').value=monthStartDate(); $('distEndDate').value=monthEndDate(); $('distTotal').value=0; $('distTitle').value=''; $('distDescription').value='';
   if($('distPrizeType')) $('distPrizeType').value='brinde';
   if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value='unit';
+  if($('distRadioQty')) $('distRadioQty').value=0;
   updateDistPairsPreview();
   setRotationControls('dist',[]);
   setPromoStyleControls('distTitle',defaultPromoTextStyle('title'),'title');
@@ -5458,7 +5537,7 @@ function saveReserveNote(){
 }
 function editDist(distId){
   const d=distributionById(distId); if(!d) return;
-  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
+  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; if($('distRadioQty')) $('distRadioQty').value=num(d.ar); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
 }
 function deleteDist(distId){
   if(programmed(distId)>0 && !confirm('ESTE BRINDE TEM ITENS NA PROGRAMAÇÃO. EXCLUIR MESMO ASSIM? OS ITENS FICARÃO SEM LINK.')) return;
@@ -5475,11 +5554,16 @@ $('distForm').addEventListener('submit',e=>{
   const startDate=$('distStartDate').value;
   const endDate=$('distEndDate').value;
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return; }
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:existing.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),app:num(existing.app),camarote:num(existing.camarote),camarim:num(existing.camarim),rua:num(existing.rua),ar:$('distRadioQty') ? num($('distRadioQty').value) : num(existing.ar),rs:num(existing.rs),reservado:num(existing.reservado),reservadoNote:existing.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
   syncDistributionToLinkedRadioItems(d);
-  saveState(true); closeDrawer('distDrawer'); render(); toast('DISTRIBUIÇÃO SALVA E PAUTAS VINCULADAS ATUALIZADAS.');
+  saveState(true);
+  closeDrawer('distDrawer');
+  render();
+  const radioResult=handleRadioScheduleAfterSave(d,false);
+  if(!radioResult.created && !radioResult.missing) toast('DISTRIBUIÇÃO SALVA E PAUTAS VINCULADAS ATUALIZADAS.');
+  else if(radioResult.created && !radioResult.missing) toast(`DISTRIBUIÇÃO SALVA. ${radioResult.created} HORÁRIO(S) PROGRAMADO(S) AUTOMATICAMENTE.`);
 });
 $('distTable').addEventListener('input',e=>{
   const input=e.target.closest('.distInlineNum');
@@ -5508,7 +5592,10 @@ $('distTable').addEventListener('change',e=>{
   const d=distributionById(input.dataset.distId);
   if(!d) return;
   if(input.dataset.key === 'ar'){
-    if(num(input.value) > 0) openRadioPlanner(d.id);
+    if(num(input.value) > 0){
+      const result=handleRadioScheduleAfterSave(d,true);
+      if(!result.created && !result.missing && radioPlannerNeeded(d)>0) openRadioPlanner(d.id);
+    }
     return;
   }
   if(input.dataset.key !== 'reservado') return;
