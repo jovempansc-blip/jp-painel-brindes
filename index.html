@@ -1587,7 +1587,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             </div>
           </div>
         </div>
-        <div class="formActions"><button class="btn red" type="submit">SALVAR DISTRIBUIÇÃO</button><button class="btn" type="button" data-close="distDrawer">CANCELAR</button></div>
+        <div class="formActions"><button class="btn" type="button" id="generateDistRadioBtn">GERAR</button><button class="btn red" type="submit">SALVAR DISTRIBUIÇÃO</button><button class="btn" type="button" data-close="distDrawer">CANCELAR</button></div>
       </form>
     </div>
   </div>
@@ -5007,7 +5007,7 @@ function renderDistribuicao(){
       <td class="num" data-prog-id="${esc(d.id)}">${prog}</td>
       <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${balanceBadge(left)}</td>
       <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d)}</td>
-      <td class="distActionsCell"><div class="actions distActions"><button class="actionIcon ghost" title="PROGRAMAR" aria-label="PROGRAMAR" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
+      <td class="distActionsCell"><div class="actions distActions"><button class="btn small" type="button" title="GERAR RODÍZIO" aria-label="GERAR RODÍZIO" onclick="generateRadioFromDist('${d.id}')">GERAR</button><button class="actionIcon ghost" title="PROGRAMAR MANUAL" aria-label="PROGRAMAR MANUAL" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
     </tr>`;
   }).join('');
 }
@@ -5573,7 +5573,7 @@ function renderSmartRadioReport(report){
     ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`
     : `<strong>RELATÓRIO GERADO.</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`;
   list.innerHTML = report.plans.length
-    ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(p.program||programForSlot(p.date,p.slot))}</span></div>`).join('')
+    ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(periodLabel(p.period||periodKey(p.slot)))} · ${esc(p.program||programForSlot(p.date,p.slot))}</span></div>`).join('')
     : '<div class="smartReportEmpty">USE “REFAZER / AJUSTAR HORÁRIOS” PARA ESCOLHER OUTROS HORÁRIOS OU LANÇAR MANUALMENTE.</div>';
   if(confirmBtn) confirmBtn.disabled=!report.plans.length;
 }
@@ -5902,33 +5902,44 @@ function deleteDist(distId){
   monthData().items.forEach(i=>{ if(i.distributionId===distId) i.distributionId=''; });
   saveState(true); render(); toast('DISTRIBUIÇÃO EXCLUÍDA.');
 }
-$('distForm').addEventListener('submit',e=>{
-  e.preventDefault();
+function saveDistributionFromForm(generate=false){
   const idVal=$('distId').value || id('DST');
   const existing = monthData().distributions.find(x=>x.id===idVal) || {};
   const prize=norm($('distPrize').value);
   const startDate=$('distStartDate').value;
   const endDate=$('distEndDate').value;
-  if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return; }
+  if(!prize){ alert('INFORME O PRÊMIO.'); return null; }
+  if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return null; }
   const destValues=collectDistDestinationValues(existing);
   const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   const distributedTotal=Object.entries(destValues).filter(([k])=>['app','camarote','camarim','rua','ar','rs','reservado'].includes(k)).reduce((sum,[k,v])=>sum+destinationConsumed(v,(destValues.ticketUnits||{})[k]||d.ticketDefaultUnit,isTicketDist(d)),0);
-  if(num(d.total)>0 && distributedTotal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.\n\nTOTAL: ${num(d.total)}\nDISTRIBUÍDO: ${distributedTotal}`); return; }
+  if(num(d.total)>0 && distributedTotal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.\n\nTOTAL: ${num(d.total)}\nDISTRIBUÍDO: ${distributedTotal}`); return null; }
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
   syncDistributionToLinkedRadioItems(d);
   saveState(true);
   closeDrawer('distDrawer');
   render();
-  if(num(d.ar)>0){
-    setTimeout(()=>{
-      const saved=distributionById(d.id) || d;
-      const openedReport=handleRadioScheduleAfterSave(saved);
-      if(!openedReport) alert('DISTRIBUIÇÃO SALVA, MAS O RELATÓRIO NÃO FOI GERADO. VERIFIQUE DATA DE INÍCIO, DATA DE TÉRMINO E HORÁRIOS DO RODÍZIO.');
-    },30);
+  if(generate){
+    generateRadioFromDist(d.id);
   }else{
-    toast('DISTRIBUIÇÃO SALVA. SEM DESTINO RÁDIO PARA GERAR PROGRAMAÇÃO.');
+    toast('DISTRIBUIÇÃO SALVA.');
   }
+  return d;
+}
+function generateRadioFromDist(distId){
+  const d=distributionById(distId);
+  if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA.'); return false; }
+  if(num(d.ar)<=0){ alert('O DESTINO RÁDIO ESTÁ ZERADO. INFORME A QUANTIDADE DE RÁDIO PARA GERAR A PROGRAMAÇÃO.'); return false; }
+  const needed=radioPlannerNeeded(d);
+  if(needed<=0){ alert('ESSA DISTRIBUIÇÃO JÁ TEM TODOS OS HORÁRIOS DE RÁDIO PROGRAMADOS.'); return false; }
+  const openedReport=handleRadioScheduleAfterSave(d);
+  if(!openedReport){ alert('NÃO FOI POSSÍVEL GERAR O RELATÓRIO. VERIFIQUE DATA DE INÍCIO, DATA DE TÉRMINO E HORÁRIOS DO RODÍZIO.'); return false; }
+  return true;
+}
+$('distForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  saveDistributionFromForm(false);
 });
 $('distTable').addEventListener('input',e=>{
   const input=e.target.closest('.distInlineNum');
@@ -6202,6 +6213,7 @@ bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotation
 bind('distTitle','blur',()=>applyDistributionTemplateFromTitle(false));
 bind('distTitle','change',()=>applyDistributionTemplateFromTitle(false));
 bind('distPrize','blur',()=>{ if(!norm($('distTitle')?.value)) applyDistributionTemplateFromTitle(false); });
+bind('generateDistRadioBtn','click',()=>saveDistributionFromForm(true));
 
 if($('distRotationHours')) $('distRotationHours').addEventListener('change',()=>syncRotationAllFromHours('dist'));
 if($('distRotationAll')) $('distRotationAll').addEventListener('change',()=>{
@@ -6234,6 +6246,7 @@ function toCsv(){
   monthData().promos.forEach(p=>lines.push(['PROMOÇÕES',p.name||p.title||'',formatBR(p.startDate||''),formatBR(p.drawDate),p.drawTime||'',p.local||'',p.description||'',p.imageData ? 'COM IMAGEM' : 'SEM IMAGEM'].map(csvCell).join(';')));
   return '\ufeff'+lines.join('\n');
 }
+window.generateRadioFromDist=generateRadioFromDist;
 window.confirmSmartRadioReport=confirmSmartRadioReport;
 window.redoSmartRadioReport=redoSmartRadioReport;
 window.openProgramScheduleForm=openProgramScheduleForm;
