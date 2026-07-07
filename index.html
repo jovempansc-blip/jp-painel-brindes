@@ -1259,6 +1259,42 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   line-height:1.45;
 }
 
+
+/* AJUSTE — PROMO / PAUTA FUNCIONAL */
+.promoPreviewMeta{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-bottom:7px;
+  border:1px solid #e1e7ee;
+  background:#f8fafc;
+  border-radius:999px;
+  padding:5px 8px;
+  color:#667283;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:.05em;
+}
+.promoPreviewSchedule{
+  margin-top:10px;
+  border-top:1px solid #edf1f6;
+  padding-top:9px;
+  color:#667283;
+  font-size:10px;
+  font-weight:1000;
+  line-height:1.35;
+}
+#promoDescription{
+  white-space:pre-wrap;
+  line-height:1.45;
+}
+#promoDrawer .promoPreviewDesc{
+  white-space:pre-wrap;
+}
+#promoDrawer .hidden{
+  display:none!important;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1704,30 +1740,30 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div>
             <div class="formGrid">
               <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
-              <div class="field"><label>DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate" required></div>
-              <div class="field"><label>HORA</label><input class="control" type="time" id="promoDrawTime" required></div>
-              <div class="field"><label>TIPO DA PAUTA</label><select class="control" id="promoKind"><option value="promo">PROMOÇÃO</option><option value="merchan">MERCHAN</option></select></div>
-              <div class="field"><label>RÁDIO</label><select class="control" id="promoStation"><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option><option value="ALL">AMBOS</option></select></div>
-              <div class="field promoLocalField" id="promoLocalField"><label>LOCAL</label><select class="control" id="promoLocal"></select></div>
-              <div class="field merchanProgramField hidden" id="promoProgramField"><label>PROGRAMA DO MERCHAN</label><select class="control" id="promoProgram"></select></div>
+              <div class="field" id="promoDrawDateField"><label id="promoDrawDateLabel">DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate" required></div>
+              <div class="field" id="promoDrawTimeField"><label id="promoDrawTimeLabel">HORA DO SORTEIO</label><input class="control" type="time" id="promoDrawTime" required></div>
+              <div class="field"><label>TIPO DE CONTEÚDO</label><select class="control" id="promoKind"><option value="promo">PROMOÇÃO</option><option value="merchan">MERCHAN</option><option value="pauta">PAUTA ESPECIAL</option><option value="aviso">AVISO / COMUNICADO</option></select></div>
+              <div class="field"><label>RÁDIO DA PAUTA</label><select class="control" id="promoStation"><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option><option value="ALL">AMBAS</option></select></div>
+              <div class="field promoLocalField" id="promoLocalField"><label id="promoLocalLabel">CANAL DA PROMOÇÃO</label><select class="control" id="promoLocal"></select></div>
+              <div class="field merchanProgramField hidden" id="promoProgramField"><label id="promoProgramLabel">PROGRAMA / FAIXA</label><select class="control" id="promoProgram"></select></div>
               <div class="field full">
                 <label>HORÁRIOS DE LEITURA DA PAUTA</label>
                 <div class="promoReadSchedule" id="promoReadScheduleBox">
                   <div class="promoReadScheduleTop">
-                    <strong>ONDE ESSA PROMO APARECE NO ESTÚDIO</strong>
+                    <strong>ONDE ESSA PAUTA APARECE NO ESTÚDIO</strong>
                     <label class="promoReadAll"><input type="checkbox" id="promoReadAll" checked> TODOS OS HORÁRIOS</label>
                   </div>
                   <div class="promoReadHours" id="promoReadHours"></div>
                 </div>
               </div>
-              <div class="field wide"><label>NOME</label><input class="control" id="promoName" required>
+              <div class="field wide"><label>NOME / TÍTULO PARA O LOCUTOR</label><input class="control" id="promoName" required>
                 <div class="textStyleEditor" aria-label="EDITOR DO TÍTULO DA PROMOÇÃO">
                   <label class="miniField"><span>FONTE DO TÍTULO</span><select id="promoTitleFont"></select></label>
                   <label class="miniField"><span>TAMANHO</span><input id="promoTitleSize" type="number" min="10" max="42" step="1"></label>
                   <label class="miniField"><span>COR</span><input id="promoTitleColor" type="color"></label>
                 </div>
               </div>
-              <div class="field full"><label>DESCRIÇÃO</label><textarea class="control" id="promoDescription" required></textarea>
+              <div class="field full"><label>TEXTO PARA O LOCUTOR</label><textarea class="control" id="promoDescription" required></textarea>
                 <div class="textStyleEditor" aria-label="EDITOR DA DESCRIÇÃO DA PROMOÇÃO">
                   <label class="miniField"><span>FONTE DA DESCRIÇÃO</span><select id="promoDescFont"></select></label>
                   <label class="miniField"><span>TAMANHO</span><input id="promoDescSize" type="number" min="9" max="32" step="1"></label>
@@ -1743,8 +1779,10 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             <div class="promoPreviewCard">
               <div class="promoPreviewImage" id="promoPreviewImage">IMAGEM 1600 X 400</div>
               <div class="promoPreviewContent">
+                <div class="promoPreviewMeta" id="promoPreviewMeta">PROMOÇÃO · JOVEMPAN</div>
                 <div class="promoPreviewTitle" id="promoPreviewTitle">NOME DA PROMOÇÃO</div>
                 <div class="promoPreviewDesc" id="promoPreviewDesc">DESCRIÇÃO DA PROMOÇÃO PARA LEITURA NO AR.</div>
+                <div class="promoPreviewSchedule" id="promoPreviewSchedule">APARECE EM TODOS OS HORÁRIOS</div>
               </div>
             </div>
           </aside>
@@ -4581,7 +4619,14 @@ function saveProgramSchedule(e){
   saveState(true); render(); toast('HORÁRIO SALVO.');
 }
 function populateProgramSelects(){
-  const names=[...new Set([...programSchedules().map(p=>norm(p.name)),...monthData().items.map(i=>norm(i.program))].filter(Boolean))].sort();
+  const station=$('promoStation')?.value || 'JP1017';
+  const programRows=programSchedules()
+    .filter(p=>station==='ALL' || (p.station||'JP1017')===station)
+    .map(p=>norm(p.name));
+  const itemRows=monthData().items
+    .filter(i=>station==='ALL' || (i.station||'JP1017')===station)
+    .map(i=>norm(i.program));
+  const names=[...new Set([...programRows,...itemRows].filter(Boolean))].sort();
   const promoProgram=$('promoProgram');
   if(promoProgram){
     const current=promoProgram.value;
@@ -4617,17 +4662,40 @@ function rotationAllowedSlots(d){
   const slots=(d&&Array.isArray(d.rotationSlots)&&d.rotationSlots.length)?d.rotationSlots.map(normalizeSlot):RADIO_PLANNER_SLOTS;
   return slots;
 }
+function promoKindLabel(value){
+  const k=String(value||'promo').toLowerCase();
+  if(k==='merchan') return 'MERCHAN';
+  if(k==='pauta') return 'PAUTA ESPECIAL';
+  if(k==='aviso') return 'AVISO / COMUNICADO';
+  return 'PROMOÇÃO';
+}
 function isMerchanMain(p){
   const k=norm(p.kind||p.promoKind||p.type||'');
   return k==='MERCHAN' || k==='MERCHANDISING';
 }
+function isPromoKindMerchan(){
+  return $('promoKind')?.value==='merchan';
+}
 function updatePromoKindMode(){
-  const isM=$('promoKind')?.value==='merchan';
+  const kind=$('promoKind')?.value || 'promo';
+  const isM=kind==='merchan';
+  const isPromo=kind==='promo';
   const lf=$('promoLocalField'), pf=$('promoProgramField');
   if(lf) lf.classList.toggle('hidden',isM);
   if(pf) pf.classList.toggle('hidden',!isM);
   if($('promoLocal')) $('promoLocal').required=!isM;
   if($('promoProgram')) $('promoProgram').required=isM;
+
+  if($('promoLocalLabel')){
+    $('promoLocalLabel').textContent = isPromo ? 'CANAL DA PROMOÇÃO' : 'CANAL / DESTINO DA PAUTA';
+  }
+  if($('promoProgramLabel')) $('promoProgramLabel').textContent='PROGRAMA / FAIXA';
+  if($('promoDrawDateLabel')) $('promoDrawDateLabel').textContent = isM ? 'TÉRMINO' : (isPromo ? 'DATA DE SORTEIO' : 'DATA DE EXIBIÇÃO');
+  if($('promoDrawTimeLabel')) $('promoDrawTimeLabel').textContent = isPromo ? 'HORA DO SORTEIO' : 'HORÁRIO';
+  if($('promoDrawerTitle')) $('promoDrawerTitle').textContent = $('promoId')?.value ? `EDITAR ${promoKindLabel(kind)}` : `NOVA ${promoKindLabel(kind)}`;
+  populatePromoLocalSelect();
+  populateProgramSelects();
+  updatePromoPreview();
 }
 
 
@@ -6285,25 +6353,47 @@ function promoInlineStyle(style,type){
   const s=style || d;
   return `font-family:'${safePromoFont(s.font || d.font)}', Arial, sans-serif;font-size:${safePromoSize(s.size,type==='title'?10:9,type==='title'?42:32,d.size)}px;color:${safePromoHex(s.color,d.color)}`;
 }
+function promoReadScheduleText(){
+  if($('promoReadAll')?.checked) return 'APARECE EM TODOS OS HORÁRIOS';
+  const hours=getPromoReadHoursFromForm();
+  return hours.length ? `APARECE NO ESTÚDIO: ${hours.map(h=>h+'H').join(', ')}` : 'NENHUM HORÁRIO SELECIONADO';
+}
 function updatePromoPreview(){
   populatePromoFontSelects();
   const imgData = $('promoImageData')?.value || '';
   const name = norm($('promoName')?.value || '');
-  const desc = $('promoDescription')?.value || '';
+  const desc = textNorm($('promoDescription')?.value || '');
+  const kind=$('promoKind')?.value||'promo';
+  const station=$('promoStation')?.value||'JP1017';
+  const local=$('promoLocal')?.value||'';
+  const program=$('promoProgram')?.value||'';
   const titleStyle = promoStyleFromForm('promoTitle','title');
   const descStyle = promoStyleFromForm('promoDesc','desc');
   const imgBox = $('promoPreviewImage');
   if(imgBox) imgBox.innerHTML = imgData ? `<img src="${imgData}" alt="IMAGEM DA PROMOÇÃO">` : 'IMAGEM 1600 X 400';
+  const meta=$('promoPreviewMeta');
+  if(meta){
+    const parts=[promoKindLabel(kind),stationLabel(station)];
+    if(isPromoKindMerchan() && program) parts.push(program);
+    if(!isPromoKindMerchan() && local) parts.push(local);
+    meta.textContent=parts.join(' · ');
+  }
   const titleBox = $('promoPreviewTitle');
-  if(titleBox){ titleBox.textContent = name || 'NOME DA PROMOÇÃO'; applyPromoTextStyle(titleBox,titleStyle,'title'); }
+  if(titleBox){ titleBox.textContent = name || (kind==='merchan'?'NOME DO MERCHAN':'NOME DA PAUTA'); applyPromoTextStyle(titleBox,titleStyle,'title'); }
   const descBox = $('promoPreviewDesc');
-  if(descBox){ descBox.textContent = desc || 'DESCRIÇÃO DA PROMOÇÃO PARA LEITURA NO AR.'; applyPromoTextStyle(descBox,descStyle,'desc'); }
+  if(descBox){ descBox.textContent = desc || 'TEXTO PARA O LOCUTOR LER NO AR.'; applyPromoTextStyle(descBox,descStyle,'desc'); }
+  const schedule=$('promoPreviewSchedule');
+  if(schedule) schedule.textContent = promoReadScheduleText();
 }
 function populatePromoLocalSelect(){
   const sel=$('promoLocal');
   if(!sel) return;
   const current=sel.value;
-  sel.innerHTML = '<option value="">SELECIONE</option>' + CHANNELS.map(([,label])=>`<option>${esc(label)}</option>`).join('');
+  const kind=$('promoKind')?.value || 'promo';
+  const promoOptions=['RÁDIO','INSTAGRAM','APP','SITE','WHATSAPP','EXTERNA'];
+  const pautaOptions=['RÁDIO','ESTÚDIO','INTERNO','REDES SOCIAIS','APP','SITE'];
+  const opts = kind==='promo' ? promoOptions : pautaOptions;
+  sel.innerHTML = '<option value="">SELECIONE</option>' + opts.map(label=>`<option>${esc(label)}</option>`).join('');
   if([...sel.options].some(o=>o.value===current)) sel.value=current;
 }
 const PROMO_READ_HOURS = Array.from({length:17},(_,idx)=>String(idx+6).padStart(2,'0'));
@@ -6318,6 +6408,7 @@ function updatePromoReadScheduleState(){
   const locked=!!$('promoReadAll')?.checked;
   const box=$('promoReadScheduleBox');
   if(box) box.classList.toggle('locked',locked);
+  updatePromoPreview();
 }
 function getPromoReadHoursFromForm(){
   populatePromoReadHours();
@@ -6385,7 +6476,7 @@ $('promoImage').addEventListener('change',e=>{
   };
   reader.readAsDataURL(file);
 });
-['promoName','promoDescription','promoTitleFont','promoTitleSize','promoTitleColor','promoDescFont','promoDescSize','promoDescColor'].forEach(id=>bind(id,'input',updatePromoPreview));
+['promoName','promoDescription','promoTitleFont','promoTitleSize','promoTitleColor','promoDescFont','promoDescSize','promoDescColor','promoLocal','promoProgram','promoDrawDate','promoDrawTime'].forEach(id=>bind(id,'input',updatePromoPreview));
 bind('promoReadAll','change',updatePromoReadScheduleState);
 document.addEventListener('change',e=>{ if(e.target.closest('#promoReadHours')) updatePromoReadScheduleState(); });
 ['itemTitleFont','itemTitleSize','itemTitleColor','itemDescFont','itemDescSize','itemDescColor','distTitleFont','distTitleSize','distTitleColor','distDescFont','distDescSize','distDescColor'].forEach(id=>bind(id,'input',()=>{}));
@@ -6403,7 +6494,7 @@ $('promoForm').addEventListener('submit',e=>{
     station:$('promoStation')?.value || 'JP1017',
     name:norm($('promoName').value),
     title:norm($('promoName').value),
-    description:$('promoDescription').value.trim(),
+    description:textNorm($('promoDescription').value),
     titleStyle:promoStyleFromForm('promoTitle','title'),
     descriptionStyle:promoStyleFromForm('promoDesc','desc'),
     readMode:$('promoReadAll')?.checked ? 'all' : 'selected',
@@ -6446,6 +6537,7 @@ bind('addProgramScheduleBtn','click',()=>openProgramScheduleForm());
 document.addEventListener('click',e=>{ const btn=e.target.closest('#programStationFilterTabs .stationTab'); if(btn) setProgramStationFilter(btn.dataset.station); });
 bind('programStation','change',()=>{ populateProgramSelects(); });
 bind('promoKind','change',()=>{updatePromoKindMode(); updatePromoPreview();});
+bind('promoStation','change',()=>{populateProgramSelects(); updatePromoKindMode(); updatePromoPreview();});
 bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotationSlots('dist')));
 
 bind('distTitle','blur',()=>applyDistributionTemplateFromTitle(false));
