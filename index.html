@@ -1875,6 +1875,23 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   .backupSecurityPanel .backupDiagGrid{grid-template-columns:1fr}
 }
 
+
+/* AJUSTE — FIREBASE COMO SERVIDOR OFICIAL */
+.serverSourceBox{
+  border:1px solid #ccefdc;
+  border-radius:18px;
+  background:#fbfffd;
+  padding:12px 14px;
+  margin-top:12px;
+  color:#137947;
+  font-size:11px;
+  line-height:1.45;
+  font-weight:900;
+}
+.serverSourceBox strong{
+  color:#171c26;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2098,6 +2115,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
         <div class="panelBody backupSecurityPanel">
           <div class="backupGrid backupDiagGrid" id="backupSummaryCards"></div>
           <div class="backupRiskBox" id="backupRiskBox"></div>
+          <div class="serverSourceBox"><strong>SERVIDOR OFICIAL:</strong><br>Ao abrir qualquer link do painel, estúdio, recepção ou preview, o sistema carrega automaticamente a base do Firebase. Cada alteração salva no painel principal ou nos links de estúdio alimenta o servidor e atualiza os demais navegadores em tempo real.</div>
           <div class="backupMonthBreakdown" id="backupMonthBreakdown"></div>
 
           <div class="backupSection safe">
@@ -2107,7 +2125,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             </div>
             <div class="backupActions">
               <button class="btn" id="verifyFirebaseBtn" type="button">VERIFICAR BASE DO FIREBASE</button>
-              <button class="btn" id="forceLoadFirebaseBtn" type="button">CARREGAR FIREBASE NESTE NAVEGADOR</button>
+              <button class="btn" id="forceLoadFirebaseBtn" type="button">RECARREGAR DO FIREBASE</button>
               <button class="btn red" id="exportBackupBtn">EXPORTAR BACKUP AGORA</button>
             </div>
           </div>
@@ -2119,7 +2137,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             </div>
             <div class="backupActions">
               <button class="btn dark" id="chooseBackupBtn">IMPORTAR / RESTAURAR BACKUP</button>
-              <button class="btn" id="forceUploadFirebaseBtn" type="button">ENVIAR ESTE NAVEGADOR PARA O FIREBASE</button>
+              <button class="btn" id="forceUploadFirebaseBtn" type="button">FORÇAR ENVIO PARA O FIREBASE</button>
               <input id="backupFileInput" type="file" accept=".json,application/json" style="display:none">
             </div>
           </div>
@@ -2138,7 +2156,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 
           <div class="backupInfoBox backupWarning" style="margin-top:14px">
             <strong>ATENÇÃO:</strong><br>
-            Importar backup ou enviar este navegador para o Firebase substitui a base oficial. Use apenas quando tiver certeza de que este navegador ou arquivo contém a estrutura correta.
+            Importar backup ou forçar envio para o Firebase substitui a base oficial. No uso normal, não é necessário importar em cada navegador: todos os links leem o servidor automaticamente.
           </div>
         </div>
       </div>
@@ -4629,6 +4647,7 @@ let firebaseApplyingRemote = false;
 let firebaseLastLocalWrite = 0;
 let firebasePendingSave = false;
 let firebaseInitialSnapshotSeen = false;
+let firebaseServerLoaded = false;
 
 function firebaseConfigReady(){
   return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
@@ -4705,6 +4724,7 @@ function applyRemoteFirebaseState(remoteState){
   if(!remoteState || !remoteState.months) return;
   firebaseApplyingRemote = true;
   state = normalizePanelState(remoteState);
+  firebaseServerLoaded = true;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));
   ensureCurrentMonthAvailable();
@@ -4712,17 +4732,12 @@ function applyRemoteFirebaseState(remoteState){
   firebaseApplyingRemote = false;
 }
 async function handleEmptyFirebase(){
-  const localCount = hasLocalPersistedState() ? countStateRecords(state) : 0;
-  if(localCount>0){
-    await saveStateToApi();
-    return;
-  }
-  const imported = await importLegacyStateToFirebase();
-  if(!imported){
-    normalizePanelState(state);
-    updateSyncStatus('local','FIREBASE VAZIO');
-    renderBackup();
-  }
+  // O Firebase é a fonte oficial. Navegador local nunca envia dados automaticamente
+  // quando o servidor está vazio, para evitar sobrescrever/apagar a base oficial.
+  firebaseServerLoaded = true;
+  normalizePanelState(state);
+  updateSyncStatus('local','FIREBASE VAZIO');
+  renderBackup();
 }
 function initFirebaseSync(){
   if(firebaseStarted) return;
@@ -4792,6 +4807,7 @@ async function saveStateToApi(){
       version: 'FIREBASE_RTDB_V1'
     });
     localStorage.setItem('jp_painel_last_firebase_save', new Date().toLocaleString('pt-BR'));
+    firebaseServerLoaded = true;
     firebasePendingSave = false;
     updateSyncStatus('online','FIREBASE');
     renderBackup();
@@ -5148,7 +5164,7 @@ function renderBackup(){
   const uploadBtn=$('forceUploadFirebaseBtn');
   if(uploadBtn){
     uploadBtn.disabled = total===0;
-    uploadBtn.title = total===0 ? 'ENVIO BLOQUEADO: BASE LOCAL VAZIA' : 'ENVIAR ESTE NAVEGADOR PARA O FIREBASE';
+    uploadBtn.title = total===0 ? 'ENVIO BLOQUEADO: BASE LOCAL VAZIA' : 'FORÇAR ENVIO PARA O FIREBASE';
   }
 }
 function buildBackupPayload(){
@@ -7736,7 +7752,7 @@ updatePromoReadScheduleState();
 ensureCurrentMonthAvailable();
 render();
 syncStateFromApi(true);
-window.addEventListener('beforeunload',()=>saveState(true));
+window.addEventListener('beforeunload',()=>{ normalizePanelState(state); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); });
 setInterval(()=>{ ensureCurrentMonthAvailable(); render(); },60000);
 setInterval(()=>syncStateFromApi(false),30000);
 </script>

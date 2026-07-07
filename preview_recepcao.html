@@ -140,6 +140,10 @@ function channelName(i){return upper(i.channel||'RÁDIO');}
 function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
 firebase.initializeApp(FIREBASE_CONFIG);
 const firebaseRef=firebase.database().ref(FIREBASE_ROOT_PATH);
+function countStateRecords(data){
+  if(!data || !data.months) return 0;
+  return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
+}
 function saveReceptionState(){
   return firebaseRef.set({
     state,

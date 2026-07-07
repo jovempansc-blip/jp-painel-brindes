@@ -949,6 +949,7 @@ let firebaseSaveTimer=null;
 let firebaseApplyingRemote=false;
 let firebaseLastLocalWrite=0;
 let firebasePendingSave=false;
+let firebaseServerLoaded=false;
 
 function firebaseConfigReady(){
   return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
@@ -967,7 +968,7 @@ function saveState(){
 }
 function countStateRecords(data){
   if(!data || !data.months) return 0;
-  return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0);
+  return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
 }
 function apiJsonp(params={}){
   return new Promise((resolve,reject)=>{
@@ -1004,6 +1005,7 @@ function applyRemoteFirebaseState(remoteState){
   if(!remoteState || !remoteState.months) return;
   firebaseApplyingRemote=true;
   state=remoteState;
+  firebaseServerLoaded=true;
   selectStudioMonth();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if(!manual) selectedIndex=-1;
@@ -1011,12 +1013,9 @@ function applyRemoteFirebaseState(remoteState){
   firebaseApplyingRemote=false;
 }
 async function handleEmptyFirebase(){
-  const localCount=countStateRecords(state);
-  if(localCount>0){
-    await saveStateToApi();
-    return;
-  }
-  await importLegacyStateToFirebase();
+  // Firebase é a fonte oficial. O estúdio não envia cache local quando o servidor está vazio.
+  firebaseServerLoaded=true;
+  render();
 }
 function initFirebaseSync(){
   if(firebaseStarted) return;
@@ -1062,6 +1061,11 @@ async function saveStateToApi(){
     if(!firebaseReady || !firebaseRef) return;
   }
   try{
+    if(countStateRecords(state)===0){
+      firebasePendingSave=false;
+      console.warn('ENVIO BLOQUEADO: BASE DO ESTÚDIO VAZIA.');
+      return;
+    }
     await firebaseRef.set({
       state,
       updatedAt: window.firebase.database.ServerValue.TIMESTAMP,
@@ -1070,6 +1074,7 @@ async function saveStateToApi(){
       user: 'JOVEM_PAN_FLORIPA',
       version: 'FIREBASE_RTDB_V1'
     });
+    firebaseServerLoaded=true;
     firebasePendingSave=false;
   }catch(err){
     console.warn('FIREBASE SAVE ERROR',err);
