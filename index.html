@@ -1768,6 +1768,113 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   }
 }
 
+
+/* AJUSTE — CENTRAL DE SEGURANÇA DO BANCO */
+.backupSecurityPanel .backupDiagGrid{
+  grid-template-columns:repeat(6,minmax(130px,1fr));
+}
+.backupRiskBox{
+  border:1px solid #dfe5ec;
+  border-radius:18px;
+  background:#f8fafc;
+  padding:14px 16px;
+  margin:12px 0;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:900;
+  color:#526075;
+}
+.backupRiskBox.ok{
+  background:#effaf4;
+  border-color:#ccefdc;
+  color:#137947;
+}
+.backupRiskBox.warn{
+  background:#fff7ec;
+  border-color:#ffd7a8;
+  color:#8a4b00;
+}
+.backupRiskBox.danger{
+  background:#fff0f4;
+  border-color:#ffc0cc;
+  color:#c9002b;
+}
+.backupRiskBox strong{
+  display:block;
+  color:#171c26;
+  font-size:13px;
+  margin-bottom:4px;
+}
+.backupSection{
+  border:1px solid #dfe5ec;
+  border-radius:18px;
+  padding:14px 16px;
+  margin-top:14px;
+  background:#fff;
+}
+.backupSection.safe{
+  border-color:#ccefdc;
+  background:#fbfffd;
+}
+.backupSection.danger{
+  border-color:#ffd7a8;
+  background:#fffdf8;
+}
+.backupSectionHead{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  margin-bottom:10px;
+}
+.backupSectionHead strong{
+  color:#171c26;
+  font-size:12px;
+  font-weight:1000;
+  letter-spacing:.05em;
+}
+.backupSectionHead span{
+  color:#667283;
+  font-size:10px;
+  font-weight:900;
+}
+.backupPreviewBox{
+  display:none;
+  border:1px dashed #ccd6e1;
+  border-radius:16px;
+  background:#f8fafc;
+  padding:12px 14px;
+  margin-top:12px;
+  color:#526075;
+  font-size:11px;
+  line-height:1.45;
+  font-weight:900;
+}
+.backupPreviewBox.show{
+  display:block;
+}
+.backupPreviewBox strong{
+  color:#171c26;
+}
+.backupMonthBreakdown td.stateOk{
+  color:#137947;
+  font-weight:1000;
+}
+.backupMonthBreakdown td.stateEmpty{
+  color:#c9002b;
+  font-weight:1000;
+}
+.backupActions .btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+  filter:grayscale(.3);
+}
+@media(max-width:1180px){
+  .backupSecurityPanel .backupDiagGrid{grid-template-columns:repeat(3,minmax(130px,1fr))}
+}
+@media(max-width:760px){
+  .backupSecurityPanel .backupDiagGrid{grid-template-columns:1fr}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1986,28 +2093,35 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
     <section class="view" id="view-backup">
       <div class="panel">
         <div class="panelHead">
-          <div><h2>BACKUP DO BANCO</h2><p>EXPORTAÇÃO MANUAL DO FIREBASE EM UM ARQUIVO ÚNICO PARA RESTAURAÇÃO EM CASO DE ERRO.</p></div>
+          <div><h2>CENTRAL DE SEGURANÇA DO BANCO</h2><p>DIAGNÓSTICO, BACKUP, SINCRONIZAÇÃO E RESTAURAÇÃO CONTROLADA DO FIREBASE.</p></div>
         </div>
-        <div class="panelBody">
-          <div class="backupGrid" id="backupSummaryCards"></div>
+        <div class="panelBody backupSecurityPanel">
+          <div class="backupGrid backupDiagGrid" id="backupSummaryCards"></div>
+          <div class="backupRiskBox" id="backupRiskBox"></div>
           <div class="backupMonthBreakdown" id="backupMonthBreakdown"></div>
 
-          <div class="backupInfoBox">
-            <strong>COMO USAR:</strong><br>
-            Clique em <strong>EXPORTAR BACKUP AGORA</strong> e salve sempre por cima do mesmo arquivo no computador. 
-            O arquivo contém toda a estrutura atual do painel: distribuição, programação, promoções, resultados e histórico de leitura.
+          <div class="backupSection safe">
+            <div class="backupSectionHead">
+              <strong>AÇÕES SEGURAS</strong>
+              <span>Essas ações não substituem a base oficial por dados locais vazios.</span>
+            </div>
+            <div class="backupActions">
+              <button class="btn" id="verifyFirebaseBtn" type="button">VERIFICAR BASE DO FIREBASE</button>
+              <button class="btn" id="forceLoadFirebaseBtn" type="button">CARREGAR FIREBASE NESTE NAVEGADOR</button>
+              <button class="btn red" id="exportBackupBtn">EXPORTAR BACKUP AGORA</button>
+            </div>
           </div>
 
-          <div class="backupActions">
-            <button class="btn red" id="exportBackupBtn">EXPORTAR BACKUP AGORA</button>
-            <button class="btn dark" id="chooseBackupBtn">IMPORTAR / RESTAURAR BACKUP</button>
-            <button class="btn" id="forceUploadFirebaseBtn" type="button">ENVIAR ESTE NAVEGADOR PARA O FIREBASE</button>
-            <button class="btn" id="forceLoadFirebaseBtn" type="button">CARREGAR FIREBASE NESTE NAVEGADOR</button>
-            <input id="backupFileInput" type="file" accept=".json,application/json" style="display:none">
-          </div>
-          <div class="firebaseSyncBox">
-            <strong>SINCRONIZAÇÃO ENTRE NAVEGADORES:</strong><br>
-            Se os dados aparecem em um navegador e não aparecem em outro, eles ainda estão locais. Abra o navegador onde os dados aparecem e clique em <strong>ENVIAR ESTE NAVEGADOR PARA O FIREBASE</strong>. Depois, no outro navegador, clique em <strong>CARREGAR FIREBASE NESTE NAVEGADOR</strong> ou atualize a página.
+          <div class="backupSection danger">
+            <div class="backupSectionHead">
+              <strong>AÇÕES DE RISCO</strong>
+              <span>Essas ações podem substituir a base oficial. Use apenas com conferência.</span>
+            </div>
+            <div class="backupActions">
+              <button class="btn dark" id="chooseBackupBtn">IMPORTAR / RESTAURAR BACKUP</button>
+              <button class="btn" id="forceUploadFirebaseBtn" type="button">ENVIAR ESTE NAVEGADOR PARA O FIREBASE</button>
+              <input id="backupFileInput" type="file" accept=".json,application/json" style="display:none">
+            </div>
           </div>
 
           <div class="backupImportRow">
@@ -2015,10 +2129,16 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             <button class="btn ghost" id="clearBackupLocalBtn">LIMPAR MARCAÇÃO DE BACKUP</button>
           </div>
 
+          <div class="backupPreviewBox" id="backupPreviewBox"></div>
+
+          <div class="firebaseSyncBox">
+            <strong>REGRA DE SEGURANÇA:</strong><br>
+            O painel bloqueia envio de base local vazia para o Firebase. Antes de restaurar ou enviar dados, confira os totais, a tabela mensal e o diagnóstico do Firebase.
+          </div>
+
           <div class="backupInfoBox backupWarning" style="margin-top:14px">
             <strong>ATENÇÃO:</strong><br>
-            Ao importar um backup, o painel substitui a base atual do Firebase pelo conteúdo do arquivo. 
-            Use apenas quando for necessário restaurar a estrutura oficial.
+            Importar backup ou enviar este navegador para o Firebase substitui a base oficial. Use apenas quando tiver certeza de que este navegador ou arquivo contém a estrutura correta.
           </div>
         </div>
       </div>
@@ -4532,7 +4652,8 @@ function saveState(silent=false){
 }
 function countStateRecords(data){
   if(!data || !data.months) return 0;
-  return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0);
+  const monthTotal=Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0);
+  return monthTotal + (data.schedules||[]).length + (data.programSchedules||[]).length;
 }
 function hasLocalPersistedState(){
   try{
@@ -4585,6 +4706,7 @@ function applyRemoteFirebaseState(remoteState){
   firebaseApplyingRemote = true;
   state = normalizePanelState(remoteState);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));
   ensureCurrentMonthAvailable();
   render();
   firebaseApplyingRemote = false;
@@ -4598,7 +4720,8 @@ async function handleEmptyFirebase(){
   const imported = await importLegacyStateToFirebase();
   if(!imported){
     normalizePanelState(state);
-    await saveStateToApi();
+    updateSyncStatus('local','FIREBASE VAZIO');
+    renderBackup();
   }
 }
 function initFirebaseSync(){
@@ -4653,6 +4776,13 @@ async function saveStateToApi(){
   }
   try{
     normalizePanelState(state);
+    if(countStateRecords(state)===0){
+      firebasePendingSave=false;
+      updateSyncStatus('error','BASE VAZIA');
+      renderBackup();
+      console.warn('ENVIO BLOQUEADO: BASE LOCAL VAZIA.');
+      return;
+    }
     await firebaseRef.set({
       state,
       updatedAt: window.firebase.database.ServerValue.TIMESTAMP,
@@ -4661,8 +4791,10 @@ async function saveStateToApi(){
       user: 'JOVEM_PAN_FLORIPA',
       version: 'FIREBASE_RTDB_V1'
     });
+    localStorage.setItem('jp_painel_last_firebase_save', new Date().toLocaleString('pt-BR'));
     firebasePendingSave = false;
     updateSyncStatus('online','FIREBASE');
+    renderBackup();
   }catch(err){
     console.warn('FIREBASE SAVE ERROR', err);
     updateSyncStatus('error','ERRO FIREBASE');
@@ -4670,10 +4802,45 @@ async function saveStateToApi(){
 }
 
 async function forceUploadLocalToFirebase(){
-  if(!confirm('ENVIAR OS DADOS DESTE NAVEGADOR PARA O FIREBASE?\n\nUse este botão no navegador onde os dados aparecem corretamente.')) return;
+  const c=backupCounts(state);
+  const total=backupTotal(c);
+  if(total===0){
+    alert('ENVIO BLOQUEADO. A BASE LOCAL ESTÁ VAZIA E NÃO PODE SUBSTITUIR O FIREBASE.');
+    renderBackup();
+    return;
+  }
+  if(!confirm(`ENVIAR OS DADOS DESTE NAVEGADOR PARA O FIREBASE?\n\nTOTAL LOCAL: ${total}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\nAGENDAMENTOS: ${c.schedules}\n\nUse apenas se este navegador contém a base correta.`)) return;
+  const typed=prompt('PARA CONFIRMAR O ENVIO, DIGITE: ENVIAR');
+  if(norm(typed)!=='ENVIAR') return;
   updateSyncStatus('saving','ENVIANDO');
   await saveStateToApi();
   toast('DADOS DESTE NAVEGADOR ENVIADOS PARA O FIREBASE.');
+}
+async function verifyFirebaseState(){
+  initFirebaseSync();
+  if(!firebaseReady || !firebaseRef){ alert('FIREBASE NÃO CONECTADO.'); updateSyncStatus('error','ERRO FIREBASE'); return; }
+  try{
+    updateSyncStatus('saving','VERIFICANDO');
+    const snapshot=await firebaseRef.get();
+    const payload=snapshot.val();
+    const remote=payload && payload.state ? normalizePanelState(clone(payload.state)) : null;
+    if(!remote){
+      lastFirebaseDiagnostic={counts:{months:0,items:0,distributions:0,promos:0,schedules:0,programSchedules:0},checkedAtLabel:new Date().toLocaleString('pt-BR')};
+      updateSyncStatus('local','FIREBASE VAZIO');
+      renderBackup();
+      alert('FIREBASE VAZIO. NÃO HÁ BASE OFICIAL SALVA.');
+      return;
+    }
+    const c=backupCounts(remote);
+    lastFirebaseDiagnostic={counts:c,checkedAtLabel:new Date().toLocaleString('pt-BR'),savedAt:payload.savedAt||''};
+    updateSyncStatus('online','FIREBASE');
+    renderBackup();
+    alert(`BASE DO FIREBASE VERIFICADA.\n\nTOTAL: ${backupTotal(c)}\nMESES: ${c.months}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\nAGENDAMENTOS: ${c.schedules}`);
+  }catch(err){
+    console.warn('VERIFY FIREBASE ERROR',err);
+    alert('NÃO FOI POSSÍVEL VERIFICAR O FIREBASE.');
+    updateSyncStatus('error','ERRO FIREBASE');
+  }
 }
 async function forceLoadFirebaseToLocal(){
   initFirebaseSync();
@@ -4683,6 +4850,7 @@ async function forceLoadFirebaseToLocal(){
     const snapshot=await firebaseRef.get();
     const payload=snapshot.val();
     if(payload && payload.state){
+      lastFirebaseDiagnostic={counts:backupCounts(payload.state),checkedAtLabel:new Date().toLocaleString('pt-BR'),savedAt:payload.savedAt||''};
       applyRemoteFirebaseState(payload.state);
       updateSyncStatus('online','FIREBASE');
       toast('DADOS DO FIREBASE CARREGADOS NESTE NAVEGADOR.');
@@ -4921,34 +5089,66 @@ function duplicateCurrentTo(key){
 }
 
 
+let lastFirebaseDiagnostic=null;
 function backupCounts(data=state){
   const months=data?.months || {};
   const values=Object.values(months);
   return {
     months:Object.keys(months).length,
-    distributions:values.reduce((t,m)=>t+(m.distributions||[]).length,0),
     items:values.reduce((t,m)=>t+(m.items||[]).length,0),
-    promos:values.reduce((t,m)=>t+(m.promos||[]).length,0)
+    distributions:values.reduce((t,m)=>t+(m.distributions||[]).length,0),
+    promos:values.reduce((t,m)=>t+(m.promos||[]).length,0),
+    schedules:(data?.schedules||[]).length,
+    programSchedules:(data?.programSchedules||[]).length
   };
+}
+function backupTotal(c){
+  return num(c.items)+num(c.distributions)+num(c.promos)+num(c.schedules)+num(c.programSchedules);
+}
+function backupRiskInfo(data=state){
+  const c=backupCounts(data);
+  const total=backupTotal(c);
+  if(total===0) return {cls:'danger',title:'BASE LOCAL VAZIA — ENVIO BLOQUEADO',text:'Este navegador não tem registros operacionais. O envio para o Firebase foi bloqueado para evitar apagar a base oficial.'};
+  if(c.months>0 && c.items===0 && c.distributions===0 && c.promos===0 && c.schedules===0) return {cls:'warn',title:'BASE COM MESES VAZIOS',text:'Existem meses criados, mas sem conteúdo operacional. Carregue o Firebase ou restaure um backup antes de enviar dados.'};
+  return {cls:'ok',title:'BASE LOCAL COM DADOS',text:`Base pronta para backup/sincronização. Total operacional: ${total} registro(s).`};
+}
+function firebaseDiagnosticLabel(){
+  if(!lastFirebaseDiagnostic) return 'NÃO VERIFICADO';
+  return `${backupTotal(lastFirebaseDiagnostic.counts)} REG. · ${lastFirebaseDiagnostic.checkedAtLabel}`;
 }
 function renderBackup(){
   const box=$('backupSummaryCards');
   if(!box) return;
   const c=backupCounts(state);
-  const last=localStorage.getItem('jp_painel_last_backup_export') || 'NUNCA EXPORTADO NESTE NAVEGADOR';
+  const risk=backupRiskInfo(state);
+  const total=backupTotal(c);
+  const lastLoad=localStorage.getItem('jp_painel_last_firebase_load') || 'NÃO CARREGADO';
+  const lastSave=localStorage.getItem('jp_painel_last_firebase_save') || 'NÃO ENVIADO';
   box.innerHTML = `
-    <div class="backupCard"><span>MESES NO BANCO</span><strong>${c.months}</strong></div>
-    <div class="backupCard"><span>ITENS DA PROGRAMAÇÃO</span><strong>${c.items}</strong></div>
-    <div class="backupCard"><span>DISTRIBUIÇÕES</span><strong>${c.distributions}</strong></div>
-    <div class="backupCard"><span>PROMOÇÕES / PAUTAS</span><strong>${c.promos}</strong></div>
-    <div class="backupCard"><span>MÊS ABERTO NO PAINEL</span><strong>${esc(state.currentMonth || '-')}</strong></div>
-    <div class="backupCard"><span>ÚLTIMO BACKUP MANUAL</span><strong style="font-size:16px;line-height:1.25">${esc(last)}</strong></div>
-    <div class="backupCard"><span>NOME SUGERIDO DO ARQUIVO</span><strong style="font-size:16px;line-height:1.25">JP_PAINEL_BRINDES_BACKUP_OFICIAL.JSON</strong></div>
+    <div class="backupCard"><span>STATUS DO FIREBASE</span><strong style="font-size:16px;line-height:1.25">${esc(firebaseDiagnosticLabel())}</strong></div>
+    <div class="backupCard"><span>ÚLTIMO CARREGAMENTO</span><strong style="font-size:15px;line-height:1.25">${esc(lastLoad)}</strong></div>
+    <div class="backupCard"><span>ÚLTIMO ENVIO</span><strong style="font-size:15px;line-height:1.25">${esc(lastSave)}</strong></div>
+    <div class="backupCard"><span>TOTAL DE REGISTROS</span><strong>${total}</strong></div>
+    <div class="backupCard"><span>MÊS ABERTO</span><strong>${esc(state.currentMonth || '-')}</strong></div>
+    <div class="backupCard"><span>RISCO DA BASE</span><strong style="font-size:15px;line-height:1.25">${esc(risk.cls==='danger'?'BLOQUEADO':risk.cls==='warn'?'ATENÇÃO':'OK')}</strong></div>
   `;
+  const riskBox=$('backupRiskBox');
+  if(riskBox){
+    riskBox.className=`backupRiskBox ${risk.cls}`;
+    riskBox.innerHTML=`<strong>${esc(risk.title)}</strong><span>${esc(risk.text)}</span>`;
+  }
   const breakdown=$('backupMonthBreakdown');
   if(breakdown){
     const rows=monthSummaryList(state);
-    breakdown.innerHTML=rows.length ? `<table><thead><tr><th>MÊS</th><th>ITENS</th><th>DISTRIBUIÇÕES</th><th>PROMOÇÕES / PAUTAS</th><th>ABRIR</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${esc(r.key)}</strong>${r.key===state.currentMonth?' · ABERTO':''}</td><td class="num">${r.items}</td><td class="num">${r.distributions}</td><td class="num">${r.promos}</td><td><button class="btn small" type="button" onclick="openMonthKey('${esc(r.key)}')">ABRIR</button></td></tr>`).join('')}</tbody></table>` : '';
+    breakdown.innerHTML=rows.length ? `<table><thead><tr><th>MÊS</th><th>ITENS</th><th>DISTRIBUIÇÕES</th><th>PROMOÇÕES / PAUTAS</th><th>SITUAÇÃO</th><th>ABRIR</th></tr></thead><tbody>${rows.map(r=>{
+      const stateLabel=r.total>0 ? 'COM DADOS' : 'VAZIO';
+      return `<tr><td><strong>${esc(r.key)}</strong>${r.key===state.currentMonth?' · ABERTO':''}</td><td class="num">${r.items}</td><td class="num">${r.distributions}</td><td class="num">${r.promos}</td><td class="${r.total>0?'stateOk':'stateEmpty'}">${stateLabel}</td><td><button class="btn small" type="button" onclick="openMonthKey('${esc(r.key)}')">ABRIR</button></td></tr>`;
+    }).join('')}</tbody></table>` : '';
+  }
+  const uploadBtn=$('forceUploadFirebaseBtn');
+  if(uploadBtn){
+    uploadBtn.disabled = total===0;
+    uploadBtn.title = total===0 ? 'ENVIO BLOQUEADO: BASE LOCAL VAZIA' : 'ENVIAR ESTE NAVEGADOR PARA O FIREBASE';
   }
 }
 function buildBackupPayload(){
@@ -4988,9 +5188,21 @@ function importManualBackupFile(file){
       if(!incoming || !incoming.months) throw new Error('ARQUIVO INVÁLIDO.');
       normalizePanelState(incoming);
       const c=backupCounts(incoming);
+      const total=backupTotal(c);
       const label=payload.exportedAtLabel || payload.exportedAt || 'DATA NÃO INFORMADA';
-      const ok=confirm(`RESTAURAR BACKUP?\n\nARQUIVO: ${file.name}\nGERADO EM: ${label}\nMESES: ${c.months}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\n\nISSO VAI SUBSTITUIR A BASE ATUAL DO FIREBASE.`);
+      const preview=$('backupPreviewBox');
+      if(preview){
+        preview.classList.add('show');
+        preview.innerHTML=`<strong>PREVIEW DO BACKUP SELECIONADO:</strong><br>ARQUIVO: ${esc(file.name)}<br>GERADO EM: ${esc(label)}<br>MESES: ${c.months} · ITENS: ${c.items} · DISTRIBUIÇÕES: ${c.distributions} · PROMOÇÕES/PAUTAS: ${c.promos} · AGENDAMENTOS: ${c.schedules}`;
+      }
+      if(total===0){
+        alert('BACKUP VAZIO. RESTAURAÇÃO BLOQUEADA PARA NÃO APAGAR O FIREBASE.');
+        return;
+      }
+      const ok=confirm(`RESTAURAR BACKUP?\n\nARQUIVO: ${file.name}\nGERADO EM: ${label}\nTOTAL: ${total}\nMESES: ${c.months}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\nAGENDAMENTOS: ${c.schedules}\n\nISSO VAI SUBSTITUIR A BASE ATUAL DO FIREBASE.`);
       if(!ok) return;
+      const typed=prompt('PARA CONFIRMAR A RESTAURAÇÃO, DIGITE: RESTAURAR');
+      if(norm(typed)!=='RESTAURAR') return;
       state=incoming;
       ensureCurrentMonthAvailable();
       saveState(true);
@@ -7487,9 +7699,10 @@ bind('returnBellBtn','click',()=>{ renderReturnAlerts(); openDrawer('returnDrawe
 bind('exportBackupBtn','click',exportManualBackup);
 bind('chooseBackupBtn','click',()=>$('backupFileInput')?.click());
 bind('backupFileInput','change',e=>importManualBackupFile(e.target.files?.[0]));
-bind('clearBackupLocalBtn','click',()=>{ localStorage.removeItem('jp_painel_last_backup_export'); if($('backupSelectedFile')) $('backupSelectedFile').textContent='NENHUM ARQUIVO SELECIONADO.'; renderBackup(); toast('MARCAÇÃO LOCAL DE BACKUP LIMPA.'); });
+bind('clearBackupLocalBtn','click',()=>{ localStorage.removeItem('jp_painel_last_backup_export'); if($('backupSelectedFile')) $('backupSelectedFile').textContent='NENHUM ARQUIVO SELECIONADO.'; if($('backupPreviewBox')){$('backupPreviewBox').classList.remove('show'); $('backupPreviewBox').innerHTML='';} renderBackup(); toast('MARCAÇÃO LOCAL DE BACKUP LIMPA.'); });
 bind('forceUploadFirebaseBtn','click',forceUploadLocalToFirebase);
 bind('forceLoadFirebaseBtn','click',forceLoadFirebaseToLocal);
+bind('verifyFirebaseBtn','click',verifyFirebaseState);
 
 bind('monthInput','change',()=>{ const key=$('monthInput').value; if(!key) return toast('ESCOLHA UM MÊS.'); if(!state.months[key]) createBlankMonth(key); state.currentMonth=key; saveState(true); render(); toast('MÊS ABERTO COM SALVAMENTO AUTOMÁTICO.'); });
 function downloadFile(name, content, type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
