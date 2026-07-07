@@ -1295,6 +1295,72 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   display:none!important;
 }
 
+
+/* AJUSTE — PROMO/MERCHAN OPERACIONAL */
+#promoDrawer select.control,
+#promoDrawer input.control{
+  font-size:11.5px!important;
+  font-weight:850!important;
+  letter-spacing:.01em!important;
+}
+#promoDrawer textarea.control{
+  font-size:12px!important;
+  font-weight:750!important;
+}
+#promoDrawer .control option{
+  font-size:12px;
+  font-weight:800;
+}
+.promoSummaryGrid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:10px;
+}
+.promoSummaryCard{
+  border:1px solid #e2e7ef;
+  border-radius:16px;
+  background:#f8fafc;
+  padding:11px 12px;
+}
+.promoSummaryCard span{
+  display:block;
+  color:#667283;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:.06em;
+}
+.promoSummaryCard strong{
+  display:block;
+  margin-top:4px;
+  color:#171c26;
+  font-size:22px;
+  font-weight:1000;
+  line-height:1;
+}
+.promoFilterBar{
+  grid-template-columns:repeat(4,minmax(110px,180px))!important;
+  justify-content:flex-start!important;
+}
+.promoFilterBar .field{max-width:180px!important}
+.promoMainTable th:nth-child(3),
+.promoMainTable td:nth-child(3){
+  text-align:left;
+}
+.promoMainTable td{
+  font-size:11px;
+  line-height:1.25;
+}
+.promoHoursCell{
+  color:#526075;
+  font-weight:1000;
+  font-size:10px;
+}
+@media(max-width:900px){
+  .promoSummaryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .promoFilterBar{grid-template-columns:repeat(2,minmax(110px,1fr))!important}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1372,7 +1438,16 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div><h2>PROMO / MERCHAN</h2><p>CONTROLE DAS PROMOÇÕES, MERCHANS, SORTEIOS E PAUTAS PROMOCIONAIS PARA O LOCUTOR.</p></div>
           <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" title="NOVA PROMOÇÃO" aria-label="NOVA PROMOÇÃO" data-tip="NOVA PROMOÇÃO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
         </div>
-        <div class="panelBody"><div class="filterBar promoFilterBar"><div class="field"><label>ORDENAR NOMES</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div></div><div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>INÍCIO</th><th>FIM / SORTEIO</th><th>HORA</th><th>LOCAL / PROGRAMA</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div></div>
+        <div class="panelBody">
+          <div class="promoSummaryGrid" id="promoSummaryGrid"></div>
+          <div class="filterBar promoFilterBar">
+            <div class="field"><label>TIPO</label><select class="control" id="promoTypeFilter"><option value="">TODOS</option><option value="promo">PROMOÇÕES</option><option value="merchan">MERCHANS</option><option value="pauta">PAUTAS ESPECIAIS</option><option value="aviso">AVISOS</option></select></div>
+            <div class="field"><label>RÁDIO</label><select class="control" id="promoStationFilter"><option value="">TODAS</option><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option><option value="ALL">AMBAS</option></select></div>
+            <div class="field"><label>STATUS</label><select class="control" id="promoStatusFilter"><option value="">TODOS</option><option value="active">ATIVAS</option><option value="ended">ENCERRADAS</option></select></div>
+            <div class="field"><label>ORDENAR</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div>
+          </div>
+          <div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO / SORTEIO</th><th>HORÁRIOS</th><th>LOCAL / PROGRAMA</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div>
+        </div>
       </div>
     </section>
 
@@ -4618,6 +4693,30 @@ function saveProgramSchedule(e){
   closeDrawer('programScheduleDrawer');
   saveState(true); render(); toast('HORÁRIO SALVO.');
 }
+function promoHoursForSelectedProgram(){
+  const program=norm($('promoProgram')?.value || '');
+  const station=$('promoStation')?.value || 'JP1017';
+  if(!program) return [];
+  const rows=programSchedules()
+    .filter(p=>station==='ALL' || (p.station||'JP1017')===station)
+    .filter(p=>norm(p.name)===program);
+  const hours=new Set();
+  rows.forEach(p=>{
+    const start=Math.floor(minutesOf(p.startTime)/60);
+    const end=Math.ceil(minutesOf(p.endTime)/60);
+    for(let h=start; h<end; h++){
+      if(h>=6 && h<=22) hours.add(String(h).padStart(2,'0'));
+    }
+  });
+  return [...hours].sort();
+}
+function applyProgramHoursToPromo(){
+  if(!isPromoKindMerchan()) return;
+  const hours=promoHoursForSelectedProgram();
+  if(!hours.length) return;
+  setPromoReadControls({readMode:'selected',readHours:hours});
+  updatePromoPreview();
+}
 function populateProgramSelects(){
   const station=$('promoStation')?.value || 'JP1017';
   const programRows=programSchedules()
@@ -5113,28 +5212,74 @@ function renderDistribuicao(){
     </tr>`;
   }).join('');
 }
+function promoTypeKey(p){
+  const k=String(p.kind||p.promoKind||p.type||'promo').toLowerCase();
+  if(k==='merchan') return 'merchan';
+  if(k==='pauta') return 'pauta';
+  if(k==='aviso') return 'aviso';
+  return 'promo';
+}
+function promoTypeDisplay(p){
+  const k=promoTypeKey(p);
+  if(k==='merchan') return 'MERCHAN';
+  if(k==='pauta') return 'PAUTA ESPECIAL';
+  if(k==='aviso') return 'AVISO';
+  return 'PROMOÇÃO';
+}
+function promoTypeClass(p){
+  return promoTypeKey(p)==='merchan' ? 'merchan' : 'promo';
+}
 function promoStatusData(p){
   const now = new Date();
   let isEnded = false;
-  if(p.drawDate){
-    const dt = new Date(`${p.drawDate}T${p.drawTime || '23:59'}:00`);
+  const endDate = p.drawDate || p.endDate || '';
+  if(endDate){
+    const dt = new Date(`${endDate}T${p.drawTime || '23:59'}:00`);
     if(!Number.isNaN(dt.getTime())) isEnded = dt < now;
   }
-  return isEnded ? {label:'ENCERRADA', cls:'green'} : {label:'ATIVA', cls:'blue'};
+  return isEnded ? {label:'ENCERRADA', cls:'green', key:'ended'} : {label:'ATIVA', cls:'blue', key:'active'};
+}
+function promoReadHoursLabel(p){
+  if((p.readMode||'all')==='selected'){
+    const hours=Array.isArray(p.readHours)?p.readHours.map(h=>`${String(h).padStart(2,'0')}H`):[];
+    return hours.length ? hours.join(', ') : 'SEM HORÁRIO';
+  }
+  return 'TODOS OS HORÁRIOS';
+}
+function renderPromoSummary(){
+  const host=$('promoSummaryGrid');
+  if(!host) return;
+  const rows=monthData().promos||[];
+  const count=key=>rows.filter(p=>promoTypeKey(p)===key).length;
+  host.innerHTML=[
+    ['PROMOÇÕES',count('promo')],
+    ['MERCHANS',count('merchan')],
+    ['PAUTAS ESPECIAIS',count('pauta')],
+    ['AVISOS',count('aviso')]
+  ].map(([label,total])=>`<div class="promoSummaryCard"><span>${label}</span><strong>${total}</strong></div>`).join('');
 }
 function renderPromos(){
+  renderPromoSummary();
   const order=$('promoOrderFilter')?.value || 'created';
-  const rows=[...monthData().promos];
+  const typeFilter=$('promoTypeFilter')?.value || '';
+  const stationFilter=$('promoStationFilter')?.value || '';
+  const statusFilter=$('promoStatusFilter')?.value || '';
+  let rows=[...monthData().promos];
+  if(typeFilter) rows=rows.filter(p=>promoTypeKey(p)===typeFilter);
+  if(stationFilter) rows=rows.filter(p=>(p.station||'JP1017')===stationFilter);
+  if(statusFilter) rows=rows.filter(p=>promoStatusData(p).key===statusFilter);
   if(order==='alpha') rows.sort((a,b)=> norm(a.name || a.title || '').localeCompare(norm(b.name || b.title || '')));
   const tb=$('promoTable');
-  if(!rows.length){ tb.innerHTML=`<tr><td colspan="9"><div class="empty">NENHUMA PROMOÇÃO / MERCHAN CADASTRADO.</div></td></tr>`; return; }
+  if(!rows.length){ tb.innerHTML=`<tr><td colspan="8"><div class="empty">NENHUMA PAUTA CADASTRADA PARA ESSE FILTRO.</div></td></tr>`; return; }
   tb.innerHTML = rows.map(p=>{
     const st = promoStatusData(p);
-    const isM=isMerchanMain(p);
-    const typeLabel=isM?'MERCHAN':'PROMOÇÃO';
-    const typeClass=isM?'merchan':'promo';
+    const typeLabel=promoTypeDisplay(p);
+    const typeClass=promoTypeClass(p);
+    const isM=promoTypeKey(p)==='merchan';
     const localProgram=isM ? norm(p.program||p.programName||'') : norm(p.local||'');
-    return `<tr class="${typeClass}Row"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td>${esc(stationLabel(p.station||'JP1017'))}</td><td>${esc(p.name || p.title || '')}</td><td>${esc(formatBR(p.startDate || ''))}</td><td>${esc(formatBR(p.drawDate || p.endDate || ''))}</td><td>${esc(p.drawTime || '')}</td><td>${esc(localProgram)}</td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
+    const endOrDraw = p.drawDate || p.endDate || '';
+    const period = `${formatBR(p.startDate || '')}${endOrDraw ? ' A '+formatBR(endOrDraw) : ''}`;
+    return `<tr class="${typeClass}Row"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td>${esc(stationLabel(p.station||'JP1017'))}</td><td>${esc(p.name || p.title || '')}</td><td>${esc(period)}</td><td class="promoHoursCell">${esc(promoReadHoursLabel(p))}</td><td>${esc(localProgram)}</td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
   }).join('');
 }
 function formatStudioTime(slot){
@@ -6476,7 +6621,9 @@ $('promoImage').addEventListener('change',e=>{
   };
   reader.readAsDataURL(file);
 });
-['promoName','promoDescription','promoTitleFont','promoTitleSize','promoTitleColor','promoDescFont','promoDescSize','promoDescColor','promoLocal','promoProgram','promoDrawDate','promoDrawTime'].forEach(id=>bind(id,'input',updatePromoPreview));
+['promoName','promoDescription','promoTitleFont','promoTitleSize','promoTitleColor','promoDescFont','promoDescSize','promoDescColor','promoLocal','promoDrawDate','promoDrawTime'].forEach(id=>bind(id,'input',updatePromoPreview));
+bind('promoProgram','change',()=>{applyProgramHoursToPromo(); updatePromoPreview();});
+bind('promoProgram','input',updatePromoPreview);
 bind('promoReadAll','change',updatePromoReadScheduleState);
 document.addEventListener('change',e=>{ if(e.target.closest('#promoReadHours')) updatePromoReadScheduleState(); });
 ['itemTitleFont','itemTitleSize','itemTitleColor','itemDescFont','itemDescSize','itemDescColor','distTitleFont','distTitleSize','distTitleColor','distDescFont','distDescSize','distDescColor'].forEach(id=>bind(id,'input',()=>{}));
@@ -6525,7 +6672,7 @@ bind('addPromoBtn','click',()=>{ clearPromoForm(); openDrawer('promoDrawer'); })
 bind('clearDistFiltersBtn','click',()=>{ $('distSearchInput').value=''; $('distStatusFilter').value=''; renderDistribuicao(); });
 ['weekFilter','channelFilter','statusFilter'].forEach(id=>bind(id,'input',()=>{ renderProgramacao(); renderClearProgramDrawer(); }));
 ['distSearchInput','distStatusFilter','distOrderFilter'].forEach(id=>bind(id,'input',renderDistribuicao));
-bind('promoOrderFilter','input',renderPromos);
+['promoOrderFilter','promoTypeFilter','promoStationFilter','promoStatusFilter'].forEach(id=>bind(id,'input',renderPromos));
 bind('studioDateFilter','input',renderStudioPauta);
 bind('studioPautaType','input',renderStudioPauta);
 bind('studioPrevDayBtn','click',()=>changeStudioDay(-1));
@@ -6537,7 +6684,7 @@ bind('addProgramScheduleBtn','click',()=>openProgramScheduleForm());
 document.addEventListener('click',e=>{ const btn=e.target.closest('#programStationFilterTabs .stationTab'); if(btn) setProgramStationFilter(btn.dataset.station); });
 bind('programStation','change',()=>{ populateProgramSelects(); });
 bind('promoKind','change',()=>{updatePromoKindMode(); updatePromoPreview();});
-bind('promoStation','change',()=>{populateProgramSelects(); updatePromoKindMode(); updatePromoPreview();});
+bind('promoStation','change',()=>{populateProgramSelects(); updatePromoKindMode(); applyProgramHoursToPromo(); updatePromoPreview();});
 bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotationSlots('dist')));
 
 bind('distTitle','blur',()=>applyDistributionTemplateFromTitle(false));

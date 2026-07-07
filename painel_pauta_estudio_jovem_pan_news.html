@@ -791,6 +791,44 @@ body{
 .pautaBody{padding:20px 28px 22px;gap:10px}
 .resultBox{padding:10px;border-radius:14px}
 
+
+/* AJUSTE — LETREIRO DE HISTÓRICO DE LEITURA */
+.readHistoryTicker{
+  margin:10px auto 0;
+  width:min(1180px,100%);
+  min-height:34px;
+  border:1px solid #dfe5ec;
+  border-radius:999px;
+  background:rgba(255,255,255,.86);
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+}
+.readHistoryTickerTrack{
+  display:flex;
+  gap:26px;
+  white-space:nowrap;
+  animation:readHistoryMarquee 42s linear infinite;
+  padding-left:100%;
+  color:#5d6878;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.03em;
+}
+.readHistoryTickerTrack span{
+  display:inline-flex;
+  align-items:center;
+}
+.readHistoryTickerTrack span::after{
+  content:'•';
+  margin-left:26px;
+  color:#c9002b;
+}
+@keyframes readHistoryMarquee{
+  from{transform:translateX(0)}
+  to{transform:translateX(-100%)}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -804,6 +842,7 @@ body{
     </header>
 
   <section class="panel" id="pautaPanel"></section>
+  <div class="readHistoryTicker" id="readHistoryTicker"></div>
 </div>
 
 <div class="modalBackdrop" id="winnerModal">
@@ -1146,6 +1185,47 @@ function promosForItemHour(item,includeRead=false){return pautasForItemHour(item
 function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
 function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
 function findPromoById(id){return monthData().promos?.find(p=>p.id===id)||null;}
+function studioStationLabel(){
+  return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS' : 'JOVEMPAN';
+}
+function pautaTypeLabel(p){
+  if(isMerchan(p)) return 'MERCHAN';
+  const k=upper(p.kind||p.promoKind||p.type||'PROMO');
+  if(k==='PAUTA') return 'PAUTA ESPECIAL';
+  if(k==='AVISO') return 'AVISO';
+  return 'PROMOÇÃO';
+}
+function readLogRowsForDate(date=todayISO()){
+  const rows=[];
+  (monthData().promos||[]).forEach(p=>{
+    (p.readLog||[]).forEach(r=>{
+      if((r.station||STUDIO_STATION)!==STUDIO_STATION) return;
+      if((r.date||'')!==date) return;
+      rows.push({
+        at:r.confirmedAt||r.at||'',
+        text:`${r.confirmedAtLabel||readTimeLabel(r.confirmedAt||r.at).replace('FEITA ','')} · ${studioStationLabel()} · ${upper(r.program||'PROGRAMA')} · ${upper(r.type||pautaTypeLabel(p))} ${upper(r.name||p.name||p.title||'PAUTA')} LIDA`
+      });
+    });
+    Object.entries(p.readByHour||{}).forEach(([key,value])=>{
+      const keyDate=String(key).slice(0,10);
+      if(keyDate!==date) return;
+      const already=(p.readLog||[]).some(r=>(r.key===key || (r.date===keyDate && r.confirmedAt===value)) && (r.station||STUDIO_STATION)===STUDIO_STATION);
+      if(already) return;
+      rows.push({
+        at:value,
+        text:`${readTimeLabel(value).replace('FEITA ','')} · ${studioStationLabel()} · ${upper(p.readProgram||p.program||'PROGRAMA')} · ${pautaTypeLabel(p)} ${upper(p.name||p.title||'PAUTA')} LIDA`
+      });
+    });
+  });
+  return rows.sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(-18);
+}
+function renderReadHistoryTicker(){
+  const host=$('readHistoryTicker');
+  if(!host) return;
+  const rows=readLogRowsForDate(todayISO());
+  const textRows=rows.length ? rows.map(r=>r.text) : [`${studioStationLabel()} · SEM LEITURAS CONFIRMADAS HOJE`];
+  host.innerHTML=`<div class="readHistoryTickerTrack">${textRows.concat(textRows).map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
+}
 function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
 function buildPromoFooter(item){
   const pautas=allPautasForItemHour(item,true);
@@ -1308,11 +1388,28 @@ function confirmPromoRead(){
   if(!p || !item) return;
   const now=new Date();
   const key=readHourKey(item,p);
+  const iso=now.toISOString();
   p.readByHour ||= {};
-  p.readByHour[key]=now.toISOString();
-  p.readAt=now.toISOString();
+  p.readByHour[key]=iso;
+  p.readLog ||= [];
+  p.readLog.push({
+    id:`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+    key,
+    date:item.date||todayISO(),
+    scheduledHour:pad(slotHour(item.slot)),
+    slot:formatStudioTime(item.slot),
+    station:STUDIO_STATION,
+    program:upper(item.program||'PROGRAMA'),
+    type:pautaTypeLabel(p),
+    name:upper(p.name||p.title||'PAUTA'),
+    confirmedAt:iso,
+    confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`
+  });
+  p.readAt=iso;
   p.readAtLabel=now.toLocaleString('pt-BR');
   p.readSlot=formatStudioTime(item.slot);
+  p.readStation=STUDIO_STATION;
+  p.readProgram=upper(item.program||'PROGRAMA');
   saveState();
   selectedPromoId=null;
   render();
@@ -1418,6 +1515,7 @@ function render(){
     item=found.item;
   }
   currentDisplayItem=item;
+  renderReadHistoryTicker();
   const promo=currentPromoForRead();
   const isVirtual=!!item.__virtual;
   const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
