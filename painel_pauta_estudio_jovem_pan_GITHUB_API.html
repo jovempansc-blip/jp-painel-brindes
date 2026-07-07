@@ -796,37 +796,59 @@ body{
 .readHistoryTicker{
   margin:10px auto 0;
   width:min(1180px,100%);
-  min-height:34px;
+  height:52px;
   border:1px solid #dfe5ec;
-  border-radius:999px;
-  background:rgba(255,255,255,.86);
+  border-radius:18px;
+  background:rgba(255,255,255,.88);
   overflow:hidden;
-  display:flex;
-  align-items:center;
+  position:relative;
+  display:block;
+}
+.readHistoryTicker::before{
+  content:'LEITURAS CONFIRMADAS';
+  position:absolute;
+  left:14px;
+  top:6px;
+  color:#7a8798;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  z-index:2;
 }
 .readHistoryTickerTrack{
+  position:absolute;
+  left:14px;
+  right:14px;
+  top:0;
   display:flex;
-  gap:26px;
-  white-space:nowrap;
-  animation:readHistoryMarquee 42s linear infinite;
-  padding-left:100%;
+  flex-direction:column;
+  gap:7px;
+  animation:readHistoryDrop 18s linear infinite;
   color:#5d6878;
-  font-size:11px;
+  font-size:10.5px;
   font-weight:1000;
   letter-spacing:.03em;
+  padding-top:26px;
 }
 .readHistoryTickerTrack span{
-  display:inline-flex;
+  display:flex;
   align-items:center;
+  justify-content:flex-start;
+  min-height:20px;
+  border-radius:999px;
+  background:rgba(248,250,252,.9);
+  padding:4px 10px;
+  box-shadow:0 1px 0 rgba(17,23,34,.04);
 }
-.readHistoryTickerTrack span::after{
-  content:'•';
-  margin-left:26px;
+.readHistoryTickerTrack span::before{
+  content:'●';
+  margin-right:8px;
   color:#c9002b;
+  font-size:7px;
 }
-@keyframes readHistoryMarquee{
-  from{transform:translateX(0)}
-  to{transform:translateX(-100%)}
+@keyframes readHistoryDrop{
+  from{transform:translateY(-50%)}
+  to{transform:translateY(0)}
 }
 
 </style>
@@ -1223,7 +1245,8 @@ function renderReadHistoryTicker(){
   if(!host) return;
   const rows=readLogRowsForDate(todayISO());
   const textRows=rows.length ? rows.map(r=>r.text) : [`${studioStationLabel()} · SEM LEITURAS CONFIRMADAS HOJE`];
-  host.innerHTML=`<div class="readHistoryTickerTrack">${textRows.concat(textRows).map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
+  const loopRows=textRows.length>1 ? textRows.concat(textRows) : textRows.concat(textRows,textRows);
+  host.innerHTML=`<div class="readHistoryTickerTrack">${loopRows.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
 }
 function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
 function buildPromoFooter(item){

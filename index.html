@@ -1361,6 +1361,56 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   .promoFilterBar{grid-template-columns:repeat(2,minmax(110px,1fr))!important}
 }
 
+
+/* AJUSTE — STATUS E SINCRONIZAÇÃO FIREBASE */
+.syncStatusBtn{
+  min-height:36px;
+  height:36px;
+  border-radius:999px;
+  padding:0 12px;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.05em;
+  border:1px solid #dfe5ec;
+}
+.syncStatusBtn.online{
+  color:#007a45;
+  background:#eafff4;
+  border-color:#bdf1d6;
+}
+.syncStatusBtn.saving{
+  color:#8a4b00;
+  background:#fff7ec;
+  border-color:#ffd7a8;
+}
+.syncStatusBtn.error{
+  color:#c9002b;
+  background:#fff0f4;
+  border-color:#ffc0cc;
+}
+.syncStatusBtn.local{
+  color:#667283;
+  background:#f8fafc;
+}
+.firebaseSyncBox{
+  border:1px solid #dfe5ec;
+  border-radius:20px;
+  background:#f8fafc;
+  padding:14px 16px;
+  margin-top:14px;
+  color:#4f5b6c;
+  font-size:12px;
+  line-height:1.45;
+  font-weight:900;
+}
+.firebaseSyncBox strong{color:#171c26}
+.firebaseSyncActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1377,6 +1427,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
     <div class="topTools">
       <div class="field"><label>MÊS</label><input class="control" type="month" id="monthInput" value="2026-06"></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
+        <button class="btn syncStatusBtn local" id="syncStatusBtn" type="button" title="STATUS DO BANCO">LOCAL</button>
         <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="EXPORTAR PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
         <button class="btn iconBtn returnBellBtn" id="returnBellBtn" title="RETORNOS / REAPROVEITAMENTO" aria-label="RETORNOS / REAPROVEITAMENTO" data-tip="RETORNOS"><span class="iconGlyph">🔔</span><span class="returnBellCount" id="returnBellCount">0</span><span class="visuallyHidden">RETORNOS</span></button>
       </div>
@@ -1541,7 +1592,13 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div class="backupActions">
             <button class="btn red" id="exportBackupBtn">EXPORTAR BACKUP AGORA</button>
             <button class="btn dark" id="chooseBackupBtn">IMPORTAR / RESTAURAR BACKUP</button>
+            <button class="btn" id="forceUploadFirebaseBtn" type="button">ENVIAR ESTE NAVEGADOR PARA O FIREBASE</button>
+            <button class="btn" id="forceLoadFirebaseBtn" type="button">CARREGAR FIREBASE NESTE NAVEGADOR</button>
             <input id="backupFileInput" type="file" accept=".json,application/json" style="display:none">
+          </div>
+          <div class="firebaseSyncBox">
+            <strong>SINCRONIZAÇÃO ENTRE NAVEGADORES:</strong><br>
+            Se os dados aparecem em um navegador e não aparecem em outro, eles ainda estão locais. Abra o navegador onde os dados aparecem e clique em <strong>ENVIAR ESTE NAVEGADOR PARA O FIREBASE</strong>. Depois, no outro navegador, clique em <strong>CARREGAR FIREBASE NESTE NAVEGADOR</strong> ou atualize a página.
           </div>
 
           <div class="backupImportRow">
@@ -4068,6 +4125,20 @@ function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0);
 }
+function hasLocalPersistedState(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+    return !!(saved && saved.months);
+  }catch(e){ return false; }
+}
+function updateSyncStatus(mode='local',text='LOCAL'){
+  const btn=$('syncStatusBtn');
+  if(!btn) return;
+  btn.classList.remove('online','saving','error','local');
+  btn.classList.add(mode);
+  btn.textContent=text;
+  btn.title = mode==='online' ? 'FIREBASE ONLINE' : mode==='saving' ? 'SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'DADOS LOCAIS NESTE NAVEGADOR';
+}
 function apiJsonp(params={}){
   return new Promise((resolve,reject)=>{
     if(!LEGACY_API_URL) return reject(new Error('LEGACY_API_URL NÃO CONFIGURADA.'));
@@ -4110,7 +4181,7 @@ function applyRemoteFirebaseState(remoteState){
   firebaseApplyingRemote = false;
 }
 async function handleEmptyFirebase(){
-  const localCount = countStateRecords(state);
+  const localCount = hasLocalPersistedState() ? countStateRecords(state) : 0;
   if(localCount>0){
     await saveStateToApi();
     return;
@@ -4132,6 +4203,7 @@ function initFirebaseSync(){
     const app = window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
     firebaseRef = window.firebase.database(app).ref(FIREBASE_ROOT_PATH);
     firebaseReady = true;
+    updateSyncStatus('online','FIREBASE');
     firebaseRef.on('value', async snapshot=>{
       firebaseInitialSnapshotSeen = true;
       const payload = snapshot.val();
@@ -4144,9 +4216,11 @@ function initFirebaseSync(){
       firebasePendingSave = false;
     }, err=>{
       console.warn('FIREBASE LOAD ERROR', err);
+      updateSyncStatus('error','ERRO FIREBASE');
     });
   }catch(err){
     console.warn('FIREBASE INIT ERROR', err);
+    updateSyncStatus('error','ERRO FIREBASE');
   }
 }
 function syncStateFromApi(force=false){
@@ -4160,6 +4234,7 @@ function syncStateFromApi(force=false){
 }
 function queueApiSave(delay=250){
   clearTimeout(firebaseSaveTimer);
+  updateSyncStatus('saving','SALVANDO');
   firebaseSaveTimer = setTimeout(saveStateToApi, delay);
 }
 async function saveStateToApi(){
@@ -4178,8 +4253,38 @@ async function saveStateToApi(){
       version: 'FIREBASE_RTDB_V1'
     });
     firebasePendingSave = false;
+    updateSyncStatus('online','FIREBASE');
   }catch(err){
     console.warn('FIREBASE SAVE ERROR', err);
+    updateSyncStatus('error','ERRO FIREBASE');
+  }
+}
+
+async function forceUploadLocalToFirebase(){
+  if(!confirm('ENVIAR OS DADOS DESTE NAVEGADOR PARA O FIREBASE?\n\nUse este botão no navegador onde os dados aparecem corretamente.')) return;
+  updateSyncStatus('saving','ENVIANDO');
+  await saveStateToApi();
+  toast('DADOS DESTE NAVEGADOR ENVIADOS PARA O FIREBASE.');
+}
+async function forceLoadFirebaseToLocal(){
+  initFirebaseSync();
+  if(!firebaseReady || !firebaseRef){ alert('FIREBASE NÃO CONECTADO. VERIFIQUE AS REGRAS DO DATABASE OU A CONEXÃO.'); updateSyncStatus('error','ERRO FIREBASE'); return; }
+  try{
+    updateSyncStatus('saving','CARREGANDO');
+    const snapshot=await firebaseRef.get();
+    const payload=snapshot.val();
+    if(payload && payload.state){
+      applyRemoteFirebaseState(payload.state);
+      updateSyncStatus('online','FIREBASE');
+      toast('DADOS DO FIREBASE CARREGADOS NESTE NAVEGADOR.');
+    }else{
+      alert('O FIREBASE AINDA NÃO TEM DADOS SALVOS. ENVIE OS DADOS A PARTIR DO NAVEGADOR ONDE ELES APARECEM.');
+      updateSyncStatus('local','LOCAL');
+    }
+  }catch(err){
+    console.warn('FORCE LOAD FIREBASE ERROR',err);
+    alert('NÃO FOI POSSÍVEL CARREGAR O FIREBASE. VERIFIQUE AS REGRAS DO DATABASE.');
+    updateSyncStatus('error','ERRO FIREBASE');
   }
 }
 
@@ -6711,6 +6816,8 @@ bind('exportBackupBtn','click',exportManualBackup);
 bind('chooseBackupBtn','click',()=>$('backupFileInput')?.click());
 bind('backupFileInput','change',e=>importManualBackupFile(e.target.files?.[0]));
 bind('clearBackupLocalBtn','click',()=>{ localStorage.removeItem('jp_painel_last_backup_export'); if($('backupSelectedFile')) $('backupSelectedFile').textContent='NENHUM ARQUIVO SELECIONADO.'; renderBackup(); toast('MARCAÇÃO LOCAL DE BACKUP LIMPA.'); });
+bind('forceUploadFirebaseBtn','click',forceUploadLocalToFirebase);
+bind('forceLoadFirebaseBtn','click',forceLoadFirebaseToLocal);
 
 bind('monthInput','change',()=>{ const key=$('monthInput').value; if(!key) return toast('ESCOLHA UM MÊS.'); if(!state.months[key]) createBlankMonth(key); state.currentMonth=key; saveState(true); render(); toast('MÊS ABERTO COM SALVAMENTO AUTOMÁTICO.'); });
 function downloadFile(name, content, type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
