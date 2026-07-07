@@ -1470,6 +1470,114 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   color:#171c26;
 }
 
+
+/* AJUSTE — AGENDAMENTO COMO CENTRAL DE PRÉ-PRODUÇÃO */
+.scheduleSummaryGrid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:12px;
+}
+.scheduleSummaryCard{
+  border:1px solid #e2e7ef;
+  border-radius:16px;
+  background:#f8fafc;
+  padding:11px 12px;
+}
+.scheduleSummaryCard span{
+  display:block;
+  color:#667283;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:.06em;
+}
+.scheduleSummaryCard strong{
+  display:block;
+  color:#171c26;
+  font-size:22px;
+  font-weight:1000;
+  line-height:1;
+  margin-top:4px;
+}
+.scheduleGrid{
+  display:grid!important;
+  grid-template-columns:160px 160px minmax(220px,1.3fr) 140px 140px 170px 170px;
+  gap:8px;
+  align-items:end;
+  margin-bottom:14px;
+}
+.scheduleGrid .field{min-width:0}
+.scheduleGrid .field.wide{grid-column:span 2}
+.scheduleGrid .field.full{grid-column:1/-1}
+.scheduleGrid textarea.control{
+  min-height:72px;
+  white-space:pre-wrap;
+  line-height:1.45;
+}
+.scheduleGrid .formActions{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  margin-top:0;
+}
+.scheduleFilterBar{
+  grid-template-columns:repeat(4,minmax(130px,190px))!important;
+  justify-content:flex-start!important;
+  margin-bottom:10px;
+}
+.scheduleTable td{vertical-align:middle}
+.scheduleTable td:nth-child(3),
+.scheduleTable td:nth-child(7){text-align:left}
+.scheduleNoteCell{
+  white-space:pre-wrap;
+  max-width:420px;
+  color:#526075;
+  font-size:10.5px;
+  line-height:1.35;
+  font-weight:900;
+}
+.scheduleStatus{
+  display:inline-flex;
+  min-height:24px;
+  align-items:center;
+  border-radius:999px;
+  padding:0 8px;
+  border:1px solid #dfe5ec;
+  background:#f7f9fc;
+  color:#5a6474;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.03em;
+}
+.scheduleStatus.future,.scheduleStatus.reserved{background:#fff7ec;border-color:#ffd7a8;color:#8a4b00}
+.scheduleStatus.active,.scheduleStatus.production{background:#eef5ff;border-color:#c9defa;color:#1e5aa5}
+.scheduleStatus.approved{background:#effaf4;border-color:#ccefdc;color:#137947}
+.scheduleStatus.waiting{background:#fff0f4;border-color:#ffc0cc;color:#c9002b}
+.scheduleStatus.converted{background:#eef1f5;border-color:#dbe2eb;color:#526075}
+.scheduleStatus.cancelled,.scheduleStatus.done{background:#f3f4f6;border-color:#dfe3e8;color:#747b87}
+.scheduleActions{
+  display:flex;
+  gap:5px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.scheduleActions .btn{
+  min-height:26px;
+  padding:5px 8px;
+  border-radius:10px;
+  font-size:9px;
+}
+@media(max-width:1100px){
+  .scheduleSummaryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .scheduleGrid{grid-template-columns:1fr 1fr!important}
+  .scheduleFilterBar{grid-template-columns:repeat(2,minmax(130px,1fr))!important}
+}
+@media(max-width:720px){
+  .scheduleSummaryGrid{grid-template-columns:1fr}
+  .scheduleGrid,.scheduleFilterBar{grid-template-columns:1fr!important}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1617,19 +1725,56 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 <section class="view" id="view-agendamento">
       <div class="panel">
         <div class="panelHead">
-          <div><h2>AGENDAMENTO</h2><p>RESERVA DE PROMOÇÕES, MERCHANS E PAUTAS FUTURAS OU DE LONGA DURAÇÃO.</p></div>
+          <div><h2>AGENDAMENTO</h2><p>CENTRAL DE PRÉ-PRODUÇÃO PARA PROMOÇÕES, MERCHANS, PAUTAS E CAMPANHAS FUTURAS.</p></div>
         </div>
         <div class="panelBody">
+          <div class="scheduleSummaryGrid" id="scheduleSummaryGrid"></div>
+
           <form id="scheduleForm" class="scheduleGrid">
             <input type="hidden" id="scheduleId">
-            <div class="field"><label>TIPO</label><select class="control" id="scheduleType"><option>PROMOÇÃO</option><option>MERCHAN</option><option>PAUTA ESPECIAL</option></select></div>
-            <div class="field"><label>NOME</label><input class="control" id="scheduleName" required></div>
+            <div class="field"><label>TIPO</label><select class="control" id="scheduleType">
+              <option>PROMOÇÃO</option>
+              <option>MERCHAN</option>
+              <option>PAUTA ESPECIAL</option>
+              <option>AVISO / COMUNICADO</option>
+              <option>PRÊMIO FUTURO</option>
+              <option>CAMPANHA LONGA</option>
+            </select></div>
+            <div class="field"><label>RÁDIO</label><select class="control" id="scheduleStation">
+              <option value="JP1017">JOVEMPAN 101,7</option>
+              <option value="JPNEWS983">JPNEWS 98,3</option>
+              <option value="ALL">AMBAS</option>
+            </select></div>
+            <div class="field wide"><label>NOME</label><input class="control" id="scheduleName" required></div>
             <div class="field"><label>INÍCIO</label><input class="control" type="date" id="scheduleStart" required></div>
             <div class="field"><label>TÉRMINO</label><input class="control" type="date" id="scheduleEnd" required></div>
-            <div class="field"><label>OBSERVAÇÃO / ESPECIFICAÇÃO</label><input class="control" id="scheduleNotes"></div>
-            <div class="field"><label>&nbsp;</label><button class="btn red" type="submit">SALVAR</button></div>
+            <div class="field"><label>STATUS</label><select class="control" id="scheduleStatus">
+              <option>RESERVADO</option>
+              <option>EM PRODUÇÃO</option>
+              <option>APROVADO</option>
+              <option>AGUARDANDO MATERIAL</option>
+              <option>PROGRAMADO</option>
+              <option>CONVERTIDO</option>
+              <option>CANCELADO</option>
+            </select></div>
+            <div class="field"><label>DESTINO FUTURO</label><select class="control" id="scheduleDestination">
+              <option>PROMO / MERCHAN</option>
+              <option>PAUTA ESTÚDIO</option>
+              <option>PROGRAMAÇÃO</option>
+              <option>DISTRIBUIÇÃO GERAL</option>
+            </select></div>
+            <div class="field full"><label>OBSERVAÇÃO / ESPECIFICAÇÃO</label><textarea class="control" id="scheduleNotes"></textarea></div>
+            <div class="formActions full"><button class="btn red" type="submit">SALVAR AGENDAMENTO</button><button class="btn" type="button" id="clearScheduleFormBtn">LIMPAR</button></div>
           </form>
-          <div class="tableWrap"><table class="promoMainTable scheduleTable"><thead><tr><th>TIPO</th><th>NOME</th><th>INÍCIO</th><th>TÉRMINO</th><th>STATUS</th><th>OBSERVAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="scheduleTable"></tbody></table></div>
+
+          <div class="filterBar scheduleFilterBar">
+            <div class="field"><label>TIPO</label><select class="control" id="scheduleTypeFilter"><option value="">TODOS</option><option>PROMOÇÃO</option><option>MERCHAN</option><option>PAUTA ESPECIAL</option><option>AVISO / COMUNICADO</option><option>PRÊMIO FUTURO</option><option>CAMPANHA LONGA</option></select></div>
+            <div class="field"><label>RÁDIO</label><select class="control" id="scheduleStationFilter"><option value="">TODAS</option><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option><option value="ALL">AMBAS</option></select></div>
+            <div class="field"><label>STATUS</label><select class="control" id="scheduleStatusFilter"><option value="">TODOS</option><option>RESERVADO</option><option>EM PRODUÇÃO</option><option>APROVADO</option><option>AGUARDANDO MATERIAL</option><option>PROGRAMADO</option><option>CONVERTIDO</option><option>CANCELADO</option></select></div>
+            <div class="field"><label>DESTINO</label><select class="control" id="scheduleDestinationFilter"><option value="">TODOS</option><option>PROMO / MERCHAN</option><option>PAUTA ESTÚDIO</option><option>PROGRAMAÇÃO</option><option>DISTRIBUIÇÃO GERAL</option></select></div>
+          </div>
+
+          <div class="tableWrap"><table class="promoMainTable scheduleTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO</th><th>DESTINO</th><th>STATUS</th><th>OBSERVAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="scheduleTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -4404,6 +4549,8 @@ function normalizePanelState(data){
   if(!data || !data.months) return data;
   data.schedules ||= [];
   data.programSchedules ||= [];
+  data.schedules ||= [];
+  data.schedules.forEach(s=>{ s.type=normalizeScheduleType(s.type); s.status=normalizeScheduleStatus(s.status); s.destination=normalizeScheduleDestination(s.destination); s.station ||= 'JP1017'; s.notes=textNorm(s.notes||''); });
   Object.values(data.months).forEach(m=>{
     (m.items || []).forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
     (m.promos || []).forEach(p=>{ p.status = normalizeStatus(p.status); });
@@ -4659,38 +4806,135 @@ function importManualBackupFile(file){
 
 
 function scheduleItems(){ state.schedules ||= []; return state.schedules; }
+function normalizeScheduleStatus(value){
+  const v=norm(value);
+  if(v==='EM PRODUCAO') return 'EM PRODUÇÃO';
+  if(v==='AGUARDANDO MATERIAL') return 'AGUARDANDO MATERIAL';
+  if(v==='APROVADO') return 'APROVADO';
+  if(v==='PROGRAMADO') return 'PROGRAMADO';
+  if(v==='CONVERTIDO') return 'CONVERTIDO';
+  if(v==='CANCELADO') return 'CANCELADO';
+  return v || 'RESERVADO';
+}
+function normalizeScheduleType(value){
+  const v=norm(value);
+  if(v==='AVISO' || v==='AVISO / COMUNICADO') return 'AVISO / COMUNICADO';
+  if(v==='PREMIO FUTURO' || v==='PRÊMIO FUTURO') return 'PRÊMIO FUTURO';
+  if(v==='CAMPANHA LONGA') return 'CAMPANHA LONGA';
+  if(v==='MERCHAN') return 'MERCHAN';
+  if(v==='PAUTA ESPECIAL') return 'PAUTA ESPECIAL';
+  return 'PROMOÇÃO';
+}
+function normalizeScheduleDestination(value){
+  const v=norm(value);
+  if(v==='PAUTA ESTUDIO' || v==='PAUTA ESTÚDIO') return 'PAUTA ESTÚDIO';
+  if(v==='PROGRAMACAO' || v==='PROGRAMAÇÃO') return 'PROGRAMAÇÃO';
+  if(v==='DISTRIBUICAO GERAL' || v==='DISTRIBUIÇÃO GERAL') return 'DISTRIBUIÇÃO GERAL';
+  return 'PROMO / MERCHAN';
+}
 function scheduleStatus(item){
+  const explicit=normalizeScheduleStatus(item.status);
+  if(explicit==='CONVERTIDO') return {label:'CONVERTIDO',cls:'converted',key:'CONVERTIDO'};
+  if(explicit==='CANCELADO') return {label:'CANCELADO',cls:'cancelled',key:'CANCELADO'};
+  if(explicit==='APROVADO') return {label:'APROVADO',cls:'approved',key:'APROVADO'};
+  if(explicit==='AGUARDANDO MATERIAL') return {label:'AGUARDANDO MATERIAL',cls:'waiting',key:'AGUARDANDO MATERIAL'};
+  if(explicit==='EM PRODUÇÃO') return {label:'EM PRODUÇÃO',cls:'production',key:'EM PRODUÇÃO'};
+  if(explicit==='PROGRAMADO') return {label:'PROGRAMADO',cls:'active',key:'PROGRAMADO'};
   const now=todayISO();
-  if(item.endDate && item.endDate < now) return {label:'ENCERRADO',cls:'done'};
-  if(item.startDate && item.startDate > now) return {label:'RESERVADO',cls:'future'};
-  return {label:'EM ANDAMENTO',cls:'active'};
+  if(item.endDate && item.endDate < now) return {label:'ENCERRADO',cls:'done',key:'ENCERRADO'};
+  if(item.startDate && item.startDate > now) return {label:'RESERVADO',cls:'future',key:'RESERVADO'};
+  return {label:'EM ANDAMENTO',cls:'active',key:'EM ANDAMENTO'};
+}
+function scheduleTargetMonth(s){
+  return String(s.startDate||state.currentMonth+'-01').slice(0,7) || state.currentMonth;
+}
+function monthDataForKey(key){
+  if(!state.months[key]) createBlankMonth(key);
+  const m=state.months[key];
+  m.items ||= []; m.promos ||= []; m.distributions ||= [];
+  return m;
+}
+function scheduleKindToPromoKind(type){
+  const t=normalizeScheduleType(type);
+  if(t==='MERCHAN') return 'merchan';
+  if(t==='PAUTA ESPECIAL' || t==='CAMPANHA LONGA') return 'pauta';
+  if(t==='AVISO / COMUNICADO') return 'aviso';
+  return 'promo';
+}
+function renderScheduleSummary(){
+  const host=$('scheduleSummaryGrid');
+  if(!host) return;
+  const rows=scheduleItems();
+  const now=todayISO();
+  const limit=dateAddISO(now,7);
+  const upcoming=rows.filter(s=>s.startDate && s.startDate>=now && s.startDate<=limit && normalizeScheduleStatus(s.status)!=='CONVERTIDO' && normalizeScheduleStatus(s.status)!=='CANCELADO').length;
+  const waiting=rows.filter(s=>normalizeScheduleStatus(s.status)==='AGUARDANDO MATERIAL').length;
+  const approved=rows.filter(s=>normalizeScheduleStatus(s.status)==='APROVADO').length;
+  const converted=rows.filter(s=>normalizeScheduleStatus(s.status)==='CONVERTIDO').length;
+  host.innerHTML=[
+    ['AGENDADOS',rows.length],
+    ['PRÓXIMOS 7 DIAS',upcoming],
+    ['AGUARDANDO MATERIAL',waiting],
+    ['APROVADOS',approved],
+    ['CONVERTIDOS',converted]
+  ].map(([label,total])=>`<div class="scheduleSummaryCard"><span>${label}</span><strong>${total}</strong></div>`).join('');
 }
 function clearScheduleForm(){
   if($('scheduleForm')) $('scheduleForm').reset();
   if($('scheduleId')) $('scheduleId').value='';
+  if($('scheduleStation')) $('scheduleStation').value='JP1017';
+  if($('scheduleStatus')) $('scheduleStatus').value='RESERVADO';
+  if($('scheduleDestination')) $('scheduleDestination').value='PROMO / MERCHAN';
   if($('scheduleStart')) $('scheduleStart').value=todayISO();
   if($('scheduleEnd')) $('scheduleEnd').value=todayISO();
 }
+function filteredScheduleItems(){
+  const type=norm($('scheduleTypeFilter')?.value||'');
+  const station=$('scheduleStationFilter')?.value||'';
+  const status=norm($('scheduleStatusFilter')?.value||'');
+  const dest=norm($('scheduleDestinationFilter')?.value||'');
+  return scheduleItems().filter(s=>{
+    const st=scheduleStatus(s);
+    return (!type || normalizeScheduleType(s.type)===type) &&
+      (!station || (s.station||'JP1017')===station) &&
+      (!status || st.key===status || normalizeScheduleStatus(s.status)===status) &&
+      (!dest || normalizeScheduleDestination(s.destination)===dest);
+  });
+}
 function renderSchedule(){
+  renderScheduleSummary();
   const tb=$('scheduleTable');
   if(!tb) return;
-  const rows=[...scheduleItems()].sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.name).localeCompare(norm(b.name)));
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="7"><div class="empty">NENHUM AGENDAMENTO CADASTRADO.</div></td></tr>'; return; }
+  const rows=filteredScheduleItems().sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.name).localeCompare(norm(b.name)));
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="8"><div class="empty">NENHUM AGENDAMENTO CADASTRADO PARA ESSE FILTRO.</div></td></tr>'; return; }
   tb.innerHTML=rows.map(s=>{
     const st=scheduleStatus(s);
-    return `<tr><td>${esc(s.type||'')}</td><td>${esc(s.name||'')}</td><td>${esc(formatBR(s.startDate||''))}</td><td>${esc(formatBR(s.endDate||''))}</td><td><span class="scheduleStatus ${st.cls}">${st.label}</span></td><td>${esc(s.notes||'')}</td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" onclick="editSchedule('${esc(s.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" onclick="deleteSchedule('${esc(s.id)}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
+    const type=normalizeScheduleType(s.type);
+    const dest=normalizeScheduleDestination(s.destination);
+    const period=`${formatBR(s.startDate||'')}${s.endDate?' A '+formatBR(s.endDate):''}`;
+    return `<tr><td><span class="typeBadge ${type==='MERCHAN'?'merchan':'promo'}">${esc(type)}</span></td><td>${esc(stationLabel(s.station||'JP1017'))}</td><td><strong>${esc(s.name||'')}</strong></td><td>${esc(period)}</td><td>${esc(dest)}</td><td><span class="scheduleStatus ${st.cls}">${esc(st.label)}</span></td><td class="scheduleNoteCell">${esc(s.notes||'')}</td><td><div class="scheduleActions"><button class="btn small" type="button" onclick="convertSchedule('${esc(s.id)}')">CONVERTER</button><button class="actionIcon" title="EDITAR" onclick="editSchedule('${esc(s.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon ghost" title="DUPLICAR" onclick="duplicateSchedule('${esc(s.id)}')"><span class="iconGlyph">⧉</span></button><button class="actionIcon danger" title="EXCLUIR" onclick="deleteSchedule('${esc(s.id)}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
   }).join('');
 }
 function editSchedule(idValue){
   const s=scheduleItems().find(x=>x.id===idValue);
   if(!s) return;
   $('scheduleId').value=s.id;
-  $('scheduleType').value=s.type||'PROMOÇÃO';
+  $('scheduleType').value=normalizeScheduleType(s.type);
+  $('scheduleStation').value=s.station||'JP1017';
   $('scheduleName').value=s.name||'';
   $('scheduleStart').value=s.startDate||todayISO();
   $('scheduleEnd').value=s.endDate||todayISO();
+  $('scheduleStatus').value=normalizeScheduleStatus(s.status);
+  $('scheduleDestination').value=normalizeScheduleDestination(s.destination);
   $('scheduleNotes').value=s.notes||'';
   setView('agendamento');
+}
+function duplicateSchedule(idValue){
+  const s=scheduleItems().find(x=>x.id===idValue);
+  if(!s) return;
+  const copy={...clone(s),id:id('SCH'),name:`${s.name} CÓPIA`,status:'RESERVADO',createdAt:new Date().toISOString(),convertedAt:'',convertedTo:''};
+  scheduleItems().push(copy);
+  saveState(true); render(); toast('AGENDAMENTO DUPLICADO.');
 }
 function deleteSchedule(idValue){
   if(!confirm('EXCLUIR ESTE AGENDAMENTO?')) return;
@@ -4702,11 +4946,115 @@ function saveSchedule(e){
   const idVal=$('scheduleId').value||id('SCH');
   const start=$('scheduleStart').value, end=$('scheduleEnd').value;
   if(start && end && end<start){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR AO INÍCIO.'); return; }
-  const s={id:idVal,type:norm($('scheduleType').value),name:norm($('scheduleName').value),startDate:start,endDate:end,notes:textNorm($('scheduleNotes').value),createdAt:new Date().toISOString()};
+  const existing=scheduleItems().find(x=>x.id===idVal)||{};
+  const s={
+    id:idVal,
+    type:normalizeScheduleType($('scheduleType').value),
+    station:$('scheduleStation').value||'JP1017',
+    name:norm($('scheduleName').value),
+    startDate:start,
+    endDate:end,
+    status:normalizeScheduleStatus($('scheduleStatus').value),
+    destination:normalizeScheduleDestination($('scheduleDestination').value),
+    notes:textNorm($('scheduleNotes').value),
+    createdAt:existing.createdAt||new Date().toISOString(),
+    updatedAt:new Date().toISOString(),
+    convertedAt:existing.convertedAt||'',
+    convertedTo:existing.convertedTo||''
+  };
   const idx=scheduleItems().findIndex(x=>x.id===idVal);
   if(idx>=0) state.schedules[idx]=s; else scheduleItems().push(s);
   clearScheduleForm();
   saveState(true); render(); toast('AGENDAMENTO SALVO.');
+}
+function markScheduleConverted(s,target){
+  s.status='CONVERTIDO';
+  s.convertedAt=new Date().toISOString();
+  s.convertedTo=target;
+}
+function convertSchedule(idValue){
+  const s=scheduleItems().find(x=>x.id===idValue);
+  if(!s) return;
+  const type=normalizeScheduleType(s.type);
+  const dest=normalizeScheduleDestination(s.destination);
+  const key=scheduleTargetMonth(s);
+  const targetMonth=monthDataForKey(key);
+  if(dest==='DISTRIBUIÇÃO GERAL' || type==='PRÊMIO FUTURO'){
+    const d={
+      id:id('DST'),
+      date:s.startDate||`${key}-01`,
+      startDate:s.startDate||`${key}-01`,
+      endDate:s.endDate||s.startDate||`${key}-01`,
+      show:s.name||'',
+      prize:s.name||'',
+      title:s.name||'',
+      description:s.notes||'',
+      notes:s.notes||'',
+      total:0,
+      prizeType:'brinde',
+      ticketDefaultUnit:'unit',
+      ticketUnits:{},
+      rotationSlots:[],
+      radioDailyLimit:1,
+      app:0,camarote:0,camarim:0,rua:0,ar:0,rs:0,reservado:0,reservadoNote:'',
+      clientes:0,outros:0,
+      createdAt:new Date().toISOString(),
+      updatedAt:new Date().toISOString()
+    };
+    targetMonth.distributions.push(d);
+    markScheduleConverted(s,'DISTRIBUIÇÃO GERAL');
+    state.currentMonth=key;
+    saveState(true); queueApiSave(80); render(); setView('distribuicao');
+    toast('AGENDAMENTO CONVERTIDO EM DISTRIBUIÇÃO GERAL.');
+    return;
+  }
+  if(dest==='PROGRAMAÇÃO'){
+    state.currentMonth=key;
+    render();
+    clearItemForm();
+    $('itemDate').value=s.startDate||`${key}-01`;
+    if($('itemProgramStation')) $('itemProgramStation').value=s.station==='ALL'?'JP1017':(s.station||'JP1017');
+    $('itemPrize').value=s.name||'';
+    $('itemTitle').value=s.name||'';
+    $('itemNotes').value=s.notes||'';
+    $('itemChannel').value='RÁDIO';
+    $('itemStatus').value='NO AR';
+    saveState(true); render(); setView('programacao'); openDrawer('itemDrawer');
+    toast('AGENDAMENTO ABERTO PARA LANÇAR NA PROGRAMAÇÃO.');
+    return;
+  }
+  const p={
+    id:id('PR'),
+    startDate:s.startDate||`${key}-01`,
+    drawDate:s.endDate||s.startDate||`${key}-01`,
+    drawTime:'',
+    kind:scheduleKindToPromoKind(type),
+    local:'RÁDIO',
+    program:'',
+    station:s.station||'JP1017',
+    name:s.name||'',
+    title:s.name||'',
+    description:s.notes||'',
+    titleStyle:defaultPromoTextStyle('title'),
+    descriptionStyle:defaultPromoTextStyle('desc'),
+    readMode:'all',
+    readHours:[],
+    readByHour:{},
+    readAt:'',
+    readAtLabel:'',
+    resultName:'',
+    resultAt:'',
+    resultAtLabel:'',
+    resultSlot:'',
+    resultDate:'',
+    resultByHour:{},
+    imageData:''
+  };
+  targetMonth.promos.push(p);
+  markScheduleConverted(s,'PROMO / MERCHAN');
+  state.currentMonth=key;
+  saveState(true); queueApiSave(80); render(); setView('digital');
+  toast('AGENDAMENTO CONVERTIDO EM PROMO / PAUTA.');
 }
 function promoEndingAlerts(){
   const now=new Date(); now.setHours(0,0,0,0);
@@ -6884,6 +7232,8 @@ bind('studioPrevDayBtn','click',()=>changeStudioDay(-1));
 bind('studioNextDayBtn','click',()=>changeStudioDay(1));
 bind('exportPdfBtn','click',()=>window.print());
 bind('scheduleForm','submit',saveSchedule);
+bind('clearScheduleFormBtn','click',clearScheduleForm);
+['scheduleTypeFilter','scheduleStationFilter','scheduleStatusFilter','scheduleDestinationFilter'].forEach(id=>bind(id,'input',renderSchedule));
 bind('programScheduleForm','submit',saveProgramSchedule);
 bind('addProgramScheduleBtn','click',()=>openProgramScheduleForm());
 document.addEventListener('click',e=>{ const btn=e.target.closest('#programStationFilterTabs .stationTab'); if(btn) setProgramStationFilter(btn.dataset.station); });
@@ -6930,6 +7280,10 @@ function toCsv(){
   monthData().promos.forEach(p=>lines.push(['PROMOÇÕES',p.name||p.title||'',formatBR(p.startDate||''),formatBR(p.drawDate),p.drawTime||'',p.local||'',p.description||'',p.imageData ? 'COM IMAGEM' : 'SEM IMAGEM'].map(csvCell).join(';')));
   return '\ufeff'+lines.join('\n');
 }
+window.convertSchedule=convertSchedule;
+window.duplicateSchedule=duplicateSchedule;
+window.editSchedule=editSchedule;
+window.deleteSchedule=deleteSchedule;
 window.openMonthKey=openMonthKey;
 window.generateRadioFromDist=generateRadioFromDist;
 window.confirmSmartRadioReport=confirmSmartRadioReport;
