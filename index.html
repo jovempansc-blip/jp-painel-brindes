@@ -1411,6 +1411,65 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   margin-top:10px;
 }
 
+
+/* AJUSTE — DADOS POR MÊS E DIAGNÓSTICO DE CARREGAMENTO */
+.monthDataNotice{
+  display:grid;
+  gap:10px;
+  justify-items:center;
+  padding:20px;
+  color:#526075;
+  font-size:12px;
+  font-weight:900;
+  text-align:center;
+}
+.monthDataNotice strong{
+  color:#171c26;
+  font-size:14px;
+}
+.monthDataButtons{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.monthDataButtons .btn{
+  min-height:32px;
+  border-radius:12px;
+  font-size:10px;
+  padding:7px 11px;
+}
+.backupMonthBreakdown{
+  border:1px solid #dfe5ec;
+  border-radius:18px;
+  overflow:hidden;
+  background:#fff;
+  margin-top:12px;
+}
+.backupMonthBreakdown table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+  font-weight:900;
+}
+.backupMonthBreakdown th,
+.backupMonthBreakdown td{
+  border-bottom:1px solid #edf1f6;
+  padding:10px 12px;
+  text-align:left;
+}
+.backupMonthBreakdown th{
+  background:#f8fafc;
+  color:#526075;
+  font-size:9px;
+  letter-spacing:.06em;
+}
+.backupMonthBreakdown td.num{
+  text-align:center;
+  font-weight:1000;
+  color:#171c26;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1582,6 +1641,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
         </div>
         <div class="panelBody">
           <div class="backupGrid" id="backupSummaryCards"></div>
+          <div class="backupMonthBreakdown" id="backupMonthBreakdown"></div>
 
           <div class="backupInfoBox">
             <strong>COMO USAR:</strong><br>
@@ -4160,7 +4220,7 @@ async function importLegacyStateToFirebase(){
     if(payload && payload.ok && payload.state && payload.state.months && countStateRecords(payload.state)>0){
       state = normalizePanelState(payload.state);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      ensureCurrentCalendarMonth();
+      ensureCurrentMonthAvailable();
       render();
       await saveStateToApi();
       toast('BASE MIGRADA DO GOOGLE SHEETS PARA O FIREBASE.');
@@ -4176,7 +4236,7 @@ function applyRemoteFirebaseState(remoteState){
   firebaseApplyingRemote = true;
   state = normalizePanelState(remoteState);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  ensureCurrentCalendarMonth();
+  ensureCurrentMonthAvailable();
   render();
   firebaseApplyingRemote = false;
 }
@@ -4292,13 +4352,39 @@ function currentCalendarMonth(){
   const d=new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
-function ensureCurrentCalendarMonth(){
-  const key=currentCalendarMonth();
-  if(state.currentMonth !== key){
+function monthSummaryList(data=state){
+  const months=data?.months || {};
+  return Object.entries(months).map(([key,m])=>({
+    key,
+    items:(m.items||[]).length,
+    distributions:(m.distributions||[]).length,
+    promos:(m.promos||[]).length,
+    total:(m.items||[]).length+(m.distributions||[]).length+(m.promos||[]).length
+  })).sort((a,b)=>b.key.localeCompare(a.key));
+}
+function bestAvailableMonth(data=state){
+  const list=monthSummaryList(data);
+  const withData=list.filter(m=>m.total>0);
+  if(withData.length) return withData[0].key;
+  if(list.length) return list[0].key;
+  return currentCalendarMonth();
+}
+function ensureCurrentMonthAvailable(){
+  if(!state.months) state.months={};
+  if(!state.currentMonth || !state.months[state.currentMonth]){
+    const key=bestAvailableMonth(state);
     if(!state.months[key]) createBlankMonth(key);
     state.currentMonth=key;
-    saveState(true);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }
+}
+function openMonthKey(key){
+  if(!key) return;
+  if(!state.months[key]) createBlankMonth(key);
+  state.currentMonth=key;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  render();
+  toast(`MÊS ${key} ABERTO.`);
 }
 function normalizeStatus(value){
   const v = norm(value);
@@ -4502,11 +4588,17 @@ function renderBackup(){
   box.innerHTML = `
     <div class="backupCard"><span>MESES NO BANCO</span><strong>${c.months}</strong></div>
     <div class="backupCard"><span>ITENS DA PROGRAMAÇÃO</span><strong>${c.items}</strong></div>
-    <div class="backupCard"><span>DISTRIBUIÇÕES / PROMOÇÕES</span><strong>${c.distributions + c.promos}</strong></div>
-    <div class="backupCard"><span>MÊS ATUAL</span><strong>${esc(state.currentMonth || '-')}</strong></div>
+    <div class="backupCard"><span>DISTRIBUIÇÕES</span><strong>${c.distributions}</strong></div>
+    <div class="backupCard"><span>PROMOÇÕES / PAUTAS</span><strong>${c.promos}</strong></div>
+    <div class="backupCard"><span>MÊS ABERTO NO PAINEL</span><strong>${esc(state.currentMonth || '-')}</strong></div>
     <div class="backupCard"><span>ÚLTIMO BACKUP MANUAL</span><strong style="font-size:16px;line-height:1.25">${esc(last)}</strong></div>
     <div class="backupCard"><span>NOME SUGERIDO DO ARQUIVO</span><strong style="font-size:16px;line-height:1.25">JP_PAINEL_BRINDES_BACKUP_OFICIAL.JSON</strong></div>
   `;
+  const breakdown=$('backupMonthBreakdown');
+  if(breakdown){
+    const rows=monthSummaryList(state);
+    breakdown.innerHTML=rows.length ? `<table><thead><tr><th>MÊS</th><th>ITENS</th><th>DISTRIBUIÇÕES</th><th>PROMOÇÕES / PAUTAS</th><th>ABRIR</th></tr></thead><tbody>${rows.map(r=>`<tr><td><strong>${esc(r.key)}</strong>${r.key===state.currentMonth?' · ABERTO':''}</td><td class="num">${r.items}</td><td class="num">${r.distributions}</td><td class="num">${r.promos}</td><td><button class="btn small" type="button" onclick="openMonthKey('${esc(r.key)}')">ABRIR</button></td></tr>`).join('')}</tbody></table>` : '';
+  }
 }
 function buildBackupPayload(){
   normalizePanelState(state);
@@ -4549,10 +4641,7 @@ function importManualBackupFile(file){
       const ok=confirm(`RESTAURAR BACKUP?\n\nARQUIVO: ${file.name}\nGERADO EM: ${label}\nMESES: ${c.months}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\n\nISSO VAI SUBSTITUIR A BASE ATUAL DO FIREBASE.`);
       if(!ok) return;
       state=incoming;
-      if(!state.currentMonth || !state.months[state.currentMonth]){
-        state.currentMonth = currentCalendarMonth();
-        if(!state.months[state.currentMonth]) createBlankMonth(state.currentMonth);
-      }
+      ensureCurrentMonthAvailable();
       saveState(true);
       queueApiSave(80);
       render();
@@ -5292,7 +5381,18 @@ function renderDistribuicao(){
   const rows=filteredDistributions();
   const tb=$('distTable');
   renderReservations();
-  if(!rows.length){ tb.innerHTML=`<tr><td colspan="14"><div class="empty">NENHUMA DISTRIBUIÇÃO CADASTRADA PARA ESTE MÊS.</div></td></tr>`; return; }
+  if(!rows.length){
+    const currentTotal=(monthData().distributions||[]).length;
+    const otherMonths=monthSummaryList(state).filter(m=>m.key!==state.currentMonth && m.distributions>0);
+    if(currentTotal===0 && otherMonths.length){
+      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA DISTRIBUIÇÃO NO MÊS ${esc(state.currentMonth)}.</strong><span>EXISTEM DISTRIBUIÇÕES SALVAS EM OUTRO(S) MÊS(ES). ABRA O MÊS CORRETO ABAIXO.</span><div class="monthDataButtons">${otherMonths.map(m=>`<button class="btn small" type="button" onclick="openMonthKey('${esc(m.key)}')">${esc(m.key)} · ${m.distributions} DISTR.</button>`).join('')}</div></div></td></tr>`;
+    }else if(currentTotal>0){
+      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>AS DISTRIBUIÇÕES EXISTEM, MAS O FILTRO ESTÁ ESCONDENDO.</strong><span>LIMPE A BUSCA OU MUDE O STATUS DO SALDO PARA TODOS.</span></div></td></tr>`;
+    }else{
+      tb.innerHTML=`<tr><td colspan="15"><div class="empty">NENHUMA DISTRIBUIÇÃO CADASTRADA PARA ESTE MÊS.</div></td></tr>`;
+    }
+    return;
+  }
   const inlineNum = (d,key,label) => `<div class="distNumStack"><input class="distInlineNum" type="number" min="0" step="1" value="${num(d[key])}" data-dist-id="${esc(d.id)}" data-key="${esc(key)}" aria-label="${esc(label || key)}">${ticketUnitSelect(d,key)}</div>`;
   tb.innerHTML = rows.map(d=>{
     const left=leftTotal(d); const prog=programmed(d.id);
@@ -6830,6 +6930,7 @@ function toCsv(){
   monthData().promos.forEach(p=>lines.push(['PROMOÇÕES',p.name||p.title||'',formatBR(p.startDate||''),formatBR(p.drawDate),p.drawTime||'',p.local||'',p.description||'',p.imageData ? 'COM IMAGEM' : 'SEM IMAGEM'].map(csvCell).join(';')));
   return '\ufeff'+lines.join('\n');
 }
+window.openMonthKey=openMonthKey;
 window.generateRadioFromDist=generateRadioFromDist;
 window.confirmSmartRadioReport=confirmSmartRadioReport;
 window.redoSmartRadioReport=redoSmartRadioReport;
@@ -6842,11 +6943,11 @@ window.addEventListener('storage',()=>{
 });
 populatePromoReadHours();
 updatePromoReadScheduleState();
-ensureCurrentCalendarMonth();
+ensureCurrentMonthAvailable();
 render();
 syncStateFromApi(true);
 window.addEventListener('beforeunload',()=>saveState(true));
-setInterval(()=>{ ensureCurrentCalendarMonth(); render(); },60000);
+setInterval(()=>{ ensureCurrentMonthAvailable(); render(); },60000);
 setInterval(()=>syncStateFromApi(false),30000);
 </script>
 </body>
