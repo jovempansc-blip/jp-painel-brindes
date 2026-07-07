@@ -1724,6 +1724,50 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   }
 }
 
+
+/* AJUSTE — AGENDAMENTO COM STATUS AUTOMÁTICO */
+#view-agendamento .scheduleFormRowBottom{
+  grid-template-columns:190px 190px minmax(360px,1fr) 260px!important;
+}
+#view-agendamento .scheduleFilterBar{
+  grid-template-columns:repeat(5,minmax(135px,185px))!important;
+}
+.schedulePendingBadge{
+  display:inline-flex;
+  min-height:24px;
+  align-items:center;
+  border-radius:999px;
+  padding:0 8px;
+  border:1px solid #dfe5ec;
+  background:#f7f9fc;
+  color:#5a6474;
+  font-size:9.5px;
+  font-weight:1000;
+  letter-spacing:.03em;
+}
+.schedulePendingBadge.warn{
+  background:#fff0f4;
+  border-color:#ffc0cc;
+  color:#c9002b;
+}
+.scheduleActions .cancelBtn{
+  color:#8a4b00;
+  background:#fff7ec;
+  border-color:#ffd7a8;
+}
+@media(max-width:980px){
+  #view-agendamento .scheduleFormRowBottom,
+  #view-agendamento .scheduleFilterBar{
+    grid-template-columns:1fr 1fr!important;
+  }
+}
+@media(max-width:640px){
+  #view-agendamento .scheduleFormRowBottom,
+  #view-agendamento .scheduleFilterBar{
+    grid-template-columns:1fr!important;
+  }
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1902,21 +1946,19 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
             </div>
 
             <div class="scheduleFormRow scheduleFormRowBottom">
-              <div class="field"><label>STATUS</label><select class="control" id="scheduleStatus">
-                <option>RESERVADO</option>
-                <option>EM PRODUÇÃO</option>
-                <option>APROVADO</option>
-                <option>AGUARDANDO MATERIAL</option>
-                <option>PROGRAMADO</option>
-                <option>CONVERTIDO</option>
-                <option>CANCELADO</option>
-              </select></div>
-
               <div class="field"><label>DESTINO FUTURO</label><select class="control" id="scheduleDestination">
                 <option>PROMO / MERCHAN</option>
                 <option>PAUTA ESTÚDIO</option>
                 <option>PROGRAMAÇÃO</option>
                 <option>DISTRIBUIÇÃO GERAL</option>
+              </select></div>
+
+              <div class="field"><label>PENDÊNCIA</label><select class="control" id="schedulePending">
+                <option>SEM PENDÊNCIA</option>
+                <option>FALTA TEXTO</option>
+                <option>FALTA ARTE</option>
+                <option>FALTA APROVAÇÃO</option>
+                <option>FALTA DEFINIR PRÊMIO</option>
               </select></div>
 
               <div class="field scheduleNotesField"><label>OBSERVAÇÃO / ESPECIFICAÇÃO</label><textarea class="control" id="scheduleNotes"></textarea></div>
@@ -1931,11 +1973,12 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
           <div class="filterBar scheduleFilterBar">
             <div class="field"><label>TIPO</label><select class="control" id="scheduleTypeFilter"><option value="">TODOS</option><option>PROMOÇÃO</option><option>MERCHAN</option><option>PAUTA ESPECIAL</option><option>AVISO / COMUNICADO</option><option>PRÊMIO FUTURO</option><option>CAMPANHA LONGA</option></select></div>
             <div class="field"><label>RÁDIO</label><select class="control" id="scheduleStationFilter"><option value="">TODAS</option><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option><option value="ALL">AMBAS</option></select></div>
-            <div class="field"><label>STATUS</label><select class="control" id="scheduleStatusFilter"><option value="">TODOS</option><option>RESERVADO</option><option>EM PRODUÇÃO</option><option>APROVADO</option><option>AGUARDANDO MATERIAL</option><option>PROGRAMADO</option><option>CONVERTIDO</option><option>CANCELADO</option></select></div>
+            <div class="field"><label>STATUS AUTOMÁTICO</label><select class="control" id="scheduleStatusFilter"><option value="">TODOS</option><option>AGENDADO</option><option>PRÓXIMO</option><option>EM ANDAMENTO</option><option>ENCERRADO</option><option>CONVERTIDO</option><option>CANCELADO</option></select></div>
+            <div class="field"><label>PENDÊNCIA</label><select class="control" id="schedulePendingFilter"><option value="">TODAS</option><option>SEM PENDÊNCIA</option><option>FALTA TEXTO</option><option>FALTA ARTE</option><option>FALTA APROVAÇÃO</option><option>FALTA DEFINIR PRÊMIO</option></select></div>
             <div class="field"><label>DESTINO</label><select class="control" id="scheduleDestinationFilter"><option value="">TODOS</option><option>PROMO / MERCHAN</option><option>PAUTA ESTÚDIO</option><option>PROGRAMAÇÃO</option><option>DISTRIBUIÇÃO GERAL</option></select></div>
           </div>
 
-          <div class="tableWrap"><table class="promoMainTable scheduleTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO</th><th>DESTINO</th><th>STATUS</th><th>OBSERVAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="scheduleTable"></tbody></table></div>
+          <div class="tableWrap"><table class="promoMainTable scheduleTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO</th><th>DESTINO</th><th>STATUS</th><th>PENDÊNCIA</th><th>OBSERVAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="scheduleTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -4711,7 +4754,7 @@ function normalizePanelState(data){
   data.schedules ||= [];
   data.programSchedules ||= [];
   data.schedules ||= [];
-  data.schedules.forEach(s=>{ s.type=normalizeScheduleType(s.type); s.status=normalizeScheduleStatus(s.status); s.destination=normalizeScheduleDestination(s.destination); s.station ||= 'JP1017'; s.notes=textNorm(s.notes||''); });
+  data.schedules.forEach(s=>{ s.type=normalizeScheduleType(s.type); s.status=legacyStatusToScheduleMeta(s); s.pending=normalizeSchedulePending(s.pending||s.pendencia||s.status); s.destination=normalizeScheduleDestination(s.destination); s.station ||= 'JP1017'; s.notes=textNorm(s.notes||''); });
   Object.values(data.months).forEach(m=>{
     (m.items || []).forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
     (m.promos || []).forEach(p=>{ p.status = normalizeStatus(p.status); });
@@ -4967,16 +5010,6 @@ function importManualBackupFile(file){
 
 
 function scheduleItems(){ state.schedules ||= []; return state.schedules; }
-function normalizeScheduleStatus(value){
-  const v=norm(value);
-  if(v==='EM PRODUCAO') return 'EM PRODUÇÃO';
-  if(v==='AGUARDANDO MATERIAL') return 'AGUARDANDO MATERIAL';
-  if(v==='APROVADO') return 'APROVADO';
-  if(v==='PROGRAMADO') return 'PROGRAMADO';
-  if(v==='CONVERTIDO') return 'CONVERTIDO';
-  if(v==='CANCELADO') return 'CANCELADO';
-  return v || 'RESERVADO';
-}
 function normalizeScheduleType(value){
   const v=norm(value);
   if(v==='AVISO' || v==='AVISO / COMUNICADO') return 'AVISO / COMUNICADO';
@@ -4993,18 +5026,34 @@ function normalizeScheduleDestination(value){
   if(v==='DISTRIBUICAO GERAL' || v==='DISTRIBUIÇÃO GERAL') return 'DISTRIBUIÇÃO GERAL';
   return 'PROMO / MERCHAN';
 }
+function normalizeSchedulePending(value){
+  const v=norm(value);
+  if(v==='FALTA TEXTO') return 'FALTA TEXTO';
+  if(v==='FALTA ARTE') return 'FALTA ARTE';
+  if(v==='FALTA APROVACAO' || v==='FALTA APROVAÇÃO') return 'FALTA APROVAÇÃO';
+  if(v==='FALTA DEFINIR PREMIO' || v==='FALTA DEFINIR PRÊMIO') return 'FALTA DEFINIR PRÊMIO';
+  return 'SEM PENDÊNCIA';
+}
+function legacyStatusToScheduleMeta(s){
+  const old=norm(s.status||'');
+  if(old==='CONVERTIDO' || old==='CANCELADO') return old;
+  return '';
+}
 function scheduleStatus(item){
-  const explicit=normalizeScheduleStatus(item.status);
-  if(explicit==='CONVERTIDO') return {label:'CONVERTIDO',cls:'converted',key:'CONVERTIDO'};
-  if(explicit==='CANCELADO') return {label:'CANCELADO',cls:'cancelled',key:'CANCELADO'};
-  if(explicit==='APROVADO') return {label:'APROVADO',cls:'approved',key:'APROVADO'};
-  if(explicit==='AGUARDANDO MATERIAL') return {label:'AGUARDANDO MATERIAL',cls:'waiting',key:'AGUARDANDO MATERIAL'};
-  if(explicit==='EM PRODUÇÃO') return {label:'EM PRODUÇÃO',cls:'production',key:'EM PRODUÇÃO'};
-  if(explicit==='PROGRAMADO') return {label:'PROGRAMADO',cls:'active',key:'PROGRAMADO'};
+  const manual=legacyStatusToScheduleMeta(item);
+  if(manual==='CONVERTIDO') return {label:'CONVERTIDO',cls:'converted',key:'CONVERTIDO'};
+  if(manual==='CANCELADO') return {label:'CANCELADO',cls:'cancelled',key:'CANCELADO'};
   const now=todayISO();
-  if(item.endDate && item.endDate < now) return {label:'ENCERRADO',cls:'done',key:'ENCERRADO'};
-  if(item.startDate && item.startDate > now) return {label:'RESERVADO',cls:'future',key:'RESERVADO'};
-  return {label:'EM ANDAMENTO',cls:'active',key:'EM ANDAMENTO'};
+  const start=item.startDate||'';
+  const end=item.endDate||'';
+  if(end && end < now) return {label:'ENCERRADO',cls:'done',key:'ENCERRADO'};
+  if(start && end && start <= now && end >= now) return {label:'EM ANDAMENTO',cls:'active',key:'EM ANDAMENTO'};
+  if(start && start > now){
+    const limit=dateAddISO(now,7);
+    if(start <= limit) return {label:'PRÓXIMO',cls:'future',key:'PRÓXIMO'};
+    return {label:'AGENDADO',cls:'reserved',key:'AGENDADO'};
+  }
+  return {label:'AGENDADO',cls:'reserved',key:'AGENDADO'};
 }
 function scheduleTargetMonth(s){
   return String(s.startDate||state.currentMonth+'-01').slice(0,7) || state.currentMonth;
@@ -5026,25 +5075,21 @@ function renderScheduleSummary(){
   const host=$('scheduleSummaryGrid');
   if(!host) return;
   const rows=scheduleItems();
-  const now=todayISO();
-  const limit=dateAddISO(now,7);
-  const upcoming=rows.filter(s=>s.startDate && s.startDate>=now && s.startDate<=limit && normalizeScheduleStatus(s.status)!=='CONVERTIDO' && normalizeScheduleStatus(s.status)!=='CANCELADO').length;
-  const waiting=rows.filter(s=>normalizeScheduleStatus(s.status)==='AGUARDANDO MATERIAL').length;
-  const approved=rows.filter(s=>normalizeScheduleStatus(s.status)==='APROVADO').length;
-  const converted=rows.filter(s=>normalizeScheduleStatus(s.status)==='CONVERTIDO').length;
+  const countByStatus=key=>rows.filter(s=>scheduleStatus(s).key===key).length;
+  const pending=rows.filter(s=>normalizeSchedulePending(s.pending||s.pendencia||'SEM PENDÊNCIA')!=='SEM PENDÊNCIA' && scheduleStatus(s).key!=='CONVERTIDO' && scheduleStatus(s).key!=='CANCELADO').length;
   host.innerHTML=[
-    ['AGENDADOS',rows.length],
-    ['PRÓXIMOS 7 DIAS',upcoming],
-    ['AGUARDANDO MATERIAL',waiting],
-    ['APROVADOS',approved],
-    ['CONVERTIDOS',converted]
+    ['AGENDADOS',countByStatus('AGENDADO')],
+    ['PRÓXIMOS 7 DIAS',countByStatus('PRÓXIMO')],
+    ['EM ANDAMENTO',countByStatus('EM ANDAMENTO')],
+    ['PENDÊNCIAS',pending],
+    ['CONVERTIDOS',countByStatus('CONVERTIDO')]
   ].map(([label,total])=>`<div class="scheduleSummaryCard"><span>${label}</span><strong>${total}</strong></div>`).join('');
 }
 function clearScheduleForm(){
   if($('scheduleForm')) $('scheduleForm').reset();
   if($('scheduleId')) $('scheduleId').value='';
   if($('scheduleStation')) $('scheduleStation').value='JP1017';
-  if($('scheduleStatus')) $('scheduleStatus').value='RESERVADO';
+  if($('schedulePending')) $('schedulePending').value='SEM PENDÊNCIA';
   if($('scheduleDestination')) $('scheduleDestination').value='PROMO / MERCHAN';
   if($('scheduleStart')) $('scheduleStart').value=todayISO();
   if($('scheduleEnd')) $('scheduleEnd').value=todayISO();
@@ -5053,12 +5098,14 @@ function filteredScheduleItems(){
   const type=norm($('scheduleTypeFilter')?.value||'');
   const station=$('scheduleStationFilter')?.value||'';
   const status=norm($('scheduleStatusFilter')?.value||'');
+  const pending=norm($('schedulePendingFilter')?.value||'');
   const dest=norm($('scheduleDestinationFilter')?.value||'');
   return scheduleItems().filter(s=>{
     const st=scheduleStatus(s);
     return (!type || normalizeScheduleType(s.type)===type) &&
       (!station || (s.station||'JP1017')===station) &&
-      (!status || st.key===status || normalizeScheduleStatus(s.status)===status) &&
+      (!status || st.key===status) &&
+      (!pending || normalizeSchedulePending(s.pending||s.pendencia||'SEM PENDÊNCIA')===pending) &&
       (!dest || normalizeScheduleDestination(s.destination)===dest);
   });
 }
@@ -5067,13 +5114,15 @@ function renderSchedule(){
   const tb=$('scheduleTable');
   if(!tb) return;
   const rows=filteredScheduleItems().sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.name).localeCompare(norm(b.name)));
-  if(!rows.length){ tb.innerHTML='<tr><td colspan="8"><div class="empty">NENHUM AGENDAMENTO CADASTRADO PARA ESSE FILTRO.</div></td></tr>'; return; }
+  if(!rows.length){ tb.innerHTML='<tr><td colspan="9"><div class="empty">NENHUM AGENDAMENTO CADASTRADO PARA ESSE FILTRO.</div></td></tr>'; return; }
   tb.innerHTML=rows.map(s=>{
     const st=scheduleStatus(s);
     const type=normalizeScheduleType(s.type);
     const dest=normalizeScheduleDestination(s.destination);
+    const pend=normalizeSchedulePending(s.pending||s.pendencia||'SEM PENDÊNCIA');
     const period=`${formatBR(s.startDate||'')}${s.endDate?' A '+formatBR(s.endDate):''}`;
-    return `<tr><td><span class="typeBadge ${type==='MERCHAN'?'merchan':'promo'}">${esc(type)}</span></td><td>${esc(stationLabel(s.station||'JP1017'))}</td><td><strong>${esc(s.name||'')}</strong></td><td>${esc(period)}</td><td>${esc(dest)}</td><td><span class="scheduleStatus ${st.cls}">${esc(st.label)}</span></td><td class="scheduleNoteCell">${esc(s.notes||'')}</td><td><div class="scheduleActions"><button class="btn small" type="button" onclick="convertSchedule('${esc(s.id)}')">CONVERTER</button><button class="actionIcon" title="EDITAR" onclick="editSchedule('${esc(s.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon ghost" title="DUPLICAR" onclick="duplicateSchedule('${esc(s.id)}')"><span class="iconGlyph">⧉</span></button><button class="actionIcon danger" title="EXCLUIR" onclick="deleteSchedule('${esc(s.id)}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
+    const canCancel=st.key!=='CONVERTIDO' && st.key!=='CANCELADO';
+    return `<tr><td><span class="typeBadge ${type==='MERCHAN'?'merchan':'promo'}">${esc(type)}</span></td><td>${esc(stationLabel(s.station||'JP1017'))}</td><td><strong>${esc(s.name||'')}</strong></td><td>${esc(period)}</td><td>${esc(dest)}</td><td><span class="scheduleStatus ${st.cls}">${esc(st.label)}</span></td><td><span class="schedulePendingBadge ${pend==='SEM PENDÊNCIA'?'':'warn'}">${esc(pend)}</span></td><td class="scheduleNoteCell">${esc(s.notes||'')}</td><td><div class="scheduleActions"><button class="btn small" type="button" onclick="convertSchedule('${esc(s.id)}')">CONVERTER</button>${canCancel?`<button class="btn small cancelBtn" type="button" onclick="cancelSchedule('${esc(s.id)}')">CANCELAR</button>`:''}<button class="actionIcon" title="EDITAR" onclick="editSchedule('${esc(s.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon ghost" title="DUPLICAR" onclick="duplicateSchedule('${esc(s.id)}')"><span class="iconGlyph">⧉</span></button><button class="actionIcon danger" title="EXCLUIR" onclick="deleteSchedule('${esc(s.id)}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
   }).join('');
 }
 function editSchedule(idValue){
@@ -5085,7 +5134,7 @@ function editSchedule(idValue){
   $('scheduleName').value=s.name||'';
   $('scheduleStart').value=s.startDate||todayISO();
   $('scheduleEnd').value=s.endDate||todayISO();
-  $('scheduleStatus').value=normalizeScheduleStatus(s.status);
+  $('schedulePending').value=normalizeSchedulePending(s.pending||s.pendencia||'SEM PENDÊNCIA');
   $('scheduleDestination').value=normalizeScheduleDestination(s.destination);
   $('scheduleNotes').value=s.notes||'';
   setView('agendamento');
@@ -5093,9 +5142,17 @@ function editSchedule(idValue){
 function duplicateSchedule(idValue){
   const s=scheduleItems().find(x=>x.id===idValue);
   if(!s) return;
-  const copy={...clone(s),id:id('SCH'),name:`${s.name} CÓPIA`,status:'RESERVADO',createdAt:new Date().toISOString(),convertedAt:'',convertedTo:''};
+  const copy={...clone(s),id:id('SCH'),name:`${s.name} CÓPIA`,status:'',pending:normalizeSchedulePending(s.pending||'SEM PENDÊNCIA'),createdAt:new Date().toISOString(),convertedAt:'',convertedTo:''};
   scheduleItems().push(copy);
   saveState(true); render(); toast('AGENDAMENTO DUPLICADO.');
+}
+function cancelSchedule(idValue){
+  const s=scheduleItems().find(x=>x.id===idValue);
+  if(!s) return;
+  if(!confirm('CANCELAR ESTE AGENDAMENTO?')) return;
+  s.status='CANCELADO';
+  s.cancelledAt=new Date().toISOString();
+  saveState(true); render(); toast('AGENDAMENTO CANCELADO.');
 }
 function deleteSchedule(idValue){
   if(!confirm('EXCLUIR ESTE AGENDAMENTO?')) return;
@@ -5115,13 +5172,15 @@ function saveSchedule(e){
     name:norm($('scheduleName').value),
     startDate:start,
     endDate:end,
-    status:normalizeScheduleStatus($('scheduleStatus').value),
+    status:legacyStatusToScheduleMeta(existing),
+    pending:normalizeSchedulePending($('schedulePending').value),
     destination:normalizeScheduleDestination($('scheduleDestination').value),
     notes:textNorm($('scheduleNotes').value),
     createdAt:existing.createdAt||new Date().toISOString(),
     updatedAt:new Date().toISOString(),
     convertedAt:existing.convertedAt||'',
-    convertedTo:existing.convertedTo||''
+    convertedTo:existing.convertedTo||'',
+    cancelledAt:existing.cancelledAt||''
   };
   const idx=scheduleItems().findIndex(x=>x.id===idVal);
   if(idx>=0) state.schedules[idx]=s; else scheduleItems().push(s);
@@ -5136,6 +5195,8 @@ function markScheduleConverted(s,target){
 function convertSchedule(idValue){
   const s=scheduleItems().find(x=>x.id===idValue);
   if(!s) return;
+  if(scheduleStatus(s).key==='CANCELADO'){ alert('AGENDAMENTO CANCELADO NÃO PODE SER CONVERTIDO.'); return; }
+  if(scheduleStatus(s).key==='CONVERTIDO'){ alert('ESTE AGENDAMENTO JÁ FOI CONVERTIDO.'); return; }
   const type=normalizeScheduleType(s.type);
   const dest=normalizeScheduleDestination(s.destination);
   const key=scheduleTargetMonth(s);
@@ -7394,7 +7455,7 @@ bind('studioNextDayBtn','click',()=>changeStudioDay(1));
 bind('exportPdfBtn','click',()=>window.print());
 bind('scheduleForm','submit',saveSchedule);
 bind('clearScheduleFormBtn','click',clearScheduleForm);
-['scheduleTypeFilter','scheduleStationFilter','scheduleStatusFilter','scheduleDestinationFilter'].forEach(id=>bind(id,'input',renderSchedule));
+['scheduleTypeFilter','scheduleStationFilter','scheduleStatusFilter','schedulePendingFilter','scheduleDestinationFilter'].forEach(id=>bind(id,'input',renderSchedule));
 bind('programScheduleForm','submit',saveProgramSchedule);
 bind('addProgramScheduleBtn','click',()=>openProgramScheduleForm());
 document.addEventListener('click',e=>{ const btn=e.target.closest('#programStationFilterTabs .stationTab'); if(btn) setProgramStationFilter(btn.dataset.station); });
@@ -7442,6 +7503,7 @@ function toCsv(){
   return '\ufeff'+lines.join('\n');
 }
 window.convertSchedule=convertSchedule;
+window.cancelSchedule=cancelSchedule;
 window.duplicateSchedule=duplicateSchedule;
 window.editSchedule=editSchedule;
 window.deleteSchedule=deleteSchedule;
