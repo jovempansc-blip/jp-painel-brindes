@@ -1252,6 +1252,13 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   .distGenerateBtn{min-width:58px}
 }
 
+
+/* AJUSTE — DESCRIÇÃO COM QUEBRA DE LINHA PRESERVADA */
+#itemNotes,#distDescription{
+  white-space:pre-wrap;
+  line-height:1.45;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -3888,6 +3895,12 @@ const $ = id => document.getElementById(id);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const clone = obj => JSON.parse(JSON.stringify(obj));
 const norm = v => String(v ?? '').trim().replace(/\s+/g,' ').toUpperCase();
+const textNorm = v => String(v ?? '')
+  .replace(/\r\n/g,'\n')
+  .split('\n')
+  .map(line => line.trim().replace(/[ \t]+/g,' ').toUpperCase())
+  .join('\n')
+  .replace(/^\n+|\n+$/g,'');
 const num = v => Math.max(0, Number(v || 0));
 const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 let state = normalizePanelState(loadState());
@@ -4382,7 +4395,7 @@ function saveSchedule(e){
   const idVal=$('scheduleId').value||id('SCH');
   const start=$('scheduleStart').value, end=$('scheduleEnd').value;
   if(start && end && end<start){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR AO INÍCIO.'); return; }
-  const s={id:idVal,type:norm($('scheduleType').value),name:norm($('scheduleName').value),startDate:start,endDate:end,notes:norm($('scheduleNotes').value),createdAt:new Date().toISOString()};
+  const s={id:idVal,type:norm($('scheduleType').value),name:norm($('scheduleName').value),startDate:start,endDate:end,notes:textNorm($('scheduleNotes').value),createdAt:new Date().toISOString()};
   const idx=scheduleItems().findIndex(x=>x.id===idVal);
   if(idx>=0) state.schedules[idx]=s; else scheduleItems().push(s);
   clearScheduleForm();
@@ -5283,10 +5296,11 @@ function programFromDist(distId){
   clearItemForm(); $('itemDistribution').value=distId; handleItemDistributionChange(true); $('itemDate').value=d.date || state.currentMonth+'-01'; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; updateDistHint(); updateItemProgramFromSchedule(true); setView('programacao'); openDrawer('itemDrawer');
 }
 function filterProgramByDist(distId){ activeDistributionFilter=distId; setView('programacao'); toast('FILTRO APLICADO NA PROGRAMAÇÃO.'); }
-function textFieldValue(obj,keys=[]){
+function textFieldValue(obj,keys=[],multiline=false){
   for(const key of keys){
     const value=obj && obj[key];
-    if(norm(value)) return norm(value);
+    const cleaned=multiline ? textNorm(value) : norm(value);
+    if(cleaned) return cleaned;
   }
   return '';
 }
@@ -5294,20 +5308,20 @@ function distributionLinkedText(d,field){
   if(!d) return '';
   const titleKeys=['title','titulo','name','prize','show'];
   const descKeys=['description','descricao','desc','notes','note','observacao','observação','texto','text','pauta','detalhes','details'];
-  const direct=textFieldValue(d,field==='title'?titleKeys:descKeys);
+  const direct=textFieldValue(d,field==='title'?titleKeys:descKeys,field!=='title');
   if(direct) return direct;
 
   const linkedItem=[...(monthData().items||[])]
     .filter(i=>i.distributionId===d.id)
-    .filter(i=>norm(field==='title' ? i.title : (i.notes || i.description)))
+    .filter(i=>field==='title' ? norm(i.title) : textNorm(i.notes || i.description))
     .sort((a,b)=>String(b.createdAt||b.date||'').localeCompare(String(a.createdAt||a.date||'')))[0];
-  if(linkedItem) return norm(field==='title' ? linkedItem.title : (linkedItem.notes || linkedItem.description));
+  if(linkedItem) return field==='title' ? norm(linkedItem.title) : textNorm(linkedItem.notes || linkedItem.description);
 
   const samePrize=[...(monthData().distributions||[])]
     .filter(x=>x.id!==d.id && norm(x.prize)===norm(d.prize))
-    .filter(x=>norm(field==='title' ? textFieldValue(x,titleKeys) : textFieldValue(x,descKeys)))
+    .filter(x=>field==='title' ? norm(textFieldValue(x,titleKeys)) : textNorm(textFieldValue(x,descKeys,true)))
     .sort((a,b)=>String(b.updatedAt||b.createdAt||b.startDate||b.date||'').localeCompare(String(a.updatedAt||a.createdAt||a.startDate||a.date||'')))[0];
-  if(samePrize) return field==='title' ? textFieldValue(samePrize,titleKeys) : textFieldValue(samePrize,descKeys);
+  if(samePrize) return field==='title' ? textFieldValue(samePrize,titleKeys,false) : textFieldValue(samePrize,descKeys,true);
 
   return '';
 }
@@ -5378,7 +5392,7 @@ $('itemForm').addEventListener('submit',e=>{
   e.preventDefault();
   const idVal=$('itemId').value || id('BR');
   const date=$('itemDate').value;
-  const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),station:$('itemProgramStation')?.value||'JP1017',program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:normalizeStatus($('itemStatus').value),notes:norm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc')};
+  const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),station:$('itemProgramStation')?.value||'JP1017',program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:normalizeStatus($('itemStatus').value),notes:textNorm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc')};
   if(item.channel === 'RÁDIO'){
     const occupied=radioSlotConflicts(item.date,item.slot,item.id,item.station);
     if(occupied.length){
@@ -5967,8 +5981,8 @@ function applyDistributionTemplateFromTitle(force=false){
   const currentId=$('distId')?.value || '';
   const found=findDistributionTemplateByTitle(title,currentId);
   if(!found) return;
-  const currentDesc=norm($('distDescription')?.value || '');
-  const incomingDesc=found.description || found.notes || '';
+  const currentDesc=textNorm($('distDescription')?.value || '');
+  const incomingDesc=textNorm(found.description || found.notes || '');
   if(!incomingDesc) return;
   if(currentDesc && !force) return;
   $('distDescription').value=incomingDesc;
@@ -6131,7 +6145,7 @@ function saveDistributionFromForm(generate=false){
   if(!prize){ alert('INFORME O PRÊMIO.'); return null; }
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return null; }
   const destValues=collectDistDestinationValues(existing);
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:norm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:norm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:textNorm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:textNorm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   const distributedTotal=Object.entries(destValues).filter(([k])=>['app','camarote','camarim','rua','ar','rs','reservado'].includes(k)).reduce((sum,[k,v])=>sum+destinationConsumed(v,(destValues.ticketUnits||{})[k]||d.ticketDefaultUnit,isTicketDist(d)),0);
   if(num(d.total)>0 && distributedTotal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.\n\nTOTAL: ${num(d.total)}\nDISTRIBUÍDO: ${distributedTotal}`); return null; }
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
