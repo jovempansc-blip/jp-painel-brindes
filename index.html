@@ -1892,6 +1892,149 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   color:#171c26;
 }
 
+
+/* AJUSTE — CABEÇALHO OFICIAL COMPACTO */
+.appHeader{
+  top:8px!important;
+  grid-template-columns:minmax(360px,560px) minmax(420px,1fr)!important;
+  gap:18px!important;
+  padding:13px 16px!important;
+  border-radius:24px!important;
+  min-height:92px!important;
+  align-items:center!important;
+}
+.brand{
+  gap:13px!important;
+}
+.logo{
+  width:252px!important;
+  max-height:62px!important;
+  object-fit:contain!important;
+}
+.brandTitle{
+  padding-left:14px!important;
+}
+.brandTitle strong{
+  font-size:20px!important;
+  letter-spacing:-.035em!important;
+}
+.brandTitle span{
+  font-size:10px!important;
+  margin-top:5px!important;
+  letter-spacing:.055em!important;
+}
+.topTools{
+  grid-template-columns:minmax(240px,320px) auto!important;
+  align-items:center!important;
+  gap:12px!important;
+  justify-content:end!important;
+}
+.topTools .monthHeaderField{
+  width:100%!important;
+  max-width:320px!important;
+  justify-self:end!important;
+}
+.monthHeaderField label{
+  font-size:9.5px!important;
+  letter-spacing:.07em!important;
+}
+#monthInput.control{
+  min-height:40px!important;
+  height:40px!important;
+  border-radius:14px!important;
+  padding:7px 12px!important;
+  font-size:16px!important;
+  font-weight:1000!important;
+  letter-spacing:.01em!important;
+}
+.toolbar{
+  gap:7px!important;
+  flex-wrap:nowrap!important;
+}
+.syncStatusBtn{
+  min-height:36px!important;
+  height:36px!important;
+  padding:0 13px!important;
+  border-radius:999px!important;
+  font-size:10px!important;
+  min-width:112px!important;
+}
+.toolbar .iconBtn{
+  width:36px!important;
+  min-width:36px!important;
+  min-height:36px!important;
+  height:36px!important;
+  border-radius:13px!important;
+}
+.toolbar .iconBtn .iconGlyph{
+  font-size:15px!important;
+}
+#exportPdfBtn .iconGlyph{
+  font-size:10px!important;
+  font-weight:1000!important;
+  letter-spacing:.03em!important;
+}
+.returnBellCount{
+  top:-4px!important;
+  right:-4px!important;
+}
+.tabs{
+  margin:8px 0 8px!important;
+  gap:4px!important;
+  align-items:center!important;
+}
+.tabBtn{
+  min-height:26px!important;
+  padding:5px 11px!important;
+  border-radius:999px!important;
+  font-size:10.5px!important;
+  letter-spacing:.035em!important;
+}
+@media(max-width:1180px){
+  .appHeader{
+    grid-template-columns:1fr!important;
+    min-height:0!important;
+  }
+  .topTools{
+    grid-template-columns:minmax(220px,320px) auto!important;
+    justify-content:space-between!important;
+  }
+  .topTools .monthHeaderField{
+    justify-self:start!important;
+  }
+}
+@media(max-width:760px){
+  .appHeader{
+    padding:12px!important;
+    border-radius:20px!important;
+  }
+  .brand{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .brandTitle{
+    border-left:0!important;
+    border-top:1px solid var(--line)!important;
+    padding-left:0!important;
+    padding-top:8px!important;
+  }
+  .logo{
+    width:230px!important;
+  }
+  .topTools{
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .topTools .monthHeaderField{
+    max-width:none!important;
+  }
+  .toolbar{
+    justify-content:flex-start!important;
+    flex-wrap:wrap!important;
+  }
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1906,11 +2049,11 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
       <div class="brandTitle"><strong>PAINEL DE BRINDES</strong><span>PROGRAMAÇÃO + DISTRIBUIÇÃO GERAL</span></div>
     </div>
     <div class="topTools">
-      <div class="field"><label>MÊS</label><input class="control" type="month" id="monthInput" value="2026-06"></div>
+      <div class="field monthHeaderField"><label>MÊS</label><input class="control" type="month" id="monthInput" value="2026-06"></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
         <button class="btn syncStatusBtn local" id="syncStatusBtn" type="button" title="STATUS DO BANCO">LOCAL</button>
-        <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="EXPORTAR PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
-        <button class="btn iconBtn returnBellBtn" id="returnBellBtn" title="RETORNOS / REAPROVEITAMENTO" aria-label="RETORNOS / REAPROVEITAMENTO" data-tip="RETORNOS"><span class="iconGlyph">🔔</span><span class="returnBellCount" id="returnBellCount">0</span><span class="visuallyHidden">RETORNOS</span></button>
+        <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
+        <button class="btn iconBtn returnBellBtn" id="returnBellBtn" title="RETORNOS / REAPROVEITAMENTO" aria-label="RETORNOS / REAPROVEITAMENTO" data-tip="ALERTAS"><span class="iconGlyph">🔔</span><span class="returnBellCount" id="returnBellCount">0</span><span class="visuallyHidden">RETORNOS</span></button>
       </div>
     </div>
   </header>
@@ -4750,7 +4893,7 @@ function initFirebaseSync(){
     const app = window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
     firebaseRef = window.firebase.database(app).ref(FIREBASE_ROOT_PATH);
     firebaseReady = true;
-    updateSyncStatus('online','FIREBASE');
+    updateSyncStatus('online','FIREBASE ONLINE');
     firebaseRef.on('value', async snapshot=>{
       firebaseInitialSnapshotSeen = true;
       const payload = snapshot.val();
@@ -4809,7 +4952,7 @@ async function saveStateToApi(){
     localStorage.setItem('jp_painel_last_firebase_save', new Date().toLocaleString('pt-BR'));
     firebaseServerLoaded = true;
     firebasePendingSave = false;
-    updateSyncStatus('online','FIREBASE');
+    updateSyncStatus('online','FIREBASE ONLINE');
     renderBackup();
   }catch(err){
     console.warn('FIREBASE SAVE ERROR', err);
@@ -4849,7 +4992,7 @@ async function verifyFirebaseState(){
     }
     const c=backupCounts(remote);
     lastFirebaseDiagnostic={counts:c,checkedAtLabel:new Date().toLocaleString('pt-BR'),savedAt:payload.savedAt||''};
-    updateSyncStatus('online','FIREBASE');
+    updateSyncStatus('online','FIREBASE ONLINE');
     renderBackup();
     alert(`BASE DO FIREBASE VERIFICADA.\n\nTOTAL: ${backupTotal(c)}\nMESES: ${c.months}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\nAGENDAMENTOS: ${c.schedules}`);
   }catch(err){
@@ -4868,7 +5011,7 @@ async function forceLoadFirebaseToLocal(){
     if(payload && payload.state){
       lastFirebaseDiagnostic={counts:backupCounts(payload.state),checkedAtLabel:new Date().toLocaleString('pt-BR'),savedAt:payload.savedAt||''};
       applyRemoteFirebaseState(payload.state);
-      updateSyncStatus('online','FIREBASE');
+      updateSyncStatus('online','FIREBASE ONLINE');
       toast('DADOS DO FIREBASE CARREGADOS NESTE NAVEGADOR.');
     }else{
       alert('O FIREBASE AINDA NÃO TEM DADOS SALVOS. ENVIE OS DADOS A PARTIR DO NAVEGADOR ONDE ELES APARECEM.');
