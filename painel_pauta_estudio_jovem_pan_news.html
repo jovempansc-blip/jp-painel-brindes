@@ -1320,6 +1320,7 @@ function confirmPromoRead(){
 function allPrizeRows(){
   return [...(monthData().items||[])]
     .filter(i=>i && i.date)
+    .filter(i=>(i.station||'JP1017')===STUDIO_STATION)
     .sort((a,b)=>itemDateTime(a)-itemDateTime(b)||upper(a.program).localeCompare(upper(b.program)));
 }
 function sameHour(a,b){

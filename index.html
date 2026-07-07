@@ -1503,9 +1503,10 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
         <input type="hidden" id="itemId">
         <div class="formGrid">
           <div class="field"><label>DATA</label><input class="control" type="date" id="itemDate" required></div>
-          <div class="field"><label>HORÁRIO</label><input class="control" id="itemSlot" required></div>
-          <div class="field wide"><label>PROGRAMA</label><input class="control" id="itemProgram" list="programDatalist" required></div>
-          <div class="field wide"><label>LINK COM EVENTO / PRÊMIO</label><select class="control" id="itemDistribution"><option value="">SEM LINK / A DEFINIR</option></select><div class="linkHint" id="distBalanceHint"></div></div>
+          <div class="field"><label>RÁDIO DA GRADE</label><select class="control" id="itemProgramStation"><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option></select></div>
+          <div class="field"><label>HORÁRIO</label><select class="control" id="itemSlot" required><option value="">SELECIONE</option><option value="07H">07H</option><option value="08H">08H</option><option value="09H">09H</option><option value="10H">10H</option><option value="11H">11H</option><option value="14H">14H</option><option value="15H">15H</option><option value="16H">16H</option><option value="17H">17H</option><option value="20H">20H</option></select></div>
+          <div class="field wide"><label>PROGRAMA AUTOMÁTICO</label><input class="control" id="itemProgram" list="programDatalist" required></div>
+          <div class="field wide"><label>LINK COM EVENTO / PRÊMIO</label><select class="control" id="itemDistribution"><option value="">SEM LINK / A DEFINIR</option></select><div class="linkHint" id="distBalanceHint"></div><div class="linkHint" id="itemLinkLoadHint"></div></div>
           <div class="field wide"><label>PRÊMIO</label><input class="control" id="itemPrize" required></div>
           <div class="field wide"><label>TÍTULO</label><input class="control" id="itemTitle">
             <div class="textStyleEditor" aria-label="EDITOR DO TÍTULO DA PAUTA">
@@ -4973,6 +4974,7 @@ function reuseReturnedPrize(recordId){
     title:d.title || r.prize,
     qty:1,
     channel:'RÁDIO',
+    station:'JP1017',
     status:'NO AR',
     notes:`REAPROVEITAMENTO: PRÊMIO NÃO RETIRADO POR ${r.winner}. PRAZO VENCIDO EM ${r.deadlineLabel}.`,
     titleStyle:d.titleStyle || defaultPromoTextStyle('title'),
@@ -5248,14 +5250,14 @@ $$('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeDrawer(btn
 $$('.tabBtn').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.view)));
 
 function clearItemForm(){
-  $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; $('itemDate').value=(weekDatesForLabel($('weekFilter')?.value || '')[0] || state.currentMonth+'-01'); $('distBalanceHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
+  $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; if($('itemProgram')) $('itemProgram').dataset.auto='1'; $('itemDate').value=(weekDatesForLabel($('weekFilter')?.value || '')[0] || state.currentMonth+'-01'); if($('distBalanceHint')) $('distBalanceHint').textContent=''; if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
   setPromoStyleControls('itemTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('itemDesc',defaultPromoTextStyle('desc'),'desc');
 }
 function editItem(itemId){
   const i=monthData().items.find(x=>x.id===itemId); if(!i) return;
   clearItemForm(); $('itemDrawerTitle').textContent='EDITAR ITEM DA PROGRAMAÇÃO';
-  $('itemId').value=i.id; $('itemDate').value=i.date||''; $('itemSlot').value=i.slot||''; $('itemProgram').value=i.program||''; $('itemDistribution').value=i.distributionId||''; $('itemPrize').value=i.prize||''; $('itemTitle').value=i.title||''; $('itemQty').value=num(i.qty); $('itemChannel').value=normalizeChannel(i.channel)||'RÁDIO'; $('itemStatus').value=normalizeStatus(i.status); $('itemNotes').value=i.notes||''; setPromoStyleControls('itemTitle',i.titleStyle,'title'); setPromoStyleControls('itemDesc',i.descriptionStyle,'desc'); updateDistHint(); openDrawer('itemDrawer');
+  $('itemId').value=i.id; $('itemDate').value=i.date||''; $('itemSlot').value=i.slot||''; if($('itemProgramStation')) $('itemProgramStation').value=i.station||'JP1017'; $('itemProgram').value=i.program||''; $('itemProgram').dataset.auto='0'; $('itemDistribution').value=i.distributionId||''; $('itemPrize').value=i.prize||''; $('itemTitle').value=i.title||''; $('itemQty').value=num(i.qty); $('itemChannel').value=normalizeChannel(i.channel)||'RÁDIO'; $('itemStatus').value=normalizeStatus(i.status); $('itemNotes').value=i.notes||''; setPromoStyleControls('itemTitle',i.titleStyle,'title'); setPromoStyleControls('itemDesc',i.descriptionStyle,'desc'); updateDistHint(); openDrawer('itemDrawer');
 }
 function duplicateItem(itemId){
   const item=monthData().items.find(x=>x.id===itemId); if(!item) return;
@@ -5278,29 +5280,107 @@ function duplicateItem(itemId){
 function deleteItem(itemId){ if(!confirm('EXCLUIR ESTE ITEM DA PROGRAMAÇÃO?')) return; monthData().items=monthData().items.filter(i=>i.id!==itemId); saveState(true); render(); toast('ITEM EXCLUÍDO.'); }
 function programFromDist(distId){
   const d=distributionById(distId); if(!d) return;
-  clearItemForm(); $('itemDistribution').value=distId; $('itemPrize').value=d.prize; $('itemDate').value=d.date || state.currentMonth+'-01'; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; updateDistHint(); setView('programacao'); openDrawer('itemDrawer');
+  clearItemForm(); $('itemDistribution').value=distId; handleItemDistributionChange(true); $('itemDate').value=d.date || state.currentMonth+'-01'; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; updateDistHint(); updateItemProgramFromSchedule(true); setView('programacao'); openDrawer('itemDrawer');
 }
 function filterProgramByDist(distId){ activeDistributionFilter=distId; setView('programacao'); toast('FILTRO APLICADO NA PROGRAMAÇÃO.'); }
+function textFieldValue(obj,keys=[]){
+  for(const key of keys){
+    const value=obj && obj[key];
+    if(norm(value)) return norm(value);
+  }
+  return '';
+}
+function distributionLinkedText(d,field){
+  if(!d) return '';
+  const titleKeys=['title','titulo','name','prize','show'];
+  const descKeys=['description','descricao','desc','notes','note','observacao','observação','texto','text','pauta','detalhes','details'];
+  const direct=textFieldValue(d,field==='title'?titleKeys:descKeys);
+  if(direct) return direct;
+
+  const linkedItem=[...(monthData().items||[])]
+    .filter(i=>i.distributionId===d.id)
+    .filter(i=>norm(field==='title' ? i.title : (i.notes || i.description)))
+    .sort((a,b)=>String(b.createdAt||b.date||'').localeCompare(String(a.createdAt||a.date||'')))[0];
+  if(linkedItem) return norm(field==='title' ? linkedItem.title : (linkedItem.notes || linkedItem.description));
+
+  const samePrize=[...(monthData().distributions||[])]
+    .filter(x=>x.id!==d.id && norm(x.prize)===norm(d.prize))
+    .filter(x=>norm(field==='title' ? textFieldValue(x,titleKeys) : textFieldValue(x,descKeys)))
+    .sort((a,b)=>String(b.updatedAt||b.createdAt||b.startDate||b.date||'').localeCompare(String(a.updatedAt||a.createdAt||a.startDate||a.date||'')))[0];
+  if(samePrize) return field==='title' ? textFieldValue(samePrize,titleKeys) : textFieldValue(samePrize,descKeys);
+
+  return '';
+}
+function applyDistributionToItemFields(d,force=false){
+  if(!d) return;
+  const prize=distributionLabel(d);
+  const title=distributionLinkedText(d,'title') || prize;
+  const desc=distributionLinkedText(d,'desc');
+
+  if($('itemPrize')) $('itemPrize').value=prize;
+  if($('itemTitle') && (force || !norm($('itemTitle').value))) $('itemTitle').value=title;
+  if($('itemNotes') && (force || !norm($('itemNotes').value))) $('itemNotes').value=desc || '';
+
+  if(d.titleStyle) setPromoStyleControls('itemTitle',d.titleStyle,'title');
+  if(d.descriptionStyle) setPromoStyleControls('itemDesc',d.descriptionStyle,'desc');
+
+  const hint=$('itemLinkLoadHint');
+  if(hint){
+    hint.textContent = desc
+      ? 'DADOS DO PRÊMIO CARREGADOS DA DISTRIBUIÇÃO GERAL.'
+      : 'PRÊMIO CARREGADO, MAS SEM DESCRIÇÃO CADASTRADA NO MASTER.';
+  }
+}
+function handleItemDistributionChange(force=true){
+  const d=distributionById($('itemDistribution')?.value);
+  if(d) applyDistributionToItemFields(d,force);
+  else if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent='';
+  updateDistHint();
+  updateItemProgramFromSchedule(true);
+}
 function updateDistHint(){
-  const d=distributionById($('itemDistribution').value); const ch=normalizeChannel($('itemChannel').value || 'RÁDIO');
-  if(!d){ $('distBalanceHint').textContent='SEM LINK COM A DISTRIBUIÇÃO GERAL.'; return; }
+  const d=distributionById($('itemDistribution')?.value); const ch=normalizeChannel($('itemChannel')?.value || 'RÁDIO');
+  if(!d){ if($('distBalanceHint')) $('distBalanceHint').textContent='SEM LINK COM A DISTRIBUIÇÃO GERAL.'; return; }
   const key=(CHANNELS.find(c=>c[1]===ch)||['ar'])[0];
-  const currentId=$('itemId').value;
+  const currentId=$('itemId')?.value;
   const currentItem=monthData().items.find(i=>i.id===currentId);
   const currentQty=currentItem && currentItem.distributionId===d.id && normalizeChannel(currentItem.channel)===ch ? num(currentItem.qty) : 0;
   const saldo = num(d[key]) - programmed(d.id,ch) + currentQty;
-  $('distBalanceHint').textContent=`SALDO DO CANAL ${ch}: ${saldo} | TOTAL DO BRINDE: ${num(d.total)} | SOBRAM NO MASTER: ${leftTotal(d)}`;
+  if($('distBalanceHint')) $('distBalanceHint').textContent=`SALDO DO CANAL ${ch}: ${saldo} | TOTAL DO BRINDE: ${num(d.total)} | SOBRAM NO MASTER: ${leftTotal(d)}`;
 }
-$('itemDistribution').addEventListener('change',()=>{ const d=distributionById($('itemDistribution').value); if(d && !$('itemPrize').value) $('itemPrize').value=d.prize; updateDistHint(); });
+
+function programForManualItem(date,slot,station){
+  const st=station || $('itemProgramStation')?.value || 'JP1017';
+  const scheduled=programFromSchedule(date,slot,st);
+  if(scheduled) return scheduled;
+  return st==='JP1017' ? programFallbackForSlot(date,slot,st) : '';
+}
+function updateItemProgramFromSchedule(force=false){
+  const date=$('itemDate')?.value || '';
+  const slot=$('itemSlot')?.value || '';
+  const station=$('itemProgramStation')?.value || 'JP1017';
+  const target=$('itemProgram');
+  if(!target || !date || !slot) return;
+  const program=programForManualItem(date,slot,station);
+  if(force || !norm(target.value) || target.dataset.auto==='1'){
+    target.value=program || '';
+    target.dataset.auto='1';
+  }
+}
+$('itemDistribution').addEventListener('change',()=>handleItemDistributionChange(true));
+$('itemProgramStation')?.addEventListener('change',()=>updateItemProgramFromSchedule(true));
+$('itemDate')?.addEventListener('change',()=>updateItemProgramFromSchedule(true));
+$('itemSlot')?.addEventListener('change',()=>updateItemProgramFromSchedule(true));
+$('itemProgram')?.addEventListener('input',()=>{ $('itemProgram').dataset.auto='0'; });
 $('itemChannel').addEventListener('change',updateDistHint);
 $('itemQty').addEventListener('input',updateDistHint);
 $('itemForm').addEventListener('submit',e=>{
   e.preventDefault();
   const idVal=$('itemId').value || id('BR');
   const date=$('itemDate').value;
-  const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:normalizeStatus($('itemStatus').value),notes:norm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc')};
+  const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),station:$('itemProgramStation')?.value||'JP1017',program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:normalizeStatus($('itemStatus').value),notes:norm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc')};
   if(item.channel === 'RÁDIO'){
-    const occupied=radioSlotConflicts(item.date,item.slot,item.id);
+    const occupied=radioSlotConflicts(item.date,item.slot,item.id,item.station);
     if(occupied.length){
       const dist=distributionById(item.distributionId) || {startDate:item.date,endDate:monthEndDate(),date:item.date};
       const alt=findNextFreeRadioSlot(dist,new Set(),item.id);
@@ -5322,6 +5402,14 @@ $('itemForm').addEventListener('submit',e=>{
     const old=monthData().items.find(i=>i.id===idVal); const oldQty=old && old.distributionId===item.distributionId && normalizeChannel(old.channel)===item.channel ? num(old.qty) : 0;
     const saldo = num(d?.[key]) - programmed(item.distributionId,item.channel) + oldQty;
     if(item.qty > saldo && !confirm(`ATENÇÃO: O CANAL ${item.channel} TEM SALDO ${saldo}. SALVAR MESMO ASSIM?`)) return;
+  }
+  if(item.distributionId){
+    const linked=distributionById(item.distributionId);
+    if(linked){
+      if(item.title){ linked.title=item.title; linked.titleStyle=item.titleStyle; }
+      if(item.notes){ linked.description=item.notes; linked.notes=item.notes; linked.descriptionStyle=item.descriptionStyle; }
+      linked.updatedAt=new Date().toISOString();
+    }
   }
   const idx=monthData().items.findIndex(i=>i.id===idVal);
   if(idx>=0) monthData().items[idx]=item; else monthData().items.push(item);
@@ -5357,9 +5445,10 @@ function normalizeSlot(slot){
   return m ? `${String(Number(m[1])).padStart(2,'0')}H` : s;
 }
 function radioSlotKey(date,slot){ return `${date}|${normalizeSlot(slot)}`; }
-function programFallbackForSlot(date,slot){
-  const scheduled=programFromSchedule(date,slot,'JP1017');
+function programFallbackForSlot(date,slot,station='JP1017'){
+  const scheduled=programFromSchedule(date,slot,station);
   if(scheduled) return scheduled;
+  if(station!=='JP1017') return '';
   const h=Number(normalizeSlot(slot).replace('H',''));
   const day=new Date(`${date}T12:00:00`).getDay();
   if(h===7) return day===6 ? 'ROCK AND POP' : 'JORNAL DA MANHÃ LOCAL';
@@ -5372,17 +5461,18 @@ function programFallbackForSlot(date,slot){
   if(h===20) return day===1 || day===6 ? 'UMA ATRÁS DA OUTRA' : 'JURASSIC PAN';
   return '';
 }
-function programForSlot(date,slot){
+function programForSlot(date,slot,station='JP1017'){
   const ns=normalizeSlot(slot);
-  const found=monthData().items.find(i=>i.date===date && normalizeSlot(i.slot)===ns && norm(i.program));
-  return found ? found.program : programFallbackForSlot(date,ns);
+  const found=monthData().items.find(i=>i.date===date && (i.station||'JP1017')===station && normalizeSlot(i.slot)===ns && norm(i.program));
+  return found ? found.program : programFallbackForSlot(date,ns,station);
 }
 function radioItemsInPeriod(start,end){
   return monthData().items.filter(i=>normalizeChannel(i.channel)==='RÁDIO' && i.date>=start && i.date<=end && normalizeSlot(i.slot));
 }
-function radioSlotConflicts(date,slot,excludeId=''){
+function itemStation(i){ return i?.station || 'JP1017'; }
+function radioSlotConflicts(date,slot,excludeId='',station=''){
   const ns=normalizeSlot(slot);
-  return monthData().items.filter(i=>normalizeChannel(i.channel)==='RÁDIO' && i.id!==excludeId && i.date===date && normalizeSlot(i.slot)===ns);
+  return monthData().items.filter(i=>normalizeChannel(i.channel)==='RÁDIO' && i.id!==excludeId && (!station || itemStation(i)===station) && i.date===date && normalizeSlot(i.slot)===ns);
 }
 
 function remapRadioItem(itemId){
