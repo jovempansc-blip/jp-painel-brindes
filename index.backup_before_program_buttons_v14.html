@@ -2621,26 +2621,6 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
   #view-agendamento .scheduleActionBox{grid-column:1/-1;justify-content:flex-end}
 }
 
-
-/* === V14: BOTÕES DA ABA PROGRAMAÇÃO COM CLIQUE GARANTIDO === */
-#view-programacao button,
-#view-programacao .actionIcon,
-#view-programacao .btn{
-  pointer-events:auto!important;
-}
-#view-programacao .programActions{
-  position:relative;
-  z-index:5;
-}
-#view-programacao .programActions .actionIcon{
-  cursor:pointer!important;
-}
-#addProgramBtn,#clearProgramBtn{
-  pointer-events:auto!important;
-  position:relative;
-  z-index:6;
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2684,7 +2664,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             <div class="field"><label>CANAL</label><select class="control" id="channelFilter"><option value="">TODOS</option></select></div>
             <div class="field"><label>SEMANA</label><select class="control" id="weekFilter"><option value="">TODAS</option></select></div>
             <div class="field"><label>STATUS</label><select class="control" id="statusFilter"><option value="">TODOS</option><option>PENDENTE</option><option>NO AR</option><option>REALIZADO</option><option>CANCELADO</option></select></div>
-            <div class="programFilterActions"><button class="btn red" id="addProgramBtn" type="button">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" type="button" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
+            <div class="programFilterActions"><button class="btn red" id="addProgramBtn">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
           </div>
           <div class="weeklyHeader">
             <div><strong>PROGRAMAÇÃO SEMANAL</strong><span id="weeklyRangeLabel">SEMANA SELECIONADA</span></div>
@@ -6952,7 +6932,7 @@ function renderProgramCard(i){
   const conflictNote = radioConflict.length
     ? `<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`
     : (rotationConflict.length ? `<span class="programConflictNote">RODÍZIO: ${esc(samePrizeRepeatLabel(rotationConflict))}</span>` : '');
-  const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" data-program-action="remap" data-item-id="${esc(i.id)}"><span class="iconGlyph">↪</span></button>` : '';
+  const remapBtn = hasConflict ? `<button class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" onclick="remapRadioItem('${i.id}')"><span class="iconGlyph">↪</span></button>` : '';
   return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}">
     <div class="programTime">${esc(i.slot || '')}</div>
     <div class="programInfo">
@@ -6962,7 +6942,7 @@ function renderProgramCard(i){
       ${conflictNote}
     </div>
     <div class="programSide">
-      <div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" data-program-action="edit" data-item-id="${esc(i.id)}"><span class="iconGlyph">✎</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" data-program-action="copy" data-item-id="${esc(i.id)}"><span class="iconGlyph">⧉</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" data-program-action="delete" data-item-id="${esc(i.id)}"><span class="iconGlyph">🗑</span></button></div>
+      <div class="programActions">${remapBtn}<button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editItem('${i.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" onclick="duplicateItem('${i.id}')"><span class="iconGlyph">⧉</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteItem('${i.id}')"><span class="iconGlyph">🗑</span></button></div>
     </div>
   </article>`;
 }
@@ -8978,41 +8958,9 @@ $('promoForm').addEventListener('submit',e=>{
 });
 
 function bind(id,event,handler){ const el=$(id); if(el) el.addEventListener(event,handler); }
-function openProgramItemDrawer(){
-  clearItemForm();
-  renderItemSlotOptions(false);
-  updateItemProgramFromSchedule(true);
-  setView('programacao');
-  openDrawer('itemDrawer');
-}
-function openClearProgramDrawer(){
-  renderClearProgramDrawer();
-  openDrawer('clearProgramDrawer');
-}
-function handleProgramAction(action,itemId){
-  if(!action || !itemId) return;
-  if(action==='edit') return editItem(itemId);
-  if(action==='copy') return duplicateItem(itemId);
-  if(action==='delete') return deleteItem(itemId);
-  if(action==='remap') return remapRadioItem(itemId);
-}
-window.openProgramItemDrawer=openProgramItemDrawer;
-window.openClearProgramDrawer=openClearProgramDrawer;
-window.editItem=editItem;
-window.duplicateItem=duplicateItem;
-window.deleteItem=deleteItem;
-window.remapRadioItem=remapRadioItem;
-document.addEventListener('click',event=>{
-  const btn=event.target.closest('[data-program-action]');
-  if(!btn) return;
-  event.preventDefault();
-  event.stopPropagation();
-  handleProgramAction(btn.dataset.programAction,btn.dataset.itemId);
-});
-
 bind('addDistBtn','click',()=>{ clearDistForm(); openDrawer('distDrawer'); });
-bind('addProgramBtn','click',openProgramItemDrawer);
-bind('clearProgramBtn','click',openClearProgramDrawer);
+bind('addProgramBtn','click',()=>{ clearItemForm(); renderItemSlotOptions(false); updateItemProgramFromSchedule(true); openDrawer('itemDrawer'); });
+bind('clearProgramBtn','click',()=>{ renderClearProgramDrawer(); openDrawer('clearProgramDrawer'); });
 bind('deleteProgramWeekBtn','click',()=>clearProgramScope('week'));
 bind('deleteProgramMonthBtn','click',()=>clearProgramScope('month'));
 bind('addPromoBtn','click',()=>{ clearPromoForm(); openDrawer('promoDrawer'); });
