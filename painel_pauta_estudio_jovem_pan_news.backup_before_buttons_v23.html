@@ -6,7 +6,7 @@
 <meta http-equiv="Expires" content="0">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pauta de Estúdio — Jovem Pan Floripa</title>
+<title>Pauta de Estúdio — Jovem Pan News Floripa</title>
 <style>
 :root{
   --red:#d54b67;
@@ -1077,109 +1077,6 @@ body{
   to{transform:translateX(-100%)}
 }
 
-
-/* === V23: BOTÕES P/M/H E ALERTAS COM INTENSIDADE PREMIUM === */
-.promoListBtn{
-  background:rgba(255,255,255,.82)!important;
-  border:1px solid #dfe6ef!important;
-  color:#637083!important;
-  box-shadow:0 6px 16px rgba(17,23,34,.055)!important;
-}
-#promoListBtn{
-  background:#fff7ec!important;
-  border-color:#ffd59c!important;
-  color:#c76700!important;
-}
-#merchanListBtn{
-  background:#edf6ff!important;
-  border-color:#c8e4ff!important;
-  color:#1767ad!important;
-}
-#historyListBtn{
-  background:#f4f6fa!important;
-  border-color:#dfe6ef!important;
-  color:#657084!important;
-}
-#promoListBtn.active,#promoListBtn:hover{
-  background:#f28b20!important;
-  border-color:#f28b20!important;
-  color:#fff!important;
-  box-shadow:0 8px 18px rgba(242,139,32,.18)!important;
-}
-#merchanListBtn.active,#merchanListBtn:hover{
-  background:#2477bd!important;
-  border-color:#2477bd!important;
-  color:#fff!important;
-  box-shadow:0 8px 18px rgba(36,119,189,.18)!important;
-}
-#historyListBtn:hover{
-  background:#fff!important;
-  border-color:#cfd8e4!important;
-  color:#1f2733!important;
-}
-.iconNav{
-  color:#808a99!important;
-  opacity:.86;
-}
-.iconNav:hover{
-  color:#4f5a6a!important;
-  opacity:1;
-}
-.modalBtn.primary,
-#confirmPromoReadBtn,
-#confirmPromoReadInline,
-#saveWinnerBtn,
-#savePromoResultInline{
-  background:linear-gradient(180deg,#cf0a33,#b90d2f)!important;
-  border-color:rgba(185,13,47,.74)!important;
-  color:#fff!important;
-  box-shadow:0 9px 18px rgba(185,13,47,.16)!important;
-}
-.modalBtn:not(.primary),
-#cancelPromoReadBtn,
-#cancelPromoReadInline,
-#cancelWinnerBtn{
-  background:#f4f6fa!important;
-  border-color:#dfe6ef!important;
-  color:#4f5a6a!important;
-}
-.winnerBtn .trophy{
-  opacity:.72!important;
-}
-.winnerBtn:hover .trophy{
-  opacity:1!important;
-  filter:none!important;
-}
-.promoFooter{
-  background:#fff2df!important;
-}
-.promoPill.pending.promo{
-  background:#f28b20!important;
-  border-color:#f6b465!important;
-  color:#fff!important;
-}
-.promoPill.pending.merchan{
-  background:#2477bd!important;
-  border-color:#8bc6ff!important;
-  color:#fff!important;
-}
-.promoPill.pending{
-  box-shadow:0 8px 18px rgba(17,23,34,.09)!important;
-}
-@keyframes studioPautaBlink{
-  0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 0 0 rgba(255,139,0,0)}
-  50%{filter:brightness(1.13);transform:translateY(-1px);box-shadow:0 0 0 5px rgba(255,139,0,.12)}
-}
-.promoPill.read{
-  background:#effaf4!important;
-  border-color:#bde9ce!important;
-  color:#137947!important;
-  box-shadow:0 6px 16px rgba(19,121,71,.08)!important;
-}
-.readHistoryTickerTrack span::before{
-  color:#b90d2f!important;
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1255,8 +1152,8 @@ let currentDisplayItem=null;
 let manualHourDateMs=null;
 let lastHourKey=currentHourKey();
 let historyDate='';
-const STUDIO_STATION='JP1017';
-const ALLOW_PROMO_SHORTCUT=true;
+const STUDIO_STATION='JPNEWS983';
+const ALLOW_PROMO_SHORTCUT=false;
 
 
 const FIREBASE_CONFIG = {
@@ -1739,7 +1636,7 @@ function buildPromoList(item){return buildPautaList(item,'promo');}
 function buildMerchanList(item){return buildPautaList(item,'merchan');}
 function buildHourReadList(item){
   const pautas=allPautasForItemHour(item,true);
-  if(!pautas.length) return `<div class="promoListItem" type="button">SEM PROMOÇÕES OU MERCHAN CADASTRADOS PARA ESTE HORÁRIO</div>`;
+  if(!pautas.length) return ``;
   return `<div class="hourReadList">${pautas.map(p=>{
     const read=isPromoReadForHour(p,item);
     const label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';
@@ -2108,13 +2005,10 @@ function render(){
     if(add) addPromoWinnerField('');
     if(remove) remove.closest('.resultWinnerLine')?.remove();
   });
-  const promoBtn=$('promoListBtn');
-  if(promoBtn) promoBtn.onclick=e=>studioShortcutClick(e,'promo');
-  const merchanBtn=$('merchanListBtn');
-  if(merchanBtn) merchanBtn.onclick=e=>studioShortcutClick(e,'merchan');
-  const historyBtn=$('historyListBtn');
-  if(historyBtn) historyBtn.onclick=e=>studioShortcutClick(e,'history');
-  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId));
+  const promoBtn=$('promoListBtn'); if(promoBtn) promoBtn.addEventListener('click',()=>{$('promoList')?.classList.toggle('show');$('merchanList')?.classList.remove('show');});
+  const merchanBtn=$('merchanListBtn'); if(merchanBtn) merchanBtn.addEventListener('click',()=>{$('merchanList')?.classList.toggle('show');$('promoList')?.classList.remove('show');});
+  const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList')?.classList.remove('show');$('merchanList')?.classList.remove('show');openHistoryModal();});
+  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.addEventListener('click',()=>startPromoRead(btn.dataset.promoId)));
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
