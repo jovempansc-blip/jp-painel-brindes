@@ -1295,123 +1295,6 @@ body{
   }
 }
 
-
-/* === V25: HORA EM NEGRITO, RESULTADO NO HORÁRIO CORRETO E AVISOS MAIS DELICADOS === */
-.pautaTime{
-  font-weight:1000!important;
-  letter-spacing:-.035em!important;
-  color:#5fcf96!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.75)!important;
-}
-.time-past{color:#d84b63!important}
-.time-now{color:#5fcf96!important}
-.time-next{color:#e88a26!important}
-.studioContextBar span{
-  font-weight:1000!important;
-}
-.studioContextBar span:nth-child(3){
-  font-weight:1000!important;
-  color:#3f4856!important;
-  border-color:#cfd8e4!important;
-  background:#fff!important;
-}
-.resultBox{
-  width:min(650px,100%)!important;
-  border:1px solid #dfe6ef!important;
-  background:linear-gradient(180deg,#f8fafc,#f2f5f9)!important;
-  border-radius:18px!important;
-  padding:13px 14px!important;
-  box-shadow:0 8px 20px rgba(17,23,34,.045)!important;
-}
-.resultBox label{
-  color:#657084!important;
-  font-size:10px!important;
-  letter-spacing:.08em!important;
-}
-.resultWinnerLine input{
-  border-color:#dfe6ef!important;
-  background:#fff!important;
-  color:#171c26!important;
-}
-.resultAddBtn,.resultRemoveBtn{
-  background:#f4f6fa!important;
-  border:1px solid #dfe6ef!important;
-  color:#4f5a6a!important;
-  box-shadow:0 4px 12px rgba(17,23,34,.04)!important;
-}
-.resultAddBtn:hover,.resultRemoveBtn:hover{
-  background:#fff!important;
-  border-color:#cfd8e4!important;
-}
-#savePromoResultInline{
-  background:#fff2f5!important;
-  border:1px solid #f3b5c0!important;
-  color:#b90d2f!important;
-  box-shadow:0 5px 14px rgba(185,13,47,.075)!important;
-}
-#savePromoResultInline:hover{
-  background:#ffe8ee!important;
-}
-.promoFooter{
-  height:44px!important;
-  min-height:44px!important;
-  max-height:44px!important;
-  background:#fff6ea!important;
-  border-top:1px solid #f2d3a3!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.64)!important;
-}
-.promoFooterList{
-  gap:8px!important;
-}
-.promoFooterList.empty::before{
-  color:#a76500!important;
-  opacity:.72!important;
-  font-size:8px!important;
-}
-.promoPill{
-  height:27px!important;
-  min-height:27px!important;
-  max-height:27px!important;
-  padding:0 13px!important;
-  font-size:10.5px!important;
-  box-shadow:0 5px 14px rgba(17,23,34,.055)!important;
-}
-.promoPill.pending{
-  animation:studioSoftAlert 1.35s ease-in-out infinite!important;
-}
-.promoPill.pending.promo{
-  background:#fff4e6!important;
-  border:1px solid #f0bf7a!important;
-  color:#b85f00!important;
-}
-.promoPill.pending.merchan{
-  background:#edf7ff!important;
-  border:1px solid #b9dcff!important;
-  color:#1767ad!important;
-}
-@keyframes studioSoftAlert{
-  0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 5px 14px rgba(17,23,34,.055)}
-  50%{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 0 0 4px rgba(255,151,45,.10),0 8px 16px rgba(17,23,34,.07)}
-}
-.promoPill.read{
-  background:#effaf4!important;
-  border:1px solid #bde9ce!important;
-  color:#137947!important;
-  box-shadow:0 5px 14px rgba(19,121,71,.07)!important;
-}
-.pautaActions .modalBtn.primary,
-#confirmPromoReadInline{
-  background:linear-gradient(180deg,#cf0a33,#b90d2f)!important;
-  border-color:rgba(185,13,47,.72)!important;
-  box-shadow:0 9px 18px rgba(185,13,47,.14)!important;
-}
-.pautaActions .modalBtn:not(.primary),
-#cancelPromoReadInline{
-  background:#f4f6fa!important;
-  border-color:#dfe6ef!important;
-  color:#4f5a6a!important;
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2050,12 +1933,6 @@ function savePromoResultInline(){
   saveState();
   render();
 }
-
-function shouldShowPromoResultBox(p,item){
-  if(!p || !item || isMerchan(p)) return false;
-  return isPromoResultForItem(p,item);
-}
-
 function buildPromoResultBox(p,item){
   const winners=promoWinnerList(p,item);
   const inputRows=(winners.length?winners:[{name:''}]).map((w,idx)=>`<div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(w.name||'')}" placeholder="NOME DO GANHADOR"><button class="${idx?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${idx?'REMOVER':'ADICIONAR GANHADOR'}">${idx?'×':'+'}</button></div>`).join('');
@@ -2299,7 +2176,7 @@ function render(){
       <div class="promoReadBanner">${promo.imageData?`<img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO">`:'IMAGEM DA PROMOÇÃO'}</div>
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
-      ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
+      ${isMerchan(promo)?'':buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())}
       <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button">CONFIRMAR LEITURA</button></div>
     ` : isVirtual ? `
       <div class="emptyStudioBox"><strong>SEM PAUTA PARA ESTE HORÁRIO</strong><span>NENHUM PRÊMIO, PROMOÇÃO OU MERCHAN CADASTRADO PARA AGORA.</span></div>
