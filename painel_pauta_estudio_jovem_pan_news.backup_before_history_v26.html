@@ -6,7 +6,7 @@
 <meta http-equiv="Expires" content="0">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pauta de Estúdio — Jovem Pan Floripa</title>
+<title>Pauta de Estúdio — Jovem Pan News Floripa</title>
 <style>
 :root{
   --red:#d54b67;
@@ -1412,82 +1412,6 @@ body{
   color:#4f5a6a!important;
 }
 
-
-/* === V26: HISTÓRICO H — SORTEIOS REALIZADOS NO DIA === */
-.historyCard{
-  width:min(920px,100%)!important;
-}
-.historyCard h3{
-  margin-bottom:4px!important;
-  letter-spacing:-.035em!important;
-}
-.historyCard p{
-  color:#657084!important;
-}
-.historyTop{
-  border:1px solid #dfe6ef!important;
-  background:#f8fafc!important;
-  border-radius:16px!important;
-  padding:10px!important;
-}
-.historyList{
-  margin-top:12px!important;
-  gap:9px!important;
-}
-.historyItem{
-  grid-template-columns:82px minmax(0,1fr) auto!important;
-  align-items:center!important;
-  border:1px solid #dfe6ef!important;
-  background:rgba(255,255,255,.92)!important;
-  border-radius:17px!important;
-  box-shadow:0 7px 16px rgba(17,23,34,.04)!important;
-}
-.historyTime{
-  color:#596475!important;
-  font-size:25px!important;
-  font-weight:1000!important;
-  letter-spacing:-.05em!important;
-}
-.historyInfo strong{
-  font-size:14px!important;
-  letter-spacing:-.015em!important;
-}
-.historyInfo span{
-  color:#657084!important;
-}
-.historyInfo em{
-  background:#effaf4!important;
-  border-color:#bde9ce!important;
-  color:#137947!important;
-}
-.historyType{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-height:25px;
-  border-radius:999px;
-  padding:0 9px;
-  font-size:9px;
-  font-weight:1000;
-  letter-spacing:.06em;
-  white-space:nowrap;
-}
-.historyType.prize{
-  background:#eef5ff;
-  border:1px solid #cfe0ff;
-  color:#2f69c9;
-}
-.historyType.promo{
-  background:#fff3df;
-  border:1px solid #ffc66e;
-  color:#dc7600;
-}
-.historyType.merchan{
-  background:#edf6ff;
-  border:1px solid #b9dcff;
-  color:#1767ad;
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1531,8 +1455,8 @@ body{
 
 <div class="modalBackdrop" id="historyModal">
   <div class="modalCard historyCard" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
-    <h3 id="historyModalTitle">SORTEIOS REALIZADOS NO DIA</h3>
-    <p>LISTA DOS SORTEIOS JÁ CONFIRMADOS NO ESTÚDIO NA DATA SELECIONADA.</p>
+    <h3 id="historyModalTitle">HISTÓRICO DE SORTEIOS</h3>
+    <p>CONSULTE OS HORÁRIOS, PRÊMIOS E RESULTADOS JÁ REGISTRADOS PARA A RECEPÇÃO.</p>
     <div class="historyTop">
       <div class="modalField">
         <label for="historyDateInput">DATA</label>
@@ -1552,7 +1476,6 @@ const STORAGE_KEY='jp_programacao_brindes_distribuicao_v2';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'" :'&#39;','"':'&quot;'}[c]));
 const upper=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
-const norm=upper;
 
 let state=loadState();
 let currentMonth=state.currentMonth||Object.keys(state.months||{})[0]||'';
@@ -1563,8 +1486,8 @@ let currentDisplayItem=null;
 let manualHourDateMs=null;
 let lastHourKey=currentHourKey();
 let historyDate='';
-const STUDIO_STATION='JP1017';
-const ALLOW_PROMO_SHORTCUT=true;
+const STUDIO_STATION='JPNEWS983';
+const ALLOW_PROMO_SHORTCUT=false;
 
 
 const FIREBASE_CONFIG = {
@@ -2047,7 +1970,7 @@ function buildPromoList(item){return buildPautaList(item,'promo');}
 function buildMerchanList(item){return buildPautaList(item,'merchan');}
 function buildHourReadList(item){
   const pautas=allPautasForItemHour(item,true);
-  if(!pautas.length) return `<div class="promoListItem" type="button">SEM PROMOÇÕES OU MERCHAN CADASTRADOS PARA ESTE HORÁRIO</div>`;
+  if(!pautas.length) return ``;
   return `<div class="hourReadList">${pautas.map(p=>{
     const read=isPromoReadForHour(p,item);
     const label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';
@@ -2146,93 +2069,13 @@ function buildPromoResultBox(p,item){
 }
 
 function historyRowsForDate(date){
-  const rows=[];
-  const pushRow=(row)=>{
-    if(!row || !row.title) return;
-    const dedupeKey=`${row.source||''}|${row.id||''}|${row.time||''}|${row.title||''}|${row.result||''}`;
-    if(rows.some(r=>r.__dedupeKey===dedupeKey)) return;
-    rows.push({...row,__dedupeKey:dedupeKey});
-  };
-
-  (monthData().items||[])
-    .filter(i=>i && i.date===date)
-    .filter(i=>(i.station||'JP1017')===STUDIO_STATION)
-    .filter(i=>upper(i.status)==='REALIZADO' || upper(i.winnerName||''))
-    .forEach(i=>pushRow({
-      source:'item',
-      id:i.id||'',
-      type:'PRÊMIO',
-      typeClass:'prize',
-      time:formatStudioTime(i.slot),
-      sort:`${i.date}T${timeToHHMM(i.slot)}`,
-      title:itemTitle(i),
-      sub:i.program||'',
-      result:upper(i.winnerName||'REALIZADO')
-    }));
-
-  (monthData().promos||[])
-    .filter(p=>p && !isMerchan(p))
-    .filter(p=>stationAllowed(p))
-    .forEach(p=>{
-      const title=upper(p.name||p.title||'PROMOÇÃO');
-      const baseSub=upper(p.local||p.program||'PROMOÇÃO');
-      const byHour=p.resultWinnersByHour||{};
-      Object.entries(byHour).forEach(([key,list])=>{
-        if(String(key).slice(0,10)!==date) return;
-        const winners=normalizeWinnerList(list).map(w=>w.name).join(', ');
-        if(!winners) return;
-        const hour=(String(key).match(/-(\d{2})$/)||[])[1] || pad(slotHour(p.resultSlot||p.drawTime||''));
-        pushRow({
-          source:'promo-hour-winners',
-          id:p.id||'',
-          type:'PROMOÇÃO',
-          typeClass:'promo',
-          time:formatStudioTime(hour),
-          sort:`${date}T${hour}:00`,
-          title,
-          sub:baseSub,
-          result:winners
-        });
-      });
-
-      Object.entries(p.resultByHour||{}).forEach(([key,value])=>{
-        if(String(key).slice(0,10)!==date) return;
-        const winner=upper(value||'');
-        if(!winner) return;
-        const hour=(String(key).match(/-(\d{2})$/)||[])[1] || pad(slotHour(p.resultSlot||p.drawTime||''));
-        pushRow({
-          source:'promo-hour-result',
-          id:p.id||'',
-          type:'PROMOÇÃO',
-          typeClass:'promo',
-          time:formatStudioTime(hour),
-          sort:`${date}T${hour}:00`,
-          title,
-          sub:baseSub,
-          result:winner
-        });
-      });
-
-      const winners=promoWinnerList(p,null).map(w=>w.name).join(', ') || upper(p.resultName||'');
-      const resultDate=p.resultDate || (p.resultName||winners ? p.drawDate : '');
-      if(resultDate===date && winners){
-        const slot=p.resultSlot || p.drawTime || '';
-        const hour=pad(slotHour(slot));
-        pushRow({
-          source:'promo-result',
-          id:p.id||'',
-          type:'PROMOÇÃO',
-          typeClass:'promo',
-          time:formatStudioTime(slot),
-          sort:`${date}T${hour||'23'}:00`,
-          title,
-          sub:baseSub,
-          result:winners
-        });
-      }
-    });
-
-  return rows.sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title));
+  const prizeRows=(monthData().items||[])
+    .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || norm(i.winnerName)))
+    .map(i=>({type:'PRÊMIO',time:formatStudioTime(i.slot),sort:`${i.date}T${timeToHHMM(i.slot)}`,title:itemTitle(i),sub:i.program||'',result:i.winnerName||'REALIZADO'}));
+  const promoRows=(monthData().promos||[])
+    .filter(p=>(p.resultDate===date || (p.drawDate===date && norm(p.resultName))))
+    .map(p=>{ const winners=promoWinnerList(p,null); return {type:isMerchan(p)?'MERCHAN':'PROMOÇÃO',time:p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${(p.drawTime||'23:59').slice(0,5)}`,title:upper(p.name||p.title||'PROMOÇÃO'),sub:p.local||'',result:(winners.map(w=>w.name).join(', ')||p.resultName||'RESULTADO REGISTRADO')}; });
+  return [...prizeRows,...promoRows].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title));
 }
 function renderHistoryList(){
   const date=$('historyDateInput')?.value || historyDate || todayISO();
@@ -2240,7 +2083,7 @@ function renderHistoryList(){
   const rows=historyRowsForDate(date);
   const box=$('historyList');
   if(!box) return;
-  box.innerHTML=rows.length ? rows.map(r=>`<div class="historyItem"><div class="historyTime">${esc(r.time)}</div><div class="historyInfo"><strong>${esc(r.title)}</strong><span>${esc(r.sub?upper(r.sub):'SORTEIO REALIZADO')}</span><em>GANHADOR: ${esc(r.result)}</em></div><span class="historyType ${esc(r.typeClass||'promo')}">${esc(r.type)}</span></div>`).join('') : '<div class="empty">NENHUM SORTEIO REALIZADO PARA ESTA DATA.</div>';
+  box.innerHTML=rows.length ? rows.map(r=>`<div class="historyItem"><div class="historyTime">${esc(r.time)}</div><div class="historyInfo"><strong>${esc(r.title)}</strong><span>${esc(r.type)}${r.sub?' · '+esc(upper(r.sub)):''}</span><em>${esc(r.result)}</em></div></div>`).join('') : '<div class="empty">NENHUM RESULTADO REGISTRADO PARA ESTA DATA.</div>';
 }
 function openHistoryModal(){
   historyDate=(currentDisplayItem && currentDisplayItem.date) || todayISO();
@@ -2480,7 +2323,7 @@ function render(){
           <button class="promoListBtn ${promo&&isMerchan(promo)?'active':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHAN" title="M = MERCHAN">M<small>MERCHAN</small></button>
           <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
         </div>
-        <button class="promoListBtn history" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="SORTEIOS REALIZADOS" title="H = SORTEIOS REALIZADOS NO DIA">H<small>HIST.</small></button>
+        <button class="promoListBtn history" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="HISTÓRICO" title="H = HISTÓRICO">H<small>HIST.</small></button>
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
         <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
       </div>
@@ -2501,13 +2344,10 @@ function render(){
     if(add) addPromoWinnerField('');
     if(remove) remove.closest('.resultWinnerLine')?.remove();
   });
-  const promoBtn=$('promoListBtn');
-  if(promoBtn) promoBtn.onclick=e=>studioShortcutClick(e,'promo');
-  const merchanBtn=$('merchanListBtn');
-  if(merchanBtn) merchanBtn.onclick=e=>studioShortcutClick(e,'merchan');
-  const historyBtn=$('historyListBtn');
-  if(historyBtn) historyBtn.onclick=e=>studioShortcutClick(e,'history');
-  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId));
+  const promoBtn=$('promoListBtn'); if(promoBtn) promoBtn.addEventListener('click',()=>{$('promoList')?.classList.toggle('show');$('merchanList')?.classList.remove('show');});
+  const merchanBtn=$('merchanListBtn'); if(merchanBtn) merchanBtn.addEventListener('click',()=>{$('merchanList')?.classList.toggle('show');$('promoList')?.classList.remove('show');});
+  const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList')?.classList.remove('show');$('merchanList')?.classList.remove('show');openHistoryModal();});
+  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.addEventListener('click',()=>startPromoRead(btn.dataset.promoId)));
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
