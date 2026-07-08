@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="light" />
@@ -4852,7 +4855,7 @@ async function importLegacyStateToFirebase(){
     if(payload && payload.ok && payload.state && payload.state.months && countStateRecords(payload.state)>0){
       state = normalizePanelState(payload.state);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      ensureCurrentMonthAvailable(true);
+      setOfficialCalendarMonth(true);
       render();
       await saveStateToApi();
       toast('BASE MIGRADA DO GOOGLE SHEETS PARA O FIREBASE.');
@@ -4870,7 +4873,7 @@ function applyRemoteFirebaseState(remoteState){
   firebaseServerLoaded = true;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));
-  ensureCurrentMonthAvailable(true);
+  setOfficialCalendarMonth(false);
   render();
   firebaseApplyingRemote = false;
 }
@@ -5025,8 +5028,17 @@ async function forceLoadFirebaseToLocal(){
 }
 
 function currentCalendarMonth(){
-  const d=new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  try{
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone:'America/Sao_Paulo',
+      year:'numeric',
+      month:'2-digit'
+    }).formatToParts(new Date()).reduce((acc,p)=>{ acc[p.type]=p.value; return acc; }, {});
+    return `${parts.year}-${parts.month}`;
+  }catch(err){
+    const d=new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+  }
 }
 function monthSummaryList(data=state){
   const months=data?.months || {};
@@ -5046,32 +5058,33 @@ function bestAvailableMonth(data=state){
   return currentCalendarMonth();
 }
 let calendarMonthOpened = '';
-function ensureCurrentMonthAvailable(forceCalendar=false){
+let manualMonthOverride = false;
+function setOfficialCalendarMonth(force=false){
+  if(manualMonthOverride && !force) return;
   if(!state.months) state.months={};
   const calendarKey=currentCalendarMonth();
-  if(forceCalendar){
-    if(!state.months[calendarKey]) createBlankMonth(calendarKey);
-    state.currentMonth=calendarKey;
-    calendarMonthOpened=calendarKey;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    return;
-  }
-  if(!state.currentMonth || !state.months[state.currentMonth]){
-    if(!state.months[calendarKey]) createBlankMonth(calendarKey);
-    state.currentMonth=calendarKey;
-    calendarMonthOpened=calendarKey;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
+  if(!state.months[calendarKey]) createBlankMonth(calendarKey);
+  state.currentMonth=calendarKey;
+  calendarMonthOpened=calendarKey;
+  const input=$('monthInput');
+  if(input) input.value=calendarKey;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+function ensureCurrentMonthAvailable(forceCalendar=false){
+  if(forceCalendar) return setOfficialCalendarMonth(true);
+  if(!state.months) state.months={};
+  if(!state.currentMonth || !state.months[state.currentMonth]) setOfficialCalendarMonth(false);
 }
 function syncCalendarMonthIfChanged(){
   const calendarKey=currentCalendarMonth();
-  if(calendarMonthOpened && calendarMonthOpened!==calendarKey){
-    ensureCurrentMonthAvailable(true);
+  if(!manualMonthOverride && calendarMonthOpened && calendarMonthOpened!==calendarKey){
+    setOfficialCalendarMonth(true);
     render();
   }
 }
 function openMonthKey(key){
   if(!key) return;
+  manualMonthOverride=true;
   if(!state.months[key]) createBlankMonth(key);
   state.currentMonth=key;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -5385,7 +5398,7 @@ function importManualBackupFile(file){
       const typed=prompt('PARA CONFIRMAR A RESTAURAÇÃO, DIGITE: RESTAURAR');
       if(norm(typed)!=='RESTAURAR') return;
       state=incoming;
-      ensureCurrentMonthAvailable(true);
+      setOfficialCalendarMonth(true);
       saveState(true);
       queueApiSave(80);
       render();
@@ -6024,7 +6037,8 @@ function renderFilters(){
 function fillSelect(id, values, firstLabel, fallbackValue=''){
   const sel=$(id); const current=sel.value;
   sel.innerHTML = `<option value="">${firstLabel}</option>` + values.map(v=>`<option>${esc(v)}</option>`).join('');
-  if(values.includes(current)) sel.value=current;
+  if(id==='weekFilter' && fallbackValue && values.includes(fallbackValue)) sel.value=fallbackValue;
+  else if(values.includes(current)) sel.value=current;
   else if(fallbackValue && values.includes(fallbackValue)) sel.value=fallbackValue;
 }
 function renderStats(){
@@ -7886,7 +7900,7 @@ bind('forceUploadFirebaseBtn','click',forceUploadLocalToFirebase);
 bind('forceLoadFirebaseBtn','click',forceLoadFirebaseToLocal);
 bind('verifyFirebaseBtn','click',verifyFirebaseState);
 
-bind('monthInput','change',()=>{ const key=$('monthInput').value; if(!key) return toast('ESCOLHA UM MÊS.'); if(!state.months[key]) createBlankMonth(key); state.currentMonth=key; saveState(true); render(); toast('MÊS ABERTO COM SALVAMENTO AUTOMÁTICO.'); });
+bind('monthInput','change',()=>{ const key=$('monthInput').value; if(!key) return toast('ESCOLHA UM MÊS.'); manualMonthOverride=true; if(!state.months[key]) createBlankMonth(key); state.currentMonth=key; saveState(true); render(); toast('MÊS ABERTO COM SALVAMENTO AUTOMÁTICO.'); });
 function downloadFile(name, content, type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
 function csvCell(v){ return `"${String(v??'').replace(/"/g,'""')}"`; }
 function toCsv(){
@@ -7915,7 +7929,8 @@ window.addEventListener('storage',()=>{
 });
 populatePromoReadHours();
 updatePromoReadScheduleState();
-ensureCurrentMonthAvailable(true);
+setOfficialCalendarMonth(true);
+console.info('PAINEL JP — MÊS OFICIAL:', currentCalendarMonth(), 'MÊS ABERTO:', state.currentMonth);
 render();
 syncStateFromApi(true);
 window.addEventListener('beforeunload',()=>{ normalizePanelState(state); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); });
