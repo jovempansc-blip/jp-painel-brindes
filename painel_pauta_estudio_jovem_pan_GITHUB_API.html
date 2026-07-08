@@ -938,6 +938,7 @@ let manualHourDateMs=null;
 let lastHourKey=currentHourKey();
 let historyDate='';
 const STUDIO_STATION='JP1017';
+const ALLOW_PROMO_SHORTCUT=true;
 
 
 const FIREBASE_CONFIG = {
@@ -1097,6 +1098,7 @@ function pad(n){return String(n).padStart(2,'0');}
 function formatBR(iso){if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
 function slotHour(slot){const m=String(slot||'').match(/(\d{1,2})/);return m?Number(m[1]):0;}
 function formatStudioTime(slot){const h=slotHour(slot);return h?`${pad(h)}H`:upper(slot||'--H');}
+function timeToHHMM(slot){const h=slotHour(slot);return h?`${pad(h)}:00`:'00:00';}
 function currentHourKey(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}`;}
 function dateISO(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
 function todayISO(){
@@ -1162,8 +1164,9 @@ function readTimeLabel(value){
 }
 
 function stationAllowed(p){
-  if(!isMerchan(p)) return true;
-  return !p.station || p.station===STUDIO_STATION || p.station==='ALL';
+  const st = p?.station || '';
+  if(st && st !== 'ALL' && st !== STUDIO_STATION) return false;
+  return true;
 }
 function programMatchesMerchan(p,item){
   if(!isMerchan(p)) return true;
@@ -1188,6 +1191,88 @@ function renderStudioDateStamp(){
   el.textContent=`${days[d.getDay()]} · ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
 }
 
+
+function minutesOf(time){
+  const raw=String(time||'').trim().toUpperCase();
+  const hMatch=raw.match(/(\d{1,2})H/);
+  if(hMatch) return Number(hMatch[1])*60;
+  const m=raw.match(/(\d{1,2}):(\d{2})/);
+  if(m) return Number(m[1])*60+Number(m[2]);
+  const n=raw.match(/(\d{1,2})/);
+  return n ? Number(n[1])*60 : 0;
+}
+function dayMatchesSchedule(date,days){
+  if(!Array.isArray(days) || !days.length) return true;
+  const [y,m,d]=String(date||todayISO()).split('-').map(Number);
+  const dow=new Date(y,(m||1)-1,d||1).getDay();
+  return days.map(Number).includes(dow);
+}
+function programFromSchedule(date,slot,station=STUDIO_STATION){
+  const rows=Array.isArray(state.programSchedules) ? state.programSchedules : [];
+  const minute=minutesOf(slot);
+  const hit=rows
+    .filter(p=>(!p.station || p.station===station))
+    .filter(p=>dayMatchesSchedule(date,p.days))
+    .find(p=>minute>=minutesOf(p.startTime) && minute<minutesOf(p.endTime));
+  return hit ? upper(hit.name||'') : '';
+}
+function promoResultStations(p){
+  const st=p?.station || STUDIO_STATION;
+  if(st==='ALL') return ['JP1017','JPNEWS983'];
+  return [st];
+}
+function promoResultSlot(p){
+  return formatStudioTime(p?.resultSlot || p?.drawTime || '');
+}
+function isPromoResultForItem(p,item){
+  if(!p || !item || isMerchan(p)) return false;
+  if(!stationAllowed(p)) return false;
+  const ref=p.drawDate || p.resultDate || '';
+  if(ref !== (item.date||'')) return false;
+  const drawSlot=promoResultSlot(p);
+  if(!drawSlot || drawSlot==='--H') return false;
+  return slotHour(drawSlot) === slotHour(item.slot);
+}
+function promoResultVirtualRows(){
+  const physical=new Set((monthData().items||[])
+    .filter(i=>i.sourceType==='promo-result' && i.promoId)
+    .map(i=>`${i.promoId}|${i.station||STUDIO_STATION}|${i.date}|${formatStudioTime(i.slot)}`));
+  return [...(monthData().promos||[])]
+    .filter(p=>!isMerchan(p))
+    .filter(p=>p && p.id && p.drawDate && p.drawTime)
+    .filter(p=>promoResultStations(p).includes(STUDIO_STATION))
+    .map(p=>{
+      const slot=promoResultSlot(p);
+      const key=`${p.id}|${STUDIO_STATION}|${p.drawDate}|${slot}`;
+      if(physical.has(key)) return null;
+      const program=programFromSchedule(p.drawDate,slot,STUDIO_STATION) || upper(p.program||'RESULTADO PROMOÇÃO');
+      const name=upper(p.name||p.title||'PROMOÇÃO');
+      const winners=promoWinnerList(p,{date:p.drawDate,slot});
+      return {
+        id:`PROMO_RESULT_${p.id}_${STUDIO_STATION}`,
+        date:p.drawDate,
+        slot,
+        station:STUDIO_STATION,
+        program,
+        distributionId:p.distributionId||'',
+        prize:name,
+        title:`RESULTADO: ${name}`,
+        qty:1,
+        channel:'RÁDIO',
+        status:winners.length || p.resultName ? 'REALIZADO' : 'PENDENTE',
+        winnerName:winners.map(w=>w.name).join(', '),
+        notes:`RESULTADO DO SORTEIO PROGRAMADO PARA ESTE HORÁRIO. ${upper(p.local||'PROMOÇÃO')}.`,
+        titleStyle:p.titleStyle||defaultTextStyle('title'),
+        descriptionStyle:p.descriptionStyle||defaultTextStyle('desc'),
+        sourceType:'promo-result',
+        promoId:p.id,
+        promoKind:p.kind||'promo',
+        __promoResultVirtual:true
+      };
+    })
+    .filter(Boolean);
+}
+
 function promoEligibleForItemHour(p,item){
   if(!p || !item) return false;
   if(!stationAllowed(p) || !programMatchesMerchan(p,item) || !merchanHourAllowed(p,item)) return false;
@@ -1200,11 +1285,12 @@ function promoEligibleForItemHour(p,item){
   }else{
     const ref=promoRefDate(p);
     if(ref && ref!==date) return false;
+    if(isPromoResultForItem(p,item)) return true;
   }
   const hour=pad(slotHour(item.slot));
   const mode=p.readMode||'all';
   if(mode==='selected'){
-    const hours=Array.isArray(p.readHours)?p.readHours.map(String):[];
+    const hours=Array.isArray(p.readHours)?p.readHours.map(h=>pad(slotHour(h))):[];
     return hours.includes(hour);
   }
   return true;
@@ -1467,9 +1553,11 @@ function confirmPromoRead(){
   render();
 }
 function allPrizeRows(){
-  return [...(monthData().items||[])]
+  const items=[...(monthData().items||[])]
     .filter(i=>i && i.date)
-    .filter(i=>(i.station||'JP1017')===STUDIO_STATION)
+    .filter(i=>(i.station||'JP1017')===STUDIO_STATION);
+  const virtualResults=promoResultVirtualRows();
+  return [...items,...virtualResults]
     .sort((a,b)=>itemDateTime(a)-itemDateTime(b)||upper(a.program).localeCompare(upper(b.program)));
 }
 function sameHour(a,b){
@@ -1567,6 +1655,12 @@ function render(){
     item=found.item;
   }
   currentDisplayItem=item;
+  if(selectedPromoId && item && !allPautasForItemHour(item,true).some(p=>p.id===selectedPromoId)){
+    selectedPromoId=null;
+  }
+  if(!selectedPromoId && item && item.sourceType==='promo-result' && item.promoId){
+    selectedPromoId=item.promoId;
+  }
   if(!selectedPromoId && item && item.__virtual){
     const pending=allPautasForItemHour(item,false);
     if(pending.length) selectedPromoId=pending[0].id;
@@ -1624,9 +1718,11 @@ function render(){
     if(add) addPromoWinnerField('');
     if(remove) remove.closest('.resultWinnerLine')?.remove();
   });
-  $('promoListBtn').addEventListener('click',()=>{$('promoList').classList.toggle('show');$('merchanList').classList.remove('show');});
-  $('merchanListBtn').addEventListener('click',()=>{$('merchanList').classList.toggle('show');$('promoList').classList.remove('show');});
-  const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList').classList.remove('show');$('merchanList').classList.remove('show');openHistoryModal();});
+  const promoBtn=$('promoListBtn');
+  if(promoBtn) promoBtn.addEventListener('click',()=>{$('promoList')?.classList.toggle('show');$('merchanList')?.classList.remove('show');});
+  const merchanBtn=$('merchanListBtn');
+  if(merchanBtn) merchanBtn.addEventListener('click',()=>{$('merchanList')?.classList.toggle('show');$('promoList')?.classList.remove('show');});
+  const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList')?.classList.remove('show');$('merchanList')?.classList.remove('show');openHistoryModal();});
   document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.addEventListener('click',()=>startPromoRead(btn.dataset.promoId)));
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
