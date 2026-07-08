@@ -1180,6 +1180,121 @@ body{
   color:#b90d2f!important;
 }
 
+
+/* === V24: RODAPÉ DO ESTÚDIO EM LINHA ÚNICA + SEM LEITURAS CONFIRMADAS === */
+.readHistoryTicker{
+  display:none!important;
+}
+.panel{
+  overflow:hidden!important;
+}
+.promoFooter{
+  margin-top:0!important;
+  height:46px!important;
+  min-height:46px!important;
+  max-height:46px!important;
+  flex:0 0 46px!important;
+  display:flex!important;
+  align-items:center!important;
+  padding:6px 12px!important;
+  background:#fff1df!important;
+  border-top:1px solid #f0c584!important;
+}
+.promoFooterList{
+  width:100%!important;
+  height:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:9px!important;
+  flex-wrap:nowrap!important;
+  overflow:hidden!important;
+}
+.promoFooterList.empty::before{
+  content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  max-height:26px;
+  color:#b46a00;
+  font-size:8.5px;
+  font-weight:1000;
+  letter-spacing:.06em;
+  white-space:nowrap;
+}
+.promoPill{
+  height:28px!important;
+  min-height:28px!important;
+  max-height:28px!important;
+  flex:0 0 auto!important;
+  max-width:360px!important;
+  border-radius:999px!important;
+  padding:0 14px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:11px!important;
+  line-height:1!important;
+  letter-spacing:.05em!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  box-shadow:0 7px 16px rgba(17,23,34,.075)!important;
+}
+.promoPill.pending{
+  animation:studioPautaBlink 1.05s ease-in-out infinite!important;
+}
+.promoPill.pending.promo{
+  background:#f28b20!important;
+  border-color:#f6b465!important;
+  color:#fff!important;
+}
+.promoPill.pending.merchan{
+  background:#2477bd!important;
+  border-color:#8bc6ff!important;
+  color:#fff!important;
+}
+.promoPill.read{
+  min-width:300px!important;
+  max-width:520px!important;
+  background:#effaf4!important;
+  border-color:#bde9ce!important;
+  color:#137947!important;
+  box-shadow:0 6px 16px rgba(19,121,71,.08)!important;
+}
+.promoPill.read .busMarquee{
+  display:block!important;
+  width:100%!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+.promoPill.read .busMarquee span{
+  display:inline-block!important;
+  min-width:100%!important;
+  padding-left:100%!important;
+  animation:busMarqueeLeft 13s linear infinite!important;
+}
+@keyframes busMarqueeLeft{
+  from{transform:translateX(0)}
+  to{transform:translateX(-100%)}
+}
+@media(max-width:760px){
+  .promoFooter{
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+    padding:5px 8px!important;
+  }
+  .promoPill{
+    height:26px!important;
+    min-height:26px!important;
+    max-height:26px!important;
+    max-width:250px!important;
+    font-size:9.5px!important;
+    padding:0 10px!important;
+  }
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1193,7 +1308,6 @@ body{
     </header>
 
   <section class="panel" id="pautaPanel"></section>
-  <div class="readHistoryTicker" id="readHistoryTicker"></div>
 </div>
 
 <div class="modalBackdrop" id="winnerModal">
@@ -1721,9 +1835,9 @@ function buildPromoFooter(item){
     const typeClass=isM?'merchan':'promo';
     if(done){
       const label=`${readTimeLabel(p.readByHour[key]).replace('FEITA ','')} · ${type} · ${name} LIDA`;
-      return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" title="${esc(label)}"><span class="busMarquee"><span>${esc(label)}</span></span></button>`;
+      return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(label)}"><span class="busMarquee"><span>${esc(label)}</span></span></button>`;
     }
-    return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" title="${esc(type+' · '+name)}">${esc(name)}</button>`;
+    return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+name)}">${esc(name)}</button>`;
   }).join('')}</div></div>`;
 }
 function buildPautaList(item,kind){
@@ -2055,7 +2169,6 @@ function render(){
     const pending=allPautasForItemHour(item,false);
     if(pending.length) selectedPromoId=pending[0].id;
   }
-  renderReadHistoryTicker();
   const promo=currentPromoForRead();
   const isVirtual=!!item.__virtual;
   const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
