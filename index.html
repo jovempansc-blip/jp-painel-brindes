@@ -2341,6 +2341,41 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
   .distMainTable{min-width:1180px!important}
 }
 
+
+
+/* AJUSTE — RODÍZIO POR PERÍODO (MANHÃ / TARDE / NOITE) */
+.rotationHours{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:7px!important;
+}
+.rotationPeriodGroup{
+  border:1px solid #dfe5ec;
+  border-radius:12px;
+  background:#fff;
+  padding:7px;
+  min-width:0;
+}
+.rotationPeriodTitle{
+  color:#667283;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  margin:0 0 6px;
+}
+.rotationPeriodItems{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px;
+}
+.rotationPeriodGroup[data-period="manha"] .rotationPeriodItems{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rotationPeriodGroup[data-period="noite"] .rotationPeriodItems{grid-template-columns:1fr}
+@media(max-width:900px){
+  .rotationHours{grid-template-columns:1fr!important}
+  .rotationPeriodGroup[data-period="manha"] .rotationPeriodItems,
+  .rotationPeriodItems{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2775,11 +2810,11 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
           <div class="field full">
             <label>HORÁRIOS DO RODÍZIO INTELIGENTE</label>
             <div class="rotationBox">
-              <div class="rotationBoxTop"><strong>ESCOLHA OS PRINCIPAIS HORÁRIOS PARA ESCALAR ESTE PRÊMIO</strong><label class="promoReadAll"><input type="checkbox" id="distRotationAll" checked> TODOS</label></div>
+              <div class="rotationBoxTop"><strong>ESCOLHA A DISPONIBILIDADE POR PERÍODO PARA O RODÍZIO</strong><label class="promoReadAll"><input type="checkbox" id="distRotationAll" checked> TODOS</label></div>
               <div class="rotationLimitRow">
                 <div>
                   <span>QUANTAS VEZES POR DIA?</span>
-                  <div class="rotationLimitHint">O SISTEMA PODE USAR OUTROS HORÁRIOS NO MESMO DIA, NÃO REPETE NO MESMO PERÍODO E EVITA O MESMO HORÁRIO EM MAIS DE 2 DIAS.</div>
+                  <div class="rotationLimitHint">O SISTEMA DISTRIBUI ENTRE MANHÃ, TARDE E NOITE, AVANÇA OS HORÁRIOS EM RODÍZIO E BLOQUEIA O MESMO PRÊMIO NO MESMO PERÍODO/HORÁRIO POR 2 DIAS.</div>
                 </div>
                 <input type="number" min="1" max="3" step="1" id="distDailyLimit" value="1">
               </div>
@@ -6276,7 +6311,12 @@ function setRotationControls(prefix,slots=[]){
   const box=$(`${prefix}RotationHours`);
   if(!box) return;
   if(box.dataset.ready!=='1'){
-    box.innerHTML=RADIO_PLANNER_SLOTS.map(s=>`<label class="rotationHour"><input type="checkbox" value="${s}"><span>${s}</span></label>`).join('');
+    const groups=[
+      ['manha','MANHÃ',RADIO_PLANNER_SLOTS.filter(s=>periodKey(s)==='manha')],
+      ['tarde','TARDE',RADIO_PLANNER_SLOTS.filter(s=>periodKey(s)==='tarde')],
+      ['noite','NOITE',RADIO_PLANNER_SLOTS.filter(s=>periodKey(s)==='noite')]
+    ];
+    box.innerHTML=groups.map(([key,label,items])=>`<div class="rotationPeriodGroup" data-period="${key}"><div class="rotationPeriodTitle">${label}</div><div class="rotationPeriodItems">${items.map(s=>`<label class="rotationHour"><input type="checkbox" value="${s}"><span>${s}</span></label>`).join('')}</div></div>`).join('');
     box.dataset.ready='1';
   }
   const all=$(`${prefix}RotationAll`);
@@ -6427,6 +6467,65 @@ function periodKey(slot){
 }
 function periodLabel(key){
   return key === 'manha' ? 'MANHÃ' : key === 'tarde' ? 'TARDE' : 'NOITE';
+}
+const SMART_REPEAT_GAP_DAYS=2;
+function isoDayNumber(date){
+  const d=new Date(`${date}T12:00:00`);
+  if(Number.isNaN(d.getTime())) return NaN;
+  return Math.floor(d.getTime()/86400000);
+}
+function isoDayDistance(a,b){
+  const da=isoDayNumber(a), db=isoDayNumber(b);
+  if(Number.isNaN(da)||Number.isNaN(db)) return Infinity;
+  return Math.abs(da-db);
+}
+function samePrizeRepeatConflicts(d,date,slot,extraPlans=[],excludeId=''){
+  if(!d || !d.id || !date || !slot) return [];
+  const ns=normalizeSlot(slot);
+  const period=periodKey(ns);
+  const rows=[];
+  monthData().items.forEach(i=>{
+    if(i.id===excludeId) return;
+    if(i.distributionId!==d.id) return;
+    if(normalizeChannel(i.channel)!=='RÁDIO') return;
+    const itemSlot=normalizeSlot(i.slot);
+    if(itemSlot!==ns || periodKey(itemSlot)!==period) return;
+    const gap=isoDayDistance(date,i.date);
+    if(gap<=SMART_REPEAT_GAP_DAYS) rows.push({date:i.date,slot:itemSlot,period,gap,source:'EXISTENTE'});
+  });
+  (extraPlans||[]).forEach(p=>{
+    const planSlot=normalizeSlot(p.slot);
+    if(planSlot!==ns || periodKey(planSlot)!==period) return;
+    const gap=isoDayDistance(date,p.date);
+    if(gap<=SMART_REPEAT_GAP_DAYS) rows.push({date:p.date,slot:planSlot,period,gap,source:'NOVO'});
+  });
+  return rows.sort((a,b)=>isoDayNumber(a.date)-isoDayNumber(b.date));
+}
+function samePrizeRepeatLabel(rows){
+  const first=(rows||[])[0];
+  return first ? `MESMO PRÊMIO EM ${formatBR(first.date)} ${first.slot}` : 'REPETIÇÃO BLOQUEADA';
+}
+function rotationSlotsByPeriod(slots){
+  const map={manha:[],tarde:[],noite:[]};
+  (slots||[]).map(normalizeSlot).sort((a,b)=>slotOrder(a)-slotOrder(b)).forEach(slot=>{
+    const p=periodKey(slot);
+    if(!map[p].includes(slot)) map[p].push(slot);
+  });
+  return map;
+}
+function circularDistance(a,b,len){
+  if(!len) return 0;
+  const diff=Math.abs(a-b);
+  return Math.min(diff,len-diff);
+}
+function periodOrderIndex(key){ return key==='manha'?0:key==='tarde'?1:2; }
+function periodRotationTargetIndex(periodSlots,dateIndex,pass,seed){
+  if(!periodSlots || !periodSlots.length) return 0;
+  const offset=seed%periodSlots.length;
+  return (dateIndex + pass + offset) % periodSlots.length;
+}
+function periodRotationTargetSlot(periodSlots,dateIndex,pass,seed){
+  return periodSlots && periodSlots.length ? periodSlots[periodRotationTargetIndex(periodSlots,dateIndex,pass,seed)] : '';
 }
 function periodIcon(key){
   return key === 'manha' ? '☀' : key === 'tarde' ? '☼' : '☾';
@@ -7331,44 +7430,51 @@ function radioPlannerCandidates(d,excludeId=''){
   const dates=dateRangeBetween(start,end).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const candidates=[];
   const allowedSlots=rotationAllowedSlots(d);
-  dates.forEach(date=>allowedSlots.forEach(slot=>{
+  dates.forEach((date,dayIndex)=>allowedSlots.forEach(slot=>{
     const key=radioSlotKey(date,slot);
     const occ=occupied.get(key)||[];
-    candidates.push({date,slot,program:programForSlot(date,slot),occupied:occ.length>0,occupiedItems:occ,key});
+    candidates.push({date,slot,period:periodKey(slot),dayIndex,program:programForSlot(date,slot),occupied:occ.length>0,occupiedItems:occ,key});
   }));
   return candidates;
 }
-function findNextFreeRadioSlot(d,avoidSet=new Set(),excludeId=''){
-  const candidates=radioPlannerCandidates(d,excludeId).filter(c=>!c.occupied && !avoidSet.has(c.key));
+function findNextFreeRadioSlot(d,avoidSet=new Set(),excludeId='',extraPlans=[]){
+  const candidates=radioPlannerCandidates(d,excludeId)
+    .filter(c=>!c.occupied && !avoidSet.has(c.key) && !samePrizeRepeatConflicts(d,c.date,c.slot,extraPlans,excludeId).length)
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date)) || periodOrderIndex(periodKey(a.slot))-periodOrderIndex(periodKey(b.slot)) || slotOrder(a.slot)-slotOrder(b.slot));
   return candidates[0] || null;
 }
 function pickBestRadioSuggestions(d,needed){
   if(needed<=0) return [];
-  const candidates=radioPlannerCandidates(d);
-  const free=candidates.filter(c=>!c.occupied);
-  const source=free.length ? free : candidates;
-  if(!source.length) return [];
-  const sameSlotSoftLimit=2;
-  const samePrizeItems=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
-  const sameSlotUsage=new Map();
-  samePrizeItems.forEach(i=>{
-    const slot=normalizeSlot(i.slot);
-    if(slot) sameSlotUsage.set(slot,(sameSlotUsage.get(slot)||0)+1);
-  });
-  const count=Math.min(needed,source.length);
+  const allowed=[...new Set(rotationAllowedSlots(d).map(normalizeSlot))].sort((a,b)=>slotOrder(a)-slotOrder(b));
+  const slotsByPeriod=rotationSlotsByPeriod(allowed);
+  const candidates=radioPlannerCandidates(d).filter(c=>!c.occupied && !samePrizeRepeatConflicts(d,c.date,c.slot,[]).length);
+  if(!candidates.length) return [];
+  const count=Math.min(needed,candidates.length);
   const picked=[], usedKeys=new Set();
+  const periodUsage=new Map();
+  const slotUsage=new Map();
+  radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id).forEach(i=>{
+    const slot=normalizeSlot(i.slot), period=periodKey(slot);
+    periodUsage.set(period,(periodUsage.get(period)||0)+1);
+    slotUsage.set(`${period}|${slot}`,(slotUsage.get(`${period}|${slot}`)||0)+1);
+  });
   for(let i=0;i<count;i++){
-    const available=source.filter(c=>!usedKeys.has(c.key));
+    const available=candidates.filter(c=>!usedKeys.has(c.key) && !samePrizeRepeatConflicts(d,c.date,c.slot,picked).length);
     if(!available.length) break;
-    const preferred=available.filter(c=>(sameSlotUsage.get(normalizeSlot(c.slot))||0)<sameSlotSoftLimit);
-    const pool=preferred.length ? preferred : available;
-    let idx=pool.length===1 ? 0 : Math.round(i*(pool.length-1)/Math.max(1,count-1));
-    let chosen=pool[Math.max(0,Math.min(pool.length-1,idx))];
+    const chosen=available.map(c=>{
+      const periodSlots=slotsByPeriod[c.period]||[];
+      const idx=periodSlots.indexOf(normalizeSlot(c.slot));
+      const target=periodRotationTargetIndex(periodSlots,c.dayIndex||0,0,smartRadioSeed(`${d.id}|${distributionLabel(d)}`));
+      const targetDistance=idx>=0 ? circularDistance(idx,target,periodSlots.length) : 0;
+      const pUsage=periodUsage.get(c.period)||0;
+      const sUsage=slotUsage.get(`${c.period}|${normalizeSlot(c.slot)}`)||0;
+      return {...c,finalScore:pUsage*120 + sUsage*80 + targetDistance*30 + periodOrderIndex(c.period)*4 + seededScore(`${d.id}|manual|${i}|${c.date}|${c.slot}`)};
+    }).sort((a,b)=>a.finalScore-b.finalScore || String(a.date).localeCompare(String(b.date)) || slotOrder(a.slot)-slotOrder(b.slot))[0];
     if(!chosen) break;
     picked.push(chosen);
     usedKeys.add(chosen.key);
-    const slot=normalizeSlot(chosen.slot);
-    sameSlotUsage.set(slot,(sameSlotUsage.get(slot)||0)+1);
+    periodUsage.set(chosen.period,(periodUsage.get(chosen.period)||0)+1);
+    slotUsage.set(`${chosen.period}|${normalizeSlot(chosen.slot)}`,(slotUsage.get(`${chosen.period}|${normalizeSlot(chosen.slot)}`)||0)+1);
   }
   return picked;
 }
@@ -7391,9 +7497,10 @@ function radioRowStatus(date,slot,distId,avoidSet=new Set()){
   const occupied=radioSlotConflicts(date,ns);
   const d=distributionById(distId);
   const localDuplicate=avoidSet.has(radioSlotKey(date,ns));
-  if(!occupied.length && !localDuplicate) return {cls:'free',text:'LIVRE'};
-  const alt=findNextFreeRadioSlot(d,avoidSet);
-  const motivo=localDuplicate ? 'REPETIDO NA SELEÇÃO' : `OCUPADO POR ${conflictLabel(occupied)}`;
+  const repeatConflicts=samePrizeRepeatConflicts(d,date,ns,[]);
+  if(!occupied.length && !localDuplicate && !repeatConflicts.length) return {cls:'free',text:'LIVRE'};
+  const alt=findNextFreeRadioSlot(d,avoidSet,'',[]);
+  const motivo=localDuplicate ? 'REPETIDO NA SELEÇÃO' : repeatConflicts.length ? `BLOQUEADO: ${samePrizeRepeatLabel(repeatConflicts)}` : `OCUPADO POR ${conflictLabel(occupied)}`;
   return {cls:'busy',text:`${motivo} — SUGESTÃO: ${alt ? formatBR(alt.date)+' '+alt.slot : 'SEM HORÁRIO LIVRE'}`};
 }
 function radioPlanRowHtml(candidate={}, checked=true){
@@ -7509,10 +7616,10 @@ function buildSmartRadioPlans(d){
   if(needed<=0) return {needed:0,plans:[],missing:0};
 
   const allowed=[...new Set(rotationAllowedSlots(d).map(normalizeSlot))].sort((a,b)=>slotOrder(a)-slotOrder(b));
+  const slotsByPeriod=rotationSlotsByPeriod(allowed);
   const maxPerDay=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1));
   const dates=dateRangeBetween(distStartDate(d),distEndDate(d)).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const seed=smartRadioSeed(`${d.id}|${distributionLabel(d)}|${distStartDate(d)}|${distEndDate(d)}|${allowed.join(',')}`);
-  const sameSlotSoftLimit=2;
 
   const existingRadio=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
   const existingByDay=new Map();
@@ -7520,17 +7627,17 @@ function buildSmartRadioPlans(d){
   existingRadio.forEach(i=>{
     if(!existingByDay.has(i.date)) existingByDay.set(i.date,{count:0,periods:new Set()});
     const info=existingByDay.get(i.date);
+    const slot=normalizeSlot(i.slot), period=periodKey(slot);
     info.count++;
-    info.periods.add(periodKey(i.slot));
-    existingPlans.push({date:i.date,slot:normalizeSlot(i.slot),period:periodKey(i.slot)});
+    info.periods.add(period);
+    existingPlans.push({date:i.date,slot,period});
   });
 
+  const periodUsage=new Map();
   const slotUsage=new Map();
-  const sameSlotUsage=new Map();
   existingPlans.forEach(p=>{
-    const key=`${p.period}|${p.slot}`;
-    slotUsage.set(key,(slotUsage.get(key)||0)+1);
-    sameSlotUsage.set(p.slot,(sameSlotUsage.get(p.slot)||0)+1);
+    periodUsage.set(p.period,(periodUsage.get(p.period)||0)+1);
+    slotUsage.set(`${p.period}|${p.slot}`,(slotUsage.get(`${p.period}|${p.slot}`)||0)+1);
   });
 
   const candidatesByDay=new Map();
@@ -7543,6 +7650,8 @@ function buildSmartRadioPlans(d){
         date,
         slot,
         period,
+        dayIndex,
+        targetSlot:periodRotationTargetSlot(slotsByPeriod[period]||[],dayIndex,0,seed),
         score: seededScore(`${seed}|${date}|${slot}|${dayIndex}`)
       });
     });
@@ -7558,7 +7667,7 @@ function buildSmartRadioPlans(d){
       const planned=plannedByDay.get(date) || {count:0,periods:new Set()};
       if(existing.count + planned.count >= maxPerDay) return false;
       const rows=candidatesByDay.get(date)||[];
-      return rows.some(c=>!existing.periods.has(c.period) && !planned.periods.has(c.period));
+      return rows.some(c=>!existing.periods.has(c.period) && !planned.periods.has(c.period) && !samePrizeRepeatConflicts(d,c.date,c.slot,plans).length);
     });
 
     if(!eligibleDates.length) continue;
@@ -7574,34 +7683,34 @@ function buildSmartRadioPlans(d){
       if(existing.count + planned.count >= maxPerDay) return;
 
       let rows=(candidatesByDay.get(date)||[])
-        .filter(c=>!existing.periods.has(c.period) && !planned.periods.has(c.period));
+        .filter(c=>!existing.periods.has(c.period) && !planned.periods.has(c.period))
+        .filter(c=>!samePrizeRepeatConflicts(d,c.date,c.slot,plans).length);
 
       if(!rows.length) return;
 
-      const underSameSlotLimit=rows.filter(c=>(sameSlotUsage.get(c.slot)||0)<sameSlotSoftLimit);
-      const hasSameSlotAlternative=underSameSlotLimit.length>0;
-      if(hasSameSlotAlternative) rows=underSameSlotLimit;
-
       rows=rows.map(c=>{
+        const periodSlots=slotsByPeriod[c.period]||[];
+        const slotIndex=periodSlots.indexOf(c.slot);
+        const targetIndex=periodRotationTargetIndex(periodSlots,c.dayIndex||0,pass,seed);
+        const targetDistance=slotIndex>=0 ? circularDistance(slotIndex,targetIndex,periodSlots.length) : 0;
+        const usage=slotUsage.get(`${c.period}|${c.slot}`)||0;
+        const pUsage=periodUsage.get(c.period)||0;
         const previous=nearestPreviousPlan([...existingPlans,...plans],date,c.period);
         const repeatedPrevious=previous && previous.slot===c.slot;
-        const periodOptions=(candidatesByDay.get(date)||[]).filter(x=>x.period===c.period);
-        const hasAlternative=periodOptions.some(x=>x.slot!==c.slot && !radioSlotConflicts(date,x.slot).length);
-        const usage=slotUsage.get(`${c.period}|${c.slot}`)||0;
-        const sameUsage=sameSlotUsage.get(c.slot)||0;
         return {
           ...c,
-          repeatedPrevious,
-          hasAlternative,
           usage,
-          sameUsage,
+          pUsage,
+          targetDistance,
           finalScore:
-            (repeatedPrevious && hasAlternative ? 1000 : 0) +
-            sameUsage*220 +
-            usage*20 +
+            pUsage*150 +
+            usage*100 +
+            targetDistance*55 +
+            (repeatedPrevious ? 220 : 0) +
+            periodOrderIndex(c.period)*6 +
             seededScore(`${seed}|${pass}|${idx}|${date}|${c.slot}`)
         };
-      }).sort((a,b)=>a.finalScore-b.finalScore || slotOrder(a.slot)-slotOrder(b.slot));
+      }).sort((a,b)=>a.finalScore-b.finalScore || periodOrderIndex(a.period)-periodOrderIndex(b.period) || slotOrder(a.slot)-slotOrder(b.slot));
 
       const chosen=rows[0];
       if(!chosen) return;
@@ -7617,12 +7726,12 @@ function buildSmartRadioPlans(d){
       planned.count++;
       planned.periods.add(chosen.period);
       plannedByDay.set(date,planned);
+      periodUsage.set(chosen.period,(periodUsage.get(chosen.period)||0)+1);
       slotUsage.set(`${chosen.period}|${chosen.slot}`,(slotUsage.get(`${chosen.period}|${chosen.slot}`)||0)+1);
-      sameSlotUsage.set(chosen.slot,(sameSlotUsage.get(chosen.slot)||0)+1);
     });
   }
 
-  plans.sort((a,b)=>String(a.date).localeCompare(String(b.date)) || slotOrder(a.slot)-slotOrder(b.slot));
+  plans.sort((a,b)=>String(a.date).localeCompare(String(b.date)) || periodOrderIndex(a.period)-periodOrderIndex(b.period) || slotOrder(a.slot)-slotOrder(b.slot));
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
 }
 function renderSmartRadioReport(report){
@@ -7631,7 +7740,7 @@ function renderSmartRadioReport(report){
   const d=distributionById(report.distId);
   summary.classList.toggle('warn',report.missing>0 || !report.plans.length);
   const maxPerDay=Math.max(1,Math.min(3,num(d?.radioDailyLimit)||1));
-  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, COM DISTRIBUIÇÃO UNIFORME DO INÍCIO AO FIM DO PERÍODO, EQUILÍBRIO DE USO DOS HORÁRIOS, SEM REPETIR O MESMO HORÁRIO NA SEQUÊNCIA DO MESMO PERÍODO E EVITANDO USAR O MESMO PRÊMIO NO MESMO HORÁRIO EM MAIS DE 2 DIAS QUANDO HOUVER ALTERNATIVA.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
+  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, COM RODÍZIO ENTRE MANHÃ, TARDE E NOITE, AVANÇO SEQUENCIAL DOS HORÁRIOS DISPONÍVEIS E BLOQUEIO FIXO DE 2 DIAS PARA O MESMO PRÊMIO NO MESMO PERÍODO/HORÁRIO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
   summary.innerHTML = report.missing>0
     ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`
     : `<strong>RELATÓRIO GERADO.</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`;
@@ -7653,8 +7762,13 @@ function confirmSmartRadioReport(){
   if(!report){ alert('NENHUM RELATÓRIO GERADO.'); return; }
   const d=distributionById(report.distId);
   if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA. SALVE A DISTRIBUIÇÃO NOVAMENTE.'); return; }
-  const validPlans=(report.plans||[]).filter(p=>!radioSlotConflicts(p.date,p.slot).length);
-  if(!validPlans.length){ alert('NENHUM HORÁRIO LIVRE PARA LANÇAR. CLIQUE EM REFAZER / AJUSTAR HORÁRIOS.'); return; }
+  const validPlans=[];
+  (report.plans||[]).forEach(p=>{
+    if(radioSlotConflicts(p.date,p.slot).length) return;
+    if(samePrizeRepeatConflicts(d,p.date,p.slot,validPlans).length) return;
+    validPlans.push(p);
+  });
+  if(!validPlans.length){ alert('NENHUM HORÁRIO LIVRE PARA LANÇAR SEM VIOLAR A REGRA DE 2 DIAS. CLIQUE EM REFAZER / AJUSTAR HORÁRIOS.'); return; }
   const newItems=validPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
   monthData().items.push(...newItems);
   pendingSmartRadioReport=null;
@@ -7738,18 +7852,19 @@ function saveRadioPlanner(){
     const key=radioSlotKey(date,slot);
     const occupied=radioSlotConflicts(date,slot);
     const localDuplicate=used.has(key);
-    if(occupied.length || localDuplicate){
-      const alt=findNextFreeRadioSlot(d,used);
+    const repeatConflicts=samePrizeRepeatConflicts(d,date,slot,plans);
+    if(occupied.length || localDuplicate || repeatConflicts.length){
+      const alt=findNextFreeRadioSlot(d,used,'',plans);
       if(alt) used.add(alt.key);
-      conflicts.push({row,date,slot,program,occupied,localDuplicate,alt});
+      conflicts.push({row,date,slot,program,occupied,localDuplicate,repeatConflicts,alt});
       return;
     }
     used.add(key);
-    plans.push({date,slot,program});
+    plans.push({date,slot,program,period:periodKey(slot)});
   });
   if(conflicts.length){
     refreshRadioPlannerRows();
-    const lines=conflicts.map(c=>`${formatBR(c.date)} ${c.slot} — ${c.localDuplicate ? 'REPETIDO NA SELEÇÃO' : 'OCUPADO POR '+conflictLabel(c.occupied)}${c.alt ? ` | SUGESTÃO: ${formatBR(c.alt.date)} ${c.alt.slot}` : ' | SEM HORÁRIO LIVRE'}`);
+    const lines=conflicts.map(c=>`${formatBR(c.date)} ${c.slot} — ${c.localDuplicate ? 'REPETIDO NA SELEÇÃO' : c.repeatConflicts?.length ? 'BLOQUEADO POR REGRA DE 2 DIAS: '+samePrizeRepeatLabel(c.repeatConflicts) : 'OCUPADO POR '+conflictLabel(c.occupied)}${c.alt ? ` | SUGESTÃO: ${formatBR(c.alt.date)} ${c.alt.slot}` : ' | SEM HORÁRIO LIVRE'}`);
     const canRemap=conflicts.every(c=>!!c.alt);
     if(canRemap && confirm(`O ASSISTENTE ENCONTROU HORÁRIO(S) OCUPADO(S):\n\n${lines.join('\n')}\n\nDESEJA REMANEJAR AUTOMATICAMENTE PARA OS HORÁRIOS SUGERIDOS?`)){
       conflicts.forEach(c=>{
