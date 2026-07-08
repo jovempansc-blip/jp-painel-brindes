@@ -2688,16 +2688,6 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
   pointer-events:none!important;
 }
 
-
-/* === V17: HORÁRIO DO ITEM LIGADO À ABA HORÁRIOS + ADICIONAR NOVO === */
-#itemSlot option[value="__ADD_PROGRAM_SCHEDULE__"]{
-  font-weight:1000;
-  color:#c9002b;
-}
-#itemProgramHint .addHourHint{
-  color:#c9002b;
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -5839,7 +5829,6 @@ function formatBR(iso){
   const [y,m,d] = String(iso).split('-');
   return y && m && d ? `${d}/${m}/${y}` : iso;
 }
-function dayIndex(iso){ const [y,m,d]=String(iso||todayISO()).split('-').map(Number); return new Date(y||2026,(m||1)-1,d||1).getDay(); }
 function dayName(iso){
   const d = new Date(`${iso}T12:00:00`);
   return Number.isNaN(d.getTime()) ? '' : PT_DAYS[d.getDay()];
@@ -6711,26 +6700,9 @@ function saveProgramSchedule(e){
   if(idx>=0) programSchedules()[idx]=rec; else programSchedules().push(rec);
   activeProgramStationFilter=rec.station;
   localStorage.setItem('jp_program_station_filter', activeProgramStationFilter);
-  const savedRec={...rec};
   clearProgramScheduleForm();
   closeDrawer('programScheduleDrawer');
   saveState(true); render(); toast('HORÁRIO SALVO.');
-  if(programScheduleOpenedFromItem){
-    programScheduleOpenedFromItem=false;
-    if($('itemProgramStation')) $('itemProgramStation').value=savedRec.station||'JP1017';
-    renderItemSlotOptions(false);
-    const savedSlot=`${String(Math.floor(minutesOf(savedRec.startTime)/60)).padStart(2,'0')}H`;
-    const date=$('itemDate')?.value || todayISO();
-    if(itemSlotsForStationDate(date,savedRec.station||'JP1017').includes(savedSlot)){
-      $('itemSlot').value=savedSlot;
-      updateItemProgramFromSchedule(true);
-    }else{
-      updateItemProgramFromSchedule(true);
-      const hint=$('itemProgramHint');
-      if(hint) hint.textContent='HORÁRIO SALVO, MAS NÃO APLICA A DATA SELECIONADA. CONFIRA OS DIAS DA SEMANA DO CADASTRO.';
-    }
-    openDrawer('itemDrawer');
-  }
 }
 function promoHoursForSelectedProgram(){
   const program=norm($('promoProgram')?.value || '');
@@ -7768,44 +7740,14 @@ function renderItemSlotOptions(keepCurrent=true){
   const date=$('itemDate')?.value || todayISO();
   const station=$('itemProgramStation')?.value || 'JP1017';
   const slots=itemSlotsForStationDate(date,station);
-  const list=slots.map(s=>{
+  sel.innerHTML='<option value="">SELECIONE UM HORÁRIO DA ABA HORÁRIOS</option>'+slots.map(s=>{
     const program=programFromSchedule(date,s,station);
     const label=program ? `${s} — ${program}` : s;
     return `<option value="${esc(s)}">${esc(label)}</option>`;
   }).join('');
-  sel.innerHTML='<option value="">SELECIONE UM HORÁRIO DA ABA HORÁRIOS</option>'+list+'<option value="__ADD_PROGRAM_SCHEDULE__">+ ADICIONAR NOVO HORÁRIO</option>';
   if(keepCurrent && current && slots.includes(current)) sel.value=current;
   else sel.value='';
 }
-
-let programScheduleOpenedFromItem=false;
-function openProgramScheduleFromItem(){
-  programScheduleOpenedFromItem=true;
-  const date=$('itemDate')?.value || todayISO();
-  const station=$('itemProgramStation')?.value || 'JP1017';
-  clearProgramScheduleForm();
-  if($('programScheduleDrawerTitle')) $('programScheduleDrawerTitle').textContent='NOVO HORÁRIO DA GRADE';
-  if($('programStation')) $('programStation').value=station;
-  if($('programName')) $('programName').value='';
-  if($('programStartTime')) $('programStartTime').value='';
-  if($('programEndTime')) $('programEndTime').value='';
-  if(typeof setProgramDaysControls==='function') setProgramDaysControls([dayIndex(date)]);
-  openDrawer('programScheduleDrawer');
-  const hint=$('itemProgramHint');
-  if(hint) hint.textContent='CADASTRE O NOVO HORÁRIO. AO SALVAR, ELE VOLTA PARA ESTE CAMPO.';
-}
-function handleItemSlotChange(){
-  const sel=$('itemSlot');
-  if(!sel) return;
-  if(sel.value==='__ADD_PROGRAM_SCHEDULE__'){
-    sel.value='';
-    updateItemProgramFromSchedule(true);
-    openProgramScheduleFromItem();
-    return;
-  }
-  updateItemProgramFromSchedule(true);
-}
-
 function updateItemRotationVisibility(){
   const box=$('itemRotationField');
   if(!box) return;
@@ -7840,9 +7782,7 @@ function updateItemProgramFromSchedule(force=false){
 $('itemDistribution').addEventListener('change',()=>handleItemDistributionChange(true));
 $('itemProgramStation')?.addEventListener('change',()=>{ renderItemSlotOptions(false); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); });
 $('itemDate')?.addEventListener('change',()=>{ renderItemSlotOptions(false); updateItemProgramFromSchedule(true); });
-$('itemSlot')?.addEventListener('focus',()=>renderItemSlotOptions(true));
-$('itemSlot')?.addEventListener('click',()=>renderItemSlotOptions(true));
-$('itemSlot')?.addEventListener('change',handleItemSlotChange);
+$('itemSlot')?.addEventListener('change',()=>updateItemProgramFromSchedule(true));
 $('itemProgram')?.addEventListener('input',()=>{ $('itemProgram').dataset.auto='0'; });
 $('itemChannel').addEventListener('change',()=>{updateDistHint(); updateItemRotationVisibility();});
 $('itemQty').addEventListener('input',updateDistHint);
@@ -9160,7 +9100,7 @@ bind('clearScheduleFormBtn','click',clearScheduleForm);
 bind('scheduleType','change',()=>{ const t=normalizeScheduleType($('scheduleType')?.value||''); if(t==='PRÊMIO FUTURO') $('scheduleDestination').value='DISTRIBUIÇÃO GERAL'; else if($('scheduleDestination')?.value==='DISTRIBUIÇÃO GERAL') $('scheduleDestination').value='PROMO / MERCHAN'; });
 ['scheduleTypeFilter','scheduleStationFilter','scheduleStatusFilter','schedulePendingFilter','scheduleDestinationFilter'].forEach(id=>bind(id,'input',renderSchedule));
 bind('programScheduleForm','submit',saveProgramSchedule);
-bind('addProgramScheduleBtn','click',()=>{ programScheduleOpenedFromItem=false; openProgramScheduleForm(); });
+bind('addProgramScheduleBtn','click',()=>openProgramScheduleForm());
 document.addEventListener('click',e=>{ const btn=e.target.closest('#programStationFilterTabs .stationTab'); if(btn) setProgramStationFilter(btn.dataset.station); });
 bind('programStation','change',()=>{ populateProgramSelects(); });
 bind('promoKind','change',()=>{updatePromoKindMode(); updatePromoPreview();});
