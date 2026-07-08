@@ -2049,7 +2049,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
       <div class="brandTitle"><strong>PAINEL DE BRINDES</strong><span>PROGRAMAÇÃO + DISTRIBUIÇÃO GERAL</span></div>
     </div>
     <div class="topTools">
-      <div class="field monthHeaderField"><label>MÊS</label><input class="control" type="month" id="monthInput" value="2026-06"></div>
+      <div class="field monthHeaderField"><label>MÊS</label><input class="control" type="month" id="monthInput" value=""></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
         <button class="btn syncStatusBtn local" id="syncStatusBtn" type="button" title="STATUS DO BANCO">LOCAL</button>
         <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
@@ -4852,7 +4852,7 @@ async function importLegacyStateToFirebase(){
     if(payload && payload.ok && payload.state && payload.state.months && countStateRecords(payload.state)>0){
       state = normalizePanelState(payload.state);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      ensureCurrentMonthAvailable();
+      ensureCurrentMonthAvailable(true);
       render();
       await saveStateToApi();
       toast('BASE MIGRADA DO GOOGLE SHEETS PARA O FIREBASE.');
@@ -4870,7 +4870,7 @@ function applyRemoteFirebaseState(remoteState){
   firebaseServerLoaded = true;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));
-  ensureCurrentMonthAvailable();
+  ensureCurrentMonthAvailable(true);
   render();
   firebaseApplyingRemote = false;
 }
@@ -5045,13 +5045,29 @@ function bestAvailableMonth(data=state){
   if(list.length) return list[0].key;
   return currentCalendarMonth();
 }
-function ensureCurrentMonthAvailable(){
+let calendarMonthOpened = '';
+function ensureCurrentMonthAvailable(forceCalendar=false){
   if(!state.months) state.months={};
-  if(!state.currentMonth || !state.months[state.currentMonth]){
-    const key=bestAvailableMonth(state);
-    if(!state.months[key]) createBlankMonth(key);
-    state.currentMonth=key;
+  const calendarKey=currentCalendarMonth();
+  if(forceCalendar){
+    if(!state.months[calendarKey]) createBlankMonth(calendarKey);
+    state.currentMonth=calendarKey;
+    calendarMonthOpened=calendarKey;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return;
+  }
+  if(!state.currentMonth || !state.months[state.currentMonth]){
+    if(!state.months[calendarKey]) createBlankMonth(calendarKey);
+    state.currentMonth=calendarKey;
+    calendarMonthOpened=calendarKey;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+}
+function syncCalendarMonthIfChanged(){
+  const calendarKey=currentCalendarMonth();
+  if(calendarMonthOpened && calendarMonthOpened!==calendarKey){
+    ensureCurrentMonthAvailable(true);
+    render();
   }
 }
 function openMonthKey(key){
@@ -5157,6 +5173,12 @@ function weekLabel(iso){
 function weekDatesForLabel(label, key=state.currentMonth){
   const found = monthWeekRanges(key).find(w => w.label === label);
   return found ? found.dates : [];
+}
+function currentWeekLabelForMonth(key=state.currentMonth){
+  if(key !== currentCalendarMonth()) return '';
+  const today=todayISO();
+  const label=weekLabel(today);
+  return monthWeekRanges(key).some(w=>w.label===label) ? label : '';
 }
 function id(prefix){ return prefix + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,6).toUpperCase(); }
 function distributionById(distId){ return monthData().distributions.find(d => d.id === distId); }
@@ -5363,7 +5385,7 @@ function importManualBackupFile(file){
       const typed=prompt('PARA CONFIRMAR A RESTAURAÇÃO, DIGITE: RESTAURAR');
       if(norm(typed)!=='RESTAURAR') return;
       state=incoming;
-      ensureCurrentMonthAvailable();
+      ensureCurrentMonthAvailable(true);
       saveState(true);
       queueApiSave(80);
       render();
@@ -5995,7 +6017,8 @@ function renderFilters(){
   const m = monthData();
   const weekSet = monthWeekRanges(state.currentMonth).map(w=>w.label);
   const channelSet = [...new Set([...m.items.map(i=>normalizeChannel(i.channel)), ...CHANNELS.map(c=>c[1])].filter(Boolean))].sort();
-  fillSelect('weekFilter', weekSet, 'TODAS', weekSet[0] || '');
+  const currentWeek=currentWeekLabelForMonth(state.currentMonth);
+  fillSelect('weekFilter', weekSet, 'TODAS', currentWeek || weekSet[0] || '');
   fillSelect('channelFilter', channelSet, 'TODOS');
 }
 function fillSelect(id, values, firstLabel, fallbackValue=''){
@@ -7892,11 +7915,11 @@ window.addEventListener('storage',()=>{
 });
 populatePromoReadHours();
 updatePromoReadScheduleState();
-ensureCurrentMonthAvailable();
+ensureCurrentMonthAvailable(true);
 render();
 syncStateFromApi(true);
 window.addEventListener('beforeunload',()=>{ normalizePanelState(state); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); });
-setInterval(()=>{ ensureCurrentMonthAvailable(); render(); },60000);
+setInterval(()=>{ syncCalendarMonthIfChanged(); },60000);
 setInterval(()=>syncStateFromApi(false),30000);
 </script>
 </body>
