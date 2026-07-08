@@ -2389,71 +2389,6 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
 .destRow.isReserve .destName::after{content:" SOLICITAÇÃO";display:block;color:#a46200;font-size:8px;letter-spacing:.04em;margin-top:2px}
 .destReserveUnit{display:block!important}
 @media(max-width:900px){.studioSummaryPrizeCard .studioCardBody{grid-template-columns:1fr}.studioSummaryPrizeCard .studioSummaryStatus{justify-content:flex-start}.destRow.isReserve{grid-template-columns:1fr 80px 90px}.destRow.isReserve .destReserveNote{grid-column:1/-1}}
-
-
-/* AJUSTE V6 — PROGRAMAÇÃO MAIS LIMPA E OPERACIONAL */
-.dayBadge small{
-  display:block;
-  margin-top:6px;
-  font-size:8px;
-  line-height:1;
-  color:#69707d;
-  letter-spacing:.05em;
-  font-weight:1000;
-}
-.programCard .programLink{display:none!important}
-.programSide{align-items:flex-end!important}
-.programActions{
-  opacity:.38;
-  transform:translateX(2px);
-  transition:.16s ease;
-}
-.programCard:hover .programActions,
-.programCard:focus-within .programActions{
-  opacity:1;
-  transform:translateX(0);
-}
-.programMeta .badge.green{
-  background:#dff8eb!important;
-  border-color:#b9edcf!important;
-  color:#08723e!important;
-  box-shadow:inset 0 -1px 0 rgba(0,0,0,.03);
-}
-.programMeta .badge.amber{
-  background:#f3f5f8!important;
-  border-color:#dfe5ec!important;
-  color:#5f6876!important;
-}
-.programMeta .badge.blue{
-  background:#eaf3ff!important;
-  border-color:#cce1ff!important;
-  color:#235faa!important;
-}
-.programMeta .badge.red{
-  background:#fff0f3!important;
-  border-color:#ef9aaa!important;
-  color:#a90d25!important;
-}
-.periodEmpty{
-  height:34px!important;
-  min-height:34px!important;
-  padding:0 12px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  opacity:.76;
-}
-.programInfo strong,
-.programInfo em{
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-.programInfo strong{-webkit-line-clamp:1}
-.programInfo em{-webkit-line-clamp:2}
-@media(max-width:900px){
-  .programActions{opacity:1;transform:none}
-}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -6673,25 +6608,22 @@ function periodIcon(key){
 }
 function renderProgramCard(i){
   const d=distributionById(i.distributionId);
+  const linkText = d ? distributionLabel(d) : 'SEM LINK / A DEFINIR';
+  const linkClass = d ? 'programLink' : 'programLink';
   const cardTitle = i.prize || i.title || i.program || '';
   const cardSubtitle = i.title ? `${i.title}${i.program ? ' · ' + i.program : ''}` : (i.program || '');
   const winnerInfo = norm(i.winnerName || '') ? `<span class="winnerInfo" title="GANHADOR: ${esc(i.winnerName)}">I</span>` : '';
   const radioConflict = normalizeChannel(i.channel)==='RÁDIO' ? radioSlotConflicts(i.date,i.slot,i.id) : [];
-  const rotationConflict = (normalizeChannel(i.channel)==='RÁDIO' && d) ? samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id) : [];
-  const hasConflict = radioConflict.length || rotationConflict.length;
-  const conflictBadge = radioConflict.length
-    ? `<span class="badge red" title="HORÁRIO JÁ OCUPADO POR ${esc(conflictLabel(radioConflict))}">CONFLITO</span>`
-    : (rotationConflict.length ? `<span class="badge red" title="${esc(samePrizeRepeatLabel(rotationConflict))}">RODÍZIO</span>` : '');
-  const conflictNote = radioConflict.length
-    ? `<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`
-    : (rotationConflict.length ? `<span class="programConflictNote">RODÍZIO: ${esc(samePrizeRepeatLabel(rotationConflict))}</span>` : '');
-  const remapBtn = hasConflict ? `<button class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" onclick="remapRadioItem('${i.id}')"><span class="iconGlyph">↪</span></button>` : '';
-  return `<article class="programCard ${hasConflict?'hasRadioConflict':''}">
+  const conflictBadge = radioConflict.length ? `<span class="badge red" title="HORÁRIO JÁ OCUPADO POR ${esc(conflictLabel(radioConflict))}">CONFLITO</span>` : '';
+  const conflictNote = radioConflict.length ? `<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>` : '';
+  const remapBtn = radioConflict.length ? `<button class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" onclick="remapRadioItem('${i.id}')"><span class="iconGlyph">↪</span></button>` : '';
+  return `<article class="programCard ${radioConflict.length?'hasRadioConflict':''}">
     <div class="programTime">${esc(i.slot || '')}</div>
     <div class="programInfo">
       <strong>${esc(cardTitle)}</strong>
       <em>${esc(cardSubtitle)}</em>
       <div class="programMeta"><span class="badge dark">${esc(i.channel || 'AR')}</span>${statusBadge(i.status)}${conflictBadge}${winnerInfo}<span class="programQtyInline">QTD <strong>${num(i.qty)}</strong></span></div>
+      <div class="${linkClass}">${esc(linkText)}</div>
       ${conflictNote}
     </div>
     <div class="programSide">
@@ -6716,9 +6648,8 @@ function renderProgramacao(){
       <div class="periodTitle"><span class="periodIcon">${periodIcon(key)}</span><strong>${periodLabel(key)}</strong></div>
       <div class="periodItems">${byPeriod[key].length ? byPeriod[key].map(renderProgramCard).join('') : '<div class="periodEmpty">SEM ITEM NESTE PERÍODO</div>'}</div>
     </section>`;
-    const dayTotal = byPeriod.manha.length + byPeriod.tarde.length + byPeriod.noite.length;
     return `<article class="weekDayRow">
-      <div class="dayCell"><div class="dayBadge"><strong>${esc(formatBR(date).slice(0,5))}</strong><span>${esc(dayName(date))}</span><small>${dayTotal} ITEM${dayTotal===1?'':'S'}</small></div></div>
+      <div class="dayCell"><div class="dayBadge"><strong>${esc(formatBR(date).slice(0,5))}</strong><span>${esc(dayName(date))}</span></div></div>
       ${renderPeriod('manha')}
       ${renderPeriod('tarde')}
       ${renderPeriod('noite')}
