@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Merchan Rádios — Jovem Pan Floripa</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js">setEmptyDateFieldsToToday();
+</script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <style>
 :root{--red:#c9002b;--ink:#171c26;--muted:#667283;--line:#dce2eb;--shadow:0 16px 34px rgba(17,23,34,.08)}
@@ -64,6 +65,8 @@ const FIREBASE_ROOT_PATH="jp-painel-brindes/state";
 firebase.initializeApp(FIREBASE_CONFIG);
 const ref=firebase.database().ref(FIREBASE_ROOT_PATH);
 const $=id=>document.getElementById(id);
+function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function setEmptyDateFieldsToToday(){document.querySelectorAll('input[type="date"]').forEach(i=>{if(!i.value)i.value=todayISO();});}
 const norm=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const pad=n=>String(n).padStart(2,'0');

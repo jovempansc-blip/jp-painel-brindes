@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pauta de Estúdio — Jovem Pan News Floripa</title>
@@ -851,6 +854,10 @@ body{
   to{transform:translateY(0)}
 }
 
+
+/* AJUSTE — ESTÚDIO OPERACIONAL */
+.panel{min-height:0!important}.pautaBody{min-height:260px!important;padding:22px 30px 24px!important}.pautaBody.emptyState{min-height:178px!important;justify-content:center!important}.studioContextBar{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:7px 12px;border-bottom:1px solid #e3e8ef;background:rgba(255,255,255,.78)}.studioContextBar span{display:inline-flex;align-items:center;min-height:24px;border:1px solid #dfe5ec;border-radius:999px;padding:0 9px;color:#637083;font-size:9px;font-weight:1000;letter-spacing:.05em;background:#f8fafc}.studioContextBar .online{color:#137947;background:#effaf4;border-color:#ccefdc}.emptyStudioBox{width:min(760px,100%);border:1px solid #e1e7ee;border-radius:18px;background:#f8fafc;padding:18px 20px;text-align:center}.emptyStudioBox strong{display:block;font-size:24px;font-weight:1000;letter-spacing:-.04em;color:#171c26}.emptyStudioBox span{display:block;margin-top:8px;color:#677387;font-size:11px;font-weight:900;letter-spacing:.04em}.promoListBtn{min-width:38px!important;height:30px!important;border:1px solid #dfe5ec!important;border-radius:999px!important;background:#f8fafc!important;color:#6f7988!important;font-size:12px!important;padding:0 8px!important}.promoListBtn small{display:none}.promoListBtn.active{background:#eaf4ff!important;color:#2d5f93!important;border-color:#b7cee8!important}.readHistoryTicker{height:46px!important;margin:8px auto 0!important}.readHistoryTicker.single{height:38px!important}.readHistoryTicker.single .readHistoryTickerTrack{animation:none!important;transform:none!important;padding-top:17px!important}.readHistoryTickerTrack{animation:readHistoryDrop 20s linear infinite!important}@keyframes readHistoryDrop{from{transform:translateY(-50%)}to{transform:translateY(0)}}@media(max-width:760px){.pautaTime{font-size:40px!important;width:92px!important;flex-basis:92px!important}.pautaProgram{font-size:22px!important;width:calc(100% - 220px)!important}.headNav{gap:6px!important}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1089,11 +1096,13 @@ function slotHour(slot){const m=String(slot||'').match(/(\d{1,2})/);return m?Num
 function formatStudioTime(slot){const h=slotHour(slot);return h?`${pad(h)}H`:upper(slot||'--H');}
 function currentHourKey(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}`;}
 function dateISO(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
-function todayISO(){return dateISO(new Date());}
-function currentCalendarMonth(){
-  const d=new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+function todayISO(){
+  try{
+    const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).reduce((acc,p)=>{acc[p.type]=p.value;return acc;},{});
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }catch(err){return dateISO(new Date());}
 }
+function currentCalendarMonth(){return todayISO().slice(0,7);}
 function selectStudioMonth(){
   const calendarMonth=currentCalendarMonth();
   if(state.months && state.months[calendarMonth]){
@@ -1215,6 +1224,14 @@ function findPromoById(id){return monthData().promos?.find(p=>p.id===id)||null;}
 function studioStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS' : 'JOVEMPAN';
 }
+function studioFullStationLabel(){
+  return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS 98,3' : 'JOVEMPAN 101,7';
+}
+function buildStudioContext(item,promo){
+  const date = item?.date || todayISO();
+  const program = promo ? (isMerchan(promo)?'MERCHAN':'PROMO / PAUTA') : (item?.program || (item?.__virtual?'SEM PROGRAMA':'PROGRAMA'));
+  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span><span>${esc(upper(program))}</span><span class="online">FIREBASE</span></div>`;
+}
 function pautaTypeLabel(p){
   if(isMerchan(p)) return 'MERCHAN';
   const k=upper(p.kind||p.promoKind||p.type||'PROMO');
@@ -1250,8 +1267,13 @@ function renderReadHistoryTicker(){
   const host=$('readHistoryTicker');
   if(!host) return;
   const rows=readLogRowsForDate(todayISO());
-  const textRows=rows.length ? rows.map(r=>r.text) : [`${studioStationLabel()} · SEM LEITURAS CONFIRMADAS HOJE`];
-  const loopRows=textRows.length>1 ? textRows.concat(textRows) : textRows.concat(textRows,textRows);
+  host.classList.toggle('single', rows.length<=1);
+  if(!rows.length){
+    host.innerHTML=`<div class="readHistoryTickerTrack"><span>${esc(studioStationLabel())} · SEM LEITURAS CONFIRMADAS HOJE</span></div>`;
+    return;
+  }
+  const textRows=rows.map(r=>r.text);
+  const loopRows=textRows.length>1 ? textRows.concat(textRows) : textRows;
   host.innerHTML=`<div class="readHistoryTickerTrack">${loopRows.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
 }
 function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
@@ -1543,6 +1565,10 @@ function render(){
     item=found.item;
   }
   currentDisplayItem=item;
+  if(!selectedPromoId && item && item.__virtual){
+    const pending=allPautasForItemHour(item,false);
+    if(pending.length) selectedPromoId=pending[0].id;
+  }
   renderReadHistoryTicker();
   const promo=currentPromoForRead();
   const isVirtual=!!item.__virtual;
@@ -1553,9 +1579,9 @@ function render(){
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${isMerchan(promo)?'':buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())}
       <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button">CONFIRMAR LEITURA</button></div>
-    ` : isVirtual ? (buildHourReadList(item) ? `
-      <div class="descBox">${buildHourReadList(item)}</div>
-    ` : '') : `
+    ` : isVirtual ? `
+      <div class="emptyStudioBox"><strong>SEM PAUTA PARA ESTE HORÁRIO</strong><span>NENHUM PRÊMIO, PROMOÇÃO OU MERCHAN CADASTRADO PARA AGORA.</span></div>
+    ` : `
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(itemTitleStyle(item),'title')}">${esc(itemTitle(item))}</h1></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(itemDescStyle(item),'desc')}">${esc(itemDesc(item))}</p></div>
       ${winnerBlock}
@@ -1564,18 +1590,24 @@ function render(){
   $('pautaPanel').innerHTML=`
     <div class="pautaHead">
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
-      <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PAUTA PROMO') : isVirtual ? 'PROMOÇÕES' : esc(upper(item.program||'PROGRAMA'))}</div>
+      <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PROMO / PAUTA') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
       <div class="headNav">
+        ${ALLOW_PROMO_SHORTCUT ? `
         <div class="promoListWrap">
-          <button class="promoListBtn" id="merchanListBtn" type="button" aria-label="MERCHAN" title="MERCHAN">M</button>
+          <button class="promoListBtn ${promo&&!isMerchan(promo)?'active':''}" id="promoListBtn" type="button" aria-label="PROMOÇÕES" title="P = PROMOÇÕES">P<small>PROMO</small></button>
+          <div class="promoList" id="promoList">${buildPromoList(item)}</div>
+        </div>` : ''}
+        <div class="promoListWrap">
+          <button class="promoListBtn ${promo&&isMerchan(promo)?'active':''}" id="merchanListBtn" type="button" aria-label="MERCHAN" title="M = MERCHAN">M<small>MERCHAN</small></button>
           <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
         </div>
-        <button class="promoListBtn history" id="historyListBtn" type="button" aria-label="HISTÓRICO" title="HISTÓRICO">H</button>
+        <button class="promoListBtn history" id="historyListBtn" type="button" aria-label="HISTÓRICO" title="H = HISTÓRICO">H<small>HIST.</small></button>
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
         <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
       </div>
     </div>
-    <div class="pautaBody">${promoBody}</div>
+    ${buildStudioContext(item,promo)}
+    <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
     ${buildPromoFooter(item)}`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
@@ -1625,6 +1657,7 @@ setInterval(()=>{
   if(!manual) render();
 },3000);
 selectStudioMonth();
+if($('historyDateInput')) $('historyDateInput').value=todayISO();
 render();
 syncStateFromApi(true);
 setTimeout(()=>syncStateFromApi(true),1800);

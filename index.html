@@ -5499,6 +5499,7 @@ function clearScheduleForm(){
   if($('scheduleDestination')) $('scheduleDestination').value='PROMO / MERCHAN';
   if($('scheduleStart')) $('scheduleStart').value=todayISO();
   if($('scheduleEnd')) $('scheduleEnd').value=todayISO();
+  if($('scheduleForm')) setEmptyDateFieldsToToday($('scheduleForm'));
 }
 function filteredScheduleItems(){
   const type=norm($('scheduleTypeFilter')?.value||'');
@@ -6025,6 +6026,7 @@ function render(){
   populateDatalists();
   populateProgramSelects();
   populateDistributionSelect();
+  setEmptyDateFieldsToToday();
 }
 function renderFilters(){
   const m = monthData();
@@ -6482,6 +6484,10 @@ function todayISO(){
   const d=new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+function setEmptyDateFieldsToToday(root=document){
+  const today=todayISO();
+  root.querySelectorAll('input[type="date"]').forEach(input=>{ if(!input.value) input.value=today; });
+}
 function dateAddISO(iso, delta){
   const base = iso || resolveStudioDefaultDate();
   const [y,m,d] = String(base).split('-').map(Number);
@@ -6653,13 +6659,13 @@ function setView(view){
   if(view !== 'programacao') activeDistributionFilter='';
   render();
 }
-function openDrawer(id){ $(id).classList.add('open'); $(id).setAttribute('aria-hidden','false'); }
+function openDrawer(id){ const el=$(id); el.classList.add('open'); el.setAttribute('aria-hidden','false'); setEmptyDateFieldsToToday(el); }
 function closeDrawer(id){ $(id).classList.remove('open'); $(id).setAttribute('aria-hidden','true'); }
 $$('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeDrawer(btn.dataset.close)));
 $$('.tabBtn').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.view)));
 
 function clearItemForm(){
-  $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; if($('itemProgram')) $('itemProgram').dataset.auto='1'; $('itemDate').value=(weekDatesForLabel($('weekFilter')?.value || '')[0] || state.currentMonth+'-01'); if($('distBalanceHint')) $('distBalanceHint').textContent=''; if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
+  $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; if($('itemProgram')) $('itemProgram').dataset.auto='1'; $('itemDate').value=todayISO(); if($('distBalanceHint')) $('distBalanceHint').textContent=''; if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
   setPromoStyleControls('itemTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('itemDesc',defaultPromoTextStyle('desc'),'desc');
 }
@@ -7348,7 +7354,7 @@ function saveRadioPlanner(){
 }
 
 function clearDistForm(){
-  $('distForm').reset(); $('distId').value=''; $('distDrawerTitle').textContent='NOVA DISTRIBUIÇÃO'; $('distDate').value=''; $('distShow').value=''; $('distStartDate').value=monthStartDate(); $('distEndDate').value=monthEndDate(); $('distTotal').value=0; $('distTitle').value=''; $('distDescription').value='';
+  $('distForm').reset(); $('distId').value=''; $('distDrawerTitle').textContent='NOVA DISTRIBUIÇÃO'; $('distDate').value=todayISO(); $('distShow').value=''; $('distStartDate').value=todayISO(); $('distEndDate').value=todayISO(); $('distTotal').value=0; $('distTitle').value=''; $('distDescription').value='';
   if($('distPrizeType')) $('distPrizeType').value='brinde';
   if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value='unit';
   renderDistDestinations([{key:'ar',qty:0,unit:$('distTicketDefaultUnit')?.value||'unit',note:''}]);
@@ -7756,6 +7762,8 @@ function clearPromoForm(){
   $('promoImageData').value='';
   if($('promoKind')) $('promoKind').value='promo';
   if($('promoStation')) $('promoStation').value='JP1017';
+  if($('promoStartDate')) $('promoStartDate').value=todayISO();
+  if($('promoDrawDate')) $('promoDrawDate').value=todayISO();
   populatePromoLocalSelect();
   populateProgramSelects();
   updatePromoKindMode();
