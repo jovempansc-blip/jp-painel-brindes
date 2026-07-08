@@ -2589,6 +2589,38 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
   #view-pauta .studioSummaryStatus{grid-column:2 / span 2;justify-content:flex-start !important}
 }
 
+
+/* === V11: AGENDAMENTO FUTURO + BACKUP COMPACTO E SEGURO === */
+#view-agendamento .panelHead p{max-width:980px}
+#view-agendamento .scheduleFormClean{background:rgba(248,250,252,.72);border:1px solid #e3e8ef;border-radius:18px;padding:12px;margin-bottom:12px}
+#view-agendamento .scheduleFormRowTop{grid-template-columns:150px 155px minmax(280px,1fr) 130px 130px}
+#view-agendamento .scheduleFormRowBottom{grid-template-columns:190px 180px minmax(360px,1fr) auto}
+.scheduleAutoHint{margin:0 0 12px;padding:10px 12px;border:1px solid #dfe7f1;border-radius:16px;background:rgba(255,255,255,.76);color:#596475;font-size:10px;line-height:1.45;font-weight:900;letter-spacing:.02em}
+.scheduleAutoHint strong{color:#171c26}
+.scheduleStatus.converted{background:#effaf4;border-color:#ccefdc;color:#137947}
+.scheduleStatus.cancelled{background:#fff1f3;border-color:#f3b5c0;color:#ad1728}
+.scheduleStatus.done{background:#f3f4f7;border-color:#dfe3ea;color:#697386}
+.backupSecurityPanel .serverSourceBox{padding:9px 12px;margin-top:10px;border-radius:14px;font-size:10px;line-height:1.35;background:#fbfffd}
+.backupSecurityPanel .backupRiskBox{margin-top:10px;padding:10px 12px;border-radius:14px}
+.backupSecurityPanel .backupSection{margin-top:12px;padding:12px 14px;border-radius:16px}
+.backupSafeActions .backupPrimaryAction{min-width:170px}
+.backupAdvanced{background:#fffdf8;border-color:#ffd7a8}
+.backupAdvancedSummary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none}
+.backupAdvancedSummary::-webkit-details-marker{display:none}
+.backupAdvancedSummary strong{font-size:12px;letter-spacing:.05em;color:#171c26}
+.backupAdvancedSummary span{font-size:10px;color:#8a4b00;font-weight:900}
+.backupAdvancedSummary::after{content:'ABRIR';display:inline-flex;align-items:center;justify-content:center;min-height:24px;border-radius:999px;padding:0 9px;background:#fff3df;border:1px solid #ffd7a8;color:#8a4b00;font-size:9px;font-weight:1000;letter-spacing:.04em}
+.backupAdvanced[open] .backupAdvancedSummary{margin-bottom:10px}
+.backupAdvanced[open] .backupAdvancedSummary::after{content:'FECHAR'}
+.backupAdvanced .backupImportRow{margin-top:10px}
+.backupAdvancedNote{margin-top:10px;border:1px solid #ffd7a8;border-radius:14px;background:#fffaf0;padding:9px 11px;color:#704100;font-size:10px;line-height:1.4;font-weight:900}
+.backupCompactRule{margin-top:12px!important;padding:10px 12px!important;border-radius:14px!important;font-size:10px!important;line-height:1.35!important;background:#f8fafc!important;border-color:#dfe5ec!important;color:#596475!important}
+@media(max-width:980px){
+  #view-agendamento .scheduleFormRowTop,#view-agendamento .scheduleFormRowBottom{grid-template-columns:1fr 1fr}
+  #view-agendamento .scheduleNotesField{grid-column:1/-1}
+  #view-agendamento .scheduleActionBox{grid-column:1/-1;justify-content:flex-end}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2736,10 +2768,11 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
 <section class="view" id="view-agendamento">
       <div class="panel">
         <div class="panelHead">
-          <div><h2>AGENDAMENTO</h2><p>CENTRAL DE PRÉ-PRODUÇÃO PARA PROMOÇÕES, MERCHANS, PAUTAS E CAMPANHAS FUTURAS.</p></div>
+          <div><h2>AGENDAMENTO</h2><p>CENTRAL DE PRÉ-CADASTRO FUTURO. AO CHEGAR NO MÊS, O ITEM ENTRA AUTOMATICAMENTE NO PAINEL CORRETO.</p></div>
         </div>
         <div class="panelBody">
           <div class="scheduleSummaryGrid" id="scheduleSummaryGrid"></div>
+          <div class="scheduleAutoHint"><strong>REGRA:</strong> PRÊMIO FUTURO ENTRA NA DISTRIBUIÇÃO GERAL. PROMOÇÃO, MERCHAN E CAMPANHA ENTRAM EM PROMO / MERCHAN. ITENS COM PENDÊNCIA NÃO CONVERTEM AUTOMATICAMENTE.</div>
 
           <form id="scheduleForm" class="scheduleGrid scheduleFormClean">
             <input type="hidden" id="scheduleId">
@@ -2767,11 +2800,10 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             </div>
 
             <div class="scheduleFormRow scheduleFormRowBottom">
-              <div class="field"><label>DESTINO FUTURO</label><select class="control" id="scheduleDestination">
-                <option>PROMO / MERCHAN</option>
-                <option>PAUTA ESTÚDIO</option>
-                <option>PROGRAMAÇÃO</option>
+              <div class="field"><label>ENTRAR NO PAINEL</label><select class="control" id="scheduleDestination">
                 <option>DISTRIBUIÇÃO GERAL</option>
+                <option>PROMO / MERCHAN</option>
+                <option>PROGRAMAÇÃO</option>
               </select></div>
 
               <div class="field"><label>PENDÊNCIA</label><select class="control" id="schedulePending">
@@ -2796,10 +2828,10 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             <div class="field"><label>RÁDIO</label><select class="control" id="scheduleStationFilter"><option value="">TODAS</option><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option><option value="ALL">AMBAS</option></select></div>
             <div class="field"><label>STATUS AUTOMÁTICO</label><select class="control" id="scheduleStatusFilter"><option value="">TODOS</option><option>AGENDADO</option><option>PRÓXIMO</option><option>EM ANDAMENTO</option><option>ENCERRADO</option><option>CONVERTIDO</option><option>CANCELADO</option></select></div>
             <div class="field"><label>PENDÊNCIA</label><select class="control" id="schedulePendingFilter"><option value="">TODAS</option><option>SEM PENDÊNCIA</option><option>FALTA TEXTO</option><option>FALTA ARTE</option><option>FALTA APROVAÇÃO</option><option>FALTA DEFINIR PRÊMIO</option></select></div>
-            <div class="field"><label>DESTINO</label><select class="control" id="scheduleDestinationFilter"><option value="">TODOS</option><option>PROMO / MERCHAN</option><option>PAUTA ESTÚDIO</option><option>PROGRAMAÇÃO</option><option>DISTRIBUIÇÃO GERAL</option></select></div>
+            <div class="field"><label>DESTINO</label><select class="control" id="scheduleDestinationFilter"><option value="">TODOS</option><option>PROMO / MERCHAN</option><option>PROGRAMAÇÃO</option><option>DISTRIBUIÇÃO GERAL</option></select></div>
           </div>
 
-          <div class="tableWrap"><table class="promoMainTable scheduleTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO</th><th>DESTINO</th><th>STATUS</th><th>PENDÊNCIA</th><th>OBSERVAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="scheduleTable"></tbody></table></div>
+          <div class="tableWrap"><table class="promoMainTable scheduleTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO</th><th>ENTRAR NO PAINEL</th><th>STATUS</th><th>PENDÊNCIA</th><th>OBSERVAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="scheduleTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -2812,48 +2844,41 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
         <div class="panelBody backupSecurityPanel">
           <div class="backupGrid backupDiagGrid" id="backupSummaryCards"></div>
           <div class="backupRiskBox" id="backupRiskBox"></div>
-          <div class="serverSourceBox"><strong>SERVIDOR OFICIAL:</strong><br>Ao abrir qualquer link do painel, estúdio, recepção ou preview, o sistema carrega automaticamente a base do Firebase. Cada alteração salva no painel principal ou nos links de estúdio alimenta o servidor e atualiza os demais navegadores em tempo real.</div>
+          <div class="serverSourceBox"><strong>SERVIDOR OFICIAL:</strong> todos os links carregam e salvam na base do Firebase. Use exportação como cópia de segurança.</div>
           <div class="backupMonthBreakdown" id="backupMonthBreakdown"></div>
 
-          <div class="backupSection safe">
+          <div class="backupSection safe backupSafeActions">
             <div class="backupSectionHead">
               <strong>AÇÕES SEGURAS</strong>
-              <span>Essas ações não substituem a base oficial por dados locais vazios.</span>
+              <span>Rotina normal de conferência e cópia de segurança.</span>
             </div>
             <div class="backupActions">
-              <button class="btn" id="verifyFirebaseBtn" type="button">VERIFICAR BASE DO FIREBASE</button>
-              <button class="btn" id="forceLoadFirebaseBtn" type="button">RECARREGAR DO FIREBASE</button>
-              <button class="btn red" id="exportBackupBtn">EXPORTAR BACKUP AGORA</button>
+              <button class="btn" id="verifyFirebaseBtn" type="button">VERIFICAR FIREBASE</button>
+              <button class="btn" id="forceLoadFirebaseBtn" type="button">RECARREGAR BASE OFICIAL</button>
+              <button class="btn red backupPrimaryAction" id="exportBackupBtn">EXPORTAR BACKUP LOCAL</button>
             </div>
           </div>
 
-          <div class="backupSection danger">
-            <div class="backupSectionHead">
-              <strong>AÇÕES DE RISCO</strong>
-              <span>Essas ações podem substituir a base oficial. Use apenas com conferência.</span>
-            </div>
+          <details class="backupSection danger backupAdvanced">
+            <summary class="backupAdvancedSummary">
+              <strong>AÇÕES AVANÇADAS DE RISCO</strong>
+              <span>Restaurar ou enviar base local pode substituir a base oficial.</span>
+            </summary>
             <div class="backupActions">
-              <button class="btn dark" id="chooseBackupBtn">IMPORTAR / RESTAURAR BACKUP</button>
-              <button class="btn" id="forceUploadFirebaseBtn" type="button">FORÇAR ENVIO PARA O FIREBASE</button>
+              <button class="btn dark" id="chooseBackupBtn">RESTAURAR BACKUP MANUAL</button>
+              <button class="btn" id="forceUploadFirebaseBtn" type="button">ENVIAR BASE LOCAL PARA FIREBASE</button>
               <input id="backupFileInput" type="file" accept=".json,application/json" style="display:none">
             </div>
-          </div>
+            <div class="backupImportRow">
+              <div class="backupFileName" id="backupSelectedFile">NENHUM ARQUIVO SELECIONADO.</div>
+              <button class="btn ghost" id="clearBackupLocalBtn">LIMPAR MARCAÇÃO DE BACKUP</button>
+            </div>
+            <div class="backupPreviewBox" id="backupPreviewBox"></div>
+            <div class="backupAdvancedNote"><strong>REGRA:</strong> antes de restaurar ou enviar dados, confira os totais da base local, a tabela mensal e o diagnóstico do Firebase.</div>
+          </details>
 
-          <div class="backupImportRow">
-            <div class="backupFileName" id="backupSelectedFile">NENHUM ARQUIVO SELECIONADO.</div>
-            <button class="btn ghost" id="clearBackupLocalBtn">LIMPAR MARCAÇÃO DE BACKUP</button>
-          </div>
-
-          <div class="backupPreviewBox" id="backupPreviewBox"></div>
-
-          <div class="firebaseSyncBox">
-            <strong>REGRA DE SEGURANÇA:</strong><br>
-            O painel bloqueia envio de base local vazia para o Firebase. Antes de restaurar ou enviar dados, confira os totais, a tabela mensal e o diagnóstico do Firebase.
-          </div>
-
-          <div class="backupInfoBox backupWarning" style="margin-top:14px">
-            <strong>ATENÇÃO:</strong><br>
-            Importar backup ou forçar envio para o Firebase substitui a base oficial. No uso normal, não é necessário importar em cada navegador: todos os links leem o servidor automaticamente.
+          <div class="firebaseSyncBox backupCompactRule">
+            O painel bloqueia envio de base local vazia para o Firebase. No uso normal, não é necessário restaurar manualmente em cada navegador.
           </div>
         </div>
       </div>
@@ -6119,7 +6144,7 @@ function normalizeScheduleType(value){
 }
 function normalizeScheduleDestination(value){
   const v=norm(value);
-  if(v==='PAUTA ESTUDIO' || v==='PAUTA ESTÚDIO') return 'PAUTA ESTÚDIO';
+  if(v==='PAUTA ESTUDIO' || v==='PAUTA ESTÚDIO') return 'PROMO / MERCHAN';
   if(v==='PROGRAMACAO' || v==='PROGRAMAÇÃO') return 'PROGRAMAÇÃO';
   if(v==='DISTRIBUICAO GERAL' || v==='DISTRIBUIÇÃO GERAL') return 'DISTRIBUIÇÃO GERAL';
   return 'PROMO / MERCHAN';
@@ -6188,7 +6213,7 @@ function clearScheduleForm(){
   if($('scheduleId')) $('scheduleId').value='';
   if($('scheduleStation')) $('scheduleStation').value='JP1017';
   if($('schedulePending')) $('schedulePending').value='SEM PENDÊNCIA';
-  if($('scheduleDestination')) $('scheduleDestination').value='PROMO / MERCHAN';
+  if($('scheduleDestination')) $('scheduleDestination').value='DISTRIBUIÇÃO GERAL';
   if($('scheduleStart')) $('scheduleStart').value=todayISO();
   if($('scheduleEnd')) $('scheduleEnd').value=todayISO();
   if($('scheduleForm')) setEmptyDateFieldsToToday($('scheduleForm'));
@@ -6291,18 +6316,41 @@ function markScheduleConverted(s,target){
   s.convertedAt=new Date().toISOString();
   s.convertedTo=target;
 }
-function convertSchedule(idValue){
-  const s=scheduleItems().find(x=>x.id===idValue);
-  if(!s) return;
-  if(scheduleStatus(s).key==='CANCELADO'){ alert('AGENDAMENTO CANCELADO NÃO PODE SER CONVERTIDO.'); return; }
-  if(scheduleStatus(s).key==='CONVERTIDO'){ alert('ESTE AGENDAMENTO JÁ FOI CONVERTIDO.'); return; }
+
+function scheduleHasBlockingPending(s){
+  return normalizeSchedulePending(s.pending||s.pendencia||'SEM PENDÊNCIA') !== 'SEM PENDÊNCIA';
+}
+function scheduleDestinationForAuto(s){
   const type=normalizeScheduleType(s.type);
   const dest=normalizeScheduleDestination(s.destination);
+  if(dest==='DISTRIBUIÇÃO GERAL' || type==='PRÊMIO FUTURO') return 'DISTRIBUIÇÃO GERAL';
+  if(dest==='PROGRAMAÇÃO') return 'PROGRAMAÇÃO';
+  return 'PROMO / MERCHAN';
+}
+function scheduleAlreadyConvertedToTarget(s,targetMonth,target){
+  const m=monthDataForKey(targetMonth);
+  if(target==='DISTRIBUIÇÃO GERAL') return (m.distributions||[]).some(d=>d.sourceScheduleId===s.id);
+  if(target==='PROMO / MERCHAN') return (m.promos||[]).some(p=>p.sourceScheduleId===s.id);
+  if(target==='PROGRAMAÇÃO') return (m.items||[]).some(i=>i.sourceScheduleId===s.id);
+  return false;
+}
+function convertScheduleRecord(s,{auto=false,openProgramDrawer=false}={}){
+  if(!s) return {ok:false,target:''};
+  if(scheduleStatus(s).key==='CANCELADO') return {ok:false,target:''};
+  if(scheduleStatus(s).key==='CONVERTIDO') return {ok:false,target:''};
+  if(auto && scheduleHasBlockingPending(s)) return {ok:false,target:''};
+  const type=normalizeScheduleType(s.type);
+  const target=scheduleDestinationForAuto(s);
   const key=scheduleTargetMonth(s);
   const targetMonth=monthDataForKey(key);
-  if(dest==='DISTRIBUIÇÃO GERAL' || type==='PRÊMIO FUTURO'){
+  if(scheduleAlreadyConvertedToTarget(s,key,target)){
+    markScheduleConverted(s,target);
+    return {ok:true,target};
+  }
+  if(target==='DISTRIBUIÇÃO GERAL'){
     const d={
       id:id('DST'),
+      sourceScheduleId:s.id,
       date:s.startDate||`${key}-01`,
       startDate:s.startDate||`${key}-01`,
       endDate:s.endDate||s.startDate||`${key}-01`,
@@ -6324,28 +6372,29 @@ function convertSchedule(idValue){
     };
     targetMonth.distributions.push(d);
     markScheduleConverted(s,'DISTRIBUIÇÃO GERAL');
-    state.currentMonth=key;
-    saveState(true); queueApiSave(80); render(); setView('distribuicao');
-    toast('AGENDAMENTO CONVERTIDO EM DISTRIBUIÇÃO GERAL.');
-    return;
+    return {ok:true,target:'DISTRIBUIÇÃO GERAL'};
   }
-  if(dest==='PROGRAMAÇÃO'){
-    state.currentMonth=key;
-    render();
-    clearItemForm();
-    $('itemDate').value=s.startDate||`${key}-01`;
-    if($('itemProgramStation')) $('itemProgramStation').value=s.station==='ALL'?'JP1017':(s.station||'JP1017');
-    $('itemPrize').value=s.name||'';
-    $('itemTitle').value=s.name||'';
-    $('itemNotes').value=s.notes||'';
-    $('itemChannel').value='RÁDIO';
-    $('itemStatus').value='PENDENTE';
-    saveState(true); render(); setView('programacao'); openDrawer('itemDrawer');
-    toast('AGENDAMENTO ABERTO PARA LANÇAR NA PROGRAMAÇÃO.');
-    return;
+  if(target==='PROGRAMAÇÃO'){
+    if(auto) return {ok:false,target:'PROGRAMAÇÃO'};
+    if(openProgramDrawer){
+      state.currentMonth=key;
+      render();
+      clearItemForm();
+      $('itemDate').value=s.startDate||`${key}-01`;
+      if($('itemProgramStation')) $('itemProgramStation').value=s.station==='ALL'?'JP1017':(s.station||'JP1017');
+      $('itemPrize').value=s.name||'';
+      $('itemTitle').value=s.name||'';
+      $('itemNotes').value=s.notes||'';
+      $('itemChannel').value='RÁDIO';
+      $('itemStatus').value='PENDENTE';
+      setView('programacao');
+      openDrawer('itemDrawer');
+    }
+    return {ok:true,target:'PROGRAMAÇÃO'};
   }
   const p={
     id:id('PR'),
+    sourceScheduleId:s.id,
     startDate:s.startDate||`${key}-01`,
     drawDate:s.endDate||s.startDate||`${key}-01`,
     drawTime:'',
@@ -6369,13 +6418,45 @@ function convertSchedule(idValue){
     resultSlot:'',
     resultDate:'',
     resultByHour:{},
-    imageData:''
+    imageData:'',
+    createdAt:new Date().toISOString(),
+    updatedAt:new Date().toISOString()
   };
   targetMonth.promos.push(p);
   markScheduleConverted(s,'PROMO / MERCHAN');
-  state.currentMonth=key;
-  saveState(true); queueApiSave(80); render(); setView('digital');
-  toast('AGENDAMENTO CONVERTIDO EM PROMO / PAUTA.');
+  return {ok:true,target:'PROMO / MERCHAN'};
+}
+function autoConvertDueSchedulesForCurrentMonth(){
+  if(!state || !state.currentMonth) return 0;
+  let converted=0;
+  scheduleItems().forEach(s=>{
+    if(!s || scheduleStatus(s).key==='CONVERTIDO' || scheduleStatus(s).key==='CANCELADO') return;
+    const targetMonth=scheduleTargetMonth(s);
+    if(targetMonth > state.currentMonth) return;
+    if(scheduleDestinationForAuto(s)==='PROGRAMAÇÃO') return;
+    const result=convertScheduleRecord(s,{auto:true});
+    if(result.ok) converted++;
+  });
+  return converted;
+}
+
+function convertSchedule(idValue){
+  const s=scheduleItems().find(x=>x.id===idValue);
+  if(!s) return;
+  if(scheduleStatus(s).key==='CANCELADO'){ alert('AGENDAMENTO CANCELADO NÃO PODE SER CONVERTIDO.'); return; }
+  if(scheduleStatus(s).key==='CONVERTIDO'){ alert('ESTE AGENDAMENTO JÁ FOI CONVERTIDO.'); return; }
+  const target=scheduleDestinationForAuto(s);
+  if(scheduleHasBlockingPending(s) && !confirm('ESTE AGENDAMENTO TEM PENDÊNCIA. CONVERTER MESMO ASSIM?')) return;
+  const result=convertScheduleRecord(s,{auto:false,openProgramDrawer:true});
+  if(!result.ok){ alert('NÃO FOI POSSÍVEL CONVERTER ESTE AGENDAMENTO.'); return; }
+  if(target==='PROGRAMAÇÃO'){
+    saveState(true);
+    toast('AGENDAMENTO ABERTO PARA LANÇAR NA PROGRAMAÇÃO.');
+    return;
+  }
+  state.currentMonth=scheduleTargetMonth(s);
+  saveState(true); queueApiSave(80); render(); setView(target==='DISTRIBUIÇÃO GERAL'?'distribuicao':'digital');
+  toast(`AGENDAMENTO CONVERTIDO EM ${target}.`);
 }
 function promoEndingAlerts(){
   const now=new Date(); now.setHours(0,0,0,0);
@@ -6707,6 +6788,10 @@ function clearProgramScope(scope){
 }
 
 function render(){
+  if(typeof autoConvertDueSchedulesForCurrentMonth==='function'){
+    const convertedCount=autoConvertDueSchedulesForCurrentMonth();
+    if(convertedCount>0) saveState(true);
+  }
   if($('programDaysBox') && !document.querySelector('#programDaysBox input:checked')) setProgramDaysControls([1,2,3,4,5]);
   $('monthInput').value = state.currentMonth;
   renderFilters();
@@ -8890,6 +8975,7 @@ bind('studioNextDayBtn','click',()=>changeStudioDay(1));
 bind('exportPdfBtn','click',()=>window.print());
 bind('scheduleForm','submit',saveSchedule);
 bind('clearScheduleFormBtn','click',clearScheduleForm);
+bind('scheduleType','change',()=>{ const t=normalizeScheduleType($('scheduleType')?.value||''); if(t==='PRÊMIO FUTURO') $('scheduleDestination').value='DISTRIBUIÇÃO GERAL'; else if($('scheduleDestination')?.value==='DISTRIBUIÇÃO GERAL') $('scheduleDestination').value='PROMO / MERCHAN'; });
 ['scheduleTypeFilter','scheduleStationFilter','scheduleStatusFilter','schedulePendingFilter','scheduleDestinationFilter'].forEach(id=>bind(id,'input',renderSchedule));
 bind('programScheduleForm','submit',saveProgramSchedule);
 bind('addProgramScheduleBtn','click',()=>openProgramScheduleForm());
