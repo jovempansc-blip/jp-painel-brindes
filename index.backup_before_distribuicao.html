@@ -2087,115 +2087,6 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
 @media(max-width:900px){.wrap{padding:8px!important}.appHeader{position:relative!important;top:auto!important}.weeklyBoard{gap:8px!important}.weekDayRow{grid-template-columns:1fr!important}.dayCell{border-right:0!important;border-bottom:1px solid var(--line)!important}.periodCell{border-right:0!important;border-bottom:1px solid var(--line)!important}.periodCell:last-child{border-bottom:0!important}.drawerCard,#itemDrawer .drawerCard,#promoDrawer .drawerCard,#distDrawer .drawerCard{width:96vw!important;max-width:96vw!important}.promoFormLayout,#promoDrawer .promoFormLayout{grid-template-columns:1fr!important}.promoPreviewBox,#promoDrawer .promoPreviewBox{position:relative!important;top:auto!important}}
 @media(max-width:640px){#itemDrawer .itemProgramRow.top,#itemDrawer .itemProgramRow.mid{grid-template-columns:1fr!important}.programCard{grid-template-columns:1fr!important}.programSide{align-items:flex-start!important}.topTools{grid-template-columns:1fr!important}.toolbar{justify-content:flex-start!important;flex-wrap:wrap!important}}
 
-
-
-/* AJUSTE — CONVERSÃO PROPORCIONAL DE DISTRIBUIÇÃO */
-.distConversionSummary{
-  display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
-  gap:7px;
-  padding:8px;
-  border:1px solid #e1e7ee;
-  border-radius:15px;
-  background:linear-gradient(180deg,#fff,#f8f9fc);
-  box-shadow:0 6px 16px rgba(17,19,26,.035);
-}
-.distConversionSummary div{
-  min-height:50px;
-  border:1px solid #e7ebf1;
-  border-radius:12px;
-  background:#fff;
-  padding:8px 9px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  gap:4px;
-  overflow:visible;
-}
-.distConversionSummary div:nth-child(1),
-.distConversionSummary div:nth-child(2),
-.distConversionSummary div:nth-child(3){grid-column:span 2}
-.distConversionSummary div:nth-child(4),
-.distConversionSummary div:nth-child(5){grid-column:span 3}
-.distConversionSummary span{
-  color:#6c7584;
-  font-size:7.5px;
-  line-height:1;
-  font-weight:1000;
-  letter-spacing:.05em;
-  white-space:nowrap;
-}
-.distConversionSummary strong{
-  color:#171c26;
-  font-size:12.5px;
-  line-height:1.08;
-  font-weight:1000;
-  white-space:normal;
-  overflow:visible;
-  text-overflow:clip;
-  word-break:normal;
-}
-.distConversionSummary small{
-  display:block;
-  color:#667283;
-  font-size:8.5px;
-  line-height:1.15;
-  font-weight:1000;
-  letter-spacing:.02em;
-}
-.distConversionSummary.bad{border-color:#ffc0cc;background:#fff7f9}
-.destSummary{
-  display:grid!important;
-  grid-template-columns:1fr!important;
-  align-items:start!important;
-  justify-content:start!important;
-  gap:5px!important;
-  line-height:1.22!important;
-}
-.destSummary strong{
-  color:#171c26;
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
-.destSummary span{
-  display:block;
-  color:#4f5b6c;
-  white-space:normal;
-  overflow-wrap:anywhere;
-}
-.destUnitFixed,.distUnitBadge{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-height:28px;
-  border:1px solid #dfe5ec;
-  border-radius:999px;
-  background:#f7f9fc;
-  color:#596476;
-  font-size:9px;
-  font-weight:1000;
-  letter-spacing:.04em;
-}
-.distUnitBadge{min-height:22px;padding:0 8px}
-.destRow:not(.isTicket) .destConsumption{background:#f7f9fc;color:#667283}
-.distSaldoCell small{
-  display:block;
-  margin-top:3px;
-  color:#7a8493;
-  font-size:8px;
-  font-weight:1000;
-  letter-spacing:.03em;
-}
-@media(max-width:900px){
-  .distConversionSummary{grid-template-columns:1fr 1fr}
-  .distConversionSummary div:nth-child(1),
-  .distConversionSummary div:nth-child(2),
-  .distConversionSummary div:nth-child(3),
-  .distConversionSummary div:nth-child(4),
-  .distConversionSummary div:nth-child(5){grid-column:auto}
-  .distConversionSummary div:nth-child(5){grid-column:1/-1}
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2263,7 +2154,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             <div class="field"><label>ORDENAR NOMES</label><select class="control" id="distOrderFilter"><option value="alpha">ALFABÉTICA</option><option value="created">CADASTRO</option></select></div>
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
-          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVADO</th><th class="num">PROG.</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
+          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">PARES</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVADO</th><th class="num">PROG.</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -2592,22 +2483,13 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
               <label class="miniField"><span>COR</span><input id="distTitleColor" type="color"></label>
             </div>
           </div>
-          <div class="field"><label>TOTAL UNITÁRIO</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"></div>
+          <div class="field"><label>TOTAL</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"></div>
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
-          <div class="field"><label>MODO DE ENTREGA</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">CONVERTE O TOTAL UNITÁRIO EM PRÊMIOS DISTRIBUÍVEIS.</span></div>
-          <div class="field"><label>DISPONÍVEL</label><input class="control" id="distPairsPreview" readonly value="0 PRÊMIOS"></div>
+          <div class="field"><label>PADRÃO</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE COMO AS COLUNAS CONSUMEM O SALDO.</span></div>
+          <div class="field"><label>PARES AUTO.</label><input class="control" id="distPairsPreview" readonly value="0 PARES"></div>
 
           
 
-          <div class="field full">
-            <div class="distConversionSummary" id="distConversionSummary">
-              <div><span>TOTAL UNITÁRIO</span><strong>0</strong></div>
-              <div><span>MODO</span><strong>INDIVIDUAL</strong></div>
-              <div><span>DISTRIBUÍVEL</span><strong>0 PRÊMIOS</strong></div>
-              <div><span>DISTRIBUÍDO</span><strong>0</strong></div>
-              <div><span>SALDO</span><strong>0</strong></div>
-            </div>
-          </div>
           <div class="field full">
             <label>DISTRIBUIÇÃO ENTRE OS SEGMENTOS</label>
             <div class="destBox">
@@ -5376,82 +5258,46 @@ function distributionLabel(d){
   return prize || 'SEM PRÊMIO';
 }
 function isTicketDist(d){
-  return !!d && (d.prizeType === 'ingresso' || d.ticketMode === 'ingresso' || d.isTicket === true || d.ticketDefaultUnit === 'pair');
-}
-function distributionDeliveryUnit(d){
-  return (d && d.ticketDefaultUnit === 'pair') ? 'pair' : 'unit';
-}
-function distributionDeliveryLabel(d){
-  return distributionDeliveryUnit(d)==='pair' ? 'PAR' : 'INDIVIDUAL';
-}
-function distributionDeliveryMultiplier(d){
-  return distributionDeliveryUnit(d)==='pair' ? 2 : 1;
+  return !!d && (d.prizeType === 'ingresso' || d.ticketMode === 'ingresso' || d.isTicket === true);
 }
 function ticketUnit(d,key){
-  return distributionDeliveryUnit(d);
+  if(!isTicketDist(d)) return 'unit';
+  return (d.ticketUnits && d.ticketUnits[key]) || d.ticketDefaultUnit || 'unit';
 }
 function ticketMultiplier(d,key){
-  return distributionDeliveryMultiplier(d);
+  return isTicketDist(d) && ticketUnit(d,key)==='pair' ? 2 : 1;
 }
 function channelConsumed(d,key){
-  return num(d[key]) * distributionDeliveryMultiplier(d);
-}
-function allocatedPackages(d){
-  return CHANNELS.reduce((sum,[key]) => sum + num(d[key]), 0);
+  return num(d[key]) * ticketMultiplier(d,key);
 }
 function allocated(d){
   return CHANNELS.reduce((sum,[key]) => sum + channelConsumed(d,key), 0);
-}
-function totalDeliverable(d){
-  const mult=distributionDeliveryMultiplier(d);
-  return Math.floor(num(d.total)/mult);
-}
-function technicalRemainder(d){
-  const mult=distributionDeliveryMultiplier(d);
-  return mult>1 ? num(d.total)%mult : 0;
-}
-function leftDeliverable(d){
-  return totalDeliverable(d) - allocatedPackages(d);
 }
 function leftTotal(d){
   return num(d.total) - allocated(d);
 }
 function ticketPairs(d){
-  return distributionDeliveryUnit(d)==='pair' ? Math.floor(num(d.total)/2) : num(d.total);
+  return isTicketDist(d) ? Math.floor(num(d.total)/2) : '';
 }
 function ticketOdd(d){
-  return technicalRemainder(d);
+  return isTicketDist(d) ? num(d.total)%2 : 0;
 }
 function ticketPairsCell(d){
-  const unit=distributionDeliveryUnit(d);
-  if(unit==='pair'){
-    const pairs=ticketPairs(d), odd=ticketOdd(d);
-    return `<span class="ticketPairBadge">${pairs} PAR${pairs===1?'':'ES'}</span>${odd?'<span class="ticketOddBadge">+1 AVULSO</span>':''}`;
-  }
-  return `<span class="ticketPairBadge">${num(d.total)} IND.</span>`;
+  if(!isTicketDist(d)) return '<span class="ticketPairBadge">—</span>';
+  const odd=ticketOdd(d);
+  return `<span class="ticketPairBadge">${ticketPairs(d)} PAR${ticketPairs(d)===1?'':'ES'}</span>${odd?'<span class="ticketOddBadge">+1 AVULSO</span>':''}`;
 }
 function ticketUnitSelect(d,key){
+  if(!isTicketDist(d)) return '';
   const qty=num(d[key]);
   if(qty<=0) return '';
-  const unit=distributionDeliveryUnit(d);
+  const selected=ticketUnit(d,key);
   const consumed=channelConsumed(d,key);
-  const label=unit==='pair'?'PAR':'IND.';
-  return `<span class="distUnitBadge">${label}</span><span class="ticketConsumptionHint">${consumed} UNID.</span>`;
+  return `<select class="distUnitSelect" data-dist-id="${esc(d.id)}" data-unit-key="${esc(key)}" title="TIPO DE DISTRIBUIÇÃO"><option value="unit" ${selected==='unit'?'selected':''}>IND.</option><option value="pair" ${selected==='pair'?'selected':''}>PAR</option></select><span class="ticketConsumptionHint">${consumed} ING.</span>`;
 }
 function ticketSummaryText(d){
-  const unit=distributionDeliveryUnit(d);
-  if(unit==='pair') return ` | MODO PAR · ${ticketPairs(d)} PAR${ticketPairs(d)===1?'':'ES'}${ticketOdd(d)?' + 1 AVULSO':''}`;
-  return ` | MODO INDIVIDUAL · ${num(d.total)} UNID.`;
-}
-function distributionBalanceCell(d){
-  const unit=distributionDeliveryUnit(d);
-  const pkgLeft=leftDeliverable(d);
-  const realLeft=leftTotal(d);
-  const cls=realLeft<0||pkgLeft<0?'red':(pkgLeft===0?'amber':'green');
-  if(unit==='pair'){
-    return `<span class="badge ${cls}">${pkgLeft} PAR${Math.abs(pkgLeft)===1?'':'ES'}</span><small>${realLeft} UNID.</small>`;
-  }
-  return balanceBadge(realLeft);
+  if(!isTicketDist(d)) return '';
+  return ` | ${ticketPairs(d)} PAR${ticketPairs(d)===1?'':'ES'}${ticketOdd(d)?' + 1 AVULSO':''}`;
 }
 function programmed(distId, channel=''){
   const target = channel ? normalizeChannel(channel) : '';
@@ -6601,7 +6447,7 @@ function renderDistribuicao(){
       <td class="num">${inlineNum(d,'rs','REDES SOCIAIS')}</td>
       <td class="num">${inlineNum(d,'reservado','RESERVADO')}</td>
       <td class="num" data-prog-id="${esc(d.id)}">${prog}</td>
-      <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${distributionBalanceCell(d)}</td>
+      <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${balanceBadge(left)}</td>
       <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d)}</td>
       <td class="distGenerateCell"><button class="btn small distGenerateBtn" type="button" title="GERAR RODÍZIO" aria-label="GERAR RODÍZIO" onclick="generateRadioFromDist('${d.id}')">GERAR</button></td>
       <td class="distActionsCell"><div class="actions distActions"><button class="actionIcon ghost" title="PROGRAMAR MANUAL" aria-label="PROGRAMAR MANUAL" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
@@ -7658,46 +7504,27 @@ function distDestRows(){
 }
 function destinationConsumed(qty,unit,isTicket){
   const q=num(qty);
-  return unit==='pair' ? q*2 : q;
-}
-function distributionFormDeliveryUnit(){
-  return $('distTicketDefaultUnit')?.value === 'pair' ? 'pair' : 'unit';
-}
-function distributionFormDeliveryMultiplier(){
-  return distributionFormDeliveryUnit()==='pair' ? 2 : 1;
+  return isTicket && unit==='pair' ? q*2 : q;
 }
 function distributionFormIsTicket(){
-  return $('distPrizeType')?.value==='ingresso' || distributionFormDeliveryUnit()==='pair';
-}
-function formTotalUnitario(){
-  return num($('distTotal')?.value);
-}
-function formDistributableTotal(){
-  return Math.floor(formTotalUnitario()/distributionFormDeliveryMultiplier());
-}
-function formTechnicalRemainder(){
-  const mult=distributionFormDeliveryMultiplier();
-  return mult>1 ? formTotalUnitario()%mult : 0;
-}
-function formUnitLabel(){
-  return distributionFormDeliveryUnit()==='pair' ? 'PAR' : 'IND.';
+  return $('distPrizeType')?.value==='ingresso';
 }
 function renderDistDestinations(rows=[]){
   const list=$('distDestList');
   if(!list) return;
-  const unit=distributionFormDeliveryUnit();
-  const unitLabel=unit==='pair'?'PAR':'IND.';
+  const isTicket=distributionFormIsTicket();
   const clean=(rows||[]).filter(r=>r && r.key);
   list.innerHTML=clean.map(r=>{
     const key=r.key;
     const label=DESTINATION_LABELS[key]||key;
+    const unit=r.unit || ($('distTicketDefaultUnit')?.value || 'unit');
     const qty=num(r.qty);
-    const consumed=destinationConsumed(qty,unit,true);
-    return `<div class="destRow ${unit==='pair'?'isTicket':''} ${key==='reservado'?'isReserve':''}" data-dest-row data-key="${esc(key)}">
+    const consumed=destinationConsumed(qty,unit,isTicket);
+    return `<div class="destRow ${isTicket?'isTicket':''} ${key==='reservado'?'isReserve':''}" data-dest-row data-key="${esc(key)}">
       <div class="destName">${esc(label)}</div>
       <input class="destQty" type="number" min="0" step="1" value="${qty}" aria-label="QUANTIDADE ${esc(label)}">
-      <div class="destUnitFixed">${unitLabel}</div><input type="hidden" class="destUnit" value="${unit}">
-      <div class="destConsumption">${unit==='pair'?`${consumed} UNID.`:`${qty}`}</div>
+      <select class="destUnit" aria-label="TIPO ${esc(label)}"><option value="unit" ${unit==='unit'?'selected':''}>IND.</option><option value="pair" ${unit==='pair'?'selected':''}>PAR</option></select>
+      <div class="destConsumption">${isTicket?`${consumed} ING.`:`${qty}`}</div>
       <input class="destReserveNote" value="${esc(r.note||'')}" placeholder="OBSERVAÇÃO DA RESERVA">
       <button class="actionIcon danger destRemove" type="button" title="REMOVER"><span class="iconGlyph">🗑</span></button>
     </div>`;
@@ -7705,21 +7532,21 @@ function renderDistDestinations(rows=[]){
   updateDistDestinationSummary();
 }
 function collectDistDestinationValues(existing={}){
-  const unit=distributionFormDeliveryUnit();
-  const result={app:0,camarote:0,camarim:0,rua:0,ar:0,rs:0,reservado:0,ticketUnits:{},reservadoNote:existing.reservadoNote||''};
+  const isTicket=distributionFormIsTicket();
+  const result={app:0,camarote:0,camarim:0,rua:0,ar:0,rs:0,reservado:0,ticketUnits:{...(existing.ticketUnits||{})},reservadoNote:existing.reservadoNote||''};
   distDestRows().forEach(row=>{
     const key=row.dataset.key;
     const qty=num(row.querySelector('.destQty')?.value);
     if(!key || qty<=0) return;
     result[key]=(result[key]||0)+qty;
-    result.ticketUnits[key]=unit;
+    if(isTicket) result.ticketUnits[key]=row.querySelector('.destUnit')?.value || $('distTicketDefaultUnit')?.value || 'unit';
     if(key==='reservado') result.reservadoNote=norm(row.querySelector('.destReserveNote')?.value || result.reservadoNote || '');
   });
   return result;
 }
 function destinationsFromDistribution(d){
   return ['ar','reservado','app','rs','rua','camarote','camarim'].map(key=>({
-    key,qty:num(d[key]),unit:distributionDeliveryUnit(d),note:key==='reservado'?(d.reservadoNote||''):''
+    key,qty:num(d[key]),unit:(d.ticketUnits||{})[key] || d.ticketDefaultUnit || 'unit',note:key==='reservado'?(d.reservadoNote||''):''
   })).filter(r=>r.qty>0);
 }
 function addDistributionDestination(key){
@@ -7729,86 +7556,48 @@ function addDistributionDestination(key){
   const rows=distDestRows().map(row=>({
     key:row.dataset.key,
     qty:num(row.querySelector('.destQty')?.value),
-    unit:distributionFormDeliveryUnit(),
+    unit:row.querySelector('.destUnit')?.value || 'unit',
     note:row.querySelector('.destReserveNote')?.value || ''
   })).filter(r=>r.qty>0);
-  rows.push({key:selected,qty:1,unit:distributionFormDeliveryUnit(),note:''});
+  rows.push({key:selected,qty:1,unit:$('distTicketDefaultUnit')?.value || 'unit',note:''});
   renderDistDestinations(rows);
 }
 function updateDistDestinationSummary(){
   const box=$('distDestSummary');
-  const conv=$('distConversionSummary');
   if(!box) return;
-  const total=formTotalUnitario();
-  const unit=distributionFormDeliveryUnit();
-  const mult=distributionFormDeliveryMultiplier();
-  const available=formDistributableTotal();
-  const odd=formTechnicalRemainder();
-  let distributedPackages=0;
+  const total=num($('distTotal')?.value);
+  const isTicket=distributionFormIsTicket();
+  let distributed=0;
   const labels=[];
   distDestRows().forEach(row=>{
     const key=row.dataset.key;
     const qty=num(row.querySelector('.destQty')?.value);
-    const consumed=destinationConsumed(qty,unit,true);
+    const unit=row.querySelector('.destUnit')?.value || 'unit';
+    const cons=destinationConsumed(qty,unit,isTicket);
     const c=row.querySelector('.destConsumption');
-    if(c) c.textContent=unit==='pair'?`${consumed} UNID.`:`${qty}`;
-    const fixed=row.querySelector('.destUnitFixed');
-    if(fixed) fixed.textContent=unit==='pair'?'PAR':'IND.';
-    const hidden=row.querySelector('.destUnit');
-    if(hidden) hidden.value=unit;
-    if(qty>0){ distributedPackages+=qty; labels.push(`${DESTINATION_LABELS[key]||key}: ${qty} ${unit==='pair'?(qty===1?'PAR':'PARES'):'UNID.'}`); }
+    if(c) c.textContent=isTicket?`${cons} ING.`:`${qty}`;
+    if(qty>0){ distributed+=cons; labels.push(`${DESTINATION_LABELS[key]||key}: ${qty}${isTicket?` ${unit==='pair'?'PAR':'IND.'}`:''}`); }
   });
-  const consumedReal=distributedPackages*mult;
-  const saldoPackages=available-distributedPackages;
-  const saldoReal=total-consumedReal;
-  box.classList.toggle('bad',saldoPackages<0 || saldoReal<0);
-  const unitName=unit==='pair'?'PARES':'UNIDADES';
-  const distributedLabel=`${distributedPackages} ${unitName}`;
-  const saldoLabel=`${saldoPackages} ${unitName}`;
-  const consumedLabel=unit==='pair'?`${consumedReal} UNIDADES CONSUMIDAS`:`${consumedReal} UNIDADES`;
-  const saldoRealLabel=unit==='pair'?` / ${saldoReal} UNIDADES RESTANTES`:'';
+  const saldo=total-distributed;
+  box.classList.toggle('bad',saldo<0);
   box.innerHTML = labels.length
-    ? `<strong>${esc(labels.join(' · '))}</strong><span>TOTAL UNITÁRIO ${total} · DISTRIBUÍVEL ${available} ${unitName} · DISTRIBUÍDO ${distributedLabel} · ${consumedLabel} · SALDO ${saldoLabel}${saldoRealLabel}${odd?` · SOBRA TÉCNICA ${odd} UNID.`:''}</span>`
-    : `<strong>NENHUM DESTINO ADICIONADO</strong><span>TOTAL UNITÁRIO ${total} · DISTRIBUÍVEL ${available} ${unitName} · DISTRIBUÍDO 0 ${unitName} · SALDO ${available} ${unitName}${odd?` · SOBRA TÉCNICA ${odd} UNID.`:''}</span>`;
-  if(conv){
-    const cells=conv.querySelectorAll('div');
-    const setCell=(idx,label,value,sub='')=>{
-      const cell=cells[idx];
-      if(!cell) return;
-      cell.innerHTML=`<span>${esc(label)}</span><strong>${esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}`;
-    };
-    setCell(0,'TOTAL UNITÁRIO',String(total));
-    setCell(1,'MODO DE ENTREGA',unit==='pair'?'PAR':'INDIVIDUAL');
-    setCell(2,'DISTRIBUÍVEL',`${available} ${unitName}`, odd?`${odd} UNID. SEM PAR`:'' );
-    setCell(3,'DISTRIBUÍDO',distributedLabel, consumedLabel);
-    setCell(4,'SALDO',saldoLabel, unit==='pair'?`${saldoReal} UNIDADES RESTANTES`:'' );
-    conv.classList.toggle('bad',saldoPackages<0 || saldoReal<0);
-  }
+    ? `<strong>${esc(labels.join(' · '))}</strong><span>TOTAL ${total} · DISTRIBUÍDO ${distributed} · SALDO ${saldo}</span>`
+    : `<strong>NENHUM DESTINO ADICIONADO</strong><span>TOTAL ${total} · DISTRIBUÍDO 0 · SALDO ${total}</span>`;
 }
 
 function updateDistPairsPreview(){
-  const total=formTotalUnitario();
-  const unit=distributionFormDeliveryUnit();
+  const total=num($('distTotal')?.value);
+  const isTicket=$('distPrizeType')?.value==='ingresso';
   const target=$('distPairsPreview');
   if(!target) return;
-  if(unit==='pair'){
-    const pairs=Math.floor(total/2), odd=total%2;
-    target.value=`${pairs} PAR${pairs===1?'':'ES'}${odd?' + 1 AVULSO':''}`;
-  }else{
-    target.value=`${total} PRÊMIO${total===1?'':'S'}`;
-  }
-  const rows=distDestRows().map(row=>({
-    key:row.dataset.key,
-    qty:num(row.querySelector('.destQty')?.value),
-    unit,
-    note:row.querySelector('.destReserveNote')?.value || ''
-  }));
-  if(rows.length) renderDistDestinations(rows);
-  else updateDistDestinationSummary();
+  if(!isTicket){ target.value='NÃO É INGRESSO'; return; }
+  const pairs=Math.floor(total/2), odd=total%2;
+  target.value=`${pairs} PAR${pairs===1?'':'ES'}${odd?' + 1 AVULSO':''}`;
+  updateDistDestinationSummary();
 }
 function autoDetectTicketType(){
   const prize=norm($('distPrize')?.value);
-  if($('distPrizeType') && /\b(INGRESSO|INGRESSOS|ENTRADA|ENTRADAS|PAR)\b/.test(prize) && $('distPrizeType').value!=='ingresso'){
+  if($('distPrizeType') && prize.includes('INGRESS') && $('distPrizeType').value!=='ingresso'){
     $('distPrizeType').value='ingresso';
     updateDistPairsPreview();
   }
@@ -7817,7 +7606,7 @@ function autoDetectTicketType(){
 function updateDistributionRow(distId){
   const d=distributionById(distId); if(!d) return;
   const saldoCell = document.querySelector(`[data-saldo-id="${CSS.escape(distId)}"]`);
-  if(saldoCell) saldoCell.innerHTML = distributionBalanceCell(d);
+  if(saldoCell) saldoCell.innerHTML = balanceBadge(leftTotal(d));
   updateReturnColumn(distId);
   const pairCell = document.querySelector(`[data-pairs-id="${CSS.escape(distId)}"]`);
   if(pairCell) pairCell.innerHTML = ticketPairsCell(d);
@@ -7862,10 +7651,8 @@ function saveDistributionFromForm(generate=false){
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return null; }
   const destValues=collectDistDestinationValues(existing);
   const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:textNorm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:textNorm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
-  const distributedPackages=Object.entries(destValues).filter(([k])=>['app','camarote','camarim','rua','ar','rs','reservado'].includes(k)).reduce((sum,[k,v])=>sum+num(v),0);
-  const availablePackages=totalDeliverable(d);
-  const consumedReal=allocated(d);
-  if(num(d.total)>0 && distributedPackages>availablePackages){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.\n\nTOTAL UNITÁRIO: ${num(d.total)}\nMODO: ${distributionDeliveryLabel(d)}\nDISPONÍVEL PARA DISTRIBUIR: ${availablePackages}\nDISTRIBUÍDO: ${distributedPackages}\nCONSUMIDO REAL: ${consumedReal}`); return null; }
+  const distributedTotal=Object.entries(destValues).filter(([k])=>['app','camarote','camarim','rua','ar','rs','reservado'].includes(k)).reduce((sum,[k,v])=>sum+destinationConsumed(v,(destValues.ticketUnits||{})[k]||d.ticketDefaultUnit,isTicketDist(d)),0);
+  if(num(d.total)>0 && distributedTotal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.\n\nTOTAL: ${num(d.total)}\nDISTRIBUÍDO: ${distributedTotal}`); return null; }
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
   syncDistributionToLinkedRadioItems(d);
@@ -7956,7 +7743,6 @@ if($('radioPlannerSuggestions')) $('radioPlannerSuggestions').addEventListener('
 if($('distStartDate')) $('distStartDate').addEventListener('change',()=>{ if($('distEndDate') && $('distEndDate').value < $('distStartDate').value) $('distEndDate').value=$('distStartDate').value; });
 if($('distTotal')) $('distTotal').addEventListener('input',updateDistPairsPreview);
 if($('distPrizeType')) $('distPrizeType').addEventListener('change',updateDistPairsPreview);
-if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').addEventListener('change',updateDistPairsPreview);
 if($('distPrize')) $('distPrize').addEventListener('input',autoDetectTicketType);
 
 
