@@ -7498,9 +7498,7 @@ function updateDistHint(){
 
 function programForManualItem(date,slot,station){
   const st=station || $('itemProgramStation')?.value || 'JP1017';
-  const scheduled=programFromSchedule(date,slot,st);
-  if(scheduled) return scheduled;
-  return st==='JP1017' ? programFallbackForSlot(date,slot,st) : '';
+  return programFromSchedule(date,slot,st) || '';
 }
 
 function itemSlotsForStationDate(date,station){
@@ -7514,7 +7512,6 @@ function itemSlotsForStationDate(date,station){
       if(h>=6 && h<=22) slots.add(`${String(h).padStart(2,'0')}H`);
     }
   });
-  if(!slots.size) RADIO_PLANNER_SLOTS.forEach(s=>slots.add(s));
   return [...slots].sort((a,b)=>Number(a.replace('H',''))-Number(b.replace('H','')));
 }
 function renderItemSlotOptions(keepCurrent=true){
@@ -7524,7 +7521,11 @@ function renderItemSlotOptions(keepCurrent=true){
   const date=$('itemDate')?.value || todayISO();
   const station=$('itemProgramStation')?.value || 'JP1017';
   const slots=itemSlotsForStationDate(date,station);
-  sel.innerHTML='<option value="">SELECIONE</option>'+slots.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  sel.innerHTML='<option value="">SELECIONE UM HORÁRIO DA ABA HORÁRIOS</option>'+slots.map(s=>{
+    const program=programFromSchedule(date,s,station);
+    const label=program ? `${s} — ${program}` : s;
+    return `<option value="${esc(s)}">${esc(label)}</option>`;
+  }).join('');
   if(keepCurrent && current && slots.includes(current)) sel.value=current;
   else sel.value='';
 }
@@ -7542,17 +7543,21 @@ function updateItemProgramFromSchedule(force=false){
   const target=$('itemProgram');
   const hint=$('itemProgramHint');
   if(!target) return;
+  const slots=date ? itemSlotsForStationDate(date,station) : [];
   const program=date && slot ? programForManualItem(date,slot,station) : '';
   if(force || !norm(target.value) || target.dataset.auto==='1'){
     target.value=program || '';
     target.dataset.auto='1';
   }
-  target.classList.toggle('programMissing', !!(date && slot && !program));
+  target.classList.toggle('programMissing', !!((date && !slots.length) || (date && slot && !program)));
   if(hint){
-    hint.classList.toggle('warn', !!(date && slot && !program));
-    hint.textContent = date && slot
-      ? (program ? 'PROGRAMA IDENTIFICADO PELA ABA HORÁRIOS.' : 'SEM PROGRAMA CADASTRADO PARA ESTA RÁDIO, DATA E HORÁRIO.')
-      : 'ESCOLHA A RÁDIO E O HORÁRIO PARA IDENTIFICAR O PROGRAMA.';
+    const warn=!!((date && !slots.length) || (date && slot && !program));
+    hint.classList.toggle('warn', warn);
+    hint.textContent = date && !slots.length
+      ? 'NENHUM HORÁRIO CADASTRADO PARA ESTA RÁDIO NESTE DIA. AJUSTE A ABA HORÁRIOS.'
+      : (date && slot
+        ? (program ? 'HORÁRIO VINCULADO À ABA HORÁRIOS.' : 'SEM PROGRAMA CADASTRADO PARA ESTA RÁDIO, DATA E HORÁRIO.')
+        : 'ESCOLHA UM HORÁRIO CADASTRADO NA ABA HORÁRIOS.');
   }
 }
 $('itemDistribution').addEventListener('change',()=>handleItemDistributionChange(true));
