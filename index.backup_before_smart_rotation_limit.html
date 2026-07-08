@@ -2779,7 +2779,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
               <div class="rotationLimitRow">
                 <div>
                   <span>QUANTAS VEZES POR DIA?</span>
-                  <div class="rotationLimitHint">O SISTEMA PODE USAR OUTROS HORÁRIOS NO MESMO DIA, NÃO REPETE NO MESMO PERÍODO E EVITA O MESMO HORÁRIO EM MAIS DE 2 DIAS.</div>
+                  <div class="rotationLimitHint">O SISTEMA PODE USAR OUTROS HORÁRIOS NO MESMO DIA, MAS NÃO REPETE NO MESMO PERÍODO.</div>
                 </div>
                 <input type="number" min="1" max="3" step="1" id="distDailyLimit" value="1">
               </div>
@@ -7348,27 +7348,13 @@ function pickBestRadioSuggestions(d,needed){
   const free=candidates.filter(c=>!c.occupied);
   const source=free.length ? free : candidates;
   if(!source.length) return [];
-  const sameSlotSoftLimit=2;
-  const samePrizeItems=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
-  const sameSlotUsage=new Map();
-  samePrizeItems.forEach(i=>{
-    const slot=normalizeSlot(i.slot);
-    if(slot) sameSlotUsage.set(slot,(sameSlotUsage.get(slot)||0)+1);
-  });
   const count=Math.min(needed,source.length);
-  const picked=[], usedKeys=new Set();
+  const picked=[], used=new Set();
   for(let i=0;i<count;i++){
-    const available=source.filter(c=>!usedKeys.has(c.key));
-    if(!available.length) break;
-    const preferred=available.filter(c=>(sameSlotUsage.get(normalizeSlot(c.slot))||0)<sameSlotSoftLimit);
-    const pool=preferred.length ? preferred : available;
-    let idx=pool.length===1 ? 0 : Math.round(i*(pool.length-1)/Math.max(1,count-1));
-    let chosen=pool[Math.max(0,Math.min(pool.length-1,idx))];
-    if(!chosen) break;
-    picked.push(chosen);
-    usedKeys.add(chosen.key);
-    const slot=normalizeSlot(chosen.slot);
-    sameSlotUsage.set(slot,(sameSlotUsage.get(slot)||0)+1);
+    let idx=count===1 ? 0 : Math.round(i*(source.length-1)/(count-1));
+    let guard=0;
+    while(used.has(idx) && guard<source.length){ idx=(idx+1)%source.length; guard++; }
+    used.add(idx); picked.push(source[idx]);
   }
   return picked;
 }
@@ -7512,7 +7498,6 @@ function buildSmartRadioPlans(d){
   const maxPerDay=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1));
   const dates=dateRangeBetween(distStartDate(d),distEndDate(d)).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const seed=smartRadioSeed(`${d.id}|${distributionLabel(d)}|${distStartDate(d)}|${distEndDate(d)}|${allowed.join(',')}`);
-  const sameSlotSoftLimit=2;
 
   const existingRadio=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
   const existingByDay=new Map();
@@ -7526,11 +7511,9 @@ function buildSmartRadioPlans(d){
   });
 
   const slotUsage=new Map();
-  const sameSlotUsage=new Map();
   existingPlans.forEach(p=>{
     const key=`${p.period}|${p.slot}`;
     slotUsage.set(key,(slotUsage.get(key)||0)+1);
-    sameSlotUsage.set(p.slot,(sameSlotUsage.get(p.slot)||0)+1);
   });
 
   const candidatesByDay=new Map();
@@ -7578,27 +7561,20 @@ function buildSmartRadioPlans(d){
 
       if(!rows.length) return;
 
-      const underSameSlotLimit=rows.filter(c=>(sameSlotUsage.get(c.slot)||0)<sameSlotSoftLimit);
-      const hasSameSlotAlternative=underSameSlotLimit.length>0;
-      if(hasSameSlotAlternative) rows=underSameSlotLimit;
-
       rows=rows.map(c=>{
         const previous=nearestPreviousPlan([...existingPlans,...plans],date,c.period);
         const repeatedPrevious=previous && previous.slot===c.slot;
         const periodOptions=(candidatesByDay.get(date)||[]).filter(x=>x.period===c.period);
         const hasAlternative=periodOptions.some(x=>x.slot!==c.slot && !radioSlotConflicts(date,x.slot).length);
         const usage=slotUsage.get(`${c.period}|${c.slot}`)||0;
-        const sameUsage=sameSlotUsage.get(c.slot)||0;
         return {
           ...c,
           repeatedPrevious,
           hasAlternative,
           usage,
-          sameUsage,
           finalScore:
             (repeatedPrevious && hasAlternative ? 1000 : 0) +
-            sameUsage*220 +
-            usage*20 +
+            usage*10 +
             seededScore(`${seed}|${pass}|${idx}|${date}|${c.slot}`)
         };
       }).sort((a,b)=>a.finalScore-b.finalScore || slotOrder(a.slot)-slotOrder(b.slot));
@@ -7618,7 +7594,6 @@ function buildSmartRadioPlans(d){
       planned.periods.add(chosen.period);
       plannedByDay.set(date,planned);
       slotUsage.set(`${chosen.period}|${chosen.slot}`,(slotUsage.get(`${chosen.period}|${chosen.slot}`)||0)+1);
-      sameSlotUsage.set(chosen.slot,(sameSlotUsage.get(chosen.slot)||0)+1);
     });
   }
 
@@ -7631,7 +7606,7 @@ function renderSmartRadioReport(report){
   const d=distributionById(report.distId);
   summary.classList.toggle('warn',report.missing>0 || !report.plans.length);
   const maxPerDay=Math.max(1,Math.min(3,num(d?.radioDailyLimit)||1));
-  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, COM DISTRIBUIÇÃO UNIFORME DO INÍCIO AO FIM DO PERÍODO, EQUILÍBRIO DE USO DOS HORÁRIOS, SEM REPETIR O MESMO HORÁRIO NA SEQUÊNCIA DO MESMO PERÍODO E EVITANDO USAR O MESMO PRÊMIO NO MESMO HORÁRIO EM MAIS DE 2 DIAS QUANDO HOUVER ALTERNATIVA.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
+  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, COM DISTRIBUIÇÃO UNIFORME DO INÍCIO AO FIM DO PERÍODO, ESCOLHA ALEATÓRIA ENTRE OS HORÁRIOS PERMITIDOS, EQUILÍBRIO DE USO DOS HORÁRIOS E SEM REPETIR O MESMO HORÁRIO NA SEQUÊNCIA DO MESMO PERÍODO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
   summary.innerHTML = report.missing>0
     ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`
     : `<strong>RELATÓRIO GERADO.</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`;
