@@ -2376,19 +2376,6 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
   .rotationPeriodItems{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 
-
-
-/* AJUSTE OPERACIONAL: PAUTA PRINCIPAL RESUMIDA + RESERVAS MÚLTIPLAS */
-.studioSummaryPrizeCard .studioCardBody{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:14px 14px!important}
-.studioSummaryPrizeCard .studioTitle{font-size:18px!important;line-height:1.12!important;margin:0!important}
-.studioSummaryPrizeCard .studioSummaryStatus{display:flex;justify-content:flex-end;align-items:center;white-space:nowrap}
-.studioSummaryPrizeCard .studioCardActions{position:static!important;margin:0!important;display:flex!important;justify-content:flex-end!important}
-.reserveTotalCell{display:grid;gap:3px;justify-items:center;min-width:74px}
-.reserveTotalCell small{display:block;color:#667283;font-size:8px;font-weight:1000;line-height:1.05;letter-spacing:.02em;white-space:nowrap}
-.destRow.isReserve{grid-template-columns:minmax(120px,1fr) 76px 96px 95px minmax(180px,1.4fr) 30px;background:#fffaf2;border-color:#f3d7a6}
-.destRow.isReserve .destName::after{content:" SOLICITAÇÃO";display:block;color:#a46200;font-size:8px;letter-spacing:.04em;margin-top:2px}
-.destReserveUnit{display:block!important}
-@media(max-width:900px){.studioSummaryPrizeCard .studioCardBody{grid-template-columns:1fr}.studioSummaryPrizeCard .studioSummaryStatus{justify-content:flex-start}.destRow.isReserve{grid-template-columns:1fr 80px 90px}.destRow.isReserve .destReserveNote{grid-column:1/-1}}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2456,7 +2443,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             <div class="field"><label>ORDENAR NOMES</label><select class="control" id="distOrderFilter"><option value="alpha">ALFABÉTICA</option><option value="created">CADASTRO</option></select></div>
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
-          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
+          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVADO</th><th class="num">PROG.</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -2501,7 +2488,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             </div>
           </div>
           <div class="studioSection" id="studioPrizeSection">
-            <div class="studioSectionHead"><strong>PAUTA DE PRÊMIOS</strong><span>RESUMO DOS PRÊMIOS DE RÁDIO PROGRAMADOS PARA O DIA.</span></div>
+            <div class="studioSectionHead"><strong>PAUTA DE PRÊMIOS</strong><span>ITENS DA PROGRAMAÇÃO COM TÍTULO E DESCRIÇÃO PARA O LOCUTOR.</span></div>
             <div class="studioGrid" id="studioPrizeGrid"></div>
           </div>
           <div class="studioSection" id="studioPromoSection">
@@ -2733,7 +2720,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
           <div class="itemProgramRow mid">
             <div class="field prizeField"><label>PRÊMIO / EVENTO</label><input class="control" id="itemPrize" required></div>
             <div class="field"><label>QTD</label><input class="control" type="number" min="0" step="1" id="itemQty" value="1"></div>
-            <div class="field"><label>CANAL</label><select class="control" id="itemChannel"><option>RÁDIO</option></select><span class="ticketFormHint">A PROGRAMAÇÃO RECEBE APENAS O DESTINO RÁDIO. OS DEMAIS SEGMENTOS FICAM NO CONTROLE DE DISTRIBUIÇÃO.</span></div>
+            <div class="field"><label>CANAL</label><select class="control" id="itemChannel"><option>RÁDIO</option><option>REDES SOCIAIS</option><option>APP</option><option>CAMAROTE</option><option>CAMARIM</option><option>EXTERNA</option><option>RESERVADO</option></select></div>
             <div class="field"><label>STATUS</label><select class="control" id="itemStatus"><option>NO AR</option><option>REALIZADO</option><option>ENTREGUE</option></select></div>
           </div>
 
@@ -5485,9 +5472,6 @@ function normalizePanelState(data){
     (m.distributions || []).forEach(d=>{
       if(d.reservado === undefined) d.reservado = num(d.clientes) + num(d.outros);
       d.reservadoNote ||= d.reservaObs || d.reservedNote || '';
-      d.reservas = normalizeReservationEntries(d);
-      d.reservado = reservationPackageTotal(d);
-      d.reservadoReal = reservationConsumed(d);
       d.title ||= '';
       d.description ||= d.notes || '';
       d.startDate ||= d.date || '';
@@ -5583,68 +5567,17 @@ function distributionDeliveryLabel(d){
 function distributionDeliveryMultiplier(d){
   return distributionDeliveryUnit(d)==='pair' ? 2 : 1;
 }
-function normalizeReservationUnit(unit){
-  const u=String(unit||'').toLowerCase();
-  return (u==='pair' || u==='par' || u==='pares') ? 'pair' : 'unit';
-}
-function normalizeReservationEntries(d={}){
-  const source = Array.isArray(d.reservas) ? d.reservas : (Array.isArray(d.reservations) ? d.reservations : []);
-  const rows = source.map((r,idx)=>({
-    id:r.id||id('RSV'),
-    qty:num(r.qty ?? r.quantidade ?? r.total ?? r.value),
-    unit:normalizeReservationUnit(r.unit ?? r.tipo ?? r.mode ?? d.ticketUnits?.reservado ?? d.ticketDefaultUnit),
-    note:norm(r.note ?? r.observacao ?? r.observação ?? r.description ?? r.descricao ?? '')
-  })).filter(r=>r.qty>0);
-  if(rows.length) return rows;
-  const legacyQty=num(d.reservado ?? d.clientes ?? d.outros);
-  if(legacyQty>0){
-    return [{id:'LEGACY_RESERVA',qty:legacyQty,unit:normalizeReservationUnit(d.ticketUnits?.reservado || d.ticketDefaultUnit),note:norm(d.reservadoNote || d.reservaObs || d.reservedNote || '')}];
-  }
-  return [];
-}
-function reservationEntries(d){
-  if(!d) return [];
-  return normalizeReservationEntries(d);
-}
-function reservationPackageTotal(d){
-  return reservationEntries(d).reduce((sum,r)=>sum+num(r.qty),0);
-}
-function reservationConsumed(d){
-  return reservationEntries(d).reduce((sum,r)=>sum+(num(r.qty)*(normalizeReservationUnit(r.unit)==='pair'?2:1)),0);
-}
-function reservationUnitText(unit){
-  return normalizeReservationUnit(unit)==='pair' ? 'PAR' : 'IND.';
-}
-function reservationUnitLong(unit,qty=0){
-  return normalizeReservationUnit(unit)==='pair' ? (num(qty)===1?'PAR':'PARES') : (num(qty)===1?'INDIVIDUAL':'INDIVIDUAIS');
-}
-function reservationSummaryText(d){
-  const rows=reservationEntries(d);
-  const pairs=rows.filter(r=>normalizeReservationUnit(r.unit)==='pair').reduce((s,r)=>s+num(r.qty),0);
-  const units=rows.filter(r=>normalizeReservationUnit(r.unit)!=='pair').reduce((s,r)=>s+num(r.qty),0);
-  const parts=[];
-  if(pairs) parts.push(`${pairs} ${pairs===1?'PAR':'PARES'}`);
-  if(units) parts.push(`${units} IND.`);
-  return parts.join(' + ') || '0';
-}
 function ticketUnit(d,key){
-  if(key==='reservado'){
-    const rows=reservationEntries(d);
-    const set=[...new Set(rows.map(r=>normalizeReservationUnit(r.unit)))];
-    return set.length===1 ? set[0] : 'mixed';
-  }
-  return normalizeReservationUnit(d?.ticketUnits?.[key] || distributionDeliveryUnit(d));
+  return distributionDeliveryUnit(d);
 }
 function ticketMultiplier(d,key){
-  const unit=ticketUnit(d,key);
-  return unit==='pair' ? 2 : 1;
+  return distributionDeliveryMultiplier(d);
 }
 function channelConsumed(d,key){
-  if(key==='reservado') return reservationConsumed(d);
-  return num(d[key]) * ticketMultiplier(d,key);
+  return num(d[key]) * distributionDeliveryMultiplier(d);
 }
 function allocatedPackages(d){
-  return CHANNELS.reduce((sum,[key]) => sum + (key==='reservado' ? reservationPackageTotal(d) : num(d[key])), 0);
+  return CHANNELS.reduce((sum,[key]) => sum + num(d[key]), 0);
 }
 function allocated(d){
   return CHANNELS.reduce((sum,[key]) => sum + channelConsumed(d,key), 0);
@@ -5658,8 +5591,7 @@ function technicalRemainder(d){
   return mult>1 ? num(d.total)%mult : 0;
 }
 function leftDeliverable(d){
-  const mult=distributionDeliveryMultiplier(d);
-  return Math.floor(leftTotal(d)/mult);
+  return totalDeliverable(d) - allocatedPackages(d);
 }
 function leftTotal(d){
   return num(d.total) - allocated(d);
@@ -5681,17 +5613,10 @@ function ticketPairsCell(d){
 function ticketUnitSelect(d,key){
   const qty=num(d[key]);
   if(qty<=0) return '';
-  const unit=ticketUnit(d,key);
+  const unit=distributionDeliveryUnit(d);
   const consumed=channelConsumed(d,key);
-  const label=unit==='pair'?'PAR':(unit==='mixed'?'MISTO':'IND.');
+  const label=unit==='pair'?'PAR':'IND.';
   return `<span class="distUnitBadge">${label}</span><span class="ticketConsumptionHint">${consumed} UNID.</span>`;
-}
-function reservationSummaryCell(d){
-  const entries=reservationEntries(d);
-  if(!entries.length) return '<span class="badge">0</span>';
-  const packageTotal=reservationPackageTotal(d);
-  const consumed=reservationConsumed(d);
-  return `<div class="reserveTotalCell"><span class="badge amber">${packageTotal} RES.</span><small>${esc(reservationSummaryText(d))}</small><small>${consumed} UNID.</small></div>`;
 }
 function ticketSummaryText(d){
   const unit=distributionDeliveryUnit(d);
@@ -6528,7 +6453,6 @@ function filteredItems(){
   const channel=norm($('channelFilter')?.value);
   const status=norm($('statusFilter')?.value);
   return monthData().items.filter(i =>
-    normalizeChannel(i.channel)==='RÁDIO' &&
     (!week || norm(weekLabel(i.date)) === week) &&
     (!channel || normalizeChannel(i.channel) === channel) &&
     (!status || normalizeStatus(i.status) === status) &&
@@ -6671,17 +6595,13 @@ function filteredDistributions(){
 function renderReservations(){
   const board=$('reservationBoard');
   if(!board) return;
-  const reservations = monthData().distributions
-    .map(d=>({d,entries:reservationEntries(d),packages:reservationPackageTotal(d),consumed:reservationConsumed(d)}))
-    .filter(r=>r.entries.length && r.consumed>0);
+  const reservations = monthData().distributions.filter(d=>num(d.reservado)>0);
   if(!reservations.length){ board.classList.remove('show'); board.innerHTML=''; return; }
-  const totalConsumed=reservations.reduce((s,r)=>s+r.consumed,0);
-  const totalPackages=reservations.reduce((s,r)=>s+r.packages,0);
   board.classList.add('show');
-  board.innerHTML = `<details class="reservationGroup"><summary class="reservationToggle"><span class="reservationToggleTitle">RESERVAS DO MÊS</span><span class="reservationToggleMeta"><span class="reservationCount">${reservations.length} PRÊMIO(S) · ${totalPackages} RES. · ${totalConsumed} UNID.</span><span class="reservationChevron">⌄</span></span></summary><div class="reservationList">${reservations.map(({d,entries,packages,consumed})=>`
+  board.innerHTML = `<details class="reservationGroup"><summary class="reservationToggle"><span class="reservationToggleTitle">RESERVAS DO MÊS</span><span class="reservationToggleMeta"><span class="reservationCount">${reservations.length} ITEM(NS)</span><span class="reservationChevron">⌄</span></span></summary><div class="reservationList">${reservations.map(d=>`
     <div class="reservationItem">
-      <div><strong>${esc(distributionLabel(d))}</strong><span>${esc(entries.map(r=>r.note).filter(Boolean).join(' · ') || 'RESERVA INTERNA SEM OBSERVAÇÃO')}</span></div>
-      <div class="reservationQty">${packages} RES. / ${consumed} UNID.</div>
+      <div><strong>${esc(distributionLabel(d))}</strong><span>${esc(d.reservadoNote || 'SEM OBSERVAÇÃO INFORMADA')}</span></div>
+      <div class="reservationQty">${num(d.reservado)} RESERVADO(S)</div>
     </div>`).join('')}</div></details>`;
 }
 
@@ -6910,7 +6830,7 @@ function renderDistribuicao(){
   }
   const inlineNum = (d,key,label) => `<div class="distNumStack"><input class="distInlineNum" type="number" min="0" step="1" value="${num(d[key])}" data-dist-id="${esc(d.id)}" data-key="${esc(key)}" aria-label="${esc(label || key)}">${ticketUnitSelect(d,key)}</div>`;
   tb.innerHTML = rows.map(d=>{
-    const left=leftTotal(d); const prog=programmed(d.id,'RÁDIO');
+    const left=leftTotal(d); const prog=programmed(d.id);
     const titleLine = norm(d.title || '') ? `<span>${esc(d.title)}</span>` : '';
     const periodLine = `<em class="distPeriodLine">${esc(distPeriodLabel(d))}${esc(ticketSummaryText(d))}</em>`;
     return `<tr data-dist-row="${esc(d.id)}">
@@ -6923,8 +6843,8 @@ function renderDistribuicao(){
       <td class="num">${inlineNum(d,'rua','EXTERNA')}</td>
       <td class="num">${inlineNum(d,'ar','RÁDIO')}</td>
       <td class="num">${inlineNum(d,'rs','REDES SOCIAIS')}</td>
-      <td class="num reserveSummaryDistCell">${reservationSummaryCell(d)}</td>
-      <td class="num" data-prog-id="${esc(d.id)}">${programmed(d.id,'RÁDIO')}</td>
+      <td class="num">${inlineNum(d,'reservado','RESERVADO')}</td>
+      <td class="num" data-prog-id="${esc(d.id)}">${prog}</td>
       <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${distributionBalanceCell(d)}</td>
       <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d)}</td>
       <td class="distGenerateCell"><button class="btn small distGenerateBtn" type="button" title="GERAR RODÍZIO" aria-label="GERAR RODÍZIO" onclick="generateRadioFromDist('${d.id}')">GERAR</button></td>
@@ -7070,7 +6990,7 @@ function changeStudioDay(delta){
 function filteredStudioPrizeEntries(){
   ensureStudioDateFilter();
   const date=$('studioDateFilter')?.value || resolveStudioDefaultDate();
-  return studioPrizeEntries().filter(i=>i.date === date && normalizeChannel(i.channel)==='RÁDIO');
+  return studioPrizeEntries().filter(i=>i.date === date);
 }
 function filteredStudioPromoEntries(){
   ensureStudioDateFilter();
@@ -7089,15 +7009,15 @@ function studioPeriod(slot){
 }
 function renderStudioPrizeCard(i){
   const linked = distributionById(i.distributionId) || {};
-  const title = i.title || linked.title || distributionLabel(linked) || 'SEM TÍTULO CADASTRADO';
+  const title = i.title || linked.title || 'SEM TÍTULO CADASTRADO';
+  const desc = i.notes || linked.description || 'SEM DESCRIÇÃO CADASTRADA.';
   const titleStyle = i.titleStyle || linked.titleStyle || defaultPromoTextStyle('title');
-  const status = normalizeStatus(i.status);
-  const statusCls = status === 'NO AR' ? 'green' : status === 'ENTREGUE' || status === 'REALIZADO' ? 'blue' : 'amber';
-  return `<article class="studioPrizeCard studioSummaryPrizeCard">
+  const descStyle = i.descriptionStyle || linked.descriptionStyle || defaultPromoTextStyle('desc');
+  return `<article class="studioPrizeCard">
     <div class="studioPrizeHead"><div class="studioPrizeTime">${esc(formatStudioTime(i.slot || 'SEM HORA'))}</div><div class="studioPrizeProgram">${esc(i.program || 'PROGRAMA')}</div><div class="studioPrizeDate">${esc(formatBR(i.date || ''))}</div></div>
-    <div class="studioCardBody studioSummaryBody">
+    <div class="studioCardBody">
       <div class="studioTitle" style="${promoInlineStyle(titleStyle,'title')}">${esc(title)}</div>
-      <div class="studioSummaryStatus"><span class="badge ${statusCls}">${esc(status)}</span></div>
+      <div class="studioDesc" style="${promoInlineStyle(descStyle,'desc')}">${esc(desc)}</div>
       <div class="studioCardActions"><button class="actionIcon" title="EDITAR ITEM" aria-label="EDITAR ITEM" onclick="editItem('${i.id}')"><span class="iconGlyph">✎</span></button></div>
     </div>
   </article>`;
@@ -7159,7 +7079,7 @@ function renderResumo(){
   const prog=m.items.reduce((s,i)=>s+num(i.qty),0);
   $('resumeKpis').innerHTML = `<div class="kpi"><span>TOTAL CADASTRADO</span><strong>${total}</strong></div><div class="kpi"><span>DESTINADO</span><strong>${dest}</strong></div><div class="kpi"><span>SOBRA GERAL</span><strong>${sobra}</strong></div><div class="kpi"><span>PROGRAMADO</span><strong>${prog}</strong></div>`;
   $('resumeTable').innerHTML = m.distributions.map(d=>{
-    const left=leftTotal(d), desti=allocated(d), pro=programmed(d.id,'RÁDIO');
+    const left=leftTotal(d), desti=allocated(d), pro=programmed(d.id);
     const st = left < 0 ? '<span class="badge red">ESTOURO</span>' : left === 0 ? '<span class="badge amber">ZERADO</span>' : '<span class="badge green">COM SALDO</span>';
     return `<tr><td>${esc(distributionLabel(d))}</td><td class="num">${num(d.total)}</td><td class="num">${desti}</td><td class="num">${left}</td><td class="num">${pro}</td><td>${st}</td></tr>`;
   }).join('') || `<tr><td colspan="6"><div class="empty">SEM DADOS PARA CONFERÊNCIA.</div></td></tr>`;
@@ -8050,70 +7970,54 @@ function formUnitLabel(){
 function renderDistDestinations(rows=[]){
   const list=$('distDestList');
   if(!list) return;
-  const globalUnit=distributionFormDeliveryUnit();
+  const unit=distributionFormDeliveryUnit();
+  const unitLabel=unit==='pair'?'PAR':'IND.';
   const clean=(rows||[]).filter(r=>r && r.key);
   list.innerHTML=clean.map(r=>{
     const key=r.key;
     const label=DESTINATION_LABELS[key]||key;
     const qty=num(r.qty);
-    const rowUnit=key==='reservado' ? normalizeReservationUnit(r.unit||globalUnit) : globalUnit;
-    const unitLabel=rowUnit==='pair'?'PAR':'IND.';
-    const consumed=destinationConsumed(qty,rowUnit,true);
-    const reserveUnitControl = key==='reservado'
-      ? `<select class="destUnit destReserveUnit" aria-label="TIPO DA RESERVA"><option value="unit" ${rowUnit==='unit'?'selected':''}>INDIVIDUAL</option><option value="pair" ${rowUnit==='pair'?'selected':''}>PAR</option></select>`
-      : `<div class="destUnitFixed">${unitLabel}</div><input type="hidden" class="destUnit" value="${globalUnit}">`;
-    return `<div class="destRow ${rowUnit==='pair'?'isTicket':''} ${key==='reservado'?'isReserve':''}" data-dest-row data-key="${esc(key)}" data-reserve-id="${esc(r.id||'')}">
+    const consumed=destinationConsumed(qty,unit,true);
+    return `<div class="destRow ${unit==='pair'?'isTicket':''} ${key==='reservado'?'isReserve':''}" data-dest-row data-key="${esc(key)}">
       <div class="destName">${esc(label)}</div>
       <input class="destQty" type="number" min="0" step="1" value="${qty}" aria-label="QUANTIDADE ${esc(label)}">
-      ${reserveUnitControl}
-      <div class="destConsumption">${rowUnit==='pair'?`${consumed} UNID.`:`${consumed} UNID.`}</div>
-      <input class="destReserveNote" value="${esc(r.note||'')}" placeholder="DESCREVA A SOLICITAÇÃO INTERNA / RESERVA">
+      <div class="destUnitFixed">${unitLabel}</div><input type="hidden" class="destUnit" value="${unit}">
+      <div class="destConsumption">${unit==='pair'?`${consumed} UNID.`:`${qty}`}</div>
+      <input class="destReserveNote" value="${esc(r.note||'')}" placeholder="OBSERVAÇÃO DA RESERVA">
       <button class="actionIcon danger destRemove" type="button" title="REMOVER"><span class="iconGlyph">🗑</span></button>
     </div>`;
   }).join('');
   updateDistDestinationSummary();
 }
 function collectDistDestinationValues(existing={}){
-  const globalUnit=distributionFormDeliveryUnit();
-  const result={app:0,camarote:0,camarim:0,rua:0,ar:0,rs:0,reservado:0,reservadoReal:0,ticketUnits:{},reservas:[],reservadoNote:''};
+  const unit=distributionFormDeliveryUnit();
+  const result={app:0,camarote:0,camarim:0,rua:0,ar:0,rs:0,reservado:0,ticketUnits:{},reservadoNote:existing.reservadoNote||''};
   distDestRows().forEach(row=>{
     const key=row.dataset.key;
     const qty=num(row.querySelector('.destQty')?.value);
     if(!key || qty<=0) return;
-    if(key==='reservado'){
-      const unit=normalizeReservationUnit(row.querySelector('.destReserveUnit, .destUnit')?.value || globalUnit);
-      const note=norm(row.querySelector('.destReserveNote')?.value || '');
-      result.reservas.push({id:row.dataset.reserveId||id('RSV'),qty,unit,note});
-      result.reservado+=qty;
-      result.reservadoReal+=qty*(unit==='pair'?2:1);
-      if(note) result.reservadoNote = result.reservadoNote ? `${result.reservadoNote} · ${note}` : note;
-    }else{
-      result[key]=(result[key]||0)+qty;
-      result.ticketUnits[key]=globalUnit;
-    }
+    result[key]=(result[key]||0)+qty;
+    result.ticketUnits[key]=unit;
+    if(key==='reservado') result.reservadoNote=norm(row.querySelector('.destReserveNote')?.value || result.reservadoNote || '');
   });
-  result.ticketUnits.reservado='mixed';
   return result;
 }
 function destinationsFromDistribution(d){
-  const base=['ar','app','rs','rua','camarote','camarim'].map(key=>({
-    key,qty:num(d[key]),unit:distributionDeliveryUnit(d),note:''
+  return ['ar','reservado','app','rs','rua','camarote','camarim'].map(key=>({
+    key,qty:num(d[key]),unit:distributionDeliveryUnit(d),note:key==='reservado'?(d.reservadoNote||''):''
   })).filter(r=>r.qty>0);
-  const reservas=reservationEntries(d).map(r=>({key:'reservado',id:r.id,qty:num(r.qty),unit:normalizeReservationUnit(r.unit),note:r.note||''}));
-  return base.concat(reservas);
 }
 function addDistributionDestination(key){
   const selected=key || $('distDestSelect')?.value || 'ar';
-  const existing=selected==='reservado' ? null : distDestRows().find(r=>r.dataset.key===selected);
+  const existing=distDestRows().find(r=>r.dataset.key===selected);
   if(existing){ existing.querySelector('.destQty')?.focus(); return; }
   const rows=distDestRows().map(row=>({
     key:row.dataset.key,
-    id:row.dataset.reserveId || '',
     qty:num(row.querySelector('.destQty')?.value),
-    unit:row.dataset.key==='reservado' ? normalizeReservationUnit(row.querySelector('.destReserveUnit, .destUnit')?.value || distributionFormDeliveryUnit()) : distributionFormDeliveryUnit(),
+    unit:distributionFormDeliveryUnit(),
     note:row.querySelector('.destReserveNote')?.value || ''
-  })).filter(r=>r.qty>0 || r.key==='reservado');
-  rows.push({key:selected,id:selected==='reservado'?id('RSV'):'',qty:1,unit:distributionFormDeliveryUnit(),note:''});
+  })).filter(r=>r.qty>0);
+  rows.push({key:selected,qty:1,unit:distributionFormDeliveryUnit(),note:''});
   renderDistDestinations(rows);
 }
 function updateDistDestinationSummary(){
@@ -8121,42 +8025,36 @@ function updateDistDestinationSummary(){
   const conv=$('distConversionSummary');
   if(!box) return;
   const total=formTotalUnitario();
-  const globalUnit=distributionFormDeliveryUnit();
+  const unit=distributionFormDeliveryUnit();
   const mult=distributionFormDeliveryMultiplier();
   const available=formDistributableTotal();
   const odd=formTechnicalRemainder();
   let distributedPackages=0;
-  let consumedReal=0;
   const labels=[];
   distDestRows().forEach(row=>{
     const key=row.dataset.key;
     const qty=num(row.querySelector('.destQty')?.value);
-    const unit=key==='reservado' ? normalizeReservationUnit(row.querySelector('.destReserveUnit, .destUnit')?.value || globalUnit) : globalUnit;
     const consumed=destinationConsumed(qty,unit,true);
     const c=row.querySelector('.destConsumption');
-    if(c) c.textContent=`${consumed} UNID.`;
+    if(c) c.textContent=unit==='pair'?`${consumed} UNID.`:`${qty}`;
     const fixed=row.querySelector('.destUnitFixed');
     if(fixed) fixed.textContent=unit==='pair'?'PAR':'IND.';
-    const hidden=row.querySelector('input.destUnit');
+    const hidden=row.querySelector('.destUnit');
     if(hidden) hidden.value=unit;
-    row.classList.toggle('isTicket', unit==='pair');
-    if(qty>0){
-      distributedPackages+=qty;
-      consumedReal+=consumed;
-      labels.push(`${DESTINATION_LABELS[key]||key}: ${qty} ${reservationUnitLong(unit,qty)}`);
-    }
+    if(qty>0){ distributedPackages+=qty; labels.push(`${DESTINATION_LABELS[key]||key}: ${qty} ${unit==='pair'?(qty===1?'PAR':'PARES'):'UNID.'}`); }
   });
+  const consumedReal=distributedPackages*mult;
+  const saldoPackages=available-distributedPackages;
   const saldoReal=total-consumedReal;
-  const saldoPackages=Math.floor(saldoReal/mult);
-  box.classList.toggle('bad',saldoReal<0);
-  const unitName=globalUnit==='pair'?'PARES':'UNIDADES';
-  const distributedLabel=`${distributedPackages} REGISTRO(S)`;
+  box.classList.toggle('bad',saldoPackages<0 || saldoReal<0);
+  const unitName=unit==='pair'?'PARES':'UNIDADES';
+  const distributedLabel=`${distributedPackages} ${unitName}`;
   const saldoLabel=`${saldoPackages} ${unitName}`;
-  const consumedLabel=`${consumedReal} UNIDADES CONSUMIDAS`;
-  const saldoRealLabel=globalUnit==='pair'?` / ${saldoReal} UNIDADES RESTANTES`:` / ${saldoReal} UNIDADES RESTANTES`;
+  const consumedLabel=unit==='pair'?`${consumedReal} UNIDADES CONSUMIDAS`:`${consumedReal} UNIDADES`;
+  const saldoRealLabel=unit==='pair'?` / ${saldoReal} UNIDADES RESTANTES`:'';
   box.innerHTML = labels.length
     ? `<strong>${esc(labels.join(' · '))}</strong><span>TOTAL UNITÁRIO ${total} · DISTRIBUÍVEL ${available} ${unitName} · DISTRIBUÍDO ${distributedLabel} · ${consumedLabel} · SALDO ${saldoLabel}${saldoRealLabel}${odd?` · SOBRA TÉCNICA ${odd} UNID.`:''}</span>`
-    : `<strong>NENHUM DESTINO ADICIONADO</strong><span>TOTAL UNITÁRIO ${total} · DISTRIBUÍVEL ${available} ${unitName} · DISTRIBUÍDO 0 · SALDO ${available} ${unitName}${odd?` · SOBRA TÉCNICA ${odd} UNID.`:''}</span>`;
+    : `<strong>NENHUM DESTINO ADICIONADO</strong><span>TOTAL UNITÁRIO ${total} · DISTRIBUÍVEL ${available} ${unitName} · DISTRIBUÍDO 0 ${unitName} · SALDO ${available} ${unitName}${odd?` · SOBRA TÉCNICA ${odd} UNID.`:''}</span>`;
   if(conv){
     const cells=conv.querySelectorAll('div');
     const setCell=(idx,label,value,sub='')=>{
@@ -8165,11 +8063,11 @@ function updateDistDestinationSummary(){
       cell.innerHTML=`<span>${esc(label)}</span><strong>${esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}`;
     };
     setCell(0,'TOTAL UNITÁRIO',String(total));
-    setCell(1,'MODO DE ENTREGA',globalUnit==='pair'?'PAR':'INDIVIDUAL');
+    setCell(1,'MODO DE ENTREGA',unit==='pair'?'PAR':'INDIVIDUAL');
     setCell(2,'DISTRIBUÍVEL',`${available} ${unitName}`, odd?`${odd} UNID. SEM PAR`:'' );
     setCell(3,'DISTRIBUÍDO',distributedLabel, consumedLabel);
-    setCell(4,'SALDO',saldoLabel, `${saldoReal} UNIDADES RESTANTES`);
-    conv.classList.toggle('bad',saldoReal<0);
+    setCell(4,'SALDO',saldoLabel, unit==='pair'?`${saldoReal} UNIDADES RESTANTES`:'' );
+    conv.classList.toggle('bad',saldoPackages<0 || saldoReal<0);
   }
 }
 
@@ -8186,9 +8084,8 @@ function updateDistPairsPreview(){
   }
   const rows=distDestRows().map(row=>({
     key:row.dataset.key,
-    id:row.dataset.reserveId || '',
     qty:num(row.querySelector('.destQty')?.value),
-    unit:row.dataset.key==='reservado' ? normalizeReservationUnit(row.querySelector('.destReserveUnit, .destUnit')?.value || unit) : unit,
+    unit,
     note:row.querySelector('.destReserveNote')?.value || ''
   }));
   if(rows.length) renderDistDestinations(rows);
@@ -8209,10 +8106,6 @@ function updateDistributionRow(distId){
   updateReturnColumn(distId);
   const pairCell = document.querySelector(`[data-pairs-id="${CSS.escape(distId)}"]`);
   if(pairCell) pairCell.innerHTML = ticketPairsCell(d);
-  const reserveCell = document.querySelector(`[data-dist-row="${CSS.escape(distId)}"] .reserveSummaryDistCell`);
-  if(reserveCell) reserveCell.innerHTML = reservationSummaryCell(d);
-  const progCell = document.querySelector(`[data-prog-id="${CSS.escape(distId)}"]`);
-  if(progCell) progCell.textContent = programmed(distId,'RÁDIO');
   renderReservations();
   renderStats();
   renderResumo();
@@ -8253,20 +8146,11 @@ function saveDistributionFromForm(generate=false){
   if(!prize){ alert('INFORME O PRÊMIO.'); return null; }
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return null; }
   const destValues=collectDistDestinationValues(existing);
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:textNorm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoReal:destValues.reservadoReal||0,reservas:destValues.reservas||[],reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:textNorm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
-  d.reservas=normalizeReservationEntries(d);
-  d.reservado=reservationPackageTotal(d);
-  d.reservadoReal=reservationConsumed(d);
-  const distributedPackages=allocatedPackages(d);
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:textNorm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:textNorm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const distributedPackages=Object.entries(destValues).filter(([k])=>['app','camarote','camarim','rua','ar','rs','reservado'].includes(k)).reduce((sum,[k,v])=>sum+num(v),0);
   const availablePackages=totalDeliverable(d);
   const consumedReal=allocated(d);
-  if(num(d.total)>0 && consumedReal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.
-
-TOTAL UNITÁRIO: ${num(d.total)}
-MODO: ${distributionDeliveryLabel(d)}
-DISPONÍVEL PARA DISTRIBUIR: ${availablePackages}
-DISTRIBUÍDO: ${distributedPackages}
-CONSUMIDO REAL: ${consumedReal}`); return null; }
+  if(num(d.total)>0 && distributedPackages>availablePackages){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.\n\nTOTAL UNITÁRIO: ${num(d.total)}\nMODO: ${distributionDeliveryLabel(d)}\nDISPONÍVEL PARA DISTRIBUIR: ${availablePackages}\nDISTRIBUÍDO: ${distributedPackages}\nCONSUMIDO REAL: ${consumedReal}`); return null; }
   const idx=monthData().distributions.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
   syncDistributionToLinkedRadioItems(d);
@@ -8331,6 +8215,9 @@ $('distTable').addEventListener('change',e=>{
     }
     return;
   }
+  if(input.dataset.key !== 'reservado') return;
+  if(num(input.value) > 0) openReserveDrawer(d.id);
+  else { d.reservadoNote=''; saveState(true); updateDistributionRow(d.id); }
 });
 $('saveReserveNoteBtn').addEventListener('click',saveReserveNote);
 if($('saveRadioPlannerBtn')) $('saveRadioPlannerBtn').addEventListener('click',saveRadioPlanner);
@@ -8630,7 +8517,7 @@ function toCsv(){
   const lines=[];
   lines.push(['TIPO','DATA','CAMPO 1','CAMPO 2','CAMPO 3','QTD/TOTAL','CANAL/DESTINO','STATUS/SALDO'].map(csvCell).join(';'));
   monthData().items.forEach(i=>lines.push(['PROGRAMAÇÃO',formatBR(i.date),i.program,i.slot,i.prize,i.title||'',i.notes||'',i.qty,i.channel,i.status].map(csvCell).join(';')));
-  monthData().distributions.forEach(d=>lines.push(['DISTRIBUIÇÃO',distributionLabel(d),'INÍCIO',distStartDate(d),'TÉRMINO',distEndDate(d),'TOTAL',d.total,'APP',d.app,'CAMAROTE',d.camarote,'CAMARIM',d.camarim,'EXTERNA',d.rua,'RÁDIO',d.ar,'REDES SOCIAIS',d.rs,'RESERVADO',reservationPackageTotal(d),'RESERVA UNID.',reservationConsumed(d),'OBS RESERVA',reservationEntries(d).map(r=>`${r.qty} ${reservationUnitText(r.unit)} ${r.note||''}`).join(' | '),'PROG RADIO',programmed(d.id,'RÁDIO'),'SALDO',leftTotal(d)].map(csvCell).join(';')));
+  monthData().distributions.forEach(d=>lines.push(['DISTRIBUIÇÃO',distributionLabel(d),'INÍCIO',distStartDate(d),'TÉRMINO',distEndDate(d),'TOTAL',d.total,'APP',d.app,'CAMAROTE',d.camarote,'CAMARIM',d.camarim,'EXTERNA',d.rua,'RÁDIO',d.ar,'REDES SOCIAIS',d.rs,'RESERVADO',d.reservado,'OBS RESERVA',d.reservadoNote||'','PROG',programmed(d.id),'SALDO',leftTotal(d)].map(csvCell).join(';')));
   monthData().promos.forEach(p=>lines.push(['PROMOÇÕES',p.name||p.title||'',formatBR(p.startDate||''),formatBR(p.drawDate),p.drawTime||'',p.local||'',p.description||'',p.imageData ? 'COM IMAGEM' : 'SEM IMAGEM'].map(csvCell).join(';')));
   return '\ufeff'+lines.join('\n');
 }
