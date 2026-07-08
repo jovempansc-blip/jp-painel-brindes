@@ -4,29 +4,82 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Merchan Rádios — Jovem Pan Floripa</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js">setEmptyDateFieldsToToday();
-</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <style>
-:root{--red:#c9002b;--ink:#171c26;--muted:#667283;--line:#dce2eb;--shadow:0 16px 34px rgba(17,23,34,.08)}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;font:900 13px/1.35 Inter,Arial,sans-serif;color:var(--ink);background:#f5f7fb url("assets/bg-estudio.jpg") center/cover fixed}
-.wrap{max-width:1180px;margin:0 auto;padding:18px}
-.logoBar{width:min(560px,100%);display:flex;align-items:center;justify-content:center;padding:10px 18px;margin:0 auto 18px;border:1px solid rgba(223,229,236,.92);border-radius:20px;background:rgba(255,255,255,.86);box-shadow:0 10px 24px rgba(16,24,40,.055);backdrop-filter:blur(8px)}
-.logoBar img{display:block;width:min(100%,460px);max-height:58px;height:auto;object-fit:contain}
-.panel{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);overflow:hidden}
-.head{padding:18px 22px;border-bottom:1px solid var(--line);background:#fff}h1{font-size:24px;margin:0;letter-spacing:-.04em}p{margin:6px 0 0;color:var(--muted)}
-.body{padding:18px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:18px;align-items:start}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:grid;gap:5px}.full{grid-column:1/-1}label{font-size:10px;color:#697386;letter-spacing:.06em}
-.control{min-height:40px;border:1px solid #dce2eb;border-radius:14px;background:#fff;padding:8px 11px;font:900 13px Inter,Arial;color:var(--ink);text-transform:uppercase}textarea.control{min-height:150px;text-transform:none;font-weight:750;line-height:1.45}
-.readHours{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}.readHour{position:relative}.readHour input{position:absolute;opacity:0}.readHour span{min-height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #dce2eb;background:#fff;border-radius:10px;color:#667283;font-size:10px;font-weight:1000;cursor:pointer}.readHour input:checked+span{background:var(--red);border-color:var(--red);color:#fff}
-.styleGrid{display:grid;grid-template-columns:minmax(0,1fr) 80px 54px 80px;gap:7px;align-items:end;padding:8px;border:1px solid #e4e8ef;background:#f8f9fc;border-radius:12px}.styleGrid .control{min-height:32px;font-size:11px;padding:6px 8px}.styleGrid input[type=color]{padding:3px}
-.preview{position:sticky;top:18px;border:1px solid #dfe5ec;border-radius:20px;background:#f8f9fc;padding:12px}.previewLabel{font-size:10px;color:#697386;letter-spacing:.06em;margin-bottom:8px}.previewCard{background:#fff;border:1px solid #e3e8ef;border-radius:18px;overflow:hidden;box-shadow:0 8px 20px rgba(17,23,34,.04)}.previewTitle{border-left:5px solid var(--red);padding:16px 18px;font-size:28px;line-height:1.08;letter-spacing:-.04em}.previewDesc{background:#f3f6fa;border-top:1px solid #e1e7ee;padding:16px 18px;font-size:17px;line-height:1.45;text-transform:none;font-weight:650;white-space:pre-wrap}
-.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.btn{min-height:40px;border:1px solid #dce2eb;border-radius:14px;background:#fff;padding:9px 14px;font:1000 12px Inter,Arial;cursor:pointer}.btn.red{background:var(--red);border-color:var(--red);color:#fff}
-.table{width:100%;border-collapse:separate;border-spacing:0;margin-top:16px;font-size:12px}.table th,.table td{border-bottom:1px solid var(--line);padding:10px;text-align:left}.badge{border:1px solid #ccefdc;background:#effaf4;color:#137947;border-radius:999px;padding:4px 8px;font-size:10px}
-@media(max-width:900px){.layout,.grid{grid-template-columns:1fr}.preview{position:relative;top:auto}.readHours{grid-template-columns:repeat(4,1fr)}}
-
-/* AJUSTE FINAL — ESCALA COMPACTA E RESPONSIVA */
-.wrap{padding:14px!important}.logoBar{max-width:500px!important;padding:8px 14px!important;margin-bottom:14px!important;border-radius:18px!important}.logoBar img{max-height:50px!important;max-width:420px!important}.head,.top{padding:12px 14px!important;margin-bottom:12px!important;border-radius:18px!important}.head h1,.brand h1,h1{font-size:21px!important}.controls{gap:8px!important;margin-bottom:12px!important}input,select,button,.control,.btn{min-height:34px!important;padding:7px 10px!important;border-radius:11px!important;font-size:11px!important}.panel{border-radius:20px!important;padding:13px!important;margin-bottom:12px!important}.panel h2{font-size:16px!important}.grid{gap:9px!important}.kpi{border-radius:15px!important;padding:11px!important}.kpi strong{font-size:24px!important}.item,.resultCard{gap:10px!important;padding:10px 12px!important;border-radius:15px!important}.time{font-size:22px!important}.info strong{font-size:12px!important}.info span{font-size:10px!important}.badge,.result{min-height:23px!important;font-size:9px!important;padding:0 8px!important}.titleBox,.descBox{border-radius:16px!important;padding:14px 18px!important}.titleBox h2{font-size:23px!important}.descBox p{font-size:13px!important}.body{padding:14px!important}.layout{gap:12px!important}.preview{padding:10px!important;border-radius:16px!important}.previewTitle{font-size:22px!important;padding:13px 15px!important}.previewDesc{font-size:14px!important;padding:13px 15px!important}.readHour span{min-height:25px!important;font-size:9px!important}.styleGrid{gap:6px!important;padding:7px!important}.table th,.table td{padding:8px!important;font-size:11px!important}@media(max-width:900px){.wrap{padding:10px!important}.layout,.grid{grid-template-columns:1fr!important}.logoBar img{max-width:320px!important}.head,.top{display:grid!important}}
-
+:root{--red:#c9002b;--red-dark:#8d001d;--ink:#171c26;--muted:#667283;--line:#dce2eb;--paper:#fff;--soft:#f6f8fb;--silver:#eef1f5;--green:#137947;--orange:#b56200;--danger:#ad1728;--shadow:0 16px 34px rgba(17,23,34,.08);--font:"Segoe UI Variable","Segoe UI",Inter,Arial,sans-serif}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{margin:0;font:900 13px/1.35 var(--font);color:var(--ink);background:linear-gradient(180deg,rgba(247,249,252,.92),rgba(244,247,251,.96)),url("assets/bg-estudio.jpg") center/cover fixed;text-transform:uppercase}
+button,input,select,textarea{font:inherit;text-transform:uppercase;outline:none}
+textarea{text-transform:none}
+button{cursor:pointer;border:0}
+.wrap{max-width:1220px;margin:0 auto;padding:16px}
+.logoBar{width:min(520px,100%);display:flex;align-items:center;justify-content:center;padding:8px 14px;margin:0 auto 14px;border:1px solid rgba(223,229,236,.92);border-radius:18px;background:rgba(255,255,255,.86);box-shadow:0 10px 24px rgba(16,24,40,.05);backdrop-filter:blur(8px)}
+.logoBar img{display:block;width:min(100%,420px);max-height:50px;height:auto;object-fit:contain}
+.panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.head{padding:15px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#fbfcff)}
+h1{font-size:22px;margin:0;letter-spacing:-.04em}
+p{margin:5px 0 0;color:var(--muted);font-size:11px;letter-spacing:.02em}
+.body{padding:16px}
+.opecLayout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.formBlock{border:1px solid #e3e8ef;border-radius:18px;background:rgba(248,250,252,.75);padding:12px;margin-bottom:12px}
+.blockTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;color:#4f5968;font-size:11px;letter-spacing:.06em}
+.blockTitle strong{color:var(--ink);font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid.three{grid-template-columns:1fr 1fr 1fr}
+.field{display:grid;gap:5px;min-width:0}
+.full{grid-column:1/-1}
+label{font-size:9.5px;color:#667283;letter-spacing:.07em}
+.control{width:100%;min-height:38px;border:1px solid #dce2eb;border-radius:13px;background:#fff;padding:8px 11px;color:var(--ink);font-weight:1000}
+.control:focus{border-color:rgba(201,0,43,.44);box-shadow:0 0 0 4px rgba(201,0,43,.08)}
+textarea.control{min-height:154px;line-height:1.45;font-weight:750;resize:vertical}
+.helper{font-size:9px;color:#7a8493;line-height:1.35;text-transform:uppercase;font-weight:900;margin-top:4px}
+.readHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.readHead .helper{margin:0}
+.readActions{display:flex;gap:6px;align-items:center;justify-content:flex-end}
+.miniBtn{min-height:26px;border:1px solid #dce2eb;border-radius:9px;background:#fff;color:#596475;padding:5px 8px;font-size:9px;font-weight:1000}
+.readHours{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.readHour{position:relative;display:flex}
+.readHour input{position:absolute;opacity:0;pointer-events:none}
+.readHour span{width:100%;min-height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #dce2eb;background:#fff;border-radius:10px;color:#667283;font-size:10px;font-weight:1000;cursor:pointer}
+.readHour input:checked+span{background:var(--red);border-color:var(--red);color:#fff}
+.readHour.disabled span{background:#f1f3f6;color:#a1a9b5;border-style:dashed;cursor:not-allowed}
+.advanced{border:1px solid #e3e8ef;border-radius:15px;background:#fff;margin-top:10px;overflow:hidden}
+.advanced summary{list-style:none;cursor:pointer;padding:10px 12px;color:#667283;font-size:10px;font-weight:1000;letter-spacing:.06em}
+.advanced summary::-webkit-details-marker{display:none}
+.styleGrid{display:grid;grid-template-columns:minmax(0,1fr) 74px 52px 78px;gap:7px;align-items:end;padding:0 10px 10px}
+.styleGrid .control{min-height:31px;font-size:11px;padding:6px 8px;border-radius:10px}
+.styleGrid input[type=color]{padding:3px}
+.preview{position:sticky;top:16px;border:1px solid #dfe5ec;border-radius:20px;background:#f8f9fc;padding:12px}
+.previewLabel{font-size:10px;color:#697386;letter-spacing:.06em;margin-bottom:8px}
+.previewMeta{display:grid;gap:5px;margin-bottom:10px;color:#556171;font-size:10px;line-height:1.25}
+.previewMeta span{display:flex;justify-content:space-between;gap:10px;border:1px solid #e3e8ef;background:#fff;border-radius:10px;padding:6px 8px}
+.previewMeta strong{color:var(--ink);text-align:right}
+.previewCard{background:#fff;border:1px solid #e3e8ef;border-radius:18px;overflow:hidden;box-shadow:0 8px 20px rgba(17,23,34,.04)}
+.previewTitle{border-left:5px solid var(--red);padding:14px 16px;font-size:24px;line-height:1.08;letter-spacing:-.04em}
+.previewDesc{background:#f3f6fa;border-top:1px solid #e1e7ee;padding:14px 16px;font-size:15px;line-height:1.45;text-transform:none;font-weight:650;white-space:pre-wrap}
+.readEstimate{margin-top:8px;border:1px solid #e3e8ef;border-radius:12px;background:#fff;padding:8px 10px;color:#596475;font-size:10px}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+.btn{min-height:38px;border:1px solid #dce2eb;border-radius:13px;background:#fff;color:var(--ink);padding:8px 13px;font:1000 11px var(--font)}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.danger{background:#fff1f3;border-color:#f3b5c0;color:var(--danger)}
+.listHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;margin-bottom:8px}
+.listHead strong{font-size:13px}
+.listFilters{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+.listFilters .control{min-height:32px;font-size:10px;border-radius:11px;padding:6px 9px}
+.tableWrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:18px;background:#fff}
+.table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px;min-width:980px}
+.table th,.table td{border-bottom:1px solid var(--line);padding:10px;text-align:left;vertical-align:middle}
+.table th{background:#f8f9fc;color:#596475;font-size:10px;letter-spacing:.06em}
+.table tr:last-child td{border-bottom:0}
+.badge{display:inline-flex;align-items:center;min-height:23px;border:1px solid #ccefdc;background:#effaf4;color:#137947;border-radius:999px;padding:0 8px;font-size:9px;font-weight:1000;white-space:nowrap}
+.badge.pending{background:#fff7ec;border-color:#ffd7a8;color:#9a5600}
+.badge.cancel{background:#fff1f3;border-color:#f3b5c0;color:#ad1728}
+.tableActions{display:flex;gap:5px;justify-content:flex-end}
+.iconBtn{width:27px;min-width:27px;min-height:27px;border-radius:9px;border:1px solid #e1e5ec;background:#eef1f5;color:#171c26}
+.empty{padding:26px;text-align:center;color:#667283;border:1px dashed #cfd7e2;border-radius:14px;background:#fbfcff;font-size:11px}
+@media(max-width:960px){.opecLayout,.grid,.grid.three{grid-template-columns:1fr}.preview{position:relative;top:auto}.readHours{grid-template-columns:repeat(4,1fr)}.styleGrid{grid-template-columns:1fr 74px 52px 78px}}
 </style>
 </head>
 <body>
@@ -35,64 +88,129 @@
   <div class="panel">
     <div class="head"><h1>MERCHAN RÁDIOS</h1><p>CADASTRO DA OPEC PARA ENTRADA DIRETA NOS PAINÉIS DE ESTÚDIO.</p></div>
     <div class="body">
-      <div class="layout">
+      <div class="opecLayout">
         <form id="merchanForm">
           <input type="hidden" id="merchanId">
-          <div class="grid">
-            <div class="field"><label>EMISSORA</label><select class="control" id="station"><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
-            <div class="field"><label>PROGRAMA</label><select class="control" id="program"></select></div>
-            <div class="field"><label>INÍCIO</label><input class="control" type="date" id="startDate" required></div>
-            <div class="field"><label>FIM</label><input class="control" type="date" id="endDate" required></div>
-            <div class="field full"><label>HORÁRIOS DE LEITURA DA PAUTA</label><div class="readHours" id="readHours"></div></div>
-            <div class="field full"><label>TÍTULO</label><input class="control" id="title" required></div>
-            <div class="field full"><label>ESTILO DO TÍTULO</label><div class="styleGrid"><select class="control" id="titleFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option><option>Impact</option></select><input class="control" type="number" id="titleSize" min="18" max="54" value="32"><input class="control" type="color" id="titleColor" value="#171c26"><select class="control" id="titleBold"><option value="1">NEGRITO</option><option value="0">NORMAL</option></select></div></div>
-            <div class="field full"><label>TEXTO / PAUTA DO MERCHAN</label><textarea class="control" id="text" required></textarea></div>
-            <div class="field full"><label>ESTILO DA DESCRIÇÃO</label><div class="styleGrid"><select class="control" id="descFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option></select><input class="control" type="number" id="descSize" min="12" max="36" value="18"><input class="control" type="color" id="descColor" value="#465161"><select class="control" id="descBold"><option value="0">NORMAL</option><option value="1">NEGRITO</option></select></div></div>
-          </div>
-          <div class="actions"><button class="btn" type="reset">LIMPAR</button><button class="btn red" type="submit">SALVAR MERCHAN</button></div>
+
+          <section class="formBlock">
+            <div class="blockTitle"><strong>ONDE ENTRA</strong><span>EMISSORA, PROGRAMA, PERÍODO E HORÁRIOS</span></div>
+            <div class="grid">
+              <div class="field"><label>EMISSORA</label><select class="control" id="station" required><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
+              <div class="field"><label>PROGRAMA</label><select class="control" id="program" required></select><div class="helper" id="programHint">SELECIONE A EMISSORA PARA CARREGAR OS PROGRAMAS.</div></div>
+              <div class="field"><label>INÍCIO</label><input class="control" type="date" id="startDate" required></div>
+              <div class="field"><label>FIM</label><input class="control" type="date" id="endDate" required></div>
+              <div class="field full">
+                <div class="readHead">
+                  <label>HORÁRIOS DE LEITURA DA PAUTA</label>
+                  <div class="readActions"><button class="miniBtn" type="button" id="selectAllHoursBtn">TODOS</button><button class="miniBtn" type="button" id="clearHoursBtn">LIMPAR</button></div>
+                </div>
+                <div class="readHours" id="readHours"></div>
+                <div class="helper" id="hoursHint">OS HORÁRIOS SÃO GERADOS A PARTIR DO PROGRAMA CADASTRADO NA ABA HORÁRIOS.</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="formBlock">
+            <div class="blockTitle"><strong>O QUE O LOCUTOR LÊ</strong><span>TÍTULO CURTO E TEXTO DA PAUTA</span></div>
+            <div class="grid">
+              <div class="field full"><label>TÍTULO PARA O ESTÚDIO</label><input class="control" id="title" required maxlength="90"><div class="helper">USE UM TÍTULO CURTO PARA IDENTIFICAÇÃO RÁPIDA NO PAINEL.</div></div>
+              <div class="field full"><label>TEXTO / PAUTA DO MERCHAN</label><textarea class="control" id="text" required></textarea><div class="helper" id="readingTime">TEMPO ESTIMADO: 0S</div></div>
+            </div>
+
+            <details class="advanced">
+              <summary>APARÊNCIA AVANÇADA</summary>
+              <div class="field full"><label>ESTILO DO TÍTULO</label><div class="styleGrid"><select class="control" id="titleFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option><option>Impact</option></select><input class="control" type="number" id="titleSize" min="18" max="54" value="32"><input class="control" type="color" id="titleColor" value="#171c26"><select class="control" id="titleBold"><option value="1">NEGRITO</option><option value="0">NORMAL</option></select></div></div>
+              <div class="field full"><label>ESTILO DA DESCRIÇÃO</label><div class="styleGrid"><select class="control" id="descFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option></select><input class="control" type="number" id="descSize" min="12" max="36" value="18"><input class="control" type="color" id="descColor" value="#465161"><select class="control" id="descBold"><option value="0">NORMAL</option><option value="1">NEGRITO</option></select></div></div>
+            </details>
+
+            <div class="actions"><button class="btn" type="reset" id="resetBtn">LIMPAR</button><button class="btn red" type="submit">SALVAR MERCHAN</button></div>
+          </section>
         </form>
+
         <aside class="preview">
           <div class="previewLabel">PREVIEW NO PAINEL DO ESTÚDIO</div>
+          <div class="previewMeta">
+            <span>EMISSORA <strong id="previewStation">JOVEM PAN - 101,7</strong></span>
+            <span>PROGRAMA <strong id="previewProgram">SELECIONE</strong></span>
+            <span>PERÍODO <strong id="previewPeriod">--</strong></span>
+            <span>HORÁRIOS <strong id="previewHours">--</strong></span>
+          </div>
           <div class="previewCard">
             <div class="previewTitle" id="previewTitle">TÍTULO DO MERCHAN</div>
             <div class="previewDesc" id="previewDesc">TEXTO DO MERCHAN PARA LEITURA NO AR.</div>
           </div>
+          <div class="readEstimate" id="previewEstimate">TEMPO ESTIMADO: 0S</div>
         </aside>
       </div>
-      <table class="table"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>TÍTULO</th><th>PERÍODO</th><th>HORÁRIOS</th></tr></thead><tbody id="list"></tbody></table>
+
+      <div class="listHead">
+        <strong>MERCHANS CADASTRADOS</strong>
+        <div class="listFilters">
+          <select class="control" id="listStationFilter"><option value="">TODAS AS EMISSORAS</option><option value="JP1017">JOVEM PAN</option><option value="JPNEWS983">JP NEWS</option></select>
+        </div>
+      </div>
+      <div class="tableWrap"><table class="table"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>TÍTULO</th><th>PERÍODO</th><th>HORÁRIOS</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="list"></tbody></table></div>
     </div>
   </div>
 </div>
+
 <script>
 const FIREBASE_CONFIG={"apiKey":"AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE","authDomain":"jp-painel-brindes.firebaseapp.com","databaseURL":"https://jp-painel-brindes-default-rtdb.firebaseio.com","projectId":"jp-painel-brindes","storageBucket":"jp-painel-brindes.firebasestorage.app","messagingSenderId":"843544648278","appId":"1:843544648278:web:066c8e64e17da046cf79f7","measurementId":"G-VB6Y2TS796"};
 const FIREBASE_ROOT_PATH="jp-painel-brindes/state";
 firebase.initializeApp(FIREBASE_CONFIG);
 const ref=firebase.database().ref(FIREBASE_ROOT_PATH);
 const $=id=>document.getElementById(id);
+const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
 function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function setEmptyDateFieldsToToday(){document.querySelectorAll('input[type="date"]').forEach(i=>{if(!i.value)i.value=todayISO();});}
 const norm=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
+const textNorm=v=>String(v??'').trim();
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
-const today=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`};
-const HOURS=Array.from({length:17},(_,i)=>String(i+6).padStart(2,'0'));
+const today=()=>todayISO();
 let state={currentMonth:today().slice(0,7),months:{},programSchedules:[]};
-function monthData(){state.months ||= {}; state.currentMonth ||= today().slice(0,7); state.months[state.currentMonth] ||= {label:state.currentMonth,items:[],promos:[],distributions:[]}; return state.months[state.currentMonth];}
-function stationLabel(v){return v==='JPNEWS983'?'JOVEM PAN NEWS - 98,3':'JOVEM PAN - 101,7'}
-function schedules(){return state.programSchedules||[]}
-function fillPrograms(){const st=$('station').value;const current=$('program').value;const names=[...new Set(schedules().filter(p=>!p.station||p.station===st).map(p=>norm(p.name)).filter(Boolean))].sort();$('program').innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');if(names.includes(current))$('program').value=current}
-function fillHours(){const box=$('readHours');box.innerHTML=HOURS.map(h=>`<label class="readHour"><input type="checkbox" value="${h}" ${['07','08','09','10','11','14','15','16','17','20'].includes(h)?'checked':''}><span>${h}H</span></label>`).join('')}
-function selectedHours(){return Array.from(document.querySelectorAll('#readHours input:checked')).map(i=>i.value)}
-function styleFrom(prefix){return {font:$(prefix+'Font').value,size:Number($(prefix+'Size').value),color:$(prefix+'Color').value,bold:$(prefix+'Bold').value==='1'}}
-function applyStyle(el,style,type){el.style.fontFamily=`'${style.font}', Arial, sans-serif`;el.style.fontSize=(style.size|| (type==='title'?32:18))+'px';el.style.color=style.color;el.style.fontWeight=style.bold?'1000':(type==='title'?'950':'650')}
-function updatePreview(){const title=norm($('title').value)||'TÍTULO DO MERCHAN';const desc=$('text').value.trim()||'TEXTO DO MERCHAN PARA LEITURA NO AR.';$('previewTitle').textContent=title;$('previewDesc').textContent=desc;applyStyle($('previewTitle'),styleFrom('title'),'title');applyStyle($('previewDesc'),styleFrom('desc'),'desc')}
-function save(){if(countStateRecords(state)===0){console.warn('ENVIO BLOQUEADO: BASE OPEC VAZIA.');return Promise.resolve();}return ref.set({state,updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'MERCHAN_RADIOS',user:'OPEC',version:'FIREBASE_RTDB_V1'})}
-function render(){fillPrograms();const rows=(monthData().promos||[]).filter(p=>norm(p.kind)==='MERCHAN').sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));$('list').innerHTML=rows.length?rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.program||'')}</td><td>${esc(p.name||p.title||'')}</td><td><span class="badge">${esc(p.startDate||'')} A ${esc(p.drawDate||p.endDate||'')}</span></td><td>${esc((p.readHours||[]).map(h=>h+'H').join(', '))}</td></tr>`).join(''):'<tr><td colspan="5">NENHUM MERCHAN CADASTRADO.</td></tr>'}
+function ensureMonth(key){state.months ||= {}; state.months[key] ||= {label:key,items:[],promos:[],distributions:[]}; return state.months[key];}
+function monthData(key=state.currentMonth){state.currentMonth ||= today().slice(0,7); return ensureMonth(key||state.currentMonth);}
+function countStateRecords(data){if(!data||!data.months)return 0;const m=Object.values(data.months).reduce((t,x)=>t+(x.items||[]).length+(x.promos||[]).length+(x.distributions||[]).length,0);return m+(data.schedules||[]).length+(data.programSchedules||[]).length;}
+function stationLabel(v){return v==='JPNEWS983'?'JOVEM PAN NEWS - 98,3':'JOVEM PAN - 101,7';}
+function schedules(){state.programSchedules ||= []; return state.programSchedules;}
+function dayIndex(date){const [y,m,d]=String(date||today()).split('-').map(Number);return new Date(y,(m||1)-1,d||1).getDay();}
+function minutesOf(t){const m=String(t||'00:00').match(/(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):0;}
+function programRows(){const st=$('station').value;return schedules().filter(p=>(p.station||'JP1017')===st).sort((a,b)=>minutesOf(a.startTime)-minutesOf(b.startTime)||norm(a.name).localeCompare(norm(b.name)));}
+function fillPrograms(){const current=norm($('program').value);const names=[...new Set(programRows().map(p=>norm(p.name)).filter(Boolean))];$('program').innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');if(names.includes(current))$('program').value=current;const hint=$('programHint');hint.textContent=names.length?'PROGRAMAS CARREGADOS DA ABA HORÁRIOS.':'NENHUM PROGRAMA CADASTRADO PARA ESTA EMISSORA NA ABA HORÁRIOS.';fillHours();updatePreview();}
+function programSelectedRows(){const program=norm($('program').value);if(!program)return[];return programRows().filter(p=>norm(p.name)===program);}
+function hoursForSelectedProgram(){const start=$('startDate').value||today();const end=$('endDate').value||start;const rows=programSelectedRows();const hours=new Set();rows.forEach(p=>{const days=Array.isArray(p.days)?p.days.map(Number):[1,2,3,4,5];let cursor=new Date(start+'T12:00:00');const limit=new Date(end+'T12:00:00');while(cursor<=limit){if(days.includes(cursor.getDay())){const sh=Math.floor(minutesOf(p.startTime)/60);const eh=Math.ceil(minutesOf(p.endTime)/60);for(let h=sh;h<eh;h++){if(h>=6&&h<=22)hours.add(String(h).padStart(2,'0'));}}cursor.setDate(cursor.getDate()+1);}});return [...hours].sort();}
+function fillHours(selected=[]){const box=$('readHours');const hours=hoursForSelectedProgram();if(!hours.length){box.innerHTML='<div class="empty">SELECIONE UM PROGRAMA COM HORÁRIOS CADASTRADOS.</div>';$('hoursHint').textContent='CADASTRE OU AJUSTE O PROGRAMA NA ABA HORÁRIOS DO PAINEL PRINCIPAL.';return;}const selectedSet=new Set(selected.length?selected:hours);box.innerHTML=hours.map(h=>`<label class="readHour"><input type="checkbox" value="${h}" ${selectedSet.has(h)?'checked':''}><span>${h}H</span></label>`).join('');$('hoursHint').textContent='MOSTRANDO APENAS HORÁRIOS VINCULADOS AO PROGRAMA SELECIONADO.';$$('#readHours input').forEach(i=>i.addEventListener('change',updatePreview));updatePreview();}
+function selectedHours(){return $$('#readHours input:checked').map(i=>i.value).sort();}
+function styleFrom(prefix){return {font:$(prefix+'Font').value,size:Number($(prefix+'Size').value),color:$(prefix+'Color').value,bold:$(prefix+'Bold').value==='1'};}
+function applyStyle(el,style,type){el.style.fontFamily=`'${style.font}', Arial, sans-serif`;el.style.fontSize=(style.size||(type==='title'?32:18))+'px';el.style.color=style.color;el.style.fontWeight=style.bold?'1000':(type==='title'?'950':'650');}
+function readingSeconds(){const words=textNorm($('text').value).split(/\s+/).filter(Boolean).length;return Math.max(0,Math.ceil(words/2.6));}
+function formatBR(v){if(!v)return'--';const [y,m,d]=String(v).split('-');return `${d}/${m}/${y}`;}
+function updatePreview(){const title=norm($('title').value)||'TÍTULO DO MERCHAN';const desc=textNorm($('text').value)||'TEXTO DO MERCHAN PARA LEITURA NO AR.';$('previewTitle').textContent=title;$('previewDesc').textContent=desc;$('previewStation').textContent=stationLabel($('station').value);$('previewProgram').textContent=norm($('program').value)||'SELECIONE';$('previewPeriod').textContent=`${formatBR($('startDate').value)} A ${formatBR($('endDate').value)}`;$('previewHours').textContent=selectedHours().map(h=>h+'H').join(', ')||'--';const seconds=readingSeconds();$('readingTime').textContent=`TEMPO ESTIMADO: ${seconds}S`;$('previewEstimate').textContent=`TEMPO ESTIMADO: ${seconds}S`;applyStyle($('previewTitle'),styleFrom('title'),'title');applyStyle($('previewDesc'),styleFrom('desc'),'desc');}
+function save(){if(countStateRecords(state)===0){console.warn('ENVIO BLOQUEADO: BASE OPEC VAZIA.');return Promise.resolve();}return ref.set({state,updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'MERCHAN_RADIOS',user:'OPEC',version:'FIREBASE_RTDB_V1'});}
+function currentRows(){const filter=$('listStationFilter')?.value||'';const rows=[];Object.values(state.months||{}).forEach(m=>(m.promos||[]).forEach(p=>{if(norm(p.kind)==='MERCHAN'&&(!filter||p.station===filter))rows.push(p);}));return rows.sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.program).localeCompare(norm(b.program)));}
+function statusLabel(p){return norm(p.status||'PENDENTE')||'PENDENTE';}
+function statusClass(st){st=norm(st);if(st==='CANCELADO')return'cancel';if(st==='REALIZADO')return'';return'pending';}
+function renderList(){const rows=currentRows();$('list').innerHTML=rows.length?rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.program||'')}</td><td><strong>${esc(p.name||p.title||'')}</strong></td><td><span class="badge">${esc(formatBR(p.startDate||''))} A ${esc(formatBR(p.drawDate||p.endDate||''))}</span></td><td>${esc((p.readHours||[]).map(h=>h+'H').join(', '))}</td><td><span class="badge ${statusClass(statusLabel(p))}">${esc(statusLabel(p))}</span></td><td><div class="tableActions"><button class="iconBtn" title="EDITAR" onclick="editMerchan('${esc(p.id)}')">✎</button><button class="iconBtn" title="DUPLICAR" onclick="duplicateMerchan('${esc(p.id)}')">⧉</button><button class="iconBtn" title="EXCLUIR" onclick="deleteMerchan('${esc(p.id)}')">🗑</button></div></td></tr>`).join(''):'<tr><td colspan="7"><div class="empty">NENHUM MERCHAN CADASTRADO.</div></td></tr>';}
+function render(){fillPrograms();renderList();}
+function findMerchan(id){for(const [key,m] of Object.entries(state.months||{})){const p=(m.promos||[]).find(x=>x.id===id);if(p)return{p,key};}return null;}
+function resetForm(){$('merchanForm').reset();$('merchanId').value='';$('startDate').value=today();$('endDate').value=today();$('station').value='JP1017';fillPrograms();updatePreview();}
+function editMerchan(id){const found=findMerchan(id);if(!found)return;const p=found.p;$('merchanId').value=p.id;$('station').value=p.station||'JP1017';fillPrograms();$('program').value=norm(p.program||'');$('startDate').value=p.startDate||today();$('endDate').value=p.drawDate||p.endDate||today();$('title').value=p.name||p.title||'';$('text').value=p.description||'';if(p.titleStyle){$('titleFont').value=p.titleStyle.font||'Segoe UI';$('titleSize').value=p.titleStyle.size||32;$('titleColor').value=p.titleStyle.color||'#171c26';$('titleBold').value=p.titleStyle.bold?'1':'0';}if(p.descriptionStyle){$('descFont').value=p.descriptionStyle.font||'Segoe UI';$('descSize').value=p.descriptionStyle.size||18;$('descColor').value=p.descriptionStyle.color||'#465161';$('descBold').value=p.descriptionStyle.bold?'1':'0';}fillHours(p.readHours||[]);updatePreview();window.scrollTo({top:0,behavior:'smooth'});}
+function deleteMerchan(id){if(!confirm('EXCLUIR ESTE MERCHAN?'))return;Object.values(state.months||{}).forEach(m=>{m.promos=(m.promos||[]).filter(p=>p.id!==id);});save().then(renderList);}
+function duplicateMerchan(id){const found=findMerchan(id);if(!found)return;const p={...found.p,id:'MR'+Date.now().toString(36).toUpperCase(),name:(found.p.name||found.p.title||'MERCHAN')+' CÓPIA',title:(found.p.title||found.p.name||'MERCHAN')+' CÓPIA',createdAt:new Date().toISOString()};monthData((p.startDate||today()).slice(0,7)).promos.push(p);save().then(renderList);}
+function submitMerchan(e){e.preventDefault();const start=$('startDate').value,end=$('endDate').value;if(!norm($('program').value)){alert('SELECIONE O PROGRAMA.');return;}if(end<start){alert('A DATA FINAL NÃO PODE SER ANTERIOR AO INÍCIO.');return;}const hours=selectedHours();if(!hours.length){alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.');return;}const targetMonth=start.slice(0,7)||state.currentMonth;state.currentMonth=targetMonth;const idVal=$('merchanId').value||'MR'+Date.now().toString(36).toUpperCase();const record={id:idVal,kind:'merchan',station:$('station').value,program:norm($('program').value),local:'MERCHAN',startDate:start,drawDate:end,endDate:end,drawTime:'23:59',name:norm($('title').value),title:norm($('title').value),description:textNorm($('text').value),titleStyle:styleFrom('title'),descriptionStyle:styleFrom('desc'),readMode:'selected',readHours:hours,readByHour:{},status:'PENDENTE',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),source:'MERCHAN_RADIOS'};Object.values(state.months||{}).forEach(m=>{m.promos=(m.promos||[]).filter(p=>p.id!==idVal);});monthData(targetMonth).promos.push(record);save().then(()=>{resetForm();renderList();alert('MERCHAN SALVO.');});}
 $('station').addEventListener('change',fillPrograms);
+$('program').addEventListener('change',()=>fillHours());
+$('startDate').addEventListener('change',()=>fillHours(selectedHours()));
+$('endDate').addEventListener('change',()=>fillHours(selectedHours()));
+$('selectAllHoursBtn').addEventListener('click',()=>{$$('#readHours input').forEach(i=>i.checked=true);updatePreview();});
+$('clearHoursBtn').addEventListener('click',()=>{$$('#readHours input').forEach(i=>i.checked=false);updatePreview();});
+$('listStationFilter').addEventListener('change',renderList);
 ['title','text','titleFont','titleSize','titleColor','titleBold','descFont','descSize','descColor','descBold'].forEach(id=>$(id).addEventListener('input',updatePreview));
-$('merchanForm').addEventListener('submit',e=>{e.preventDefault();const start=$('startDate').value,end=$('endDate').value;if(end<start){alert('A DATA FINAL NÃO PODE SER ANTERIOR AO INÍCIO.');return;}const id='MR'+Date.now().toString(36).toUpperCase(); state.currentMonth=start.slice(0,7)||state.currentMonth; monthData().promos.push({id,kind:'merchan',station:$('station').value,program:norm($('program').value),local:'MERCHAN',startDate:start,drawDate:end,endDate:end,drawTime:'23:59',name:norm($('title').value),title:norm($('title').value),description:$('text').value.trim(),titleStyle:styleFrom('title'),descriptionStyle:styleFrom('desc'),readMode:'selected',readHours:selectedHours(),readByHour:{},createdAt:new Date().toISOString(),source:'MERCHAN_RADIOS'}); save().then(()=>{$('merchanForm').reset();$('startDate').value=today();$('endDate').value=today();fillHours();updatePreview();render();alert('MERCHAN SALVO.');});});
-$('startDate').value=today();$('endDate').value=today();fillHours();updatePreview();
-ref.on('value',snap=>{const payload=snap.val(); if(payload&&payload.state){state=payload.state; state.programSchedules ||= []; render();}});
+$('merchanForm').addEventListener('submit',submitMerchan);
+$('resetBtn').addEventListener('click',e=>{e.preventDefault();resetForm();});
+resetForm();
+ref.on('value',snap=>{const payload=snap.val(); if(payload&&payload.state){state=payload.state; state.programSchedules ||= []; state.months ||= {}; render();}});
 </script>
 </body>
 </html>
