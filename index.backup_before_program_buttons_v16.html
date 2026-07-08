@@ -2662,35 +2662,17 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
   transform:none!important;
 }
 
-
-/* === V16: VARREDURA DOS BOTÕES DA PROGRAMAÇÃO === */
-#view-programacao .programFilterActions,
-#view-programacao .programActions,
-#view-programacao .programSide{
-  position:relative!important;
-  z-index:100!important;
-  pointer-events:auto!important;
-}
-#view-programacao button,
-#view-programacao .btn,
-#view-programacao .actionIcon,
-#addProgramBtn,
-#clearProgramBtn{
-  pointer-events:auto!important;
-  cursor:pointer!important;
-}
-#view-programacao .programActions{
-  opacity:1!important;
-  transform:none!important;
-}
-#view-programacao .programCard::before,
-#view-programacao .programCard::after{
-  pointer-events:none!important;
-}
-
 </style>
 
-<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js">
+document.addEventListener('DOMContentLoaded',()=>{
+  const addBtn=document.getElementById('addProgramBtn');
+  if(addBtn) addBtn.onclick=addProgramItemClick;
+  const clearBtn=document.getElementById('clearProgramBtn');
+  if(clearBtn) clearBtn.onclick=clearProgramButtonClick;
+});
+
+</script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 
 </head>
@@ -2731,7 +2713,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             <div class="field"><label>CANAL</label><select class="control" id="channelFilter"><option value="">TODOS</option></select></div>
             <div class="field"><label>SEMANA</label><select class="control" id="weekFilter"><option value="">TODAS</option></select></div>
             <div class="field"><label>STATUS</label><select class="control" id="statusFilter"><option value="">TODOS</option><option>PENDENTE</option><option>NO AR</option><option>REALIZADO</option><option>CANCELADO</option></select></div>
-            <div class="programFilterActions"><button class="btn red" id="addProgramBtn" type="button" data-program-main-action="add">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" type="button" data-program-main-action="clear" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
+            <div class="programFilterActions"><button class="btn red" id="addProgramBtn" type="button" onclick="addProgramItemClick(event)">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" type="button" onclick="clearProgramButtonClick(event)" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
           </div>
           <div class="weeklyHeader">
             <div><strong>PROGRAMAÇÃO SEMANAL</strong><span id="weeklyRangeLabel">SEMANA SELECIONADA</span></div>
@@ -6999,7 +6981,7 @@ function renderProgramCard(i){
   const conflictNote = radioConflict.length
     ? `<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`
     : (rotationConflict.length ? `<span class="programConflictNote">RODÍZIO: ${esc(samePrizeRepeatLabel(rotationConflict))}</span>` : '');
-  const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" data-program-card-action="remap" data-item-id="${esc(i.id)}" onclick="programActionClick(event,'remap','${esc(i.id)}')"><span class="iconGlyph">↪</span></button>` : '';
+  const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" onclick="programActionClick(event,'remap','${esc(i.id)}')"><span class="iconGlyph">↪</span></button>` : '';
   return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}">
     <div class="programTime">${esc(i.slot || '')}</div>
     <div class="programInfo">
@@ -7009,7 +6991,7 @@ function renderProgramCard(i){
       ${conflictNote}
     </div>
     <div class="programSide">
-      <div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" data-program-card-action="edit" data-item-id="${esc(i.id)}" onclick="programActionClick(event,'edit','${esc(i.id)}')"><span class="iconGlyph">✎</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" data-program-card-action="copy" data-item-id="${esc(i.id)}" onclick="programActionClick(event,'copy','${esc(i.id)}')"><span class="iconGlyph">⧉</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" data-program-card-action="delete" data-item-id="${esc(i.id)}" onclick="programActionClick(event,'delete','${esc(i.id)}')"><span class="iconGlyph">🗑</span></button></div>
+      <div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="programActionClick(event,'edit','${esc(i.id)}')"><span class="iconGlyph">✎</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" onclick="programActionClick(event,'copy','${esc(i.id)}')"><span class="iconGlyph">⧉</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="programActionClick(event,'delete','${esc(i.id)}')"><span class="iconGlyph">🗑</span></button></div>
     </div>
   </article>`;
 }
@@ -9172,105 +9154,5 @@ window.addEventListener('beforeunload',()=>{ normalizePanelState(state); localSt
 setInterval(()=>{ syncCalendarMonthIfChanged(); },60000);
 setInterval(()=>syncStateFromApi(false),30000);
 </script>
-
-<script>
-(function(){
-  function byId(id){ return document.getElementById(id); }
-  function stop(evt){ if(evt){ evt.preventDefault(); evt.stopPropagation(); if(evt.stopImmediatePropagation) evt.stopImmediatePropagation(); } }
-  function safeCall(fn,args,fallback){
-    try{
-      if(typeof fn === 'function') return fn.apply(window,args||[]);
-    }catch(err){
-      console.error('ERRO NA AÇÃO DA PROGRAMAÇÃO:', err);
-    }
-    if(typeof fallback === 'function') return fallback();
-  }
-  function fallbackOpenItemDrawer(){
-    var form=byId('itemForm');
-    if(form && typeof form.reset==='function') form.reset();
-    var id=byId('itemId'); if(id) id.value='';
-    var qty=byId('itemQty'); if(qty) qty.value=1;
-    var channel=byId('itemChannel'); if(channel) channel.value='RÁDIO';
-    var status=byId('itemStatus'); if(status) status.value='PENDENTE';
-    var date=byId('itemDate');
-    if(date && !date.value){
-      var d=new Date();
-      date.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    }
-    var title=byId('itemDrawerTitle'); if(title) title.textContent='NOVO ITEM DA PROGRAMAÇÃO';
-    var drawer=byId('itemDrawer');
-    if(drawer){ drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); }
-  }
-  function fallbackOpenClearDrawer(){
-    var drawer=byId('clearProgramDrawer');
-    if(drawer){ drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); }
-  }
-  function fallbackEditItem(itemId){
-    var item=null;
-    try{
-      var months=(window.state && window.state.months) || {};
-      Object.keys(months).some(function(key){
-        var found=((months[key]||{}).items||[]).find(function(x){ return x.id===itemId; });
-        if(found){ item=found; return true; }
-        return false;
-      });
-    }catch(e){}
-    fallbackOpenItemDrawer();
-    if(!item) return;
-    var map={
-      itemId:item.id||'',
-      itemDate:item.date||'',
-      itemSlot:item.slot||'',
-      itemProgram:item.program||'',
-      itemDistribution:item.distributionId||'',
-      itemPrize:item.prize||'',
-      itemTitle:item.title||'',
-      itemQty:item.qty||1,
-      itemChannel:item.channel||'RÁDIO',
-      itemStatus:item.status||'PENDENTE',
-      itemNotes:item.notes||''
-    };
-    Object.keys(map).forEach(function(id){
-      var el=byId(id);
-      if(el) el.value=map[id];
-    });
-    var heading=byId('itemDrawerTitle'); if(heading) heading.textContent='EDITAR ITEM DA PROGRAMAÇÃO';
-  }
-  window.addProgramItemClick=function(evt){
-    stop(evt);
-    return safeCall(window.openProgramItemDrawer || window.__openProgramItemDrawer || null, [], fallbackOpenItemDrawer);
-  };
-  window.clearProgramButtonClick=function(evt){
-    stop(evt);
-    return safeCall(window.openClearProgramDrawer || window.__openClearProgramDrawer || null, [], fallbackOpenClearDrawer);
-  };
-  window.programActionClick=function(evt,action,itemId){
-    stop(evt);
-    if(!itemId) return;
-    if(action==='edit') return safeCall(window.editItem,[itemId],function(){ fallbackEditItem(itemId); });
-    if(action==='copy') return safeCall(window.duplicateItem,[itemId]);
-    if(action==='delete') return safeCall(window.deleteItem,[itemId]);
-    if(action==='remap') return safeCall(window.remapRadioItem,[itemId]);
-  };
-  document.addEventListener('click',function(evt){
-    var main=evt.target.closest && evt.target.closest('[data-program-main-action]');
-    if(main){
-      if(main.dataset.programMainAction==='add') return window.addProgramItemClick(evt);
-      if(main.dataset.programMainAction==='clear') return window.clearProgramButtonClick(evt);
-    }
-    var card=evt.target.closest && evt.target.closest('[data-program-card-action]');
-    if(card){
-      return window.programActionClick(evt,card.dataset.programCardAction,card.dataset.itemId);
-    }
-  },true);
-  document.addEventListener('DOMContentLoaded',function(){
-    var add=byId('addProgramBtn');
-    if(add){ add.type='button'; add.setAttribute('data-program-main-action','add'); add.onclick=window.addProgramItemClick; }
-    var clear=byId('clearProgramBtn');
-    if(clear){ clear.type='button'; clear.setAttribute('data-program-main-action','clear'); clear.onclick=window.clearProgramButtonClick; }
-  });
-})();
-</script>
-
 </body>
 </html>
