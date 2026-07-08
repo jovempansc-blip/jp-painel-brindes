@@ -2485,64 +2485,6 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
   border-left:4px solid #2f69c9;
 }
 
-
-/* === V8: PAUTA DE ESTÚDIO EM MODO LISTA COM TOPO COMPACTO === */
-#view-pauta .panel{border-radius:26px}
-#view-pauta .panelHead.pautaHeroHead{min-height:68px;padding:10px 72px 10px 16px;justify-content:flex-start;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(255,255,255,.78));border-bottom:1px solid var(--line)}
-#view-pauta .pautaHeroHead::before{background:none}
-#view-pauta .pautaHeroLogo{max-width:340px;width:auto;height:38px;object-fit:contain;filter:none;opacity:.92}
-#view-pauta .pautaHeroActions{right:16px;gap:6px}
-#view-pauta .pautaHeroLink{width:34px;min-width:34px;min-height:34px;border-radius:11px}
-#view-pauta .panelBody{padding-top:14px;background-image:linear-gradient(rgba(248,249,252,.86),rgba(248,249,252,.86)),url("assets/bg-estudio.jpg")}
-#view-pauta .studioPautaTop{grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;margin-bottom:12px}
-#view-pauta .studioToolbar{grid-template-columns:repeat(3,minmax(104px,1fr));gap:8px}
-#view-pauta .studioMetaCard{min-height:50px;border-radius:12px;padding:8px 10px}
-#view-pauta .studioMetaCard span{font-size:8px}
-#view-pauta .studioMetaCard strong{font-size:18px;margin-top:4px}
-#view-pauta .studioSection{margin-top:12px}
-#view-pauta .studioSectionHead{margin-bottom:8px}
-#view-pauta .studioSectionHead strong{font-size:13px}
-#view-pauta .studioSectionHead span{font-size:9.5px}
-#view-pauta .studioGrid,#view-pauta .studioPromoGrid{display:grid;gap:10px}
-#view-pauta .studioPeriodBoard{display:grid;gap:10px;grid-template-columns:1fr}
-#view-pauta .studioPeriodGroup{min-height:0;border-radius:18px;background:rgba(255,255,255,.62)}
-#view-pauta .studioPeriodTitle{padding:9px 12px;font-size:11px}
-#view-pauta .studioPeriodItems{display:grid;grid-template-columns:1fr;gap:8px;padding:10px}
-#view-pauta .studioPeriodItems .empty{padding:12px 14px;min-height:0;border-radius:12px;font-size:11px;background:#fbfcff}
-#view-pauta .studioPrizeCard.studioSummaryPrizeCard{display:grid;grid-template-columns:86px minmax(0,1fr) auto auto;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;border:1px solid #e5e8ef;background:#fff;box-shadow:none}
-#view-pauta .studioPrizeHead,#view-pauta .studioCardBody.studioSummaryBody{display:contents}
-#view-pauta .studioPrizeTime{display:flex;align-items:center;justify-content:flex-start;width:auto;flex:0 0 auto;min-height:0;font-size:34px;color:#d43a57;letter-spacing:-.06em}
-#view-pauta .studioPrizeProgram{position:static;transform:none;width:auto;justify-content:flex-start;text-align:left;padding:0;font-size:13px;color:#566171;line-height:1.15;font-weight:900;letter-spacing:-.01em}
-#view-pauta .studioPrizeDate{display:none}
-#view-pauta .studioTitle{margin:3px 0 0;font-size:18px;line-height:1.08;letter-spacing:-.03em}
-#view-pauta .studioSummaryMain{min-width:0}
-#view-pauta .studioSummaryStatus{display:flex;justify-content:flex-end}
-#view-pauta .studioSummaryStatus .badge{min-height:26px;padding:0 10px;font-size:10px}
-#view-pauta .studioCardActions{margin-top:0;justify-content:flex-end}
-#view-pauta .studioCardActions .actionIcon{width:30px;min-width:30px;min-height:30px;border-radius:10px;background:#f1f3f7;border-color:#e2e6ee}
-#view-pauta .studioCardActions .actionIcon .iconGlyph{font-size:11px}
-#view-pauta .studioPromoGrid{grid-template-columns:1fr}
-#view-pauta .studioPromoCard{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;box-shadow:none}
-#view-pauta .studioPromoBanner{display:none}
-#view-pauta .studioPromoHead{display:contents;padding:0}
-#view-pauta .studioPromoLocal{justify-self:start}
-#view-pauta .studioPromoStatus{justify-self:end}
-#view-pauta .studioPromoCard .studioCardBody{padding:0;grid-column:1 / span 2;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
-#view-pauta .studioPromoCard .studioTitle{font-size:16px;margin:0}
-#view-pauta .studioPromoCard .studioDesc{display:none}
-#view-pauta .promoResultMini{grid-column:1 / span 2;font-size:10px;margin-top:-2px}
-#view-pauta .studioPromoCard .studioCardActions{grid-column:2;grid-row:1 / span 2;align-self:center}
-@media (max-width:940px){
-  #view-pauta .panelHead.pautaHeroHead{min-height:60px;padding:10px 58px 10px 12px}
-  #view-pauta .pautaHeroLogo{max-width:240px;height:30px}
-  #view-pauta .studioPautaTop{grid-template-columns:1fr}
-  #view-pauta .studioPrizeCard.studioSummaryPrizeCard{grid-template-columns:70px minmax(0,1fr) auto;align-items:start}
-  #view-pauta .studioSummaryStatus{grid-column:2;justify-content:flex-start}
-  #view-pauta .studioCardActions{grid-column:3;grid-row:1 / span 2}
-  #view-pauta .studioPrizeTime{font-size:28px}
-  #view-pauta .studioTitle{font-size:16px}
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2655,11 +2597,11 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             </div>
           </div>
           <div class="studioSection" id="studioPrizeSection">
-            <div class="studioSectionHead"><strong>PAUTA DE PRÊMIOS</strong><span>RESUMO CLARO DOS PRÊMIOS PROGRAMADOS NO DIA.</span></div>
+            <div class="studioSectionHead"><strong>PAUTA DE PRÊMIOS</strong><span>RESUMO DOS PRÊMIOS DE RÁDIO PROGRAMADOS PARA O DIA.</span></div>
             <div class="studioGrid" id="studioPrizeGrid"></div>
           </div>
           <div class="studioSection" id="studioPromoSection">
-            <div class="studioSectionHead"><strong>PAUTA DE PROMOÇÕES</strong><span>RESULTADOS E PROMOÇÕES CADASTRADOS PARA O DIA.</span></div>
+            <div class="studioSectionHead"><strong>PAUTA DE PROMOÇÕES</strong><span>PROMOÇÕES CADASTRADAS COM IMAGEM, DATA E LOCAL.</span></div>
             <div class="studioPromoGrid" id="studioPromoGrid"></div>
           </div>
         </div>
@@ -7280,15 +7222,9 @@ function renderStudioPrizeCard(i){
   const statusCls = itemStatusClass(status);
   const statusTitle = status === 'REALIZADO' && norm(i.winnerName || '') ? ` title="GANHADOR: ${esc(i.winnerName)}"` : '';
   return `<article class="studioPrizeCard studioSummaryPrizeCard">
-    <div class="studioPrizeHead">
-      <div class="studioPrizeTime">${esc(formatStudioTime(i.slot || 'SEM HORA'))}</div>
-      <div class="studioPrizeProgram">${esc(i.program || 'PROGRAMA')}</div>
-      <div class="studioPrizeDate">${esc(formatBR(i.date || ''))}</div>
-    </div>
+    <div class="studioPrizeHead"><div class="studioPrizeTime">${esc(formatStudioTime(i.slot || 'SEM HORA'))}</div><div class="studioPrizeProgram">${esc(i.program || 'PROGRAMA')}</div><div class="studioPrizeDate">${esc(formatBR(i.date || ''))}</div></div>
     <div class="studioCardBody studioSummaryBody">
-      <div class="studioSummaryMain">
-        <div class="studioTitle" style="${promoInlineStyle(titleStyle,'title')}">${esc(title)}</div>
-      </div>
+      <div class="studioTitle" style="${promoInlineStyle(titleStyle,'title')}">${esc(title)}</div>
       <div class="studioSummaryStatus"><span class="badge ${statusCls}"${statusTitle}>${esc(status)}</span></div>
       <div class="studioCardActions"><button class="actionIcon" title="EDITAR ITEM" aria-label="EDITAR ITEM" onclick="editItem('${i.id}')"><span class="iconGlyph">✎</span></button></div>
     </div>
