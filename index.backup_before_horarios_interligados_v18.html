@@ -6577,51 +6577,16 @@ function renderMiniAlerts(){
 
 
 function stationLabel(v){
-  return stationCanonical(v)==='JPNEWS983' ? 'JPNEWS' : 'JOVEMPAN';
-}
-function stationCanonical(value){
-  const raw=String(value||'').trim();
-  const v=norm(raw).replace(/[^\wÀ-Ú]/g,' ');
-  if(v.includes('NEWS') || v.includes('98') || v.includes('JPNEWS983')) return 'JPNEWS983';
-  if(v.includes('AMBAS') || v==='ALL') return 'ALL';
-  if(v.includes('101') || v.includes('JOVEMPAN') || v.includes('JOVEM PAN') || v.includes('JP1017')) return 'JP1017';
-  return raw || 'JP1017';
-}
-function sameStation(a,b){
-  const ca=stationCanonical(a), cb=stationCanonical(b);
-  return ca==='ALL' || cb==='ALL' || ca===cb || (!a && cb==='JP1017');
+  return v==='JPNEWS983' ? 'JPNEWS' : 'JOVEMPAN';
 }
 function programSchedules(){ state.programSchedules ||= []; return state.programSchedules; }
-function dayNumberFromName(value){
-  const v=norm(value);
-  if(v.includes('DOM') || v.includes('SUN')) return 0;
-  if(v.includes('SEG') || v.includes('MON')) return 1;
-  if(v.includes('TER') || v.includes('TUE')) return 2;
-  if(v.includes('QUA') || v.includes('WED')) return 3;
-  if(v.includes('QUI') || v.includes('THU')) return 4;
-  if(v.includes('SEX') || v.includes('FRI')) return 5;
-  if(v.includes('SAB') || v.includes('SÁB') || v.includes('SAT')) return 6;
-  if(/^\d$/.test(v)) return Number(v);
-  return null;
-}
 function dayValuesFromRule(rule){
-  if(Array.isArray(rule)){
-    const vals=rule.map(v=>typeof v==='number'?v:dayNumberFromName(v)).filter(v=>Number.isInteger(v) && v>=0 && v<=6);
-    return vals.length ? [...new Set(vals)] : [1,2,3,4,5];
-  }
-  const r=norm(rule||'');
-  if(!r) return [1,2,3,4,5];
-  if(r==='ALL' || r.includes('TODOS') || r.includes('TODO DIA')) return [0,1,2,3,4,5,6];
-  if(r.includes('SEG A SAB') || r.includes('SEG A SÁB') || r.includes('MON SAT') || r.includes('MON-SAT')) return [1,2,3,4,5,6];
-  if(r.includes('SEG A SEX') || r.includes('MON FRI') || r.includes('MON-FRI')) return [1,2,3,4,5];
-  if(r==='SAT' || r.includes('SÁBADO') || r.includes('SABADO')) return [6];
-  if(r==='SUN' || r.includes('DOMINGO')) return [0];
-  const vals=[];
-  r.split(/[,;|/ ]+/).forEach(part=>{
-    const n=dayNumberFromName(part);
-    if(Number.isInteger(n) && n>=0 && n<=6) vals.push(n);
-  });
-  return vals.length ? [...new Set(vals)] : [1,2,3,4,5];
+  if(Array.isArray(rule)) return rule.map(Number);
+  if(rule==='all') return [0,1,2,3,4,5,6];
+  if(rule==='sat') return [6];
+  if(rule==='sun') return [0];
+  if(rule==='mon-sat') return [1,2,3,4,5,6];
+  return [1,2,3,4,5];
 }
 function dayRuleLabel(rule){
   const names={0:'DOM',1:'SEG',2:'TER',3:'QUA',4:'QUI',5:'SEX',6:'SÁB'};
@@ -6642,39 +6607,21 @@ function setProgramDaysControls(rule){
   const vals=new Set(dayValuesFromRule(rule));
   document.querySelectorAll('#programDaysBox input').forEach(input=>{ input.checked=vals.has(Number(input.value)); });
 }
-function scheduleName(p){
-  return norm(p?.name || p?.program || p?.programa || p?.title || p?.titulo || p?.nome || '');
-}
-function scheduleStartTime(p){
-  return p?.startTime || p?.start || p?.inicio || p?.início || p?.horaInicio || p?.hora_inicio || p?.from || p?.begin || '';
-}
-function scheduleEndTime(p){
-  return p?.endTime || p?.end || p?.fim || p?.horaFim || p?.hora_fim || p?.to || '';
-}
-function scheduleDays(p){
-  return p?.days || p?.dias || p?.weekdays || p?.dayRule || p?.regraDias || '';
-}
 function minutesOf(value){
   const m=String(value||'').match(/(\d{1,2})(?::?(\d{2}))?/);
   if(!m) return 0;
   return Number(m[1])*60+Number(m[2]||0);
 }
-function scheduleStartMinutes(p){ return minutesOf(scheduleStartTime(p)); }
-function scheduleEndMinutes(p){
-  const end=minutesOf(scheduleEndTime(p));
-  const start=scheduleStartMinutes(p);
-  return end>start ? end : start+60;
-}
 function hourInProgram(date,slot,program,station='JP1017'){
   const h=Number(String(normalizeSlot(slot)).replace('H',''));
   const min=h*60;
-  return programSchedules().some(p=> sameStation(p.station,station) && dayMatchesRule(date,scheduleDays(p)) && norm(scheduleName(p))===norm(program) && min>=scheduleStartMinutes(p) && min<scheduleEndMinutes(p));
+  return programSchedules().some(p=> (!p.station || p.station===station) && dayMatchesRule(date,p.days) && norm(p.name)===norm(program) && min>=minutesOf(p.startTime) && min<minutesOf(p.endTime));
 }
 function programFromSchedule(date,slot,station='JP1017'){
   const h=Number(String(normalizeSlot(slot)).replace('H',''));
   const min=h*60;
-  const found=programSchedules().find(p=> sameStation(p.station,station) && dayMatchesRule(date,scheduleDays(p)) && min>=scheduleStartMinutes(p) && min<scheduleEndMinutes(p));
-  return found ? scheduleName(found) : '';
+  const found=programSchedules().find(p=> (!p.station || p.station===station) && dayMatchesRule(date,p.days) && min>=minutesOf(p.startTime) && min<minutesOf(p.endTime));
+  return found ? norm(p.name) : '';
 }
 
 let activeProgramStationFilter = localStorage.getItem('jp_program_station_filter') || 'JP1017';
@@ -6705,10 +6652,10 @@ function programTimeConflict(rec){
   const start=minutesOf(rec.startTime), end=minutesOf(rec.endTime);
   return programSchedules().find(p=>{
     if(p.id===rec.id) return false;
-    if(!sameStation(p.station,rec.station||'JP1017')) return false;
-    const otherDays=dayValuesFromRule(scheduleDays(p));
+    if((p.station||'JP1017') !== (rec.station||'JP1017')) return false;
+    const otherDays=dayValuesFromRule(p.days);
     if(!otherDays.some(d=>days.has(d))) return false;
-    const os=scheduleStartMinutes(p), oe=scheduleEndMinutes(p);
+    const os=minutesOf(p.startTime), oe=minutesOf(p.endTime);
     return start < oe && end > os;
   });
 }
@@ -6719,10 +6666,10 @@ function renderProgramSchedules(){
   $$('#programStationFilterTabs .stationTab').forEach(btn=>btn.classList.toggle('active',btn.dataset.station===activeProgramStation()));
   const selectedStation=activeProgramStation();
   const rows=[...programSchedules()]
-    .filter(p=>sameStation(p.station,selectedStation))
-    .sort((a,b)=>scheduleStartMinutes(a)-scheduleStartMinutes(b) || scheduleName(a).localeCompare(scheduleName(b)));
+    .filter(p=>(p.station||'JP1017')===selectedStation)
+    .sort((a,b)=>minutesOf(a.startTime)-minutesOf(b.startTime) || norm(a.name).localeCompare(norm(b.name)));
   if(!rows.length){ tb.innerHTML=`<tr><td colspan="5"><div class="empty">NENHUM HORÁRIO CADASTRADO PARA ${esc(stationLabel(selectedStation))}.</div></td></tr>`; return; }
-  tb.innerHTML=rows.map(p=>`<tr><td><strong>${esc(scheduleName(p)||'')}</strong></td><td>${dayChips(scheduleDays(p))}</td><td>${esc(scheduleStartTime(p)||'')}</td><td>${esc(scheduleEndTime(p)||'')}</td><td><div class="promoActions"><button class="actionIcon" onclick="openProgramScheduleForm('${esc(p.id)}')" title="EDITAR"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" onclick="deleteProgramSchedule('${esc(p.id)}')" title="EXCLUIR"><span class="iconGlyph">🗑</span></button></div></td></tr>`).join('');
+  tb.innerHTML=rows.map(p=>`<tr><td><strong>${esc(p.name||'')}</strong></td><td>${dayChips(p.days)}</td><td>${esc(p.startTime||'')}</td><td>${esc(p.endTime||'')}</td><td><div class="promoActions"><button class="actionIcon" onclick="openProgramScheduleForm('${esc(p.id)}')" title="EDITAR"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" onclick="deleteProgramSchedule('${esc(p.id)}')" title="EXCLUIR"><span class="iconGlyph">🗑</span></button></div></td></tr>`).join('');
 }
 function clearProgramScheduleForm(){
   if($('programScheduleForm')) $('programScheduleForm').reset();
@@ -6736,10 +6683,10 @@ function editProgramSchedule(idValue){
   $('programScheduleDrawerTitle').textContent='EDITAR PROGRAMA';
   $('programScheduleId').value=p.id;
   $('programStation').value=p.station||'JP1017';
-  $('programName').value=scheduleName(p)||'';
-  $('programStartTime').value=scheduleStartTime(p)||'';
-  $('programEndTime').value=scheduleEndTime(p)||'';
-  setProgramDaysControls(scheduleDays(p)||[1,2,3,4,5]);
+  $('programName').value=p.name||'';
+  $('programStartTime').value=p.startTime||'';
+  $('programEndTime').value=p.endTime||'';
+  setProgramDaysControls(p.days||[1,2,3,4,5]);
   setView('horarios');
   openDrawer('programScheduleDrawer');
 }
@@ -7801,49 +7748,18 @@ function programForManualItem(date,slot,station){
   return programFromSchedule(date,slot,st) || '';
 }
 
-function itemScheduleOptionsForStationDate(date,station){
-  const st=station||'JP1017';
-  const out=[];
-  programSchedules()
-    .filter(p=>sameStation(p.station,st))
-    .forEach(p=>{
-      const name=scheduleName(p);
-      const start=scheduleStartMinutes(p);
-      const end=scheduleEndMinutes(p);
-      if(!name || !start || end<=start) return;
-      const matchesDate = date ? dayMatchesRule(date,scheduleDays(p)) : true;
-      for(let h=Math.floor(start/60); h<Math.ceil(end/60); h++){
-        if(h<6 || h>22) continue;
-        const slot=`${String(h).padStart(2,'0')}H`;
-        out.push({
-          slot,
-          program:name,
-          id:p.id||'',
-          startTime:scheduleStartTime(p),
-          endTime:scheduleEndTime(p),
-          days:scheduleDays(p),
-          daysLabel:dayRuleLabel(scheduleDays(p)),
-          matchesDate
-        });
-      }
-    });
-  const seen=new Set();
-  return out
-    .sort((a,b)=>(b.matchesDate-a.matchesDate) || Number(a.slot.replace('H',''))-Number(b.slot.replace('H','')) || a.program.localeCompare(b.program))
-    .filter(o=>{
-      const key=`${o.slot}|${o.program}|${o.daysLabel}`;
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-}
 function itemSlotsForStationDate(date,station){
-  return [...new Set(itemScheduleOptionsForStationDate(date,station).map(o=>o.slot))].sort((a,b)=>Number(a.replace('H',''))-Number(b.replace('H','')));
-}
-function programFromSelectedSlotOption(){
-  const sel=$('itemSlot');
-  const opt=sel?.selectedOptions?.[0];
-  return opt?.dataset?.program ? norm(opt.dataset.program) : '';
+  const st=station||'JP1017';
+  const rows=programSchedules().filter(p=>(!p.station || p.station===st) && dayMatchesRule(date,p.days));
+  const slots=new Set();
+  rows.forEach(p=>{
+    const start=Math.floor(minutesOf(p.startTime)/60);
+    const end=Math.ceil(minutesOf(p.endTime)/60);
+    for(let h=start; h<end; h++){
+      if(h>=6 && h<=22) slots.add(`${String(h).padStart(2,'0')}H`);
+    }
+  });
+  return [...slots].sort((a,b)=>Number(a.replace('H',''))-Number(b.replace('H','')));
 }
 function renderItemSlotOptions(keepCurrent=true){
   const sel=$('itemSlot');
@@ -7851,21 +7767,17 @@ function renderItemSlotOptions(keepCurrent=true){
   const current=normalizeSlot(sel.value||'');
   const date=$('itemDate')?.value || todayISO();
   const station=$('itemProgramStation')?.value || 'JP1017';
-  const options=itemScheduleOptionsForStationDate(date,station);
-  const list=options.map(o=>{
-    const suffix=o.matchesDate ? '' : ` · ${o.daysLabel}`;
-    const label=`${o.slot} — ${o.program}${suffix}`;
-    return `<option value="${esc(o.slot)}" data-program="${esc(o.program)}" data-schedule-id="${esc(o.id)}" data-matches-date="${o.matchesDate?'1':'0'}">${esc(label)}</option>`;
+  const slots=itemSlotsForStationDate(date,station);
+  const list=slots.map(s=>{
+    const program=programFromSchedule(date,s,station);
+    const label=program ? `${s} — ${program}` : s;
+    return `<option value="${esc(s)}">${esc(label)}</option>`;
   }).join('');
-  sel.innerHTML='<option value="">SELECIONE</option>'+list+'<option value="__ADD_PROGRAM_SCHEDULE__">+ ADICIONAR NOVO HORÁRIO</option>';
-  if(keepCurrent && current){
-    const match=[...sel.options].find(opt=>normalizeSlot(opt.value)===current);
-    if(match) sel.value=match.value;
-    else sel.value='';
-  }else{
-    sel.value='';
-  }
+  sel.innerHTML='<option value="">SELECIONE UM HORÁRIO DA ABA HORÁRIOS</option>'+list+'<option value="__ADD_PROGRAM_SCHEDULE__">+ ADICIONAR NOVO HORÁRIO</option>';
+  if(keepCurrent && current && slots.includes(current)) sel.value=current;
+  else sel.value='';
 }
+
 let programScheduleOpenedFromItem=false;
 function openProgramScheduleFromItem(){
   programScheduleOpenedFromItem=true;
@@ -7908,34 +7820,28 @@ function updateItemProgramFromSchedule(force=false){
   const target=$('itemProgram');
   const hint=$('itemProgramHint');
   if(!target) return;
-  const options=itemScheduleOptionsForStationDate(date,station);
-  const selectedOptionProgram=programFromSelectedSlotOption();
-  const program=date && slot ? (programForManualItem(date,slot,station) || selectedOptionProgram) : '';
+  const slots=date ? itemSlotsForStationDate(date,station) : [];
+  const program=date && slot ? programForManualItem(date,slot,station) : '';
   if(force || !norm(target.value) || target.dataset.auto==='1'){
     target.value=program || '';
     target.dataset.auto='1';
   }
-  const noOptions=!!(date && !options.length);
-  const noProgram=!!(date && slot && !program);
-  target.classList.toggle('programMissing', noOptions || noProgram);
+  target.classList.toggle('programMissing', !!((date && !slots.length) || (date && slot && !program)));
   if(hint){
-    const selectedOpt=$('itemSlot')?.selectedOptions?.[0];
-    const isOutOfDay=selectedOpt?.dataset?.matchesDate==='0';
-    const warn=noOptions || noProgram || isOutOfDay;
+    const warn=!!((date && !slots.length) || (date && slot && !program));
     hint.classList.toggle('warn', warn);
-    hint.textContent = noOptions
-      ? 'NENHUM HORÁRIO CADASTRADO PARA ESTA RÁDIO. USE + ADICIONAR NOVO HORÁRIO.'
+    hint.textContent = date && !slots.length
+      ? 'NENHUM HORÁRIO CADASTRADO PARA ESTA RÁDIO NESTE DIA. AJUSTE A ABA HORÁRIOS.'
       : (date && slot
-        ? (isOutOfDay
-          ? 'HORÁRIO CADASTRADO NA ABA HORÁRIOS, MAS FORA DO DIA DA SEMANA SELECIONADO.'
-          : (program ? 'HORÁRIO VINCULADO À ABA HORÁRIOS.' : 'SEM PROGRAMA CADASTRADO PARA ESTA RÁDIO E HORÁRIO.'))
-        : 'ESCOLHA UM HORÁRIO CADASTRADO NA ABA HORÁRIOS OU ADICIONE UM NOVO.');
+        ? (program ? 'HORÁRIO VINCULADO À ABA HORÁRIOS.' : 'SEM PROGRAMA CADASTRADO PARA ESTA RÁDIO, DATA E HORÁRIO.')
+        : 'ESCOLHA UM HORÁRIO CADASTRADO NA ABA HORÁRIOS.');
   }
 }
 $('itemDistribution').addEventListener('change',()=>handleItemDistributionChange(true));
 $('itemProgramStation')?.addEventListener('change',()=>{ renderItemSlotOptions(false); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); });
 $('itemDate')?.addEventListener('change',()=>{ renderItemSlotOptions(false); updateItemProgramFromSchedule(true); });
 $('itemSlot')?.addEventListener('focus',()=>renderItemSlotOptions(true));
+$('itemSlot')?.addEventListener('click',()=>renderItemSlotOptions(true));
 $('itemSlot')?.addEventListener('change',handleItemSlotChange);
 $('itemProgram')?.addEventListener('input',()=>{ $('itemProgram').dataset.auto='0'; });
 $('itemChannel').addEventListener('change',()=>{updateDistHint(); updateItemRotationVisibility();});
