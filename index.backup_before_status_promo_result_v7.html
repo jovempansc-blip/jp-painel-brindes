@@ -2454,37 +2454,6 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
 @media(max-width:900px){
   .programActions{opacity:1;transform:none}
 }
-
-
-/* AJUSTE V7 — STATUS OPERACIONAL E RESULTADO DE PROMOÇÃO NA PROGRAMAÇÃO */
-.programMeta .badge.amber,
-.studioSummaryStatus .badge.amber{
-  background:#fff3dc!important;
-  border-color:#ffd19a!important;
-  color:#9a5200!important;
-}
-.programMeta .badge.green,
-.studioSummaryStatus .badge.green{
-  background:#dff8eb!important;
-  border-color:#b9edcf!important;
-  color:#08723e!important;
-}
-.programMeta .badge.blue,
-.studioSummaryStatus .badge.blue{
-  background:#eaf3ff!important;
-  border-color:#cce1ff!important;
-  color:#235faa!important;
-}
-.programMeta .badge.red,
-.studioSummaryStatus .badge.red{
-  background:#fff0f3!important;
-  border-color:#ef9aaa!important;
-  color:#a90d25!important;
-}
-.programCard.isPromoResult{
-  border-left:4px solid #2f69c9;
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2527,7 +2496,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
           <div class="filterBar programFilterBar">
             <div class="field"><label>CANAL</label><select class="control" id="channelFilter"><option value="">TODOS</option></select></div>
             <div class="field"><label>SEMANA</label><select class="control" id="weekFilter"><option value="">TODAS</option></select></div>
-            <div class="field"><label>STATUS</label><select class="control" id="statusFilter"><option value="">TODOS</option><option>PENDENTE</option><option>NO AR</option><option>REALIZADO</option><option>CANCELADO</option></select></div>
+            <div class="field"><label>STATUS</label><select class="control" id="statusFilter"><option value="">TODOS</option><option>NO AR</option><option>REALIZADO</option><option>ENTREGUE</option></select></div>
             <div class="programFilterActions"><button class="btn red" id="addProgramBtn">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
           </div>
           <div class="weeklyHeader">
@@ -2830,8 +2799,7 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
             <div class="field prizeField"><label>PRÊMIO / EVENTO</label><input class="control" id="itemPrize" required></div>
             <div class="field"><label>QTD</label><input class="control" type="number" min="0" step="1" id="itemQty" value="1"></div>
             <div class="field"><label>CANAL</label><select class="control" id="itemChannel"><option>RÁDIO</option></select><span class="ticketFormHint">A PROGRAMAÇÃO RECEBE APENAS O DESTINO RÁDIO. OS DEMAIS SEGMENTOS FICAM NO CONTROLE DE DISTRIBUIÇÃO.</span></div>
-            <div class="field"><label>STATUS</label><select class="control" id="itemStatus"><option>PENDENTE</option><option>NO AR</option><option>REALIZADO</option><option>CANCELADO</option></select></div>
-            <div class="field"><label>GANHADOR / RESULTADO</label><input class="control" id="itemWinner" placeholder="NOME DO GANHADOR"></div>
+            <div class="field"><label>STATUS</label><select class="control" id="itemStatus"><option>NO AR</option><option>REALIZADO</option><option>ENTREGUE</option></select></div>
           </div>
 
           <div class="field full"><label>TÍTULO PARA O LOCUTOR</label><input class="control" id="itemTitle">
@@ -5558,32 +5526,9 @@ function openMonthKey(key){
 }
 function normalizeStatus(value){
   const v = norm(value);
-  if(v === 'CANCELADO') return 'CANCELADO';
-  if(v === 'REALIZADO' || v === 'ENTREGUE') return 'REALIZADO';
-  if(v === 'NO AR') return 'NO AR';
-  return 'PENDENTE';
-}
-function itemOnAirNow(item){
-  if(!item || !item.date || !item.slot) return false;
-  const start = new Date(`${item.date}T${timeToHHMM(item.slot)}:00`);
-  if(Number.isNaN(start.getTime())) return false;
-  const end = new Date(start.getTime() + 60*60*1000);
-  const now = new Date();
-  return now >= start && now < end;
-}
-function itemEffectiveStatus(item){
-  const manual = normalizeStatus(item?.status);
-  if(manual === 'REALIZADO' || manual === 'CANCELADO') return manual;
-  if(itemOnAirNow(item)) return 'NO AR';
-  return 'PENDENTE';
-}
-function itemStatusClass(status){
-  const s = normalizeStatus(status);
-  if(s === 'NO AR') return 'green';
-  if(s === 'PENDENTE') return 'amber';
-  if(s === 'REALIZADO') return 'blue';
-  if(s === 'CANCELADO') return 'red';
-  return 'amber';
+  if(v === 'ENTREGUE') return 'ENTREGUE';
+  if(v === 'REALIZADO') return 'REALIZADO';
+  return 'NO AR';
 }
 function normalizeChannel(value){
   const v = norm(value);
@@ -5833,12 +5778,10 @@ function programmed(distId, channel=''){
   return monthData().items.filter(i => i.distributionId === distId && (!target || normalizeChannel(i.channel) === target)).reduce((sum,i)=> sum + num(i.qty),0);
 }
 function slotOrder(v){ const m=String(v||'').match(/\d+/); return m ? Number(m[0]) : 99; }
-function statusBadge(status,item=null){
-  const s=item ? itemEffectiveStatus(item) : normalizeStatus(status);
-  const cls = itemStatusClass(s);
-  const winner = item ? norm(item.winnerName || item.resultName || '') : '';
-  const title = (s === 'REALIZADO' && winner) ? ` title="GANHADOR: ${esc(winner)}"` : '';
-  return `<span class="badge ${cls}"${title}>${esc(s)}</span>`;
+function statusBadge(status){
+  const s=normalizeStatus(status);
+  const cls = s === 'NO AR' ? 'green' : s === 'REALIZADO' ? 'blue' : 'amber';
+  return `<span class="badge ${cls}">${esc(s)}</span>`;
 }
 function balanceBadge(value){
   const cls = value < 0 ? 'red' : value === 0 ? 'amber' : 'green';
@@ -6235,7 +6178,7 @@ function convertSchedule(idValue){
     $('itemTitle').value=s.name||'';
     $('itemNotes').value=s.notes||'';
     $('itemChannel').value='RÁDIO';
-    $('itemStatus').value='PENDENTE';
+    $('itemStatus').value='NO AR';
     saveState(true); render(); setView('programacao'); openDrawer('itemDrawer');
     toast('AGENDAMENTO ABERTO PARA LANÇAR NA PROGRAMAÇÃO.');
     return;
@@ -6653,7 +6596,7 @@ function filteredItems(){
     normalizeChannel(i.channel)==='RÁDIO' &&
     (!week || norm(weekLabel(i.date)) === week) &&
     (!channel || normalizeChannel(i.channel) === channel) &&
-    (!status || itemEffectiveStatus(i) === status) &&
+    (!status || normalizeStatus(i.status) === status) &&
     (!activeDistributionFilter || i.distributionId === activeDistributionFilter)
   ).sort((a,b)=> String(a.date).localeCompare(String(b.date)) || slotOrder(a.slot)-slotOrder(b.slot) || norm(a.program).localeCompare(norm(b.program)));
 }
@@ -6733,7 +6676,6 @@ function renderProgramCard(i){
   const cardTitle = i.prize || i.title || i.program || '';
   const cardSubtitle = i.title ? `${i.title}${i.program ? ' · ' + i.program : ''}` : (i.program || '');
   const winnerInfo = norm(i.winnerName || '') ? `<span class="winnerInfo" title="GANHADOR: ${esc(i.winnerName)}">I</span>` : '';
-  const promoResultBadge = i.sourceType==='promo-result' ? `<span class="badge blue" title="RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR">RESULTADO</span>` : '';
   const radioConflict = normalizeChannel(i.channel)==='RÁDIO' ? radioSlotConflicts(i.date,i.slot,i.id) : [];
   const rotationConflict = (normalizeChannel(i.channel)==='RÁDIO' && d) ? samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id) : [];
   const hasConflict = radioConflict.length || rotationConflict.length;
@@ -6744,12 +6686,12 @@ function renderProgramCard(i){
     ? `<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`
     : (rotationConflict.length ? `<span class="programConflictNote">RODÍZIO: ${esc(samePrizeRepeatLabel(rotationConflict))}</span>` : '');
   const remapBtn = hasConflict ? `<button class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" onclick="remapRadioItem('${i.id}')"><span class="iconGlyph">↪</span></button>` : '';
-  return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}">
+  return `<article class="programCard ${hasConflict?'hasRadioConflict':''}">
     <div class="programTime">${esc(i.slot || '')}</div>
     <div class="programInfo">
       <strong>${esc(cardTitle)}</strong>
       <em>${esc(cardSubtitle)}</em>
-      <div class="programMeta"><span class="badge dark">${esc(i.channel || 'AR')}</span>${statusBadge(i.status,i)}${promoResultBadge}${conflictBadge}${winnerInfo}<span class="programQtyInline">QTD <strong>${num(i.qty)}</strong></span></div>
+      <div class="programMeta"><span class="badge dark">${esc(i.channel || 'AR')}</span>${statusBadge(i.status)}${conflictBadge}${winnerInfo}<span class="programQtyInline">QTD <strong>${num(i.qty)}</strong></span></div>
       ${conflictNote}
     </div>
     <div class="programSide">
@@ -6991,7 +6933,7 @@ function reuseReturnedPrize(recordId){
     qty:1,
     channel:'RÁDIO',
     station:'JP1017',
-    status:'PENDENTE',
+    status:'NO AR',
     notes:`REAPROVEITAMENTO: PRÊMIO NÃO RETIRADO POR ${r.winner}. PRAZO VENCIDO EM ${r.deadlineLabel}.`,
     titleStyle:d.titleStyle || defaultPromoTextStyle('title'),
     descriptionStyle:d.descriptionStyle || defaultPromoTextStyle('desc'),
@@ -7218,14 +7160,13 @@ function renderStudioPrizeCard(i){
   const linked = distributionById(i.distributionId) || {};
   const title = i.title || linked.title || distributionLabel(linked) || 'SEM TÍTULO CADASTRADO';
   const titleStyle = i.titleStyle || linked.titleStyle || defaultPromoTextStyle('title');
-  const status = itemEffectiveStatus(i);
-  const statusCls = itemStatusClass(status);
-  const statusTitle = status === 'REALIZADO' && norm(i.winnerName || '') ? ` title="GANHADOR: ${esc(i.winnerName)}"` : '';
+  const status = normalizeStatus(i.status);
+  const statusCls = status === 'NO AR' ? 'green' : status === 'ENTREGUE' || status === 'REALIZADO' ? 'blue' : 'amber';
   return `<article class="studioPrizeCard studioSummaryPrizeCard">
     <div class="studioPrizeHead"><div class="studioPrizeTime">${esc(formatStudioTime(i.slot || 'SEM HORA'))}</div><div class="studioPrizeProgram">${esc(i.program || 'PROGRAMA')}</div><div class="studioPrizeDate">${esc(formatBR(i.date || ''))}</div></div>
     <div class="studioCardBody studioSummaryBody">
       <div class="studioTitle" style="${promoInlineStyle(titleStyle,'title')}">${esc(title)}</div>
-      <div class="studioSummaryStatus"><span class="badge ${statusCls}"${statusTitle}>${esc(status)}</span></div>
+      <div class="studioSummaryStatus"><span class="badge ${statusCls}">${esc(status)}</span></div>
       <div class="studioCardActions"><button class="actionIcon" title="EDITAR ITEM" aria-label="EDITAR ITEM" onclick="editItem('${i.id}')"><span class="iconGlyph">✎</span></button></div>
     </div>
   </article>`;
@@ -7328,7 +7269,7 @@ $$('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeDrawer(btn
 $$('.tabBtn').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.view)));
 
 function clearItemForm(){
-  $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; $('itemStatus').value='PENDENTE'; if($('itemWinner')) $('itemWinner').value=''; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; if($('itemProgram')) $('itemProgram').dataset.auto='1'; $('itemDate').value=todayISO(); if($('distBalanceHint')) $('distBalanceHint').textContent=''; if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
+  $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; if($('itemProgram')) $('itemProgram').dataset.auto='1'; $('itemDate').value=todayISO(); if($('distBalanceHint')) $('distBalanceHint').textContent=''; if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
   renderItemSlotOptions(false);
   updateItemProgramFromSchedule(true);
   updateItemRotationVisibility();
@@ -7338,7 +7279,7 @@ function clearItemForm(){
 function editItem(itemId){
   const i=monthData().items.find(x=>x.id===itemId); if(!i) return;
   clearItemForm(); $('itemDrawerTitle').textContent='EDITAR ITEM DA PROGRAMAÇÃO';
-  $('itemId').value=i.id; $('itemDate').value=i.date||todayISO(); if($('itemProgramStation')) $('itemProgramStation').value=i.station||'JP1017'; renderItemSlotOptions(false); $('itemSlot').value=normalizeSlot(i.slot||''); $('itemProgram').value=i.program||''; $('itemProgram').dataset.auto='0'; $('itemDistribution').value=i.distributionId||''; $('itemPrize').value=i.prize||''; $('itemTitle').value=i.title||''; $('itemQty').value=num(i.qty); $('itemChannel').value=normalizeChannel(i.channel)||'RÁDIO'; $('itemStatus').value=itemEffectiveStatus(i); if($('itemWinner')) $('itemWinner').value=i.winnerName||i.resultName||''; $('itemNotes').value=i.notes||''; setPromoStyleControls('itemTitle',i.titleStyle,'title'); setPromoStyleControls('itemDesc',i.descriptionStyle,'desc'); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); openDrawer('itemDrawer');
+  $('itemId').value=i.id; $('itemDate').value=i.date||todayISO(); if($('itemProgramStation')) $('itemProgramStation').value=i.station||'JP1017'; renderItemSlotOptions(false); $('itemSlot').value=normalizeSlot(i.slot||''); $('itemProgram').value=i.program||''; $('itemProgram').dataset.auto='0'; $('itemDistribution').value=i.distributionId||''; $('itemPrize').value=i.prize||''; $('itemTitle').value=i.title||''; $('itemQty').value=num(i.qty); $('itemChannel').value=normalizeChannel(i.channel)||'RÁDIO'; $('itemStatus').value=normalizeStatus(i.status); $('itemNotes').value=i.notes||''; setPromoStyleControls('itemTitle',i.titleStyle,'title'); setPromoStyleControls('itemDesc',i.descriptionStyle,'desc'); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); openDrawer('itemDrawer');
 }
 function duplicateItem(itemId){
   const item=monthData().items.find(x=>x.id===itemId); if(!item) return;
@@ -7361,7 +7302,7 @@ function duplicateItem(itemId){
 function deleteItem(itemId){ if(!confirm('EXCLUIR ESTE ITEM DA PROGRAMAÇÃO?')) return; monthData().items=monthData().items.filter(i=>i.id!==itemId); saveState(true); render(); toast('ITEM EXCLUÍDO.'); }
 function programFromDist(distId){
   const d=distributionById(distId); if(!d) return;
-  clearItemForm(); $('itemDistribution').value=distId; handleItemDistributionChange(true); $('itemDate').value=todayISO(); if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; $('itemChannel').value='RÁDIO'; $('itemStatus').value='PENDENTE'; renderItemSlotOptions(false); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); setView('programacao'); openDrawer('itemDrawer');
+  clearItemForm(); $('itemDistribution').value=distId; handleItemDistributionChange(true); $('itemDate').value=todayISO(); if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; $('itemChannel').value='RÁDIO'; $('itemStatus').value='NO AR'; renderItemSlotOptions(false); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); setView('programacao'); openDrawer('itemDrawer');
 }
 function filterProgramByDist(distId){ activeDistributionFilter=distId; setView('programacao'); toast('FILTRO APLICADO NA PROGRAMAÇÃO.'); }
 function textFieldValue(obj,keys=[],multiline=false){
@@ -7502,8 +7443,7 @@ $('itemForm').addEventListener('submit',e=>{
   e.preventDefault();
   const idVal=$('itemId').value || id('BR');
   const date=$('itemDate').value;
-  const existingItem=monthData().items.find(i=>i.id===idVal)||{};
-  const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),station:$('itemProgramStation')?.value||'JP1017',program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:normalizeStatus($('itemStatus').value),winnerName:norm($('itemWinner')?.value||''),notes:textNorm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc'),sourceType:existingItem.sourceType||'',promoId:existingItem.promoId||'',promoKind:existingItem.promoKind||''};
+  const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),station:$('itemProgramStation')?.value||'JP1017',program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:normalizeStatus($('itemStatus').value),notes:textNorm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc')};
   if(item.channel === 'RÁDIO' && !item.program){ alert('CADASTRE A GRADE EM HORÁRIOS OU ESCOLHA UMA RÁDIO/HORÁRIO COM PROGRAMA IDENTIFICADO.'); return; }
   if(item.channel === 'RÁDIO'){
     const occupied=radioSlotConflicts(item.date,item.slot,item.id,item.station);
@@ -7772,7 +7712,7 @@ function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
     title:d.title||distributionLabel(d),
     qty:1,
     channel:'RÁDIO',
-    status:'PENDENTE',
+    status:'NO AR',
     notes:d.description||d.notes||'',
     titleStyle:d.titleStyle||defaultPromoTextStyle('title'),
     descriptionStyle:d.descriptionStyle||defaultPromoTextStyle('desc'),
@@ -8639,7 +8579,7 @@ function editPromo(pid){
   updatePromoPreview();
   openDrawer('promoDrawer');
 }
-function deletePromo(pid){ if(!confirm('EXCLUIR ESTA PROMOÇÃO?')) return; monthData().promos=monthData().promos.filter(p=>p.id!==pid); removePromoResultFromProgram(pid); saveState(true); render(); toast('PROMOÇÃO EXCLUÍDA.'); }
+function deletePromo(pid){ if(!confirm('EXCLUIR ESTA PROMOÇÃO?')) return; monthData().promos=monthData().promos.filter(p=>p.id!==pid); saveState(true); render(); toast('PROMOÇÃO EXCLUÍDA.'); }
 $('promoImage').addEventListener('change',e=>{
   const file=e.target.files?.[0];
   if(!file) return;
@@ -8662,67 +8602,6 @@ bind('promoProgram','input',updatePromoPreview);
 bind('promoReadAll','change',updatePromoReadScheduleState);
 document.addEventListener('change',e=>{ if(e.target.closest('#promoReadHours')) updatePromoReadScheduleState(); });
 ['itemTitleFont','itemTitleSize','itemTitleColor','itemDescFont','itemDescSize','itemDescColor','distTitleFont','distTitleSize','distTitleColor','distDescFont','distDescSize','distDescColor'].forEach(id=>bind(id,'input',()=>{}));
-
-function promoResultStations(p){
-  const st=p?.station || 'JP1017';
-  return st==='ALL' ? ['JP1017','JPNEWS983'] : [st];
-}
-function promoResultProgramTitle(p,station,slot){
-  return programForSlot(p.drawDate || p.startDate || todayISO(), slot, station) || norm(p.program || '') || 'RESULTADO NO AR';
-}
-function existingPromoResultItems(promoId){
-  const rows=[];
-  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
-    (m.items||[]).forEach(i=>{
-      if(i.sourceType==='promo-result' && i.promoId===promoId) rows.push({monthKey,item:i});
-    });
-  });
-  return rows;
-}
-function syncPromoResultToProgram(p){
-  if(!p || !p.id || !p.drawDate || !p.drawTime) return;
-  const old=existingPromoResultItems(p.id);
-  const oldByStation={};
-  old.forEach(r=>{ oldByStation[r.item.station||'JP1017']=r.item; });
-  Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===p.id)); });
-  const key=String(p.drawDate).slice(0,7) || state.currentMonth;
-  const targetMonth=monthDataForKey(key);
-  const slot=normalizeSlot(p.drawTime);
-  promoResultStations(p).forEach(station=>{
-    const previous=oldByStation[station] || {};
-    const winner=norm(p.resultName || previous.winnerName || '');
-    const status = previous.status==='CANCELADO' ? 'CANCELADO' : (winner ? 'REALIZADO' : normalizeStatus(previous.status || 'PENDENTE'));
-    const program=promoResultProgramTitle(p,station,slot);
-    targetMonth.items.push({
-      id:previous.id || id('BR'),
-      date:p.drawDate,
-      day:dayName(p.drawDate),
-      week:weekLabel(p.drawDate),
-      slot,
-      station,
-      program,
-      distributionId:p.distributionId || '',
-      prize:norm(p.name || p.title || 'PROMOÇÃO'),
-      title:`RESULTADO: ${norm(p.name || p.title || 'PROMOÇÃO')}`,
-      qty:1,
-      channel:'RÁDIO',
-      status,
-      winnerName:winner,
-      notes:`RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR. ORIGEM: ${promoTypeDisplay(p)} · ${norm(p.local || 'PROMOÇÃO')}.`,
-      titleStyle:p.titleStyle || defaultPromoTextStyle('title'),
-      descriptionStyle:p.descriptionStyle || defaultPromoTextStyle('desc'),
-      sourceType:'promo-result',
-      promoId:p.id,
-      promoKind:p.kind || 'promo',
-      createdAt:previous.createdAt || new Date().toISOString(),
-      updatedAt:new Date().toISOString()
-    });
-  });
-}
-function removePromoResultFromProgram(promoId){
-  Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===promoId)); });
-}
-
 $('promoForm').addEventListener('submit',e=>{
   e.preventDefault();
   const idVal=$('promoId').value||id('PR');
@@ -8753,7 +8632,6 @@ $('promoForm').addEventListener('submit',e=>{
     resultByHour:(monthData().promos.find(x=>x.id===idVal)||{}).resultByHour || {},
     imageData:$('promoImageData').value||''
   };
-  syncPromoResultToProgram(p);
   const idx=monthData().promos.findIndex(x=>x.id===idVal);
   if(idx>=0) monthData().promos[idx]=p; else monthData().promos.push(p);
   saveState(true); closeDrawer('promoDrawer'); render(); toast('PROMOÇÃO SALVA.');
