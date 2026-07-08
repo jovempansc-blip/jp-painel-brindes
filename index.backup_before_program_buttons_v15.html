@@ -2641,38 +2641,9 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
   z-index:6;
 }
 
-
-/* === V15: CLIQUE DIRETO E SEM SOBREPOSIÇÃO NA ABA PROGRAMAÇÃO === */
-#view-programacao .programCard,
-#view-programacao .periodCell,
-#view-programacao .periodItems{
-  position:relative;
-}
-#view-programacao .programSide,
-#view-programacao .programActions,
-#view-programacao .programActions button,
-#addProgramBtn,
-#clearProgramBtn{
-  position:relative;
-  z-index:20;
-  pointer-events:auto!important;
-}
-#view-programacao .programActions{
-  opacity:1!important;
-  transform:none!important;
-}
-
 </style>
 
-<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js">
-document.addEventListener('DOMContentLoaded',()=>{
-  const addBtn=document.getElementById('addProgramBtn');
-  if(addBtn) addBtn.onclick=addProgramItemClick;
-  const clearBtn=document.getElementById('clearProgramBtn');
-  if(clearBtn) clearBtn.onclick=clearProgramButtonClick;
-});
-
-</script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 
 </head>
@@ -2713,7 +2684,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             <div class="field"><label>CANAL</label><select class="control" id="channelFilter"><option value="">TODOS</option></select></div>
             <div class="field"><label>SEMANA</label><select class="control" id="weekFilter"><option value="">TODAS</option></select></div>
             <div class="field"><label>STATUS</label><select class="control" id="statusFilter"><option value="">TODOS</option><option>PENDENTE</option><option>NO AR</option><option>REALIZADO</option><option>CANCELADO</option></select></div>
-            <div class="programFilterActions"><button class="btn red" id="addProgramBtn" type="button" onclick="addProgramItemClick(event)">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" type="button" onclick="clearProgramButtonClick(event)" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
+            <div class="programFilterActions"><button class="btn red" id="addProgramBtn" type="button">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" type="button" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
           </div>
           <div class="weeklyHeader">
             <div><strong>PROGRAMAÇÃO SEMANAL</strong><span id="weeklyRangeLabel">SEMANA SELECIONADA</span></div>
@@ -6981,7 +6952,7 @@ function renderProgramCard(i){
   const conflictNote = radioConflict.length
     ? `<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`
     : (rotationConflict.length ? `<span class="programConflictNote">RODÍZIO: ${esc(samePrizeRepeatLabel(rotationConflict))}</span>` : '');
-  const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" onclick="programActionClick(event,'remap','${esc(i.id)}')"><span class="iconGlyph">↪</span></button>` : '';
+  const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" data-program-action="remap" data-item-id="${esc(i.id)}"><span class="iconGlyph">↪</span></button>` : '';
   return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}">
     <div class="programTime">${esc(i.slot || '')}</div>
     <div class="programInfo">
@@ -6991,7 +6962,7 @@ function renderProgramCard(i){
       ${conflictNote}
     </div>
     <div class="programSide">
-      <div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="programActionClick(event,'edit','${esc(i.id)}')"><span class="iconGlyph">✎</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" onclick="programActionClick(event,'copy','${esc(i.id)}')"><span class="iconGlyph">⧉</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="programActionClick(event,'delete','${esc(i.id)}')"><span class="iconGlyph">🗑</span></button></div>
+      <div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" data-program-action="edit" data-item-id="${esc(i.id)}"><span class="iconGlyph">✎</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" data-program-action="copy" data-item-id="${esc(i.id)}"><span class="iconGlyph">⧉</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" data-program-action="delete" data-item-id="${esc(i.id)}"><span class="iconGlyph">🗑</span></button></div>
     </div>
   </article>`;
 }
@@ -7568,29 +7539,6 @@ function openDrawer(id){ const el=$(id); el.classList.add('open'); el.setAttribu
 function closeDrawer(id){ $(id).classList.remove('open'); $(id).setAttribute('aria-hidden','true'); }
 $$('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeDrawer(btn.dataset.close)));
 $$('.tabBtn').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.view)));
-
-
-function addProgramItemClick(event){
-  if(event){ event.preventDefault(); event.stopPropagation(); }
-  clearItemForm();
-  renderItemSlotOptions(false);
-  updateItemProgramFromSchedule(true);
-  setView('programacao');
-  openDrawer('itemDrawer');
-}
-function clearProgramButtonClick(event){
-  if(event){ event.preventDefault(); event.stopPropagation(); }
-  renderClearProgramDrawer();
-  openDrawer('clearProgramDrawer');
-}
-function programActionClick(event,action,itemId){
-  if(event){ event.preventDefault(); event.stopPropagation(); }
-  if(!itemId) return;
-  if(action==='edit') return editItem(itemId);
-  if(action==='copy') return duplicateItem(itemId);
-  if(action==='delete') return deleteItem(itemId);
-  if(action==='remap') return remapRadioItem(itemId);
-}
 
 function clearItemForm(){
   $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; $('itemStatus').value='PENDENTE'; if($('itemWinner')) $('itemWinner').value=''; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; if($('itemProgram')) $('itemProgram').dataset.auto='1'; $('itemDate').value=todayISO(); if($('distBalanceHint')) $('distBalanceHint').textContent=''; if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
