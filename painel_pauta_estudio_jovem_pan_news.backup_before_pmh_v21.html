@@ -947,46 +947,6 @@ body{
   100%{transform:translateX(0)}
 }
 
-
-/* === V21: BOTÕES P / M / H COM CAMADA DE CLIQUE E PROCESSO ATIVO === */
-.headNav,
-.promoListWrap,
-.promoListBtn,
-.iconNav{
-  position:relative;
-  z-index:80;
-  pointer-events:auto!important;
-}
-.pautaProgram{
-  pointer-events:none!important;
-}
-.promoList{
-  z-index:999!important;
-}
-.promoListBtn{
-  min-width:42px;
-  min-height:38px;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  border-radius:999px;
-  background:rgba(255,255,255,.68);
-  border:1px solid rgba(213,219,228,.82);
-  box-shadow:0 5px 14px rgba(17,23,34,.045);
-}
-.promoListBtn small{
-  display:none;
-}
-.promoListBtn.active,
-.promoListBtn:hover{
-  color:#171c26;
-  background:#fff;
-}
-.promoListBtn.history{
-  color:#657084;
-}
-
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1548,7 +1508,7 @@ function buildHourReadList(item){
   return `<div class="hourReadList">${pautas.map(p=>{
     const read=isPromoReadForHour(p,item);
     const label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';
-    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,\'${esc(p.id)}\')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
+    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
   }).join('')}</div>`;
 }
 
@@ -1791,48 +1751,6 @@ function step(delta){
   selectedPromoId=null;
   render();
 }
-
-function hideStudioShortcutLists(except=''){
-  const promoList=$('promoList');
-  const merchanList=$('merchanList');
-  if(promoList && except!=='promo') promoList.classList.remove('show');
-  if(merchanList && except!=='merchan') merchanList.classList.remove('show');
-}
-function studioShortcutClick(event,type){
-  if(event){ event.preventDefault(); event.stopPropagation(); }
-  if(type==='promo'){
-    if(!ALLOW_PROMO_SHORTCUT) return;
-    const list=$('promoList');
-    if(list){
-      const open=!list.classList.contains('show');
-      hideStudioShortcutLists('promo');
-      list.classList.toggle('show',open);
-    }
-    return;
-  }
-  if(type==='merchan'){
-    const list=$('merchanList');
-    if(list){
-      const open=!list.classList.contains('show');
-      hideStudioShortcutLists('merchan');
-      list.classList.toggle('show',open);
-    }
-    return;
-  }
-  if(type==='history'){
-    hideStudioShortcutLists('');
-    openHistoryModal();
-    return;
-  }
-}
-function studioPautaItemClick(event,promoId){
-  if(event){ event.preventDefault(); event.stopPropagation(); }
-  hideStudioShortcutLists('');
-  startPromoRead(promoId);
-}
-window.studioShortcutClick=studioShortcutClick;
-window.studioPautaItemClick=studioPautaItemClick;
-
 function render(){
   renderStudioDateStamp();
   const rows=allPrizeRows();
@@ -1885,14 +1803,14 @@ function render(){
       <div class="headNav">
         ${ALLOW_PROMO_SHORTCUT ? `
         <div class="promoListWrap">
-          <button class="promoListBtn ${promo&&!isMerchan(promo)?'active':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PROMOÇÕES" title="P = PROMOÇÕES">P<small>PROMO</small></button>
+          <button class="promoListBtn ${promo&&!isMerchan(promo)?'active':''}" id="promoListBtn" type="button" aria-label="PROMOÇÕES" title="P = PROMOÇÕES">P<small>PROMO</small></button>
           <div class="promoList" id="promoList">${buildPromoList(item)}</div>
         </div>` : ''}
         <div class="promoListWrap">
-          <button class="promoListBtn ${promo&&isMerchan(promo)?'active':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHAN" title="M = MERCHAN">M<small>MERCHAN</small></button>
+          <button class="promoListBtn ${promo&&isMerchan(promo)?'active':''}" id="merchanListBtn" type="button" aria-label="MERCHAN" title="M = MERCHAN">M<small>MERCHAN</small></button>
           <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
         </div>
-        <button class="promoListBtn history" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="HISTÓRICO" title="H = HISTÓRICO">H<small>HIST.</small></button>
+        <button class="promoListBtn history" id="historyListBtn" type="button" aria-label="HISTÓRICO" title="H = HISTÓRICO">H<small>HIST.</small></button>
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
         <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
       </div>
@@ -1925,18 +1843,6 @@ $('winnerNameInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'){ e.preventDefault(); saveWinner(); }
   if(e.key==='Escape'){ closeWinnerModal(); }
 });
-
-document.addEventListener('click',e=>{
-  const shortcut=e.target.closest('#promoListBtn,#merchanListBtn,#historyListBtn');
-  if(shortcut){
-    if(shortcut.id==='promoListBtn') return studioShortcutClick(e,'promo');
-    if(shortcut.id==='merchanListBtn') return studioShortcutClick(e,'merchan');
-    if(shortcut.id==='historyListBtn') return studioShortcutClick(e,'history');
-  }
-  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]');
-  if(pauta) return studioPautaItemClick(e,pauta.dataset.promoId);
-});
-
 document.addEventListener('click',e=>{ const h=e.target.closest('#historyListBtn, #historyBtn, [data-history]'); if(h){ e.preventDefault(); openHistoryModal(); }});
 $('closeHistoryBtn').addEventListener('click',closeHistoryModal);
 $('historyTodayBtn').addEventListener('click',()=>{ $('historyDateInput').value=todayISO(); renderHistoryList(); });

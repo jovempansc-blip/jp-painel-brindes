@@ -862,6 +862,131 @@ body{
 /* AJUSTE FINAL — PAUTA DE ESTÚDIO RESPONSIVA */
 .wrap{max-width:1280px!important;padding:10px!important}.hero{min-height:64px!important;padding:10px 54px!important;border-radius:20px!important}.heroLogo{width:min(460px,52%)!important}.backIcon{width:30px!important;height:30px!important;border-radius:10px!important}.panel{margin-top:10px!important;border-radius:22px!important;min-height:360px!important}.pautaHead{min-height:60px!important;padding:8px 18px!important}.pautaTime{width:110px!important;flex-basis:110px!important;font-size:42px!important}.pautaProgram{font-size:24px!important;width:calc(100% - 270px)!important}.iconNav{font-size:27px!important}.headNav{gap:10px!important}.pautaBody{min-height:290px!important;padding:22px 28px!important;gap:11px!important}.titleBox,.descBox{width:min(940px,100%)!important;border-radius:16px!important;padding:15px 20px!important}.title{font-size:31px!important}.desc{font-size:17px!important;line-height:1.42!important}.winnerBox{padding:12px 15px!important;border-radius:14px!important}.winnerName{font-size:22px!important}.promoFooter{min-height:38px!important;padding:5px 10px!important}.promoPill{font-size:8.5px!important;min-height:16px!important;max-width:200px!important}@media(max-width:760px){.heroLogo{width:min(330px,70%)!important}.pautaHead{display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important}.pautaProgram{position:static!important;transform:none!important;width:100%!important;grid-column:1/-1!important;font-size:18px!important;order:2}.pautaTime{font-size:34px!important;width:auto!important;flex-basis:auto!important}.title{font-size:24px!important}.desc{font-size:15px!important}.pautaBody{padding:16px!important}}
 
+
+/* === V20: PROMO / MERCHAN NA JANELA LARANJA + LETREIRO VERDE === */
+.promoFooter{
+  min-height:48px!important;
+  background:#fff0da!important;
+  border-top:1px solid #f0c584!important;
+}
+.promoFooterList{
+  gap:9px!important;
+  flex-wrap:nowrap!important;
+  overflow:hidden!important;
+}
+.promoFooterList.empty::before{
+  content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
+  color:#b46a00;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.05em;
+}
+.promoPill{
+  min-height:26px!important;
+  max-width:360px!important;
+  padding:0 12px!important;
+  font-size:10px!important;
+}
+.promoPill.pending{
+  border-color:#ffb45c!important;
+  background:#fff3df!important;
+  color:#a65300!important;
+  animation:promoOrangeBlink 1.05s ease-in-out infinite!important;
+}
+.promoPill.read{
+  border-color:#b7e4ca!important;
+  background:#e8faef!important;
+  color:#12723e!important;
+  min-width:220px!important;
+}
+.promoPill.read .marquee{
+  display:block!important;
+  width:100%!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+.promoPill.read .marquee span{
+  display:inline-block!important;
+  opacity:1!important;
+  min-width:100%!important;
+  padding-left:0!important;
+  animation:promoBusMarquee 7s linear infinite!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+.promoPill.read .marquee span:nth-child(2){
+  display:none!important;
+}
+@keyframes promoBusMarquee{
+  0%{transform:translateX(-105%)}
+  100%{transform:translateX(105%)}
+}
+.readHistoryTicker{
+  height:48px!important;
+}
+.readHistoryTickerTrack{
+  left:14px!important;
+  right:auto!important;
+  top:21px!important;
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  gap:16px!important;
+  width:max-content!important;
+  padding-top:0!important;
+  animation:readHistoryBus 28s linear infinite!important;
+  white-space:nowrap!important;
+}
+.readHistoryTickerTrack span{
+  min-height:20px!important;
+  white-space:nowrap!important;
+}
+@keyframes readHistoryBus{
+  0%{transform:translateX(-50%)}
+  100%{transform:translateX(0)}
+}
+
+
+/* === V21: BOTÕES P / M / H COM CAMADA DE CLIQUE E PROCESSO ATIVO === */
+.headNav,
+.promoListWrap,
+.promoListBtn,
+.iconNav{
+  position:relative;
+  z-index:80;
+  pointer-events:auto!important;
+}
+.pautaProgram{
+  pointer-events:none!important;
+}
+.promoList{
+  z-index:999!important;
+}
+.promoListBtn{
+  min-width:42px;
+  min-height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  border-radius:999px;
+  background:rgba(255,255,255,.68);
+  border:1px solid rgba(213,219,228,.82);
+  box-shadow:0 5px 14px rgba(17,23,34,.045);
+}
+.promoListBtn small{
+  display:none;
+}
+.promoListBtn.active,
+.promoListBtn:hover{
+  color:#171c26;
+  background:#fff;
+}
+.promoListBtn.history{
+  color:#657084;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1120,7 +1245,12 @@ function selectStudioMonth(){
 
 function hourDateFromItem(item){return itemDateTime(item);}
 function currentHourDate(){const d=new Date();d.setMinutes(0,0,0);return d;}
-function virtualItemFromDate(d){return {id:'__VIRTUAL__',date:dateISO(d),slot:`${pad(d.getHours())}:00`,program:'PROMOÇÕES',title:'PROMOÇÕES',notes:'',__virtual:true};}
+function virtualItemFromDate(d){
+  const date=dateISO(d);
+  const slot=`${pad(d.getHours())}:00`;
+  const program=programFromSchedule(date,slot,STUDIO_STATION) || 'PROMOÇÕES';
+  return {id:'__VIRTUAL__',date,slot,program,title:'PROMOÇÕES',notes:'',__virtual:true};
+}
 function virtualCurrentItem(){return virtualItemFromDate(currentHourDate());}
 function distributionById(id){return monthData().distributions?.find(d=>d.id===id)||null;}
 function safeFont(font){
@@ -1145,6 +1275,28 @@ function itemDateTime(i){
 }
 function promoRefDate(p){return p.drawDate||p.startDate||'';}
 function promoHour(p){return slotHour(p.drawTime||'');}
+function promoStartDate(p){return p?.startDate || p?.date || p?.drawDate || p?.resultDate || '';}
+function promoEndDate(p){return p?.endDate || p?.drawDate || p?.resultDate || p?.startDate || p?.date || '';}
+function promoDateAllowed(p,date){
+  const start=promoStartDate(p);
+  const end=promoEndDate(p);
+  if(start && date<start) return false;
+  if(end && date>end) return false;
+  return true;
+}
+function promoHourAllowed(p,item){
+  const hour=pad(slotHour(item?.slot||''));
+  const date=item?.date||'';
+  if(!hour || hour==='00') return false;
+  if(!promoDateAllowed(p,date)) return false;
+  if(!isMerchan(p) && isPromoResultForItem(p,item)) return true;
+  const hours=Array.isArray(p.readHours) ? p.readHours.map(h=>pad(slotHour(h))).filter(Boolean) : [];
+  if(hours.length) return hours.includes(hour);
+  const mode=p.readMode||'all';
+  if(mode==='selected') return false;
+  if(p.drawTime && (p.drawDate||p.resultDate)===date) return pad(slotHour(p.drawTime))===hour;
+  return mode==='all';
+}
 function isMerchan(p){
   const k=upper(p.kind||p.promoKind||p.type||'');
   const local=upper(p.local||'');
@@ -1163,16 +1315,28 @@ function readTimeLabel(value){
   return `FEITA ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function normalizeStationValue(value){
+  const v=upper(value||'');
+  if(!v || v==='ALL' || v==='AMBAS' || v==='TODAS') return 'ALL';
+  if(v.includes('NEWS') || v.includes('98')) return 'JPNEWS983';
+  if(v.includes('JP1017') || v.includes('101') || v.includes('JOVEMPAN') || v.includes('JOVEM PAN')) return 'JP1017';
+  return v;
+}
 function stationAllowed(p){
-  const st = p?.station || '';
-  if(st && st !== 'ALL' && st !== STUDIO_STATION) return false;
-  return true;
+  const st=normalizeStationValue(p?.station||'ALL');
+  if(st==='ALL') return true;
+  return st===STUDIO_STATION;
+}
+function genericProgramName(program){
+  const p=upper(program||'');
+  return !p || p==='TODOS' || p==='TODAS' || p==='SELECIONE' || p==='PROGRAMAÇÃO NORMAL' || p==='PROGRAMACAO NORMAL' || p==='PROGRAMA NORMAL' || p==='GRADE NORMAL';
 }
 function programMatchesMerchan(p,item){
   if(!isMerchan(p)) return true;
   const program=upper(p.program||p.programName||'');
-  if(!program) return true;
-  return upper(item.program||'')===program;
+  const itemProgram=upper(item?.program||'');
+  if(genericProgramName(program) || genericProgramName(itemProgram)) return true;
+  return itemProgram===program;
 }
 function merchanHourAllowed(p,item){
   if(!isMerchan(p)) return true;
@@ -1217,7 +1381,7 @@ function programFromSchedule(date,slot,station=STUDIO_STATION){
   return hit ? upper(hit.name||'') : '';
 }
 function promoResultStations(p){
-  const st=p?.station || STUDIO_STATION;
+  const st=normalizeStationValue(p?.station || STUDIO_STATION);
   if(st==='ALL') return ['JP1017','JPNEWS983'];
   return [st];
 }
@@ -1275,24 +1439,10 @@ function promoResultVirtualRows(){
 
 function promoEligibleForItemHour(p,item){
   if(!p || !item) return false;
-  if(!stationAllowed(p) || !programMatchesMerchan(p,item) || !merchanHourAllowed(p,item)) return false;
-  const date=item.date||'';
-  if(isMerchan(p)){
-    const start=p.startDate||'';
-    const end=p.drawDate||p.endDate||'';
-    if(start && date<start) return false;
-    if(end && date>end) return false;
-  }else{
-    const ref=promoRefDate(p);
-    if(ref && ref!==date) return false;
-    if(isPromoResultForItem(p,item)) return true;
-  }
-  const hour=pad(slotHour(item.slot));
-  const mode=p.readMode||'all';
-  if(mode==='selected'){
-    const hours=Array.isArray(p.readHours)?p.readHours.map(h=>pad(slotHour(h))):[];
-    return hours.includes(hour);
-  }
+  if(!stationAllowed(p)) return false;
+  if(!promoDateAllowed(p,item.date||'')) return false;
+  if(isMerchan(p) && (!programMatchesMerchan(p,item) || !merchanHourAllowed(p,item))) return false;
+  if(!promoHourAllowed(p,item)) return false;
   return true;
 }
 function isPromoReadForHour(p,item){
@@ -1368,14 +1518,17 @@ function renderReadHistoryTicker(){
 function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
 function buildPromoFooter(item){
   const pautas=allPautasForItemHour(item,true);
-  return `<div class="promoFooter"><div class="promoFooterList">${pautas.map(p=>{
+  const emptyClass=pautas.length ? '' : ' empty';
+  return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{
     const key=readHourKey(item,p);
     const done=!!(p.readByHour&&p.readByHour[key]);
+    const type=pautaTypeLabel(p);
     const name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMO'));
     if(done){
-      return `<button class="promoPill read" type="button" data-promo-id="${esc(p.id)}" title="${esc(name)}"><span class="marquee"><span>${esc(name)}</span><span>${esc(readTimeLabel(p.readByHour[key]))}</span></span></button>`;
+      const label=`${readTimeLabel(p.readByHour[key]).replace('FEITA ','')} · ${type} · ${name} LIDA`;
+      return `<button class="promoPill read" type="button" data-promo-id="${esc(p.id)}" title="${esc(label)}"><span class="marquee"><span>${esc(label)}</span></span></button>`;
     }
-    return `<button class="promoPill pending" type="button" data-promo-id="${esc(p.id)}" title="${esc(name)}">${esc(name)}</button>`;
+    return `<button class="promoPill pending" type="button" data-promo-id="${esc(p.id)}" title="${esc(type+' · '+name)}">${esc(type)} · ${esc(name)}</button>`;
   }).join('')}</div></div>`;
 }
 function buildPautaList(item,kind){
@@ -1395,7 +1548,7 @@ function buildHourReadList(item){
   return `<div class="hourReadList">${pautas.map(p=>{
     const read=isPromoReadForHour(p,item);
     const label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';
-    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
+    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,\'${esc(p.id)}\')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
   }).join('')}</div>`;
 }
 
@@ -1638,6 +1791,48 @@ function step(delta){
   selectedPromoId=null;
   render();
 }
+
+function hideStudioShortcutLists(except=''){
+  const promoList=$('promoList');
+  const merchanList=$('merchanList');
+  if(promoList && except!=='promo') promoList.classList.remove('show');
+  if(merchanList && except!=='merchan') merchanList.classList.remove('show');
+}
+function studioShortcutClick(event,type){
+  if(event){ event.preventDefault(); event.stopPropagation(); }
+  if(type==='promo'){
+    if(!ALLOW_PROMO_SHORTCUT) return;
+    const list=$('promoList');
+    if(list){
+      const open=!list.classList.contains('show');
+      hideStudioShortcutLists('promo');
+      list.classList.toggle('show',open);
+    }
+    return;
+  }
+  if(type==='merchan'){
+    const list=$('merchanList');
+    if(list){
+      const open=!list.classList.contains('show');
+      hideStudioShortcutLists('merchan');
+      list.classList.toggle('show',open);
+    }
+    return;
+  }
+  if(type==='history'){
+    hideStudioShortcutLists('');
+    openHistoryModal();
+    return;
+  }
+}
+function studioPautaItemClick(event,promoId){
+  if(event){ event.preventDefault(); event.stopPropagation(); }
+  hideStudioShortcutLists('');
+  startPromoRead(promoId);
+}
+window.studioShortcutClick=studioShortcutClick;
+window.studioPautaItemClick=studioPautaItemClick;
+
 function render(){
   renderStudioDateStamp();
   const rows=allPrizeRows();
@@ -1690,14 +1885,14 @@ function render(){
       <div class="headNav">
         ${ALLOW_PROMO_SHORTCUT ? `
         <div class="promoListWrap">
-          <button class="promoListBtn ${promo&&!isMerchan(promo)?'active':''}" id="promoListBtn" type="button" aria-label="PROMOÇÕES" title="P = PROMOÇÕES">P<small>PROMO</small></button>
+          <button class="promoListBtn ${promo&&!isMerchan(promo)?'active':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PROMOÇÕES" title="P = PROMOÇÕES">P<small>PROMO</small></button>
           <div class="promoList" id="promoList">${buildPromoList(item)}</div>
         </div>` : ''}
         <div class="promoListWrap">
-          <button class="promoListBtn ${promo&&isMerchan(promo)?'active':''}" id="merchanListBtn" type="button" aria-label="MERCHAN" title="M = MERCHAN">M<small>MERCHAN</small></button>
+          <button class="promoListBtn ${promo&&isMerchan(promo)?'active':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHAN" title="M = MERCHAN">M<small>MERCHAN</small></button>
           <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
         </div>
-        <button class="promoListBtn history" id="historyListBtn" type="button" aria-label="HISTÓRICO" title="H = HISTÓRICO">H<small>HIST.</small></button>
+        <button class="promoListBtn history" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="HISTÓRICO" title="H = HISTÓRICO">H<small>HIST.</small></button>
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
         <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
       </div>
@@ -1719,11 +1914,12 @@ function render(){
     if(remove) remove.closest('.resultWinnerLine')?.remove();
   });
   const promoBtn=$('promoListBtn');
-  if(promoBtn) promoBtn.addEventListener('click',()=>{$('promoList')?.classList.toggle('show');$('merchanList')?.classList.remove('show');});
+  if(promoBtn) promoBtn.onclick=e=>studioShortcutClick(e,'promo');
   const merchanBtn=$('merchanListBtn');
-  if(merchanBtn) merchanBtn.addEventListener('click',()=>{$('merchanList')?.classList.toggle('show');$('promoList')?.classList.remove('show');});
-  const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList')?.classList.remove('show');$('merchanList')?.classList.remove('show');openHistoryModal();});
-  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.addEventListener('click',()=>startPromoRead(btn.dataset.promoId)));
+  if(merchanBtn) merchanBtn.onclick=e=>studioShortcutClick(e,'merchan');
+  const historyBtn=$('historyListBtn');
+  if(historyBtn) historyBtn.onclick=e=>studioShortcutClick(e,'history');
+  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId));
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
@@ -1732,6 +1928,18 @@ $('winnerNameInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'){ e.preventDefault(); saveWinner(); }
   if(e.key==='Escape'){ closeWinnerModal(); }
 });
+
+document.addEventListener('click',e=>{
+  const shortcut=e.target.closest('#promoListBtn,#merchanListBtn,#historyListBtn');
+  if(shortcut){
+    if(shortcut.id==='promoListBtn') return studioShortcutClick(e,'promo');
+    if(shortcut.id==='merchanListBtn') return studioShortcutClick(e,'merchan');
+    if(shortcut.id==='historyListBtn') return studioShortcutClick(e,'history');
+  }
+  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]');
+  if(pauta) return studioPautaItemClick(e,pauta.dataset.promoId);
+});
+
 document.addEventListener('click',e=>{ const h=e.target.closest('#historyListBtn, #historyBtn, [data-history]'); if(h){ e.preventDefault(); openHistoryModal(); }});
 $('closeHistoryBtn').addEventListener('click',closeHistoryModal);
 $('historyTodayBtn').addEventListener('click',()=>{ $('historyDateInput').value=todayISO(); renderHistoryList(); });
