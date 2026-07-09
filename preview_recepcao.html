@@ -375,32 +375,29 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   display:flex;
   align-items:center;
   justify-content:center;
-  gap:8px;
+  gap:6px;
   min-width:0;
   flex-wrap:wrap;
   text-align:center;
-}
-.winnerCenter .winnerLabel{
-  flex:0 0 100%;
-  color:#657084;
-  font-size:8px;
-  letter-spacing:.09em;
-  font-weight:1000;
-  line-height:1;
+  flex-direction:column;
 }
 .winnerCenter .resultNameTag{
-  min-height:31px!important;
-  padding:0 14px!important;
-  font-size:13px!important;
-  border-radius:999px!important;
-  background:#fff!important;
-  border:1px solid #d8e0ea!important;
+  min-height:auto!important;
+  padding:0!important;
+  font-size:16px!important;
+  font-weight:900!important;
+  line-height:1.15!important;
+  border-radius:0!important;
+  background:transparent!important;
+  border:none!important;
   color:#171c26!important;
-  box-shadow:0 4px 12px rgba(17,23,34,.035);
+  box-shadow:none!important;
+  text-align:center!important;
 }
 .winnerCenter .deadlineNote{
   min-height:29px!important;
   padding:0 12px!important;
+  align-self:center!important;
 }
 .resultRight{
   display:flex;
@@ -446,15 +443,68 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   .winnerCenter{
     justify-content:flex-start;
     text-align:left;
+    align-items:flex-start;
   }
-  .winnerCenter .winnerLabel{
-    flex-basis:auto;
+  .winnerCenter .resultNameTag,
+  .winnerCenter .deadlineNote{
+    align-self:flex-start!important;
+    text-align:left!important;
   }
   .resultRight{
     justify-content:flex-start;
     min-width:0;
   }
   .resultRight .pickupWrap{
+    align-items:flex-start!important;
+  }
+}
+
+
+/* === V32: GANHADOR CENTRAL LIMPO + PRAZO NO BLOCO OPERACIONAL À DIREITA === */
+.winnerCenter{
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+.winnerCenter .resultNameTag{
+  font-size:17px!important;
+  font-weight:1000!important;
+  letter-spacing:-.02em!important;
+}
+.resultRight{
+  flex-direction:column!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  gap:5px!important;
+}
+.resultRight .deadlineNote{
+  min-height:23px!important;
+  padding:0 8px!important;
+  font-size:8px!important;
+  letter-spacing:.04em!important;
+  max-width:230px!important;
+  white-space:nowrap!important;
+}
+.resultRight .pickupWrap{
+  align-items:flex-end!important;
+  gap:4px!important;
+}
+.resultRight .pickupStatus{
+  min-height:28px!important;
+}
+.resultRight .undoPickupBtn{
+  min-height:20px!important;
+  font-size:7px!important;
+  padding:0 8px!important;
+  margin-top:0!important;
+}
+@media(max-width:900px){
+  .winnerCenter{
+    justify-content:flex-start!important;
+    text-align:left!important;
+  }
+  .resultRight{
     align-items:flex-start!important;
   }
 }
@@ -720,8 +770,8 @@ function render(){
         <div class="time">${esc(r.time)}</div>
         <div class="prizeText"><strong>${esc(r.title)}</strong><span>${esc(r.sub)}</span></div>
       </div>
-      <div class="winnerCenter"><span class="winnerLabel">GANHADOR</span><span class="resultNameTag">${esc(r.result)}</span>${deadline}</div>
-      <div class="resultRight">${pickupButton(r)}</div>
+      <div class="winnerCenter"><span class="resultNameTag">${esc(r.result)}</span></div>
+      <div class="resultRight">${deadline}${pickupButton(r)}</div>
     </article>`;
   }).join(''):'<div class="empty">NENHUM RESULTADO ENCONTRADO PARA ESTE FILTRO.</div>';
 }
