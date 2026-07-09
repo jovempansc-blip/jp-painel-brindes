@@ -320,6 +320,145 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   .pickupWrap{align-items:flex-start!important;min-width:0}
 }
 
+
+/* === V30: CARD DA RECEPÇÃO COM HORA À ESQUERDA, GANHADOR CENTRAL E STATUS À DIREITA === */
+.resultCard{
+  grid-template-columns:minmax(310px,.95fr) minmax(260px,1fr) minmax(220px,auto)!important;
+  gap:18px!important;
+  align-items:center!important;
+  min-height:82px!important;
+  padding:12px 16px!important;
+}
+.resultLeft{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  min-width:0;
+}
+.resultLeft .time{
+  flex:0 0 76px;
+  text-align:left;
+  font-size:34px!important;
+  line-height:1!important;
+  letter-spacing:-.075em!important;
+  font-weight:1000!important;
+  color:#a9475b!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.75);
+}
+.prizeText{
+  min-width:0;
+  display:grid;
+  gap:5px;
+}
+.prizeText strong{
+  display:block;
+  font-size:13.5px!important;
+  line-height:1.15!important;
+  color:#171c26!important;
+  letter-spacing:-.02em;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.prizeText span{
+  display:block;
+  margin:0!important;
+  font-size:9.5px!important;
+  line-height:1.25!important;
+  color:#5f6a7a!important;
+  letter-spacing:.035em;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.winnerCenter{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  min-width:0;
+  flex-wrap:wrap;
+  text-align:center;
+}
+.winnerCenter .winnerLabel{
+  flex:0 0 100%;
+  color:#657084;
+  font-size:8px;
+  letter-spacing:.09em;
+  font-weight:1000;
+  line-height:1;
+}
+.winnerCenter .resultNameTag{
+  min-height:31px!important;
+  padding:0 14px!important;
+  font-size:13px!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  border:1px solid #d8e0ea!important;
+  color:#171c26!important;
+  box-shadow:0 4px 12px rgba(17,23,34,.035);
+}
+.winnerCenter .deadlineNote{
+  min-height:29px!important;
+  padding:0 12px!important;
+}
+.resultRight{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  min-width:220px;
+}
+.resultRight .pickupWrap{
+  align-items:flex-end!important;
+  min-width:0!important;
+}
+.resultRight .pickupStatus{
+  min-height:30px!important;
+  font-size:9px!important;
+}
+.resultRight .undoPickupBtn{
+  margin-top:4px;
+}
+.resultCard.status-retirado{
+  background:linear-gradient(90deg,rgba(255,255,255,.96),rgba(239,250,244,.64))!important;
+}
+.resultCard.status-vencido{
+  background:linear-gradient(90deg,rgba(255,255,255,.96),rgba(255,241,243,.70))!important;
+}
+.resultCard.status-vence-hoje{
+  background:linear-gradient(90deg,rgba(255,255,255,.96),rgba(255,245,247,.72))!important;
+}
+.resultCard.status-vence-amanha{
+  background:linear-gradient(90deg,rgba(255,255,255,.96),rgba(255,247,236,.72))!important;
+}
+@media(max-width:900px){
+  .resultCard{
+    grid-template-columns:1fr!important;
+    gap:12px!important;
+  }
+  .resultLeft{
+    width:100%;
+  }
+  .resultLeft .time{
+    flex-basis:68px;
+    font-size:30px!important;
+  }
+  .winnerCenter{
+    justify-content:flex-start;
+    text-align:left;
+  }
+  .winnerCenter .winnerLabel{
+    flex-basis:auto;
+  }
+  .resultRight{
+    justify-content:flex-start;
+    min-width:0;
+  }
+  .resultRight .pickupWrap{
+    align-items:flex-start!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -576,7 +715,14 @@ function render(){
   renderReceptionStats(rows);
   $('resultList').innerHTML=filtered.length?filtered.map(r=>{
     const deadline = r.deadlineLabel ? `<span class="deadlineNote ${esc(r.deadlineClass||'')}">${esc(r.deadlineLabel)}</span>` : '';
-    return `<article class="resultCard status-${esc(rowStatusClass(r))}"><div class="time">${esc(r.time)}</div><div class="info"><strong>${esc(r.title)}</strong><span>${esc(r.sub)}</span><div class="winnerBlock"><span class="winnerLabel">GANHADOR</span><span class="resultNameTag">${esc(r.result)}</span>${deadline}</div></div>${pickupButton(r)}</article>`;
+    return `<article class="resultCard status-${esc(rowStatusClass(r))}">
+      <div class="resultLeft">
+        <div class="time">${esc(r.time)}</div>
+        <div class="prizeText"><strong>${esc(r.title)}</strong><span>${esc(r.sub)}</span></div>
+      </div>
+      <div class="winnerCenter"><span class="winnerLabel">GANHADOR</span><span class="resultNameTag">${esc(r.result)}</span>${deadline}</div>
+      <div class="resultRight">${pickupButton(r)}</div>
+    </article>`;
   }).join(''):'<div class="empty">NENHUM RESULTADO ENCONTRADO PARA ESTE FILTRO.</div>';
 }
 document.addEventListener('click',e=>{
