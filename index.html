@@ -2997,6 +2997,32 @@ body.drawer-open .distActions{
   .smartChoiceRow,.smartChoiceRow.two{grid-template-columns:1fr}
 }
 
+
+.smartChoiceRow.calendarRow{
+  grid-template-columns:150px minmax(0,1fr) 72px auto;
+}
+.smartChoiceRow.calendarRow input[type="date"]{
+  min-width:0;
+}
+.smartChoiceRow.calendarRow select{
+  min-width:0;
+}
+.smartChoiceEmpty{
+  display:block;
+  margin-top:7px;
+  color:#9a4b00;
+  font-size:8px;
+  font-weight:900;
+}
+@media(max-width:1050px){
+  .smartChoiceRow.calendarRow{grid-template-columns:1fr 1fr}
+  .smartChoiceRow.calendarRow .btn{grid-column:1/-1}
+}
+@media(max-width:650px){
+  .smartChoiceRow.calendarRow{grid-template-columns:1fr}
+  .smartChoiceRow.calendarRow .btn{grid-column:auto}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -9186,15 +9212,44 @@ function smartFreeChoices(report){
   });
   return rows;
 }
+function smartExistingItemsForDate(report,date){
+  return smartExistingItems(report).filter(item=>item.date===date);
+}
+function smartFreeChoicesForDate(report,date){
+  return smartFreeChoices(report).filter(row=>row.date===date);
+}
+function fillSmartExistingSlots(){
+  const report=pendingSmartRadioReport;
+  const date=$('smartExistingDate')?.value||'';
+  const select=$('smartExistingSchedule');
+  if(!select) return;
+  const rows=smartExistingItemsForDate(report,date);
+  select.innerHTML='<option value="">SELECIONE O HORÁRIO</option>'+
+    rows.map(item=>`<option value="${esc(item.id)}">${esc(normalizeSlot(item.slot))} · ${esc(item.program||programFromSchedule(item.date,item.slot,'JP1017'))} · ATUAL ${Math.max(1,num(item.qty)||1)}</option>`).join('');
+  select.disabled=!rows.length;
+  const empty=$('smartExistingEmpty');
+  if(empty) empty.textContent=rows.length?'':'NENHUM HORÁRIO JÁ PROGRAMADO NESTA DATA.';
+}
+function fillSmartNewSlots(){
+  const report=pendingSmartRadioReport;
+  const date=$('smartNewDate')?.value||'';
+  const select=$('smartNewSchedule');
+  if(!select) return;
+  const rows=smartFreeChoicesForDate(report,date);
+  select.innerHTML='<option value="">SELECIONE O HORÁRIO</option>'+
+    rows.map(row=>`<option value="${esc(normalizeSlot(row.slot))}">${esc(normalizeSlot(row.slot))} · ${esc(row.program)}</option>`).join('');
+  select.disabled=!rows.length;
+  const empty=$('smartNewEmpty');
+  if(empty) empty.textContent=rows.length?'':'NENHUM NOVO HORÁRIO LIVRE NESTA DATA.';
+}
 function addSmartExistingSchedule(){
   const report=pendingSmartRadioReport;
   if(!report) return;
-  const select=$('smartExistingSchedule');
-  const qtyInput=$('smartExistingQty');
-  const itemId=select?.value||'';
-  const qty=Math.max(1,Math.min(4,num(qtyInput?.value)||1));
-  const item=smartExistingItems(report).find(row=>row.id===itemId);
-  if(!item) return;
+  const date=$('smartExistingDate')?.value||'';
+  const itemId=$('smartExistingSchedule')?.value||'';
+  const qty=Math.max(1,Math.min(4,num($('smartExistingQty')?.value)||1));
+  const item=smartExistingItemsForDate(report,date).find(row=>row.id===itemId);
+  if(!item){ toast('SELECIONE UMA DATA E UM HORÁRIO JÁ PROGRAMADO.'); return; }
   const remaining=smartRemainingQuantity(report);
   if(remaining<=0) return;
   const addQty=Math.min(qty,remaining);
@@ -9216,16 +9271,13 @@ function addSmartExistingSchedule(){
 function addSmartNewSchedule(){
   const report=pendingSmartRadioReport;
   if(!report) return;
-  const select=$('smartNewSchedule');
-  const qtyInput=$('smartNewQty');
-  const value=select?.value||'';
-  if(!value) return;
-  const [date,slot]=value.split('|');
-  const choice=smartFreeChoices(report).find(row=>row.date===date&&normalizeSlot(row.slot)===normalizeSlot(slot));
-  if(!choice) return;
+  const date=$('smartNewDate')?.value||'';
+  const slot=normalizeSlot($('smartNewSchedule')?.value||'');
+  const choice=smartFreeChoicesForDate(report,date).find(row=>normalizeSlot(row.slot)===slot);
+  if(!choice){ toast('SELECIONE UMA DATA E UM NOVO HORÁRIO LIVRE.'); return; }
   const remaining=smartRemainingQuantity(report);
   if(remaining<=0) return;
-  const qty=Math.min(Math.max(1,Math.min(4,num(qtyInput?.value)||1)),remaining);
+  const qty=Math.min(Math.max(1,Math.min(4,num($('smartNewQty')?.value)||1)),remaining);
   report.plans.push({
     date:choice.date,
     slot:normalizeSlot(choice.slot),
@@ -9257,27 +9309,29 @@ function renderSmartRadioReport(report){
       <div class="smartChoicePanel">
         <div class="smartChoiceCard">
           <strong>USAR HORÁRIO JÁ PROGRAMADO</strong>
-          <div class="smartChoiceRow">
+          <div class="smartChoiceRow calendarRow">
+            <input id="smartExistingDate" type="date" min="${esc(distStartDate(d))}" max="${esc(distEndDate(d))}" value="${esc(existingChoices[0]?.date||distStartDate(d))}" onchange="fillSmartExistingSlots()">
             <select id="smartExistingSchedule">
-              <option value="">SELECIONE O DIA E HORÁRIO</option>
-              ${existingChoices.map(item=>`<option value="${esc(item.id)}">${esc(formatBR(item.date))} · ${esc(normalizeSlot(item.slot))} · ${esc(item.program||programFromSchedule(item.date,item.slot,'JP1017'))} · ATUAL ${Math.max(1,num(item.qty)||1)}</option>`).join('')}
+              <option value="">SELECIONE O HORÁRIO</option>
             </select>
             <input id="smartExistingQty" type="number" min="1" max="4" value="1" title="QUANTIDADE ADICIONAL">
-            <button class="btn small" type="button" onclick="addSmartExistingSchedule()" ${!existingChoices.length?'disabled':''}>ADICIONAR</button>
+            <button class="btn small" type="button" onclick="addSmartExistingSchedule()">ADICIONAR</button>
           </div>
-          <span class="smartChoiceHint">A QUANTIDADE SERÁ SOMADA AO PRÊMIO JÁ EXISTENTE E O ESTÚDIO LIBERARÁ MAIS GANHADORES.</span>
+          <span class="smartChoiceHint">ESCOLHA A DATA NO CALENDÁRIO. DEPOIS, SELECIONE UM HORÁRIO QUE JÁ POSSUA PRÊMIO PROGRAMADO.</span>
+          <span class="smartChoiceEmpty" id="smartExistingEmpty"></span>
         </div>
         <div class="smartChoiceCard">
           <strong>CRIAR NOVO HORÁRIO</strong>
-          <div class="smartChoiceRow">
+          <div class="smartChoiceRow calendarRow">
+            <input id="smartNewDate" type="date" min="${esc(distStartDate(d))}" max="${esc(distEndDate(d))}" value="${esc(freeChoices[0]?.date||distStartDate(d))}" onchange="fillSmartNewSlots()">
             <select id="smartNewSchedule">
-              <option value="">SELECIONE O DIA E HORÁRIO</option>
-              ${freeChoices.map(row=>`<option value="${esc(row.date)}|${esc(normalizeSlot(row.slot))}">${esc(formatBR(row.date))} · ${esc(normalizeSlot(row.slot))} · ${esc(row.program)}</option>`).join('')}
+              <option value="">SELECIONE O HORÁRIO</option>
             </select>
             <input id="smartNewQty" type="number" min="1" max="4" value="1" title="QUANTIDADE">
-            <button class="btn small" type="button" onclick="addSmartNewSchedule()" ${!freeChoices.length?'disabled':''}>CRIAR</button>
+            <button class="btn small" type="button" onclick="addSmartNewSchedule()">CRIAR</button>
           </div>
-          <span class="smartChoiceHint">${freeChoices.length?'SOMENTE DIAS E HORÁRIOS VÁLIDOS DA ABA HORÁRIOS SÃO MOSTRADOS.':'NÃO HÁ NOVO HORÁRIO LIVRE NA GRADE; USE UM HORÁRIO JÁ PROGRAMADO.'}</span>
+          <span class="smartChoiceHint">ESCOLHA A DATA NO CALENDÁRIO. O CAMPO DE HORÁRIO MOSTRA SOMENTE OS HORÁRIOS LIVRES E VÁLIDOS DA GRADE.</span>
+          <span class="smartChoiceEmpty" id="smartNewEmpty"></span>
         </div>
       </div>
       ${report.missing>0&&report.plans.length?`<div style="margin-top:8px"><button class="btn small" type="button" onclick="autoBalanceSmartQuantities()">DISTRIBUIR EXCEDENTE AUTOMATICAMENTE</button></div>`:''}
@@ -9329,6 +9383,12 @@ function renderSmartRadioReport(report){
     : '<div class="smartReportEmpty">CADASTRE OU AJUSTE OS HORÁRIOS NA ABA HORÁRIOS E GERE NOVAMENTE.</div>';
   const hasInvalid=(report.plans||[]).some((plan,index)=>!!smartPlanIssue(report,plan,index));
   if(confirmBtn) confirmBtn.disabled=!report.plans.length || report.missing>0 || hasInvalid;
+  if(needsConcentration){
+    setTimeout(()=>{
+      fillSmartExistingSlots();
+      fillSmartNewSlots();
+    },0);
+  }
 }
 function openSmartRadioReport(d){
   if(!d || num(d.ar)<=0) return false;
