@@ -3,251 +3,277 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Merchan Rádios — Jovem Pan Floripa</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>OPEC · Merchan Rádios — Jovem Pan Floripa</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <style>
-:root{--red:#c9002b;--red-dark:#8d001d;--ink:#171c26;--muted:#667283;--line:#dce2eb;--paper:#fff;--soft:#f6f8fb;--silver:#eef1f5;--green:#137947;--orange:#b56200;--danger:#ad1728;--shadow:0 16px 34px rgba(17,23,34,.08);--font:"Segoe UI Variable","Segoe UI",Inter,Arial,sans-serif}
+:root{
+  --red:#b90d2f;--red-dark:#8d001d;--ink:#171c26;--muted:#667283;--line:#dce2eb;
+  --paper:#fff;--soft:#f6f8fb;--silver:#eef1f5;--green:#137947;--green-soft:#effaf4;
+  --blue:#1767ad;--blue-soft:#edf6ff;--orange:#b56200;--orange-soft:#fff5e6;
+  --danger:#ad1728;--danger-soft:#fff1f3;--shadow:0 16px 34px rgba(17,23,34,.075);
+  --font:"Segoe UI Variable","Segoe UI",Inter,Arial,sans-serif;
+}
 *{box-sizing:border-box}
 html,body{min-height:100%}
-body{margin:0;font:900 13px/1.35 var(--font);color:var(--ink);background:linear-gradient(180deg,rgba(247,249,252,.92),rgba(244,247,251,.96)),url("assets/bg-estudio.jpg") center/cover fixed;text-transform:uppercase}
-button,input,select,textarea{font:inherit;text-transform:uppercase;outline:none}
+body{
+  margin:0;font:800 13px/1.35 var(--font);color:var(--ink);text-transform:uppercase;
+  background:linear-gradient(180deg,rgba(247,249,252,.94),rgba(244,247,251,.97)),url("assets/bg-estudio.jpg") center/cover fixed;
+}
+button,input,select,textarea{font:inherit;outline:none}
+button,input,select{text-transform:uppercase}
 textarea{text-transform:none}
-button{cursor:pointer;border:0}
-.wrap{max-width:1220px;margin:0 auto;padding:16px}
-.logoBar{width:min(520px,100%);display:flex;align-items:center;justify-content:center;padding:8px 14px;margin:0 auto 14px;border:1px solid rgba(223,229,236,.92);border-radius:18px;background:rgba(255,255,255,.86);box-shadow:0 10px 24px rgba(16,24,40,.05);backdrop-filter:blur(8px)}
+button{cursor:pointer}
+.wrap{max-width:1320px;margin:0 auto;padding:16px}
+.logoBar{width:min(520px,100%);display:flex;align-items:center;justify-content:center;padding:8px 14px;margin:0 auto 14px;border:1px solid rgba(223,229,236,.92);border-radius:18px;background:rgba(255,255,255,.88);box-shadow:0 10px 24px rgba(16,24,40,.05);backdrop-filter:blur(8px)}
 .logoBar img{display:block;width:min(100%,420px);max-height:50px;height:auto;object-fit:contain}
-.panel{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
-.head{padding:15px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#fbfcff)}
-h1{font-size:22px;margin:0;letter-spacing:-.04em}
-p{margin:5px 0 0;color:var(--muted);font-size:11px;letter-spacing:.02em}
-.body{padding:16px}
+.panel{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#fbfcff)}
+.headCopy h1{font-size:22px;margin:0;letter-spacing:-.04em}
+.headCopy p{margin:5px 0 0;color:var(--muted);font-size:10px;letter-spacing:.02em}
+.saveState{display:flex;align-items:center;gap:7px;min-height:30px;border:1px solid #bde9ce;border-radius:999px;background:var(--green-soft);color:var(--green);padding:0 10px;font-size:8.5px;font-weight:1000;white-space:nowrap}
+.saveState::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px rgba(19,121,71,.08)}
+.saveState.saving{background:var(--orange-soft);border-color:#ffd7a8;color:var(--orange)}
+.saveState.error{background:var(--danger-soft);border-color:#f3b5c0;color:var(--danger)}
+.body{padding:14px 16px 18px}
+.tabs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px;padding:4px;border:1px solid var(--line);border-radius:15px;background:#f7f9fc}
+.tabBtn{min-height:34px;border:1px solid transparent;border-radius:11px;background:transparent;color:#596475;padding:0 13px;font-size:9px;font-weight:1000;letter-spacing:.04em}
+.tabBtn.active{background:linear-gradient(180deg,#cf0a33,#b90d2f);border-color:#b90d2f;color:#fff;box-shadow:0 8px 16px rgba(185,13,47,.14)}
+.tabView{display:none}.tabView.active{display:block}
 .opecLayout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
-.formBlock{border:1px solid #e3e8ef;border-radius:18px;background:rgba(248,250,252,.75);padding:12px;margin-bottom:12px}
-.blockTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;color:#4f5968;font-size:11px;letter-spacing:.06em}
-.blockTitle strong{color:var(--ink);font-size:12px}
+.formBlock,.sectionBlock{border:1px solid #e3e8ef;border-radius:18px;background:rgba(248,250,252,.76);padding:12px;margin-bottom:12px}
+.blockTitle,.sectionTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;color:#4f5968;font-size:10px;letter-spacing:.06em}
+.blockTitle strong,.sectionTitle strong{color:var(--ink);font-size:12px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.grid.three{grid-template-columns:1fr 1fr 1fr}
-.field{display:grid;gap:5px;min-width:0}
-.full{grid-column:1/-1}
-label{font-size:9.5px;color:#667283;letter-spacing:.07em}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.field{display:grid;gap:5px;min-width:0}.full{grid-column:1/-1}
+label{font-size:8.5px;color:#667283;letter-spacing:.075em;font-weight:1000}
 .control{width:100%;min-height:38px;border:1px solid #dce2eb;border-radius:13px;background:#fff;padding:8px 11px;color:var(--ink);font-weight:1000}
-.control:focus{border-color:rgba(201,0,43,.44);box-shadow:0 0 0 4px rgba(201,0,43,.08)}
-textarea.control{min-height:154px;line-height:1.45;font-weight:750;resize:vertical}
-.helper{font-size:9px;color:#7a8493;line-height:1.35;text-transform:uppercase;font-weight:900;margin-top:4px}
-.readHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
-.readHead .helper{margin:0}
-.readActions{display:flex;gap:6px;align-items:center;justify-content:flex-end}
-.miniBtn{min-height:26px;border:1px solid #dce2eb;border-radius:9px;background:#fff;color:#596475;padding:5px 8px;font-size:9px;font-weight:1000}
+.control:focus{border-color:rgba(185,13,47,.44);box-shadow:0 0 0 4px rgba(185,13,47,.07)}
+textarea.control{min-height:154px;line-height:1.45;font-weight:650;resize:vertical}
+.helper{font-size:8.5px;color:#7a8493;line-height:1.35;font-weight:900;margin-top:4px}
+.readHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}.readHead .helper{margin:0}
+.readActions,.actions,.toolbarActions{display:flex;gap:7px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.miniBtn,.btn{border:1px solid #dce2eb;background:#f4f6fa;color:#4f5a6a;box-shadow:0 4px 12px rgba(17,23,34,.04);font-weight:1000}
+.miniBtn{min-height:26px;border-radius:9px;padding:5px 8px;font-size:8.5px}
+.btn{min-height:37px;border-radius:12px;padding:8px 12px;font-size:10px}
+.btn.red{background:linear-gradient(180deg,#cf0a33,#b90d2f);border-color:#b90d2f;color:#fff;box-shadow:0 9px 18px rgba(185,13,47,.15)}
+.btn.blue{background:var(--blue-soft);border-color:#b9dcff;color:var(--blue)}
+.btn.danger{background:var(--danger-soft);border-color:#f3b5c0;color:var(--danger)}
 .readHours{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
-.readHour{position:relative;display:flex}
-.readHour input{position:absolute;opacity:0;pointer-events:none}
-.readHour span{width:100%;min-height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #dce2eb;background:#fff;border-radius:10px;color:#667283;font-size:10px;font-weight:1000;cursor:pointer}
+.readHour{position:relative;display:flex}.readHour input{position:absolute;opacity:0;pointer-events:none}
+.readHour span{width:100%;min-height:28px;display:flex;align-items:center;justify-content:center;border:1px solid #dce2eb;background:#fff;border-radius:10px;color:#667283;font-size:9.5px;font-weight:1000;cursor:pointer}
 .readHour input:checked+span{background:var(--red);border-color:var(--red);color:#fff}
-.readHour.disabled span{background:#f1f3f6;color:#a1a9b5;border-style:dashed;cursor:not-allowed}
 .advanced{border:1px solid #e3e8ef;border-radius:15px;background:#fff;margin-top:10px;overflow:hidden}
-.advanced summary{list-style:none;cursor:pointer;padding:10px 12px;color:#667283;font-size:10px;font-weight:1000;letter-spacing:.06em}
-.advanced summary::-webkit-details-marker{display:none}
-.styleGrid{display:grid;grid-template-columns:minmax(0,1fr) 74px 52px 78px;gap:7px;align-items:end;padding:0 10px 10px}
-.styleGrid .control{min-height:31px;font-size:11px;padding:6px 8px;border-radius:10px}
-.styleGrid input[type=color]{padding:3px}
+.advanced summary{list-style:none;cursor:pointer;padding:10px 12px;color:#667283;font-size:9.5px;font-weight:1000;letter-spacing:.06em}.advanced summary::-webkit-details-marker{display:none}
+.styleGrid{display:grid;grid-template-columns:minmax(0,1fr) 74px 52px 78px;gap:7px;align-items:end;padding:0 10px 10px}.styleGrid .control{min-height:31px;font-size:10px;padding:6px 8px;border-radius:10px}.styleGrid input[type=color]{padding:3px}
 .preview{position:sticky;top:16px;border:1px solid #dfe5ec;border-radius:20px;background:linear-gradient(180deg,#f7f9fc,#eef2f7);padding:12px}
-.previewLabel{font-size:9.5px;color:#697386;letter-spacing:.07em;margin-bottom:8px}
-.previewMeta{display:grid;gap:4px;margin-bottom:9px;color:#556171;font-size:9px;line-height:1.2}
-.previewMeta span{display:flex;justify-content:space-between;gap:8px;border:1px solid #e2e7ef;background:rgba(255,255,255,.82);border-radius:9px;padding:5px 7px}
-.previewMeta strong{color:var(--ink);text-align:right;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.previewLabel{font-size:9px;color:#697386;letter-spacing:.07em;margin-bottom:8px}
+.previewMeta{display:grid;gap:4px;margin-bottom:9px;color:#556171;font-size:8.5px;line-height:1.2}.previewMeta span{display:flex;justify-content:space-between;gap:8px;border:1px solid #e2e7ef;background:rgba(255,255,255,.82);border-radius:9px;padding:5px 7px}.previewMeta strong{color:var(--ink);text-align:right;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .previewCard{background:#fff;border:1px solid #e1e7ef;border-radius:17px;overflow:hidden;box-shadow:0 6px 16px rgba(17,23,34,.035)}
 .previewTitle{border-left:3px solid var(--red);padding:12px 14px;font-size:22px;line-height:1.08;letter-spacing:-.035em;max-height:76px;overflow:auto}
 .previewDesc{background:#f3f6fa;border-top:1px solid #e1e7ee;padding:12px 14px;font-size:13.5px;line-height:1.43;text-transform:none;font-weight:650;white-space:pre-wrap;max-height:270px;overflow:auto}
-.readEstimate{margin-top:8px;border:1px solid #e3e8ef;border-radius:11px;background:rgba(255,255,255,.82);padding:7px 9px;color:#596475;font-size:9.5px}
-.readEstimate.warn{border-color:#ffd7a8;background:#fff7ec;color:#9a5600}
-.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
-.btn{min-height:38px;border:1px solid #dce2eb;border-radius:13px;background:#fff;color:var(--ink);padding:8px 13px;font:1000 11px var(--font)}
-.btn.red{background:var(--red);border-color:var(--red);color:#fff}
-.btn.danger{background:#fff1f3;border-color:#f3b5c0;color:var(--danger)}
-.listHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;margin-bottom:8px}
-.listHead strong{font-size:13px}
-.listFilters{display:flex;gap:8px;align-items:center;justify-content:flex-end}
-.listFilters .control{min-height:32px;font-size:10px;border-radius:11px;padding:6px 9px}
-.tableWrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:18px;background:#fff}
-.table{width:100%;border-collapse:separate;border-spacing:0;font-size:11px;min-width:980px}
-.table th,.table td{border-bottom:1px solid var(--line);padding:10px;text-align:left;vertical-align:middle}
-.table th{background:#f8f9fc;color:#596475;font-size:10px;letter-spacing:.06em}
-.table tr:last-child td{border-bottom:0}
-.badge{display:inline-flex;align-items:center;min-height:23px;border:1px solid #ccefdc;background:#effaf4;color:#137947;border-radius:999px;padding:0 8px;font-size:9px;font-weight:1000;white-space:nowrap}
-.badge.pending{background:#fff7ec;border-color:#ffd7a8;color:#9a5600}
-.badge.cancel{background:#fff1f3;border-color:#f3b5c0;color:#ad1728}
-.tableActions{display:flex;gap:5px;justify-content:flex-end}
-.iconBtn{width:27px;min-width:27px;min-height:27px;border-radius:9px;border:1px solid #e1e5ec;background:#eef1f5;color:#171c26}
-.empty{padding:26px;text-align:center;color:#667283;border:1px dashed #cfd7e2;border-radius:14px;background:#fbfcff;font-size:11px}
-@media(max-width:960px){.opecLayout,.grid,.grid.three{grid-template-columns:1fr}.preview{position:relative;top:auto}.readHours{grid-template-columns:repeat(4,1fr)}.styleGrid{grid-template-columns:1fr 74px 52px 78px}}
-
-/* === V23: OPEC COM BOTÕES NO MESMO PADRÃO DO PAINEL === */
-.btn.red{
-  background:linear-gradient(180deg,#cf0a33,#b90d2f)!important;
-  border-color:rgba(185,13,47,.74)!important;
-  color:#fff!important;
-  box-shadow:0 9px 18px rgba(185,13,47,.16)!important;
-}
-.btn:not(.red),
-.miniBtn,
-.iconBtn{
-  background:#f4f6fa!important;
-  border-color:#dfe6ef!important;
-  color:#4f5a6a!important;
-  box-shadow:0 4px 12px rgba(17,23,34,.045)!important;
-}
-.readHour input:checked+span{
-  background:#b90d2f!important;
-  border-color:#b90d2f!important;
-}
-.badge.pending{
-  background:#fff3df!important;
-  border-color:#ffc66e!important;
-  color:#dc7600!important;
-}
-.badge.cancel{
-  background:#fff1f3!important;
-  border-color:#f3b5c0!important;
-  color:#b61c32!important;
-}
-.badge{
-  background:#effaf4!important;
-  border-color:#bde9ce!important;
-  color:#137947!important;
-}
-
+.readEstimate{margin-top:8px;border:1px solid #e3e8ef;border-radius:11px;background:rgba(255,255,255,.82);padding:7px 9px;color:#596475;font-size:9px}.readEstimate.warn{border-color:#ffd7a8;background:#fff7ec;color:#9a5600}
+.toolbar{display:grid;grid-template-columns:minmax(180px,1fr) repeat(3,minmax(145px,auto));gap:8px;align-items:end;margin-bottom:10px}
+.toolbar.report{grid-template-columns:repeat(5,minmax(145px,1fr));}
+.modeBar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.modeBtn{min-height:31px;border:1px solid var(--line);border-radius:10px;background:#f4f6fa;color:#596475;padding:0 11px;font-size:8.5px;font-weight:1000}.modeBtn.active{background:#171c26;border-color:#171c26;color:#fff}
+.kpiGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.kpi{min-height:78px;border:1px solid var(--line);border-radius:15px;background:#fff;padding:10px;display:grid;align-content:space-between;gap:5px}.kpi span{font-size:7.5px;color:var(--muted);letter-spacing:.07em}.kpi strong{font-size:22px;line-height:1;letter-spacing:-.04em}.kpi small{font-size:7.5px;color:var(--muted)}
+.kpi.good{border-color:#bde9ce;background:#f5fcf8}.kpi.warn{border-color:#ffd7a8;background:#fff9f0}.kpi.bad{border-color:#f3b5c0;background:#fff5f6}
+.tableWrap{width:100%;overflow:auto;border:1px solid var(--line);border-radius:17px;background:#fff}
+.table{width:100%;border-collapse:separate;border-spacing:0;font-size:10px;min-width:980px}.table.reportTable{min-width:1120px}
+.table th,.table td{border-bottom:1px solid var(--line);padding:9px;text-align:left;vertical-align:middle}.table th{background:#f8f9fc;color:#596475;font-size:8.5px;letter-spacing:.06em;position:sticky;top:0;z-index:1}.table tr:last-child td{border-bottom:0}
+.primary{display:block;color:var(--ink);font-size:10.5px;font-weight:1000}.secondary{display:block;margin-top:3px;color:var(--muted);font-size:8px;line-height:1.35}
+.badge{display:inline-flex;align-items:center;justify-content:center;min-height:23px;border:1px solid #dce2eb;background:#f4f6fa;color:#596475;border-radius:999px;padding:0 8px;font-size:8px;font-weight:1000;white-space:nowrap}
+.badge.read{background:var(--green-soft);border-color:#bde9ce;color:var(--green)}.badge.pending{background:var(--orange-soft);border-color:#ffd7a8;color:var(--orange)}.badge.missed{background:var(--danger-soft);border-color:#f3b5c0;color:var(--danger)}.badge.future{background:var(--blue-soft);border-color:#b9dcff;color:var(--blue)}.badge.cancel{background:#f2f4f7;border-color:#dce2eb;color:#747d89}.badge.incomplete{background:#fff2df;border-color:#ffc66e;color:#a85d00}
+.tableActions{display:flex;gap:5px;justify-content:flex-end}.iconBtn{width:27px;min-width:27px;min-height:27px;border-radius:9px;border:1px solid #e1e5ec;background:#eef1f5;color:#171c26;font-weight:1000}
+.empty{padding:26px;text-align:center;color:#667283;border:1px dashed #cfd7e2;border-radius:14px;background:#fbfcff;font-size:10px}
+.summaryGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:10px}
+.summaryCard{border:1px solid var(--line);border-radius:15px;background:#fff;padding:11px;display:grid;gap:8px}.summaryCard h3{margin:0;font-size:11px;line-height:1.2}.summaryMeta{display:flex;gap:5px;flex-wrap:wrap}.summaryNumbers{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.summaryNumber{border:1px solid #e3e8ef;border-radius:10px;background:#f8fafc;padding:7px;text-align:center}.summaryNumber span{display:block;font-size:6.8px;color:var(--muted)}.summaryNumber strong{display:block;margin-top:4px;font-size:15px}.progress{height:7px;border-radius:999px;background:#eef1f5;overflow:hidden}.progress span{display:block;height:100%;background:linear-gradient(90deg,#2e9b65,#65bf8c);border-radius:inherit}
+.noPrint{}
+@media(max-width:1040px){.opecLayout,.grid,.grid.three{grid-template-columns:1fr}.preview{position:relative;top:auto}.readHours{grid-template-columns:repeat(4,1fr)}.toolbar,.toolbar.report{grid-template-columns:repeat(2,minmax(150px,1fr))}.summaryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.wrap{padding:8px}.head{align-items:flex-start;flex-direction:column}.readHours{grid-template-columns:repeat(3,1fr)}.styleGrid{grid-template-columns:1fr 68px 48px}.styleGrid select:last-child{grid-column:1/-1}.toolbar,.toolbar.report,.kpiGrid,.summaryGrid{grid-template-columns:1fr}.tabs{display:grid;grid-template-columns:1fr}.tabBtn{width:100%}}
+@media print{body{background:#fff}.logoBar,.head,.tabs,.toolbar,.modeBar,.toolbarActions,.noPrint{display:none!important}.wrap{max-width:none;padding:0}.panel{border:0;box-shadow:none}.body{padding:0}.tabView{display:none!important}#tab-relatorio{display:block!important}.tableWrap{overflow:visible;border:0}.table.reportTable{min-width:0;font-size:8px}.table th,.table td{padding:5px}.kpiGrid{grid-template-columns:repeat(5,1fr)}.summaryGrid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="logoBar"><img src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan"></div>
   <div class="panel">
-    <div class="head"><h1>MERCHAN RÁDIOS</h1><p>CADASTRO DA OPEC PARA ENTRADA DIRETA NOS PAINÉIS DE ESTÚDIO.</p></div>
+    <div class="head">
+      <div class="headCopy"><h1>OPEC · MERCHAN RÁDIOS</h1><p>CADASTRO, ACOMPANHAMENTO E COMPROVAÇÃO DAS LEITURAS NOS ESTÚDIOS.</p></div>
+      <div class="saveState" id="saveState">FIREBASE ONLINE</div>
+    </div>
     <div class="body">
-      <div class="opecLayout">
-        <form id="merchanForm">
-          <input type="hidden" id="merchanId">
+      <nav class="tabs" aria-label="Áreas do painel OPEC">
+        <button class="tabBtn active" type="button" data-tab="cadastro">CADASTRO</button>
+        <button class="tabBtn" type="button" data-tab="ativas">PAUTAS ATIVAS</button>
+        <button class="tabBtn" type="button" data-tab="relatorio">RELATÓRIO DE LEITURAS</button>
+      </nav>
 
-          <section class="formBlock">
-            <div class="blockTitle"><strong>ONDE ENTRA</strong><span>EMISSORA, PROGRAMA, PERÍODO E HORÁRIOS</span></div>
-            <div class="grid">
-              <div class="field"><label>EMISSORA</label><select class="control" id="station" required><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
-              <div class="field"><label>PROGRAMA</label><select class="control" id="program" required></select><div class="helper" id="programHint">SELECIONE A EMISSORA PARA CARREGAR OS PROGRAMAS.</div></div>
-              <div class="field"><label>INÍCIO</label><input class="control" type="date" id="startDate" required></div>
-              <div class="field"><label>FIM</label><input class="control" type="date" id="endDate" required></div>
-              <div class="field full">
-                <div class="readHead">
-                  <label>HORÁRIOS DE LEITURA DA PAUTA</label>
-                  <div class="readActions"><button class="miniBtn" type="button" id="selectAllHoursBtn">TODOS</button><button class="miniBtn" type="button" id="clearHoursBtn">LIMPAR</button></div>
+      <section class="tabView active" id="tab-cadastro">
+        <div class="opecLayout">
+          <form id="merchanForm">
+            <input type="hidden" id="merchanId">
+            <section class="formBlock">
+              <div class="blockTitle"><strong>ONDE ENTRA</strong><span>EMISSORA, PROGRAMA, PERÍODO E HORÁRIOS</span></div>
+              <div class="grid">
+                <div class="field"><label>EMISSORA</label><select class="control" id="station" required><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
+                <div class="field"><label>PROGRAMA</label><select class="control" id="program" required></select><div class="helper" id="programHint">SELECIONE A EMISSORA PARA CARREGAR OS PROGRAMAS.</div></div>
+                <div class="field"><label>INÍCIO</label><input class="control" type="date" id="startDate" required></div>
+                <div class="field"><label>FIM</label><input class="control" type="date" id="endDate" required></div>
+                <div class="field full">
+                  <div class="readHead"><label>HORÁRIOS DE LEITURA DA PAUTA</label><div class="readActions"><button class="miniBtn" type="button" id="selectAllHoursBtn">TODOS</button><button class="miniBtn" type="button" id="clearHoursBtn">LIMPAR</button></div></div>
+                  <div class="readHours" id="readHours"></div>
+                  <div class="helper" id="hoursHint">OS HORÁRIOS SÃO GERADOS A PARTIR DO PROGRAMA CADASTRADO NA ABA HORÁRIOS.</div>
                 </div>
-                <div class="readHours" id="readHours"></div>
-                <div class="helper" id="hoursHint">OS HORÁRIOS SÃO GERADOS A PARTIR DO PROGRAMA CADASTRADO NA ABA HORÁRIOS.</div>
               </div>
-            </div>
-          </section>
-
-          <section class="formBlock">
-            <div class="blockTitle"><strong>O QUE O LOCUTOR LÊ</strong><span>TÍTULO CURTO E TEXTO DA PAUTA</span></div>
-            <div class="grid">
-              <div class="field full"><label>TÍTULO PARA O ESTÚDIO</label><input class="control" id="title" required maxlength="90"><div class="helper">USE UM TÍTULO CURTO PARA IDENTIFICAÇÃO RÁPIDA NO PAINEL.</div></div>
-              <div class="field full"><label>TEXTO / PAUTA DO MERCHAN</label><textarea class="control" id="text" required></textarea><div class="helper" id="readingTime">TEMPO ESTIMADO: 0S</div></div>
-            </div>
-
-            <details class="advanced">
-              <summary>APARÊNCIA AVANÇADA</summary>
-              <div class="field full"><label>ESTILO DO TÍTULO</label><div class="styleGrid"><select class="control" id="titleFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option><option>Impact</option></select><input class="control" type="number" id="titleSize" min="18" max="54" value="24"><input class="control" type="color" id="titleColor" value="#171c26"><select class="control" id="titleBold"><option value="1">NEGRITO</option><option value="0">NORMAL</option></select></div></div>
-              <div class="field full"><label>ESTILO DA DESCRIÇÃO</label><div class="styleGrid"><select class="control" id="descFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option></select><input class="control" type="number" id="descSize" min="12" max="36" value="14"><input class="control" type="color" id="descColor" value="#465161"><select class="control" id="descBold"><option value="0">NORMAL</option><option value="1">NEGRITO</option></select></div></div>
-            </details>
-
-            <div class="actions"><button class="btn" type="reset" id="resetBtn">LIMPAR</button><button class="btn red" type="submit">SALVAR MERCHAN</button></div>
-          </section>
-        </form>
-
-        <aside class="preview">
-          <div class="previewLabel">PREVIEW NO PAINEL DO ESTÚDIO</div>
-          <div class="previewMeta">
-            <span>EMISSORA <strong id="previewStation">JOVEM PAN - 101,7</strong></span>
-            <span>PROGRAMA <strong id="previewProgram">SELECIONE</strong></span>
-            <span>PERÍODO <strong id="previewPeriod">--</strong></span>
-            <span>HORÁRIOS <strong id="previewHours">--</strong></span>
-          </div>
-          <div class="previewCard">
-            <div class="previewTitle" id="previewTitle">TÍTULO DO MERCHAN</div>
-            <div class="previewDesc" id="previewDesc">TEXTO DO MERCHAN PARA LEITURA NO AR.</div>
-          </div>
-          <div class="readEstimate" id="previewEstimate">TEMPO ESTIMADO: 0S</div>
-        </aside>
-      </div>
-
-      <div class="listHead">
-        <strong>MERCHANS CADASTRADOS</strong>
-        <div class="listFilters">
-          <select class="control" id="listStationFilter"><option value="">TODAS AS EMISSORAS</option><option value="JP1017">JOVEM PAN</option><option value="JPNEWS983">JP NEWS</option></select>
+            </section>
+            <section class="formBlock">
+              <div class="blockTitle"><strong>O QUE O LOCUTOR LÊ</strong><span>TÍTULO CURTO E TEXTO DA PAUTA</span></div>
+              <div class="grid">
+                <div class="field full"><label>TÍTULO PARA O ESTÚDIO</label><input class="control" id="title" required maxlength="90"><div class="helper">USE UM TÍTULO CURTO PARA IDENTIFICAÇÃO RÁPIDA NO PAINEL.</div></div>
+                <div class="field full"><label>TEXTO / PAUTA DO MERCHAN</label><textarea class="control" id="text" required></textarea><div class="helper" id="readingTime">TEMPO ESTIMADO: 0S</div></div>
+              </div>
+              <details class="advanced">
+                <summary>APARÊNCIA AVANÇADA</summary>
+                <div class="field full"><label>ESTILO DO TÍTULO</label><div class="styleGrid"><select class="control" id="titleFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option><option>Impact</option></select><input class="control" type="number" id="titleSize" min="18" max="54" value="24"><input class="control" type="color" id="titleColor" value="#171c26"><select class="control" id="titleBold"><option value="1">NEGRITO</option><option value="0">NORMAL</option></select></div></div>
+                <div class="field full"><label>ESTILO DA DESCRIÇÃO</label><div class="styleGrid"><select class="control" id="descFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option></select><input class="control" type="number" id="descSize" min="12" max="36" value="14"><input class="control" type="color" id="descColor" value="#465161"><select class="control" id="descBold"><option value="0">NORMAL</option><option value="1">NEGRITO</option></select></div></div>
+              </details>
+              <div class="actions"><button class="btn" type="reset" id="resetBtn">LIMPAR</button><button class="btn red" type="submit" id="saveMerchanBtn">SALVAR MERCHAN</button></div>
+            </section>
+          </form>
+          <aside class="preview">
+            <div class="previewLabel">PREVIEW NO PAINEL DO ESTÚDIO</div>
+            <div class="previewMeta"><span>EMISSORA <strong id="previewStation">JOVEM PAN - 101,7</strong></span><span>PROGRAMA <strong id="previewProgram">SELECIONE</strong></span><span>PERÍODO <strong id="previewPeriod">--</strong></span><span>HORÁRIOS <strong id="previewHours">--</strong></span></div>
+            <div class="previewCard"><div class="previewTitle" id="previewTitle">TÍTULO DO MERCHAN</div><div class="previewDesc" id="previewDesc">TEXTO DO MERCHAN PARA LEITURA NO AR.</div></div>
+            <div class="readEstimate" id="previewEstimate">TEMPO ESTIMADO: 0S</div>
+          </aside>
         </div>
-      </div>
-      <div class="tableWrap"><table class="table"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>TÍTULO</th><th>PERÍODO</th><th>HORÁRIOS</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="list"></tbody></table></div>
+      </section>
+
+      <section class="tabView" id="tab-ativas">
+        <div class="sectionTitle"><strong>PAUTAS CADASTRADAS</strong><span>CONSULTA, EDIÇÃO E ACOMPANHAMENTO</span></div>
+        <div class="toolbar">
+          <div class="field"><label>BUSCA</label><input class="control" id="listSearch" type="search" placeholder="CLIENTE, PAUTA OU PROGRAMA"></div>
+          <div class="field"><label>EMISSORA</label><select class="control" id="listStationFilter"><option value="">TODAS</option><option value="JP1017">JOVEM PAN</option><option value="JPNEWS983">JP NEWS</option></select></div>
+          <div class="field"><label>STATUS</label><select class="control" id="listStatusFilter"><option value="">TODOS</option><option value="ATIVA">ATIVAS</option><option value="FUTURA">FUTURAS</option><option value="ENCERRADA">ENCERRADAS</option><option value="CANCELADA">CANCELADAS</option></select></div>
+          <div class="field"><label>MÊS</label><input class="control" id="listMonthFilter" type="month"></div>
+        </div>
+        <div class="tableWrap"><table class="table"><thead><tr><th>EMISSORA</th><th>PROGRAMA</th><th>TÍTULO</th><th>PERÍODO</th><th>HORÁRIOS</th><th>STATUS</th><th>LEITURAS</th><th>AÇÕES</th></tr></thead><tbody id="list"></tbody></table></div>
+      </section>
+
+      <section class="tabView" id="tab-relatorio">
+        <div class="sectionTitle"><strong>RELATÓRIO DE LEITURAS</strong><span>DIA A DIA, MÊS E DETALHAMENTO POR PAUTA</span></div>
+        <div class="modeBar"><button class="modeBtn active" type="button" data-report-mode="dia">DIA</button><button class="modeBtn" type="button" data-report-mode="mes">MÊS</button><button class="modeBtn" type="button" data-report-mode="pauta">POR PAUTA</button></div>
+        <div class="toolbar report">
+          <div class="field" id="reportDateField"><label>DATA</label><input class="control" id="reportDate" type="date"></div>
+          <div class="field" id="reportMonthField"><label>MÊS</label><input class="control" id="reportMonth" type="month"></div>
+          <div class="field"><label>EMISSORA</label><select class="control" id="reportStation"><option value="">TODAS</option><option value="JP1017">JOVEM PAN</option><option value="JPNEWS983">JP NEWS</option></select></div>
+          <div class="field"><label>PAUTA</label><select class="control" id="reportPauta"><option value="">TODAS</option></select></div>
+          <div class="field"><label>STATUS</label><select class="control" id="reportStatus"><option value="">TODOS</option><option value="LIDO">LIDO</option><option value="PENDENTE">PENDENTE</option><option value="NÃO LIDO">NÃO LIDO</option><option value="FUTURO">FUTURO</option><option value="CANCELADO">CANCELADO</option><option value="REGISTRO INCOMPLETO">REGISTRO INCOMPLETO</option></select></div>
+        </div>
+        <div class="toolbarActions noPrint"><button class="btn blue" type="button" id="exportCsvBtn">EXPORTAR CSV</button><button class="btn" type="button" id="printReportBtn">IMPRIMIR / PDF</button></div>
+        <div class="kpiGrid" id="reportKpis"></div>
+        <div class="summaryGrid" id="reportSummary"></div>
+        <div class="tableWrap"><table class="table reportTable"><thead><tr><th>EMISSORA</th><th>PAUTA</th><th>PROGRAMA</th><th>DATA</th><th>HORÁRIO PREVISTO</th><th>CONFIRMADO ÀS</th><th>STATUS</th></tr></thead><tbody id="reportRows"></tbody></table></div>
+      </section>
     </div>
   </div>
 </div>
-
 <script>
 const FIREBASE_CONFIG={"apiKey":"AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE","authDomain":"jp-painel-brindes.firebaseapp.com","databaseURL":"https://jp-painel-brindes-default-rtdb.firebaseio.com","projectId":"jp-painel-brindes","storageBucket":"jp-painel-brindes.firebasestorage.app","messagingSenderId":"843544648278","appId":"1:843544648278:web:066c8e64e17da046cf79f7","measurementId":"G-VB6Y2TS796"};
 const FIREBASE_ROOT_PATH="jp-painel-brindes/state";
 firebase.initializeApp(FIREBASE_CONFIG);
 const ref=firebase.database().ref(FIREBASE_ROOT_PATH);
 const $=id=>document.getElementById(id);
-const $$=(sel,root=document)=>Array.from(root.querySelectorAll(sel));
-function todayISO(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
-function setEmptyDateFieldsToToday(){document.querySelectorAll('input[type="date"]').forEach(i=>{if(!i.value)i.value=todayISO();});}
-const norm=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
-const textNorm=v=>String(v??'').trim();
-const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const pad=n=>String(n).padStart(2,'0');
-const today=()=>todayISO();
-let state={currentMonth:today().slice(0,7),months:{},programSchedules:[]};
-function ensureMonth(key){state.months ||= {}; state.months[key] ||= {label:key,items:[],promos:[],distributions:[]}; return state.months[key];}
-function monthData(key=state.currentMonth){state.currentMonth ||= today().slice(0,7); return ensureMonth(key||state.currentMonth);}
-function countStateRecords(data){if(!data||!data.months)return 0;const m=Object.values(data.months).reduce((t,x)=>t+(x.items||[]).length+(x.promos||[]).length+(x.distributions||[]).length,0);return m+(data.schedules||[]).length+(data.programSchedules||[]).length;}
-function stationLabel(v){return v==='JPNEWS983'?'JOVEM PAN NEWS - 98,3':'JOVEM PAN - 101,7';}
-function schedules(){state.programSchedules ||= []; return state.programSchedules;}
-function dayIndex(date){const [y,m,d]=String(date||today()).split('-').map(Number);return new Date(y,(m||1)-1,d||1).getDay();}
-function minutesOf(t){const m=String(t||'00:00').match(/(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):0;}
-function programRows(){const st=$('station').value;return schedules().filter(p=>(p.station||'JP1017')===st).sort((a,b)=>minutesOf(a.startTime)-minutesOf(b.startTime)||norm(a.name).localeCompare(norm(b.name)));}
-function fillPrograms(){const current=norm($('program').value);const names=[...new Set(programRows().map(p=>norm(p.name)).filter(Boolean))];$('program').innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');if(names.includes(current))$('program').value=current;const hint=$('programHint');hint.textContent=names.length?'PROGRAMAS CARREGADOS DA ABA HORÁRIOS.':'NENHUM PROGRAMA CADASTRADO PARA ESTA EMISSORA NA ABA HORÁRIOS.';fillHours();updatePreview();}
-function programSelectedRows(){const program=norm($('program').value);if(!program)return[];return programRows().filter(p=>norm(p.name)===program);}
-function hoursForSelectedProgram(){const start=$('startDate').value||today();const end=$('endDate').value||start;const rows=programSelectedRows();const hours=new Set();rows.forEach(p=>{const days=Array.isArray(p.days)?p.days.map(Number):[1,2,3,4,5];let cursor=new Date(start+'T12:00:00');const limit=new Date(end+'T12:00:00');while(cursor<=limit){if(days.includes(cursor.getDay())){const sh=Math.floor(minutesOf(p.startTime)/60);const eh=Math.ceil(minutesOf(p.endTime)/60);for(let h=sh;h<eh;h++){if(h>=6&&h<=22)hours.add(String(h).padStart(2,'0'));}}cursor.setDate(cursor.getDate()+1);}});return [...hours].sort();}
-function fillHours(selected=[]){const box=$('readHours');const hours=hoursForSelectedProgram();if(!hours.length){box.innerHTML='<div class="empty">SELECIONE UM PROGRAMA COM HORÁRIOS CADASTRADOS.</div>';$('hoursHint').textContent='CADASTRE OU AJUSTE O PROGRAMA NA ABA HORÁRIOS DO PAINEL PRINCIPAL.';return;}const selectedSet=new Set(selected.length?selected:hours);box.innerHTML=hours.map(h=>`<label class="readHour"><input type="checkbox" value="${h}" ${selectedSet.has(h)?'checked':''}><span>${h}H</span></label>`).join('');$('hoursHint').textContent='MOSTRANDO APENAS HORÁRIOS VINCULADOS AO PROGRAMA SELECIONADO.';$$('#readHours input').forEach(i=>i.addEventListener('change',updatePreview));updatePreview();}
-function selectedHours(){return $$('#readHours input:checked').map(i=>i.value).sort();}
-function styleFrom(prefix){return {font:$(prefix+'Font').value,size:Number($(prefix+'Size').value),color:$(prefix+'Color').value,bold:$(prefix+'Bold').value==='1'};}
-function applyStyle(el,style,type){el.style.fontFamily=`'${style.font}', Arial, sans-serif`;const max=type==='title'?24:14;const fallback=type==='title'?22:13.5;el.style.fontSize=Math.min(Number(style.size)||fallback,max)+'px';el.style.color=style.color;el.style.fontWeight=style.bold?'1000':(type==='title'?'950':'650');}
+const $$=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
+const norm=value=>String(value??'').trim().replace(/\s+/g,' ').toUpperCase();
+const textNorm=value=>String(value??'').trim();
+const esc=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+const pad=value=>String(value).padStart(2,'0');
+const deepClone=value=>JSON.parse(JSON.stringify(value));
+function todayISO(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function nowISO(){return new Date().toISOString();}
+function formatBR(value){if(!value)return'--';const [y,m,d]=String(value).split('-');return y&&m&&d?`${d}/${m}/${y}`:String(value);}
+function stationLabel(value){return value==='JPNEWS983'?'JOVEM PAN NEWS - 98,3':'JOVEM PAN - 101,7';}
+function countStateRecords(data){if(!data||!data.months)return 0;const months=Object.values(data.months).reduce((total,month)=>total+(month.items||[]).length+(month.promos||[]).length+(month.distributions||[]).length,0);return months+(data.schedules||[]).length+(data.programSchedules||[]).length;}
+let state={currentMonth:todayISO().slice(0,7),months:{},programSchedules:[]};
+let activeTab='cadastro';
+let reportMode='dia';
+let lastReportRows=[];
+function ensureMonth(key){state.months ||= {};state.months[key] ||= {label:key,items:[],promos:[],distributions:[]};return state.months[key];}
+function schedules(){state.programSchedules ||= [];return state.programSchedules;}
+function dayIndex(date){const [y,m,d]=String(date||todayISO()).split('-').map(Number);return new Date(y,(m||1)-1,d||1).getDay();}
+function dateObj(date){return new Date(`${date}T12:00:00`);}
+function dateRange(start,end){const rows=[];let cursor=dateObj(start);const limit=dateObj(end);while(cursor<=limit){rows.push(`${cursor.getFullYear()}-${pad(cursor.getMonth()+1)}-${pad(cursor.getDate())}`);cursor.setDate(cursor.getDate()+1);}return rows;}
+function monthLastDay(month){const [y,m]=month.split('-').map(Number);return `${month}-${pad(new Date(y,m,0).getDate())}`;}
+function monthKeysBetween(start,end){const keys=[];let [y,m]=start.slice(0,7).split('-').map(Number);const [ey,em]=end.slice(0,7).split('-').map(Number);while(y<ey||(y===ey&&m<=em)){keys.push(`${y}-${pad(m)}`);m++;if(m>12){m=1;y++;}}return keys;}
+function slotParts(value){const raw=String(value||'').trim().toUpperCase().replace(/\s+/g,'');const match=raw.match(/^(\d{1,2})(?:H|:)?(\d{2})?$/);if(!match)return null;const hour=Number(match[1]);const minute=Number(match[2]||0);if(hour<0||hour>23||![0,30].includes(minute))return null;return{hour,minute};}
+function slotMinutes(value){const parts=slotParts(value);return parts?parts.hour*60+parts.minute:9999;}
+function slotFromMinutes(total){const hour=Math.floor(total/60),minute=total%60;return `${pad(hour)}H${minute===30?'30':''}`;}
+function normalizeSlot(value){const parts=slotParts(value);return parts?slotFromMinutes(parts.hour*60+parts.minute):'';}
+function slotHHMM(value){const parts=slotParts(value);return parts?`${pad(parts.hour)}:${pad(parts.minute)}`:'00:00';}
+function formatSlot(value){return normalizeSlot(value)||norm(value);}
+function minutesOf(value){const match=String(value||'00:00').match(/(\d{1,2}):(\d{2})/);return match?Number(match[1])*60+Number(match[2]):0;}
+function programRowsFor(station,program=''){return schedules().filter(row=>(row.station||'JP1017')===station&&(!program||norm(row.name)===norm(program))).sort((a,b)=>minutesOf(a.startTime)-minutesOf(b.startTime)||norm(a.name).localeCompare(norm(b.name)));}
+function programRows(){return programRowsFor($('station').value);}
+function programSelectedRows(){return programRowsFor($('station').value,$('program').value);}
+function programAllowedOnDate(promo,date){const rows=programRowsFor(promo.station||'JP1017',promo.program||'');if(!rows.length)return true;const day=dayIndex(date);return rows.some(row=>(Array.isArray(row.days)?row.days.map(Number):[1,2,3,4,5]).includes(day));}
+function fillPrograms(){const current=norm($('program').value);const names=[...new Set(programRows().map(row=>norm(row.name)).filter(Boolean))];$('program').innerHTML='<option value="">SELECIONE</option>'+names.map(name=>`<option>${esc(name)}</option>`).join('');if(names.includes(current))$('program').value=current;$('programHint').textContent=names.length?'PROGRAMAS CARREGADOS DA ABA HORÁRIOS.':'NENHUM PROGRAMA CADASTRADO PARA ESTA EMISSORA NA ABA HORÁRIOS.';fillHours();updatePreview();}
+function hoursForSelectedProgram(){const start=$('startDate').value||todayISO();const end=$('endDate').value||start;const rows=programSelectedRows();const slots=new Set();rows.forEach(row=>{const days=Array.isArray(row.days)?row.days.map(Number):[1,2,3,4,5];const hasValidDay=dateRange(start,end).some(date=>days.includes(dayIndex(date)));if(!hasValidDay)return;const first=Math.ceil(minutesOf(row.startTime)/30)*30;const limit=minutesOf(row.endTime);for(let minute=first;minute<limit;minute+=30){if(minute>=360&&minute<=1350)slots.add(slotFromMinutes(minute));}});return [...slots].sort((a,b)=>slotMinutes(a)-slotMinutes(b));}
+function fillHours(selected=[]){const box=$('readHours');const hours=hoursForSelectedProgram();if(!hours.length){box.innerHTML='<div class="empty">SELECIONE UM PROGRAMA COM HORÁRIOS CADASTRADOS.</div>';$('hoursHint').textContent='CADASTRE OU AJUSTE O PROGRAMA NA ABA HORÁRIOS DO PAINEL PRINCIPAL.';return;}const selectedSet=new Set(selected.map(normalizeSlot).filter(Boolean));const effective=selectedSet.size?selectedSet:new Set(hours);box.innerHTML=hours.map(slot=>`<label class="readHour"><input type="checkbox" value="${slot}" ${effective.has(slot)?'checked':''}><span>${slot}</span></label>`).join('');$('hoursHint').textContent='HORÁRIOS CHEIOS E DE MEIA HORA VINCULADOS AO PROGRAMA.';$$('#readHours input').forEach(input=>input.addEventListener('change',updatePreview));updatePreview();}
+function selectedHours(){return $$('#readHours input:checked').map(input=>normalizeSlot(input.value)).filter(Boolean).sort((a,b)=>slotMinutes(a)-slotMinutes(b));}
+function styleFrom(prefix){return{font:$(prefix+'Font').value,size:Number($(prefix+'Size').value),color:$(prefix+'Color').value,bold:$(prefix+'Bold').value==='1'};}
+function applyStyle(element,style,type){element.style.fontFamily=`'${style.font}', Arial, sans-serif`;const max=type==='title'?24:14;const fallback=type==='title'?22:13.5;element.style.fontSize=Math.min(Number(style.size)||fallback,max)+'px';element.style.color=style.color;element.style.fontWeight=style.bold?'1000':(type==='title'?'950':'650');}
 function readingSeconds(){const words=textNorm($('text').value).split(/\s+/).filter(Boolean).length;return Math.max(0,Math.ceil(words/2.6));}
-function formatBR(v){if(!v)return'--';const [y,m,d]=String(v).split('-');return `${d}/${m}/${y}`;}
-function updatePreview(){const title=norm($('title').value)||'TÍTULO DO MERCHAN';const desc=textNorm($('text').value)||'TEXTO DO MERCHAN PARA LEITURA NO AR.';$('previewTitle').textContent=title;$('previewDesc').textContent=desc;$('previewStation').textContent=stationLabel($('station').value);$('previewProgram').textContent=norm($('program').value)||'SELECIONE';$('previewPeriod').textContent=`${formatBR($('startDate').value)} A ${formatBR($('endDate').value)}`;$('previewHours').textContent=selectedHours().map(h=>h+'H').join(', ')||'--';const seconds=readingSeconds();const label=seconds>30?`TEMPO ESTIMADO: ${seconds}S · TEXTO LONGO`:`TEMPO ESTIMADO: ${seconds}S`;$('readingTime').textContent=label;$('previewEstimate').textContent=label;$('previewEstimate').classList.toggle('warn',seconds>30);applyStyle($('previewTitle'),styleFrom('title'),'title');applyStyle($('previewDesc'),styleFrom('desc'),'desc');}
-function save(){if(countStateRecords(state)===0){console.warn('ENVIO BLOQUEADO: BASE OPEC VAZIA.');return Promise.resolve();}return ref.set({state,updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'MERCHAN_RADIOS',user:'OPEC',version:'FIREBASE_RTDB_V1'});}
-function currentRows(){const filter=$('listStationFilter')?.value||'';const rows=[];Object.values(state.months||{}).forEach(m=>(m.promos||[]).forEach(p=>{if(norm(p.kind)==='MERCHAN'&&(!filter||p.station===filter))rows.push(p);}));return rows.sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.program).localeCompare(norm(b.program)));}
-function statusLabel(p){return norm(p.status||'PENDENTE')||'PENDENTE';}
-function statusClass(st){st=norm(st);if(st==='CANCELADO')return'cancel';if(st==='REALIZADO')return'';return'pending';}
-function renderList(){const rows=currentRows();$('list').innerHTML=rows.length?rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.program||'')}</td><td><strong>${esc(p.name||p.title||'')}</strong></td><td><span class="badge">${esc(formatBR(p.startDate||''))} A ${esc(formatBR(p.drawDate||p.endDate||''))}</span></td><td>${esc((p.readHours||[]).map(h=>h+'H').join(', '))}</td><td><span class="badge ${statusClass(statusLabel(p))}">${esc(statusLabel(p))}</span></td><td><div class="tableActions"><button class="iconBtn" title="EDITAR" onclick="editMerchan('${esc(p.id)}')">✎</button><button class="iconBtn" title="DUPLICAR" onclick="duplicateMerchan('${esc(p.id)}')">⧉</button><button class="iconBtn" title="EXCLUIR" onclick="deleteMerchan('${esc(p.id)}')">🗑</button></div></td></tr>`).join(''):'<tr><td colspan="7"><div class="empty">NENHUM MERCHAN CADASTRADO.</div></td></tr>';}
-function render(){fillPrograms();renderList();}
-function findMerchan(id){for(const [key,m] of Object.entries(state.months||{})){const p=(m.promos||[]).find(x=>x.id===id);if(p)return{p,key};}return null;}
-function resetForm(){$('merchanForm').reset();$('merchanId').value='';$('startDate').value=today();$('endDate').value=today();$('station').value='JP1017';fillPrograms();updatePreview();}
-function editMerchan(id){const found=findMerchan(id);if(!found)return;const p=found.p;$('merchanId').value=p.id;$('station').value=p.station||'JP1017';fillPrograms();$('program').value=norm(p.program||'');$('startDate').value=p.startDate||today();$('endDate').value=p.drawDate||p.endDate||today();$('title').value=p.name||p.title||'';$('text').value=p.description||'';if(p.titleStyle){$('titleFont').value=p.titleStyle.font||'Segoe UI';$('titleSize').value=p.titleStyle.size||24;$('titleColor').value=p.titleStyle.color||'#171c26';$('titleBold').value=p.titleStyle.bold?'1':'0';}if(p.descriptionStyle){$('descFont').value=p.descriptionStyle.font||'Segoe UI';$('descSize').value=p.descriptionStyle.size||14;$('descColor').value=p.descriptionStyle.color||'#465161';$('descBold').value=p.descriptionStyle.bold?'1':'0';}fillHours(p.readHours||[]);updatePreview();window.scrollTo({top:0,behavior:'smooth'});}
-function deleteMerchan(id){if(!confirm('EXCLUIR ESTE MERCHAN?'))return;Object.values(state.months||{}).forEach(m=>{m.promos=(m.promos||[]).filter(p=>p.id!==id);});save().then(renderList);}
-function duplicateMerchan(id){const found=findMerchan(id);if(!found)return;const p={...found.p,id:'MR'+Date.now().toString(36).toUpperCase(),name:(found.p.name||found.p.title||'MERCHAN')+' CÓPIA',title:(found.p.title||found.p.name||'MERCHAN')+' CÓPIA',createdAt:new Date().toISOString()};monthData((p.startDate||today()).slice(0,7)).promos.push(p);save().then(renderList);}
-function submitMerchan(e){e.preventDefault();const start=$('startDate').value,end=$('endDate').value;if(!norm($('program').value)){alert('SELECIONE O PROGRAMA.');return;}if(end<start){alert('A DATA FINAL NÃO PODE SER ANTERIOR AO INÍCIO.');return;}const hours=selectedHours();if(!hours.length){alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.');return;}const targetMonth=start.slice(0,7)||state.currentMonth;state.currentMonth=targetMonth;const idVal=$('merchanId').value||'MR'+Date.now().toString(36).toUpperCase();const record={id:idVal,kind:'merchan',station:$('station').value,program:norm($('program').value),local:'MERCHAN',startDate:start,drawDate:end,endDate:end,drawTime:'23:59',name:norm($('title').value),title:norm($('title').value),description:textNorm($('text').value),titleStyle:styleFrom('title'),descriptionStyle:styleFrom('desc'),readMode:'selected',readHours:hours,readByHour:{},status:'PENDENTE',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),source:'MERCHAN_RADIOS'};Object.values(state.months||{}).forEach(m=>{m.promos=(m.promos||[]).filter(p=>p.id!==idVal);});monthData(targetMonth).promos.push(record);save().then(()=>{resetForm();renderList();alert('MERCHAN SALVO.');});}
-$('station').addEventListener('change',fillPrograms);
-$('program').addEventListener('change',()=>fillHours());
-$('startDate').addEventListener('change',()=>fillHours(selectedHours()));
-$('endDate').addEventListener('change',()=>fillHours(selectedHours()));
-$('selectAllHoursBtn').addEventListener('click',()=>{$$('#readHours input').forEach(i=>i.checked=true);updatePreview();});
-$('clearHoursBtn').addEventListener('click',()=>{$$('#readHours input').forEach(i=>i.checked=false);updatePreview();});
-$('listStationFilter').addEventListener('change',renderList);
+function updatePreview(){const title=norm($('title').value)||'TÍTULO DO MERCHAN';const description=textNorm($('text').value)||'TEXTO DO MERCHAN PARA LEITURA NO AR.';$('previewTitle').textContent=title;$('previewDesc').textContent=description;$('previewStation').textContent=stationLabel($('station').value);$('previewProgram').textContent=norm($('program').value)||'SELECIONE';$('previewPeriod').textContent=`${formatBR($('startDate').value)} A ${formatBR($('endDate').value)}`;$('previewHours').textContent=selectedHours().join(', ')||'--';const seconds=readingSeconds();const label=seconds>30?`TEMPO ESTIMADO: ${seconds}S · TEXTO LONGO`:`TEMPO ESTIMADO: ${seconds}S`;$('readingTime').textContent=label;$('previewEstimate').textContent=label;$('previewEstimate').classList.toggle('warn',seconds>30);applyStyle($('previewTitle'),styleFrom('title'),'title');applyStyle($('previewDesc'),styleFrom('desc'),'desc');}
+function setSaveState(mode,text){const element=$('saveState');element.className='saveState'+(mode?` ${mode}`:'');element.textContent=text;}
+function mergeReadData(base,copy){base.readByHour={...(base.readByHour||{}),...(copy.readByHour||{})};const logs=[...(base.readLog||[]),...(copy.readLog||[])];const seen=new Set();base.readLog=logs.filter(log=>{const key=log?.id||`${log?.key||''}|${log?.confirmedAt||log?.readAt||''}`;if(!key||seen.has(key))return false;seen.add(key);return true;});if(copy.readAt&&(!base.readAt||copy.readAt>base.readAt)){base.readAt=copy.readAt;base.readAtLabel=copy.readAtLabel||base.readAtLabel;base.readSlot=copy.readSlot||base.readSlot;}return base;}
+function allMerchans(){const groups=new Map();Object.entries(state.months||{}).forEach(([month,monthData])=>(monthData.promos||[]).forEach(promo=>{if(norm(promo.kind)!=='MERCHAN')return;const id=promo.id||`${month}-${promo.name||promo.title}`;if(!groups.has(id)){const clone=deepClone(promo);clone.__months=[month];groups.set(id,clone);return;}const current=groups.get(id);const merged=mergeReadData(current,promo);merged.__months=[...new Set([...(merged.__months||[]),month])];const currentUpdated=Date.parse(current.updatedAt||current.createdAt||0)||0;const copyUpdated=Date.parse(promo.updatedAt||promo.createdAt||0)||0;if(copyUpdated>currentUpdated){const reads={readByHour:merged.readByHour,readLog:merged.readLog,__months:merged.__months};Object.assign(merged,deepClone(promo),reads);}groups.set(id,merged);}));return [...groups.values()].sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.program).localeCompare(norm(b.program))||norm(a.name||a.title).localeCompare(norm(b.name||b.title)));}
+function findMerchan(id){const promo=allMerchans().find(row=>row.id===id);return promo?{p:promo,months:promo.__months||[]}:null;}
+function targetMonths(record){return monthKeysBetween(record.startDate,record.endDate||record.drawDate||record.startDate);}
+function transactionForRecord(record){const target=new Set(targetMonths(record));const existing=findMerchan(record.id)?.months||[];const keys=[...new Set([...existing,...target])];const operations=keys.map(key=>ref.child(`state/months/${key}/promos`).transaction(current=>{const rows=Array.isArray(current)?current:[];const existingRow=rows.find(row=>row?.id===record.id);const filtered=rows.filter(row=>row?.id!==record.id);if(!target.has(key))return filtered;const next=deepClone(record);if(existingRow)mergeReadData(next,existingRow);return [...filtered,next];}));const labels={};target.forEach(key=>labels[`state/months/${key}/label`]=key);labels['state/currentMonth']=record.startDate.slice(0,7);labels.updatedAt=firebase.database.ServerValue.TIMESTAMP;labels.savedAt=nowISO();labels.source='MERCHAN_RADIOS';labels.user='OPEC';labels.version='FIREBASE_RTDB_V2';return Promise.all(operations).then(()=>ref.update(labels));}
+function deleteRecord(id){const existing=findMerchan(id);if(!existing)return Promise.resolve();return Promise.all((existing.months||Object.keys(state.months||{})).map(key=>ref.child(`state/months/${key}/promos`).transaction(current=>(Array.isArray(current)?current:[]).filter(row=>row?.id!==id)))).then(()=>ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:nowISO(),source:'MERCHAN_RADIOS',user:'OPEC'}));}
+function readKeys(date,slot){const hhmm=slotHHMM(slot);const compact=hhmm.replace(':','');const keys=[`${date}-${compact}`];if(hhmm.endsWith(':00'))keys.push(`${date}-${hhmm.slice(0,2)}`);return keys;}
+function validTimestamp(value){if(!value)return'';if(typeof value==='object')value=value.confirmedAt||value.readAt||value.at||value.iso||value.value||'';if(typeof value!=='string')return'';const parsed=new Date(value);return Number.isNaN(parsed.getTime())?'':value;}
+function readInfo(promo,date,slot){const keys=readKeys(date,slot);let raw='';for(const key of keys){if(Object.prototype.hasOwnProperty.call(promo.readByHour||{},key)){raw=promo.readByHour[key];break;}}let timestamp=validTimestamp(raw);let incomplete=!!raw&&!timestamp;if(!timestamp){const logs=[...(promo.readLog||[])].reverse();const match=logs.find(log=>{if(!log)return false;if(log.key&&keys.includes(log.key))return true;const sameDate=!log.date||log.date===date;const logSlot=normalizeSlot(log.slot||log.scheduledHour||'');return sameDate&&logSlot===normalizeSlot(slot)&&(!log.station||log.station===promo.station);});timestamp=validTimestamp(match?.confirmedAt||match?.readAt||'');if(!timestamp&&match)incomplete=true;}return{timestamp,incomplete};}
+function operationalStatus(promo){const status=norm(promo.status||'PENDENTE');if(status==='CANCELADO'||status==='CANCELADA')return'CANCELADA';const today=todayISO();if((promo.startDate||'')>today)return'FUTURA';if((promo.endDate||promo.drawDate||'')<today)return'ENCERRADA';return'ATIVA';}
+function statusClass(status){return status==='ATIVA'?'read':status==='FUTURA'?'future':status==='ENCERRADA'?'cancel':'missed';}
+function expectedRowsFor(promo,start,end){const activeStart=promo.startDate||start;const activeEnd=promo.endDate||promo.drawDate||end;const rangeStart=activeStart>start?activeStart:start;const rangeEnd=activeEnd<end?activeEnd:end;if(rangeEnd<rangeStart)return[];const hours=(promo.readHours||[]).map(normalizeSlot).filter(Boolean).sort((a,b)=>slotMinutes(a)-slotMinutes(b));const rows=[];dateRange(rangeStart,rangeEnd).forEach(date=>{if(!programAllowedOnDate(promo,date))return;hours.forEach(slot=>{const read=readInfo(promo,date,slot);let status='';if(operationalStatus(promo)==='CANCELADA')status='CANCELADO';else if(read.timestamp)status='LIDO';else if(read.incomplete)status='REGISTRO INCOMPLETO';else{const scheduled=new Date(`${date}T${slotHHMM(slot)}:00-03:00`).getTime();const now=Date.now();if(scheduled<now)status='NÃO LIDO';else if(date===todayISO())status='PENDENTE';else status='FUTURO';}const confirmed=read.timestamp?new Date(read.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'';rows.push({id:promo.id,station:promo.station||'JP1017',title:norm(promo.name||promo.title||'MERCHAN'),program:norm(promo.program||''),date,slot,status,confirmed,timestamp:read.timestamp});});});return rows;}
+function reportPeriod(){if(reportMode==='dia'){const date=$('reportDate').value||todayISO();return{start:date,end:date};}const month=$('reportMonth').value||todayISO().slice(0,7);return{start:`${month}-01`,end:monthLastDay(month)};}
+function filteredReportRows(){const period=reportPeriod();const station=$('reportStation').value;const pauta=$('reportPauta').value;const status=$('reportStatus').value;let rows=[];allMerchans().forEach(promo=>{if(station&&promo.station!==station)return;if(pauta&&promo.id!==pauta)return;rows.push(...expectedRowsFor(promo,period.start,period.end));});if(status)rows=rows.filter(row=>row.status===status);return rows.sort((a,b)=>a.date.localeCompare(b.date)||slotMinutes(a.slot)-slotMinutes(b.slot)||a.title.localeCompare(b.title));}
+function reportStats(rows){const counts={LIDO:0,PENDENTE:0,'NÃO LIDO':0,FUTURO:0,CANCELADO:0,'REGISTRO INCOMPLETO':0};rows.forEach(row=>counts[row.status]=(counts[row.status]||0)+1);const elapsed=counts.LIDO+counts['NÃO LIDO']+counts['REGISTRO INCOMPLETO'];const execution=elapsed?Math.round((counts.LIDO/elapsed)*100):0;return{counts,execution,total:rows.length};}
+function reportBadge(status){const cls=status==='LIDO'?'read':status==='PENDENTE'?'pending':status==='NÃO LIDO'?'missed':status==='FUTURO'?'future':status==='CANCELADO'?'cancel':'incomplete';return`<span class="badge ${cls}">${esc(status)}</span>`;}
+function reportSummaryCards(rows){const groups=new Map();rows.forEach(row=>{if(!groups.has(row.id))groups.set(row.id,[]);groups.get(row.id).push(row);});if(reportMode==='dia')return'';return[...groups.entries()].map(([id,list])=>{const stats=reportStats(list);const first=list[0];return`<article class="summaryCard"><h3>${esc(first.title)}</h3><div class="summaryMeta"><span class="badge">${esc(stationLabel(first.station))}</span><span class="badge">${esc(first.program||'SEM PROGRAMA')}</span></div><div class="summaryNumbers"><div class="summaryNumber"><span>PREVISTAS</span><strong>${stats.total}</strong></div><div class="summaryNumber"><span>LIDAS</span><strong>${stats.counts.LIDO}</strong></div><div class="summaryNumber"><span>NÃO LIDAS</span><strong>${stats.counts['NÃO LIDO']}</strong></div><div class="summaryNumber"><span>EXECUÇÃO</span><strong>${stats.execution}%</strong></div></div><div class="progress"><span style="width:${stats.execution}%"></span></div></article>`;}).join('');}
+function fillReportPautas(){const current=$('reportPauta').value;const station=$('reportStation').value;const rows=allMerchans().filter(p=>!station||p.station===station);$('reportPauta').innerHTML='<option value="">TODAS</option>'+rows.map(p=>`<option value="${esc(p.id)}">${esc(norm(p.name||p.title||'MERCHAN'))}</option>`).join('');if(rows.some(p=>p.id===current))$('reportPauta').value=current;}
+function renderReport(){fillReportPautas();lastReportRows=filteredReportRows();const stats=reportStats(lastReportRows);$('reportKpis').innerHTML=`<div class="kpi"><span>PREVISTAS</span><strong>${stats.total}</strong><small>NO PERÍODO FILTRADO</small></div><div class="kpi good"><span>LIDAS</span><strong>${stats.counts.LIDO}</strong><small>CONFIRMADAS NO ESTÚDIO</small></div><div class="kpi warn"><span>PENDENTES / FUTURAS</span><strong>${stats.counts.PENDENTE+stats.counts.FUTURO}</strong><small>AINDA DENTRO DO HORÁRIO</small></div><div class="kpi bad"><span>NÃO LIDAS</span><strong>${stats.counts['NÃO LIDO']+stats.counts['REGISTRO INCOMPLETO']}</strong><small>HORÁRIO JÁ PASSOU</small></div><div class="kpi ${stats.execution>=90?'good':stats.execution>=70?'warn':'bad'}"><span>EXECUÇÃO</span><strong>${stats.execution}%</strong><small>SOBRE HORÁRIOS VENCIDOS</small></div>`;$('reportSummary').innerHTML=reportSummaryCards(lastReportRows);$('reportRows').innerHTML=lastReportRows.length?lastReportRows.map(row=>`<tr><td><span class="badge">${esc(stationLabel(row.station))}</span></td><td><span class="primary">${esc(row.title)}</span></td><td><span class="primary">${esc(row.program||'—')}</span></td><td>${formatBR(row.date)}</td><td><span class="badge">${esc(row.slot)}</span></td><td>${row.confirmed?`<span class="badge read">${esc(row.confirmed)}</span>`:'—'}</td><td>${reportBadge(row.status)}</td></tr>`).join(''):'<tr><td colspan="7"><div class="empty">NENHUMA LEITURA ENCONTRADA PARA OS FILTROS SELECIONADOS.</div></td></tr>';}
+function activeRows(){const search=norm($('listSearch').value);const station=$('listStationFilter').value;const status=$('listStatusFilter').value;const month=$('listMonthFilter').value;return allMerchans().filter(p=>(!station||p.station===station)&&(!status||operationalStatus(p)===status)&&(!month||((p.startDate||'').slice(0,7)<=month&&(p.endDate||p.drawDate||'').slice(0,7)>=month))&&(!search||norm(`${p.name||p.title} ${p.program} ${stationLabel(p.station)}`).includes(search)));}
+function readsSummary(promo){const start=promo.startDate||todayISO();const end=promo.endDate||promo.drawDate||start;const rows=expectedRowsFor(promo,start,end);const stats=reportStats(rows);return`${stats.counts.LIDO}/${stats.total}`;}
+function renderList(){const rows=activeRows();$('list').innerHTML=rows.length?rows.map(p=>`<tr><td>${esc(stationLabel(p.station))}</td><td>${esc(p.program||'')}</td><td><span class="primary">${esc(p.name||p.title||'')}</span></td><td><span class="badge">${esc(formatBR(p.startDate||''))} A ${esc(formatBR(p.endDate||p.drawDate||''))}</span></td><td>${esc((p.readHours||[]).map(formatSlot).join(', '))}</td><td><span class="badge ${statusClass(operationalStatus(p))}">${esc(operationalStatus(p))}</span></td><td><span class="badge">${readsSummary(p)} LIDAS</span></td><td><div class="tableActions"><button class="iconBtn" title="EDITAR" onclick="editMerchan('${esc(p.id)}')">✎</button><button class="iconBtn" title="DUPLICAR" onclick="duplicateMerchan('${esc(p.id)}')">⧉</button><button class="iconBtn" title="EXCLUIR" onclick="removeMerchan('${esc(p.id)}')">×</button></div></td></tr>`).join(''):'<tr><td colspan="8"><div class="empty">NENHUM MERCHAN ENCONTRADO.</div></td></tr>';}
+function render(){fillPrograms();renderList();renderReport();}
+function resetForm(){$('merchanForm').reset();$('merchanId').value='';$('startDate').value=todayISO();$('endDate').value=todayISO();$('station').value='JP1017';$('saveMerchanBtn').textContent='SALVAR MERCHAN';fillPrograms();updatePreview();}
+function editMerchan(id){const found=findMerchan(id);if(!found)return;const p=found.p;activeTab='cadastro';switchTab();$('merchanId').value=p.id;$('station').value=p.station||'JP1017';fillPrograms();$('program').value=norm(p.program||'');$('startDate').value=p.startDate||todayISO();$('endDate').value=p.endDate||p.drawDate||todayISO();$('title').value=p.name||p.title||'';$('text').value=p.description||'';if(p.titleStyle){$('titleFont').value=p.titleStyle.font||'Segoe UI';$('titleSize').value=p.titleStyle.size||24;$('titleColor').value=p.titleStyle.color||'#171c26';$('titleBold').value=p.titleStyle.bold?'1':'0';}if(p.descriptionStyle){$('descFont').value=p.descriptionStyle.font||'Segoe UI';$('descSize').value=p.descriptionStyle.size||14;$('descColor').value=p.descriptionStyle.color||'#465161';$('descBold').value=p.descriptionStyle.bold?'1':'0';}fillHours(p.readHours||[]);$('saveMerchanBtn').textContent='SALVAR ALTERAÇÕES';updatePreview();window.scrollTo({top:0,behavior:'smooth'});}
+function removeMerchan(id){if(!confirm('EXCLUIR ESTE MERCHAN E TODAS AS SUAS CÓPIAS MENSAIS?'))return;setSaveState('saving','EXCLUINDO...');deleteRecord(id).then(()=>setSaveState('','EXCLUÍDO NO FIREBASE')).catch(error=>{console.error(error);setSaveState('error','ERRO AO EXCLUIR');alert('NÃO FOI POSSÍVEL EXCLUIR O MERCHAN.');});}
+function duplicateMerchan(id){const found=findMerchan(id);if(!found)return;const source=found.p;const copy={...deepClone(source),id:'MR'+Date.now().toString(36).toUpperCase(),name:(source.name||source.title||'MERCHAN')+' CÓPIA',title:(source.title||source.name||'MERCHAN')+' CÓPIA',readByHour:{},readLog:[],readAt:'',readAtLabel:'',readSlot:'',status:'PENDENTE',createdAt:nowISO(),updatedAt:nowISO()};delete copy.__months;setSaveState('saving','DUPLICANDO...');transactionForRecord(copy).then(()=>setSaveState('','CÓPIA SALVA')).catch(error=>{console.error(error);setSaveState('error','ERRO AO DUPLICAR');});}
+function submitMerchan(event){event.preventDefault();const start=$('startDate').value,end=$('endDate').value;if(!norm($('program').value)){alert('SELECIONE O PROGRAMA.');return;}if(end<start){alert('A DATA FINAL NÃO PODE SER ANTERIOR AO INÍCIO.');return;}const hours=selectedHours();if(!hours.length){alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.');return;}const id=$('merchanId').value||'MR'+Date.now().toString(36).toUpperCase();const existing=findMerchan(id)?.p;const record={...(existing?deepClone(existing):{}),id,kind:'merchan',station:$('station').value,program:norm($('program').value),local:'MERCHAN',startDate:start,drawDate:end,endDate:end,drawTime:'23:59',name:norm($('title').value),title:norm($('title').value),description:textNorm($('text').value),titleStyle:styleFrom('title'),descriptionStyle:styleFrom('desc'),readMode:'selected',readHours:hours,readByHour:existing?.readByHour||{},readLog:existing?.readLog||[],status:existing?.status||'PENDENTE',createdAt:existing?.createdAt||nowISO(),updatedAt:nowISO(),source:'MERCHAN_RADIOS',reportVersion:2};delete record.__months;$('saveMerchanBtn').disabled=true;setSaveState('saving','SALVANDO NO FIREBASE...');transactionForRecord(record).then(()=>{resetForm();activeTab='ativas';switchTab();setSaveState('','SALVO NO FIREBASE');}).catch(error=>{console.error(error);setSaveState('error','ERRO AO SALVAR');alert('NÃO FOI POSSÍVEL SALVAR. VERIFIQUE A CONEXÃO.');}).finally(()=>$('saveMerchanBtn').disabled=false);}
+function switchTab(){$$('.tabBtn').forEach(button=>button.classList.toggle('active',button.dataset.tab===activeTab));$$('.tabView').forEach(view=>view.classList.toggle('active',view.id===`tab-${activeTab}`));if(activeTab==='ativas')renderList();if(activeTab==='relatorio')renderReport();}
+function setReportMode(mode){reportMode=mode;$$('.modeBtn').forEach(button=>button.classList.toggle('active',button.dataset.reportMode===mode));$('reportDateField').style.display=mode==='dia'?'grid':'none';$('reportMonthField').style.display=mode==='dia'?'none':'grid';if(mode==='pauta'&&!$('reportPauta').value){fillReportPautas();const first=$('reportPauta').querySelector('option:nth-child(2)');if(first)$('reportPauta').value=first.value;}renderReport();}
+function csvValue(value){return`"${String(value??'').replace(/"/g,'""')}"`;}
+function exportCsv(){if(!lastReportRows.length){alert('NÃO HÁ DADOS PARA EXPORTAR.');return;}const header=['EMISSORA','PAUTA','PROGRAMA','DATA','HORÁRIO PREVISTO','CONFIRMADO ÀS','STATUS'];const lines=[header,...lastReportRows.map(row=>[stationLabel(row.station),row.title,row.program,formatBR(row.date),row.slot,row.confirmed,row.status])].map(row=>row.map(csvValue).join(';'));const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download=`relatorio_leituras_${reportMode}_${todayISO()}.csv`;link.click();URL.revokeObjectURL(url);}
+$$('.tabBtn').forEach(button=>button.addEventListener('click',()=>{activeTab=button.dataset.tab;switchTab();}));
+$$('.modeBtn').forEach(button=>button.addEventListener('click',()=>setReportMode(button.dataset.reportMode)));
+$('station').addEventListener('change',fillPrograms);$('program').addEventListener('change',()=>fillHours());$('startDate').addEventListener('change',()=>fillHours(selectedHours()));$('endDate').addEventListener('change',()=>fillHours(selectedHours()));
+$('selectAllHoursBtn').addEventListener('click',()=>{$$('#readHours input').forEach(input=>input.checked=true);updatePreview();});$('clearHoursBtn').addEventListener('click',()=>{$$('#readHours input').forEach(input=>input.checked=false);updatePreview();});
 ['title','text','titleFont','titleSize','titleColor','titleBold','descFont','descSize','descColor','descBold'].forEach(id=>$(id).addEventListener('input',updatePreview));
-$('merchanForm').addEventListener('submit',submitMerchan);
-$('resetBtn').addEventListener('click',e=>{e.preventDefault();resetForm();});
-resetForm();
-ref.on('value',snap=>{const payload=snap.val(); if(payload&&payload.state){state=payload.state; state.programSchedules ||= []; state.months ||= {}; render();}});
+['listSearch','listStationFilter','listStatusFilter','listMonthFilter'].forEach(id=>$(id).addEventListener(id==='listSearch'?'input':'change',renderList));
+['reportDate','reportMonth','reportStation','reportPauta','reportStatus'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='reportStation')fillReportPautas();renderReport();}));
+$('exportCsvBtn').addEventListener('click',exportCsv);$('printReportBtn').addEventListener('click',()=>window.print());$('merchanForm').addEventListener('submit',submitMerchan);$('resetBtn').addEventListener('click',event=>{event.preventDefault();resetForm();});
+$('reportDate').value=todayISO();$('reportMonth').value=todayISO().slice(0,7);$('listMonthFilter').value=todayISO().slice(0,7);resetForm();setReportMode('dia');
+ref.on('value',snapshot=>{const payload=snapshot.val();if(payload&&payload.state){state=payload.state;state.programSchedules ||= [];state.months ||= {};setSaveState('','FIREBASE ONLINE');render();}},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');});
 </script>
 </body>
 </html>
