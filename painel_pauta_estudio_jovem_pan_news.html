@@ -2021,7 +2021,10 @@ function readHourKeys(item,promo){
   const time=timeToHHMM(item?item.slot:(promo?.drawTime||''));
   const compact=time.replace(':','');
   const hour=time.slice(0,2);
-  return [...new Set([`${date}-${compact}`,`${date}-${hour}`])];
+  const minute=time.slice(3,5);
+  const keys=[`${date}-${compact}`];
+  if(minute==='00') keys.push(`${date}-${hour}`);
+  return [...new Set(keys)];
 }
 function readHourKey(item,promo){return readHourKeys(item,promo)[0];}
 function hourMapValue(map,item,promo){
@@ -2031,10 +2034,35 @@ function hourMapValue(map,item,promo){
   }
   return undefined;
 }
-function readTimeLabel(value){
-  if(!value) return 'HORÁRIO NÃO REGISTRADO';
+function validReadTimestamp(value){
+  if(!value) return '';
+  if(typeof value==='object'){
+    value=value.confirmedAt||value.readAt||value.at||value.iso||value.value||'';
+  }
+  if(typeof value!=='string') return '';
   const d=new Date(value);
-  if(Number.isNaN(d.getTime())) return 'HORÁRIO REGISTRADO';
+  return Number.isNaN(d.getTime()) ? '' : value;
+}
+function readTimestampForHour(p,item){
+  const direct=validReadTimestamp(hourMapValue(p?.readByHour,item,p));
+  if(direct) return direct;
+
+  const keys=readHourKeys(item,p);
+  const logs=Array.isArray(p?.readLog) ? [...p.readLog].reverse() : [];
+  const match=logs.find(log=>{
+    if(!log) return false;
+    if(log.key && keys.includes(log.key)) return true;
+    const sameDate=!log.date || log.date===(item?.date||'');
+    const sameSlot=!log.slot || timeToHHMM(log.slot)===timeToHHMM(item?.slot||'');
+    const sameStation=!log.station || log.station===STUDIO_STATION;
+    return sameDate && sameSlot && sameStation;
+  });
+  return validReadTimestamp(match?.confirmedAt||match?.readAt||'');
+}
+function readTimeLabel(value){
+  const timestamp=validReadTimestamp(value);
+  if(!timestamp) return '';
+  const d=new Date(timestamp);
   return `FEITA ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
@@ -2169,7 +2197,7 @@ function promoEligibleForItemHour(p,item){
   return true;
 }
 function isPromoReadForHour(p,item){
-  return !!hourMapValue(p.readByHour,item,p);
+  return !!readTimestampForHour(p,item);
 }
 function pautasForItemHour(item,includeRead=false,kind='all'){
   return [...(monthData().promos||[])]
@@ -2242,14 +2270,14 @@ function buildPromoFooter(item){
   const pautas=allPautasForItemHour(item,true).filter(p=>ALLOW_PROMO_SHORTCUT || isMerchan(p));
   const emptyClass=pautas.length ? '' : ' empty';
   return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{
-    const key=readHourKey(item,p);
-    const done=!!hourMapValue(p.readByHour,item,p);
+    const readAt=readTimestampForHour(p,item);
+    const done=!!readAt;
     const type=pautaTypeLabel(p);
     const isM=isMerchan(p);
     const name=upper(p.name||p.title||(isM?'MERCHAN':'PROMOÇÃO'));
     const typeClass=isM?'merchan':'promo';
     if(done){
-      const time=readTimeLabel(p.readByHour[key]).replace('FEITA ','');
+      const time=readTimeLabel(readAt).replace('FEITA ','');
       const label=`${name} · LIDA ${time}`;
       return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(label)}"><span class="verticalMarquee"><span class="verticalStack"><span>${esc(name)}</span><span>LIDA ${esc(time)}</span></span></span></button>`;
     }
@@ -2485,38 +2513,68 @@ function closePromoReadModal(){
   selectedPromoId=null;
   render();
 }
-function confirmPromoRead(){
+function confirmPromoRead(event){
+  if(event){
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const button=event?.currentTarget || $('confirmPromoReadInline');
   const p=currentPromoForRead();
   const item=currentDisplayItem || virtualCurrentItem();
-  if(!p || !item) return;
-  const now=new Date();
-  const key=readHourKey(item,p);
-  const iso=now.toISOString();
-  p.readByHour ||= {};
-  p.readByHour[key]=iso;
-  p.readLog ||= [];
-  p.readLog.push({
-    id:`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-    key,
-    date:item.date||todayISO(),
-    scheduledHour:pad(slotHour(item.slot)),
-    slot:formatStudioTime(item.slot),
-    station:STUDIO_STATION,
-    program:upper(item.program||'PROGRAMA'),
-    type:pautaTypeLabel(p),
-    name:upper(p.name||p.title||'PAUTA'),
-    confirmedAt:iso,
-    confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`
-  });
-  p.readAt=iso;
-  p.readAtLabel=now.toLocaleString('pt-BR');
-  p.readSlot=formatStudioTime(item.slot);
-  p.readStation=STUDIO_STATION;
-  p.readProgram=upper(item.program||'PROGRAMA');
-  saveState();
-  selectedPromoId=null;
-  render();
+  if(!p || !item){
+    if(button){
+      button.disabled=false;
+      button.textContent='CONFIRMAR LEITURA';
+    }
+    return;
+  }
+
+  if(button){
+    button.disabled=true;
+    button.textContent='SALVANDO...';
+  }
+
+  try{
+    const now=new Date();
+    const key=readHourKey(item,p);
+    const iso=now.toISOString();
+
+    p.readByHour ||= {};
+    p.readByHour[key]=iso;
+
+    p.readLog ||= [];
+    p.readLog.push({
+      id:`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+      key,
+      date:item.date||todayISO(),
+      scheduledHour:timeToHHMM(item.slot),
+      slot:formatStudioTime(item.slot),
+      station:STUDIO_STATION,
+      program:upper(item.program||'PROGRAMA'),
+      type:pautaTypeLabel(p),
+      name:upper(p.name||p.title||'PAUTA'),
+      confirmedAt:iso,
+      confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`
+    });
+
+    p.readAt=iso;
+    p.readAtLabel=now.toLocaleString('pt-BR');
+    p.readSlot=formatStudioTime(item.slot);
+    p.readStation=STUDIO_STATION;
+    p.readProgram=upper(item.program||'PROGRAMA');
+
+    saveState();
+    selectedPromoId=null;
+    render();
+  }catch(error){
+    console.error('ERRO AO CONFIRMAR LEITURA:',error);
+    if(button){
+      button.disabled=false;
+      button.textContent='TENTAR NOVAMENTE';
+    }
+  }
 }
+window.confirmPromoRead=confirmPromoRead;
 function isScheduledStudioPrize(item){
   if(!item || !item.date || !item.slot) return false;
   if((item.station||'JP1017')!==STUDIO_STATION) return false;
@@ -2695,7 +2753,7 @@ function render(){
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
-      <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button">CONFIRMAR LEITURA</button></div>
+      <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA</button></div>
     ` : isVirtual ? `
       <div class="emptyStudioBox"><strong>SEM PAUTA PARA ESTE HORÁRIO</strong><span>NENHUM PRÊMIO, PROMOÇÃO OU MERCHAN CADASTRADO PARA AGORA.</span></div>
     ` : `
@@ -2730,7 +2788,7 @@ function render(){
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.addEventListener('click',openWinnerModal);
   const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',closePromoReadModal);
-  const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.addEventListener('click',confirmPromoRead);
+  const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.onclick=confirmPromoRead;
   const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);
   const resultList=$('promoResultWinnersList');
   if(resultList) resultList.addEventListener('click',e=>{
