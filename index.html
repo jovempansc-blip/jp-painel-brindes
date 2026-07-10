@@ -6207,7 +6207,10 @@ function programmed(distId, channel=''){
   const target = channel ? normalizeChannel(channel) : '';
   return monthData().items.filter(i => i.distributionId === distId && (!target || normalizeChannel(i.channel) === target)).reduce((sum,i)=> sum + num(i.qty),0);
 }
-function slotOrder(v){ const m=String(v||'').match(/\d+/); return m ? Number(m[0]) : 99; }
+function slotOrder(v){
+  const min=slotToMinutes(v);
+  return Number.isFinite(min) ? min/60 : 99;
+}
 function statusBadge(status,item=null){
   const s=item ? itemEffectiveStatus(item) : normalizeStatus(status);
   const cls = itemStatusClass(s);
@@ -6834,13 +6837,13 @@ function scheduleEndMinutes(p){
   return end>start ? end : start+60;
 }
 function hourInProgram(date,slot,program,station='JP1017'){
-  const h=Number(String(normalizeSlot(slot)).replace('H',''));
-  const min=h*60;
+  const min=slotToMinutes(slot);
+  if(!Number.isFinite(min)) return false;
   return programSchedules().some(p=> sameStation(p.station,station) && dayMatchesRule(date,scheduleDays(p)) && norm(scheduleName(p))===norm(program) && min>=scheduleStartMinutes(p) && min<scheduleEndMinutes(p));
 }
 function programFromSchedule(date,slot,station='JP1017'){
-  const h=Number(String(normalizeSlot(slot)).replace('H',''));
-  const min=h*60;
+  const min=slotToMinutes(slot);
+  if(!Number.isFinite(min)) return '';
   const found=programSchedules().find(p=> sameStation(p.station,station) && dayMatchesRule(date,scheduleDays(p)) && min>=scheduleStartMinutes(p) && min<scheduleEndMinutes(p));
   return found ? scheduleName(found) : '';
 }
@@ -6940,7 +6943,7 @@ function saveProgramSchedule(e){
     programScheduleOpenedFromItem=false;
     if($('itemProgramStation')) $('itemProgramStation').value=savedRec.station||'JP1017';
     renderItemSlotOptions(false);
-    const savedSlot=`${String(Math.floor(minutesOf(savedRec.startTime)/60)).padStart(2,'0')}H`;
+    const savedSlot=slotFromMinutes(minutesOf(savedRec.startTime));
     const date=$('itemDate')?.value || todayISO();
     if(itemSlotsForStationDate(date,savedRec.station||'JP1017').includes(savedSlot)){
       $('itemSlot').value=savedSlot;
@@ -7635,7 +7638,7 @@ function renderPromos(){
   }).join('');
 }
 function formatStudioTime(slot){
-  return norm(slot || '').replace(/\s+/g,' ');
+  return normalizeSlot(slot) || norm(slot || '').replace(/\s+/g,' ');
 }
 function studioPrizeEntries(){
   return [...monthData().items].sort((a,b)=>{
@@ -7663,13 +7666,8 @@ function dateAddISO(iso, delta){
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 function timeToHHMM(slot){
-  const raw=String(slot||'').toUpperCase().trim();
-  if(/^\d{1,2}:\d{2}$/.test(raw)){
-    const [h,m]=raw.split(':');
-    return `${String(Number(h)).padStart(2,'0')}:${m}`;
-  }
-  const m=raw.match(/(\d{1,2})/);
-  return m ? `${String(Number(m[1])).padStart(2,'0')}:00` : '00:00';
+  const p=slotParts(slot);
+  return p ? `${String(p.hour).padStart(2,'0')}:${String(p.minute).padStart(2,'0')}` : '00:00';
 }
 function studioItemDateTime(i){
   return new Date(`${i.date || todayISO()}T${timeToHHMM(i.slot)}:00`);
@@ -8008,9 +8006,10 @@ function itemScheduleOptionsForStationDate(date,station){
       const end=scheduleEndMinutes(p);
       if(!name || !start || end<=start) return;
       const matchesDate = date ? dayMatchesRule(date,scheduleDays(p)) : true;
-      for(let h=Math.floor(start/60); h<Math.ceil(end/60); h++){
-        if(h<6 || h>22) continue;
-        const slot=`${String(h).padStart(2,'0')}H`;
+      const first=Math.ceil(start/30)*30;
+      for(let minute=first; minute<end; minute+=30){
+        if(minute<6*60 || minute>22*60+30) continue;
+        const slot=slotFromMinutes(minute);
         out.push({
           slot,
           program:name,
@@ -8025,7 +8024,7 @@ function itemScheduleOptionsForStationDate(date,station){
     });
   const seen=new Set();
   return out
-    .sort((a,b)=>(b.matchesDate-a.matchesDate) || Number(a.slot.replace('H',''))-Number(b.slot.replace('H','')) || a.program.localeCompare(b.program))
+    .sort((a,b)=>(b.matchesDate-a.matchesDate) || slotToMinutes(a.slot)-slotToMinutes(b.slot) || a.program.localeCompare(b.program))
     .filter(o=>{
       const key=`${o.slot}|${o.program}|${o.daysLabel}`;
       if(seen.has(key)) return false;
@@ -8034,7 +8033,7 @@ function itemScheduleOptionsForStationDate(date,station){
     });
 }
 function itemSlotsForStationDate(date,station){
-  return [...new Set(itemScheduleOptionsForStationDate(date,station).map(o=>o.slot))].sort((a,b)=>Number(a.replace('H',''))-Number(b.replace('H','')));
+  return [...new Set(itemScheduleOptionsForStationDate(date,station).map(o=>o.slot))].sort((a,b)=>slotToMinutes(a)-slotToMinutes(b));
 }
 function programFromSelectedSlotOption(){
   const sel=$('itemSlot');
@@ -8078,13 +8077,77 @@ function openProgramScheduleFromItem(){
   const hint=$('itemProgramHint');
   if(hint) hint.textContent='CADASTRE O NOVO HORÁRIO. AO SALVAR, ELE VOLTA PARA ESTE CAMPO.';
 }
+function parseTypedHourToSlot(value){
+  const raw=String(value||'').trim().toUpperCase().replace(/\s+/g,'');
+  if(!raw) return '';
+  const m=raw.match(/^(\d{1,2})(?:H|:)?(00|30)?$/);
+  if(!m) return '';
+  const hour=Number(m[1]);
+  const minute=Number(m[2]||0);
+  if(!Number.isInteger(hour) || hour<6 || hour>22 || ![0,30].includes(minute)) return '';
+  return slotFromMinutes(hour*60+minute);
+}
+function timeFromSlot(slot){
+  return timeToHHMM(slot);
+}
+function endTimeFromSlot(slot){
+  const minute=slotToMinutes(slot);
+  if(!Number.isFinite(minute)) return '';
+  const end=Math.min(minute+60,23*60+59);
+  return `${String(Math.floor(end/60)).padStart(2,'0')}:${String(end%60).padStart(2,'0')}`;
+}
+function quickAddProgramScheduleFromItem(){
+  const sel=$('itemSlot');
+  if(sel) sel.value='';
+  const date=$('itemDate')?.value || todayISO();
+  const station=$('itemProgramStation')?.value || 'JP1017';
+  const typed=prompt('QUAL HORÁRIO?\n\nDIGITE HORA CHEIA OU MEIA HORA. EXEMPLOS: 13H, 13H30, 13:00 OU 13:30');
+  const slot=parseTypedHourToSlot(typed);
+  if(!slot){
+    updateItemProgramFromSchedule(true);
+    if(typed!==null) alert('HORÁRIO INVÁLIDO. USE HORA CHEIA OU MEIA HORA ENTRE 06H E 22H30.');
+    return;
+  }
+  const existing=itemScheduleOptionsForStationDate(date,station).find(o=>normalizeSlot(o.slot)===slot && o.matchesDate);
+  if(existing){
+    renderItemSlotOptions(false);
+    if($('itemSlot')) $('itemSlot').value=existing.slot;
+    updateItemProgramFromSchedule(true);
+    const hint=$('itemProgramHint');
+    if(hint) hint.textContent='HORÁRIO JÁ CADASTRADO. ELE FOI SELECIONADO AUTOMATICAMENTE.';
+    return;
+  }
+  const rec={
+    id:id('HR'),
+    station,
+    name:'PROGRAMAÇÃO NORMAL',
+    startTime:timeFromSlot(slot),
+    endTime:endTimeFromSlot(slot),
+    days:[dayIndex(date)],
+    createdAt:new Date().toISOString()
+  };
+  const conflict=programTimeConflict(rec);
+  if(conflict){
+    const ok=confirm(`JÁ EXISTE UM HORÁRIO CONFLITANTE.\n\n${stationLabel(conflict.station)} · ${conflict.name}\n${dayRuleLabel(conflict.days)} · ${conflict.startTime} A ${conflict.endTime}\n\nDESEJA SALVAR ESTE NOVO HORÁRIO MESMO ASSIM?`);
+    if(!ok){ updateItemProgramFromSchedule(true); return; }
+  }
+  programSchedules().push(rec);
+  activeProgramStationFilter=station;
+  localStorage.setItem('jp_program_station_filter', activeProgramStationFilter);
+  renderItemSlotOptions(false);
+  if($('itemSlot')) $('itemSlot').value=slot;
+  updateItemProgramFromSchedule(true);
+  saveState(true);
+  renderProgramSchedules();
+  toast(`HORÁRIO ${slot} SALVO.`);
+  const hint=$('itemProgramHint');
+  if(hint) hint.textContent=`HORÁRIO ${slot} CADASTRADO COMO PROGRAMAÇÃO NORMAL E SELECIONADO.`;
+}
 function handleItemSlotChange(){
   const sel=$('itemSlot');
   if(!sel) return;
   if(sel.value==='__ADD_PROGRAM_SCHEDULE__'){
-    sel.value='';
-    updateItemProgramFromSchedule(true);
-    openProgramScheduleFromItem();
+    quickAddProgramScheduleFromItem();
     return;
   }
   updateItemProgramFromSchedule(true);
@@ -8203,17 +8266,35 @@ function dateRangeBetween(startIso,endIso){
   return out;
 }
 const RADIO_PLANNER_SLOTS = ['07H','08H','09H','10H','11H','14H','15H','16H','17H','20H'];
+function slotParts(slot){
+  const raw=String(slot||'').trim().toUpperCase().replace(/\s+/g,'');
+  const m=raw.match(/^(\d{1,2})(?:H|:)?(\d{2})?$/);
+  if(!m) return null;
+  const hour=Number(m[1]);
+  const minute=Number(m[2]||0);
+  if(hour<0 || hour>23 || ![0,30].includes(minute)) return null;
+  return {hour,minute};
+}
+function slotToMinutes(slot){
+  const p=slotParts(slot);
+  return p ? p.hour*60+p.minute : NaN;
+}
+function slotFromMinutes(total){
+  if(!Number.isFinite(total)) return '';
+  const hour=Math.floor(total/60);
+  const minute=total%60;
+  return `${String(hour).padStart(2,'0')}H${minute===30?'30':''}`;
+}
 function normalizeSlot(slot){
-  const s=norm(slot).replace(/:00/g,'H').replace(/\s+/g,'');
-  const m=s.match(/^(\d{1,2})H?$/);
-  return m ? `${String(Number(m[1])).padStart(2,'0')}H` : s;
+  const p=slotParts(slot);
+  return p ? slotFromMinutes(p.hour*60+p.minute) : norm(slot).replace(/\s+/g,'');
 }
 function radioSlotKey(date,slot){ return `${date}|${normalizeSlot(slot)}`; }
 function programFallbackForSlot(date,slot,station='JP1017'){
   const scheduled=programFromSchedule(date,slot,station);
   if(scheduled) return scheduled;
   if(station!=='JP1017') return '';
-  const h=Number(normalizeSlot(slot).replace('H',''));
+  const h=Math.floor(slotToMinutes(slot)/60);
   const day=new Date(`${date}T12:00:00`).getDay();
   if(h===7) return day===6 ? 'ROCK AND POP' : 'JORNAL DA MANHÃ LOCAL';
   if(h===8) return 'ROCK AND POP';

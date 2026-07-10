@@ -627,9 +627,10 @@ const pad=n=>String(n).padStart(2,'0');
 const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
 const monthKey=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;}
 const formatBR=iso=>{if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
-const slotHour=slot=>{const m=String(slot||'').match(/(\d{1,2})/);return m?Number(m[1]):0;}
-const timeToHHMM=slot=>slotHour(slot)?`${pad(slotHour(slot))}:00`:String(slot||'23:59').slice(0,5);
-const formatTime=slot=>slotHour(slot)?`${pad(slotHour(slot))}H`:upper(slot||'--H');
+const slotParts=slot=>{const raw=String(slot||'').trim().toUpperCase().replace(/\s+/g,'');const m=raw.match(/^(\d{1,2})(?:H|:)?(\d{2})?$/);if(!m)return null;const hour=Number(m[1]),minute=Number(m[2]||0);return hour>=0&&hour<=23&&[0,30].includes(minute)?{hour,minute}:null;};
+const slotHour=slot=>slotParts(slot)?.hour||0;
+const timeToHHMM=slot=>{const p=slotParts(slot);return p?`${pad(p.hour)}:${pad(p.minute)}`:String(slot||'23:59').slice(0,5);};
+const formatTime=slot=>{const p=slotParts(slot);return p?`${pad(p.hour)}H${p.minute===30?'30':''}`:upper(slot||'--H');};
 const statusBadge=s=>upper(s)==='REALIZADO'?'<span class="badge green">REALIZADO</span>':upper(s)==='NO AR'?'<span class="badge green">NO AR</span>':`<span class="badge">${esc(upper(s||'PENDENTE'))}</span>`;
 let state={months:{}}, currentMonth='';
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}

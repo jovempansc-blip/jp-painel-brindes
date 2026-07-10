@@ -1916,9 +1916,18 @@ async function saveStateToApi(){
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
 function pad(n){return String(n).padStart(2,'0');}
 function formatBR(iso){if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
-function slotHour(slot){const m=String(slot||'').match(/(\d{1,2})/);return m?Number(m[1]):0;}
-function formatStudioTime(slot){const h=slotHour(slot);return h?`${pad(h)}H`:upper(slot||'--H');}
-function timeToHHMM(slot){const h=slotHour(slot);return h?`${pad(h)}:00`:'00:00';}
+function slotParts(slot){
+  const raw=String(slot||'').trim().toUpperCase().replace(/\s+/g,'');
+  const m=raw.match(/^(\d{1,2})(?:H|:)?(\d{2})?$/);
+  if(!m) return null;
+  const hour=Number(m[1]), minute=Number(m[2]||0);
+  if(hour<0||hour>23||![0,30].includes(minute)) return null;
+  return {hour,minute};
+}
+function slotHour(slot){const p=slotParts(slot);return p?p.hour:0;}
+function slotMinute(slot){const p=slotParts(slot);return p?p.minute:0;}
+function formatStudioTime(slot){const p=slotParts(slot);return p?`${pad(p.hour)}H${p.minute===30?'30':''}`:upper(slot||'--H');}
+function timeToHHMM(slot){const p=slotParts(slot);return p?`${pad(p.hour)}:${pad(p.minute)}`:'00:00';}
 function currentHourKey(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}`;}
 function dateISO(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
 function todayISO(){
@@ -1965,8 +1974,7 @@ function itemTitleStyle(i){return i.titleStyle||distributionById(i.distributionI
 function itemDescStyle(i){return i.descriptionStyle||distributionById(i.distributionId)?.descriptionStyle||defaultTextStyle('desc');}
 function itemDateTime(i){
   const date=i.date||'9999-12-31';
-  const hour=pad(slotHour(i.slot));
-  return new Date(`${date}T${hour}:00:00`);
+  return new Date(`${date}T${timeToHHMM(i.slot)}:00`);
 }
 function promoRefDate(p){return p.drawDate||p.startDate||'';}
 function promoHour(p){return slotHour(p.drawTime||'');}
@@ -1980,16 +1988,17 @@ function promoDateAllowed(p,date){
   return true;
 }
 function promoHourAllowed(p,item){
-  const hour=pad(slotHour(item?.slot||''));
+  const itemTime=timeToHHMM(item?.slot||'');
+  const hour=itemTime.slice(0,2);
   const date=item?.date||'';
   if(!hour || hour==='00') return false;
   if(!promoDateAllowed(p,date)) return false;
   if(!isMerchan(p) && isPromoResultForItem(p,item)) return true;
-  const hours=Array.isArray(p.readHours) ? p.readHours.map(h=>pad(slotHour(h))).filter(Boolean) : [];
-  if(hours.length) return hours.includes(hour);
+  const hours=Array.isArray(p.readHours) ? p.readHours.map(h=>timeToHHMM(h)).filter(v=>v!=='00:00') : [];
+  if(hours.length) return hours.some(v=>v.endsWith(':30') ? v===itemTime : v.slice(0,2)===hour);
   const mode=p.readMode||'all';
   if(mode==='selected') return false;
-  if(p.drawTime && (p.drawDate||p.resultDate)===date) return pad(slotHour(p.drawTime))===hour;
+  if(p.drawTime && (p.drawDate||p.resultDate)===date) return timeToHHMM(p.drawTime)===itemTime;
   return mode==='all';
 }
 function isMerchan(p){
@@ -1998,10 +2007,20 @@ function isMerchan(p){
   const name=upper(p.name||p.title||'');
   return k==='MERCHAN' || k==='MERCHANDISING' || local.includes('MERCHAN') || name.includes('MERCHAN');
 }
-function readHourKey(item,promo){
+function readHourKeys(item,promo){
   const date=(item&&item.date)||promoRefDate(promo)||'';
-  const hour=item?pad(slotHour(item.slot)):pad(promoHour(promo));
-  return `${date}-${hour}`;
+  const time=timeToHHMM(item?item.slot:(promo?.drawTime||''));
+  const compact=time.replace(':','');
+  const hour=time.slice(0,2);
+  return [...new Set([`${date}-${compact}`,`${date}-${hour}`])];
+}
+function readHourKey(item,promo){return readHourKeys(item,promo)[0];}
+function hourMapValue(map,item,promo){
+  if(!map) return undefined;
+  for(const key of readHourKeys(item,promo)){
+    if(Object.prototype.hasOwnProperty.call(map,key)) return map[key];
+  }
+  return undefined;
 }
 function readTimeLabel(value){
   if(!value) return 'HORÁRIO NÃO REGISTRADO';
@@ -2141,8 +2160,7 @@ function promoEligibleForItemHour(p,item){
   return true;
 }
 function isPromoReadForHour(p,item){
-  const key=readHourKey(item,p);
-  return !!(p.readByHour && p.readByHour[key]);
+  return !!hourMapValue(p.readByHour,item,p);
 }
 function pautasForItemHour(item,includeRead=false,kind='all'){
   return [...(monthData().promos||[])]
@@ -2216,7 +2234,7 @@ function buildPromoFooter(item){
   const emptyClass=pautas.length ? '' : ' empty';
   return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{
     const key=readHourKey(item,p);
-    const done=!!(p.readByHour&&p.readByHour[key]);
+    const done=!!hourMapValue(p.readByHour,item,p);
     const type=pautaTypeLabel(p);
     const isM=isMerchan(p);
     const name=upper(p.name||p.title||(isM?'MERCHAN':'PROMOÇÃO'));
@@ -2252,8 +2270,7 @@ function buildHourReadList(item){
 
 function promoResultForHour(p,item){
   if(!p) return '';
-  const key=item ? readHourKey(item,p) : '';
-  return (key && p.resultByHour && p.resultByHour[key]) || p.resultName || '';
+  return (item && hourMapValue(p.resultByHour,item,p)) || p.resultName || '';
 }
 function normalizeWinnerList(list){
   if(!Array.isArray(list)) return [];
@@ -2264,8 +2281,8 @@ function normalizeWinnerList(list){
 }
 function promoWinnerList(p,item){
   if(!p) return [];
-  const key=item ? readHourKey(item,p) : '';
-  const byHour = key && p.resultWinnersByHour && Array.isArray(p.resultWinnersByHour[key]) ? p.resultWinnersByHour[key] : null;
+  const byHourValue=item ? hourMapValue(p.resultWinnersByHour,item,p) : null;
+  const byHour = Array.isArray(byHourValue) ? byHourValue : null;
   const base = byHour || p.resultWinners || [];
   const list=normalizeWinnerList(base);
   if(list.length) return list;
@@ -2376,14 +2393,15 @@ function historyRowsForDate(date){
         if(String(key).slice(0,10)!==date) return;
         const winners=normalizeWinnerList(list).map(w=>w.name).join(', ');
         if(!winners) return;
-        const hour=(String(key).match(/-(\d{2})$/)||[])[1] || pad(slotHour(p.resultSlot||p.drawTime||''));
+        const km=String(key).match(/-(\d{2})(\d{2})?$/);
+        const keySlot=km ? `${km[1]}H${km[2]==='30'?'30':''}` : (p.resultSlot||p.drawTime||'');
         pushRow({
           source:'promo-hour-winners',
           id:p.id||'',
           type:'PROMOÇÃO',
           typeClass:'promo',
-          time:formatStudioTime(hour),
-          sort:`${date}T${hour}:00`,
+          time:formatStudioTime(keySlot),
+          sort:`${date}T${timeToHHMM(keySlot)}`,
           title,
           sub:baseSub,
           result:winners
@@ -2394,14 +2412,15 @@ function historyRowsForDate(date){
         if(String(key).slice(0,10)!==date) return;
         const winner=upper(value||'');
         if(!winner) return;
-        const hour=(String(key).match(/-(\d{2})$/)||[])[1] || pad(slotHour(p.resultSlot||p.drawTime||''));
+        const km=String(key).match(/-(\d{2})(\d{2})?$/);
+        const keySlot=km ? `${km[1]}H${km[2]==='30'?'30':''}` : (p.resultSlot||p.drawTime||'');
         pushRow({
           source:'promo-hour-result',
           id:p.id||'',
           type:'PROMOÇÃO',
           typeClass:'promo',
-          time:formatStudioTime(hour),
-          sort:`${date}T${hour}:00`,
+          time:formatStudioTime(keySlot),
+          sort:`${date}T${timeToHHMM(keySlot)}`,
           title,
           sub:baseSub,
           result:winner
