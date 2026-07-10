@@ -1712,17 +1712,6 @@ body{
   </div>
 </div>
 
-<div class="modalBackdrop" id="promoReadModal">
-  <div class="modalCard promoReadCard" role="dialog" aria-modal="true" aria-labelledby="promoReadTitle">
-    <div id="promoReadContent"></div>
-    <div class="modalActions">
-      <button class="modalBtn" type="button" id="cancelPromoReadBtn">FECHAR</button>
-      <button class="modalBtn primary" type="button" id="confirmPromoReadBtn">CONFIRMAR LEITURA</button>
-    </div>
-  </div>
-
-</div>
-
 <div class="modalBackdrop" id="historyModal">
   <div class="modalCard historyCard" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
     <h3 id="historyModalTitle">SORTEIOS REALIZADOS NO DIA</h3>
@@ -1792,16 +1781,57 @@ function loadState(){
 }
 function saveState(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  if(!firebaseApplyingRemote){
-    firebaseLastLocalWrite=Date.now();
-    firebasePendingSave=true;
-    queueApiSave(120);
-  }
 }
 function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
 }
+function studioRecordMonths(collection,idValue){
+  const keys=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    if((m?.[collection]||[]).some(row=>row?.id===idValue)) keys.push(monthKey);
+  });
+  return keys.length?keys:[currentMonth||todayISO().slice(0,7)];
+}
+function pickStudioFields(record,fields){
+  const patch={};
+  fields.forEach(field=>{ if(Object.prototype.hasOwnProperty.call(record,field)) patch[field]=JSON.parse(JSON.stringify(record[field])); });
+  patch.updatedAt=new Date().toISOString();
+  return patch;
+}
+async function persistStudioRecord(collection,record,fields){
+  if(!record?.id) throw new Error('REGISTRO SEM ID');
+  if(!firebaseReady||!firebaseRef){ initFirebaseSync(); }
+  if(!firebaseReady||!firebaseRef) throw new Error('FIREBASE INDISPONÍVEL');
+  const patch=pickStudioFields(record,fields);
+  const keys=studioRecordMonths(collection,record.id);
+  await Promise.all(keys.map(monthKey=>firebaseRef.child(`state/months/${monthKey}/${collection}`).transaction(current=>{
+    const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+    const index=rows.findIndex(row=>row?.id===record.id);
+    if(index<0) rows.push({...record,...patch});
+    else rows[index]={...rows[index],...patch};
+    return rows;
+  })));
+  await firebaseRef.update({
+    updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
+    savedAt:new Date().toISOString(),
+    source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
+    version:'FIREBASE_RTDB_V2_GRANULAR'
+  });
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+}
+function persistStudioPromo(record){
+  return persistStudioRecord('promos',record,[
+    'readByHour','readLog','readAt','readAtLabel','readSlot','readStation','readProgram',
+    'resultByHour','resultWinnersByHour','resultWinners','resultName','resultAt','resultAtLabel','resultSlot','resultDate'
+  ]);
+}
+function persistStudioItem(record){
+  return persistStudioRecord('items',record,[
+    'winnerName','status','resultAt','resultAtLabel','deliveredAt','deliveredAtLabel','deliveredBy'
+  ]);
+}
+
 function apiJsonp(params={}){
   return new Promise((resolve,reject)=>{
     if(!LEGACY_API_URL) return reject(new Error('LEGACY_API_URL NÃO CONFIGURADA.'));
@@ -2019,11 +2049,14 @@ function isMerchan(p){
 function readHourKeys(item,promo){
   const date=(item&&item.date)||promoRefDate(promo)||'';
   const time=timeToHHMM(item?item.slot:(promo?.drawTime||''));
-  const compact=time.replace(':','');
   const hour=time.slice(0,2);
   const minute=time.slice(3,5);
-  const keys=[`${date}-${compact}`];
-  if(minute==='00') keys.push(`${date}-${hour}`);
+  const configured=(promo?.readHours||[]).map(value=>timeToHHMM(value));
+  const explicitHalfHour=configured.includes(`${hour}:30`);
+  const useExactHalf=minute==='30' && explicitHalfHour;
+  const keys=useExactHalf
+    ? [`${date}-${hour}30`]
+    : [`${date}-${hour}00`,`${date}-${hour}`];
   return [...new Set(keys)];
 }
 function readHourKey(item,promo){return readHourKeys(item,promo)[0];}
@@ -2347,7 +2380,7 @@ function addPromoWinnerField(value=''){
   const last=list.querySelector('.resultWinnerLine:last-child input');
   if(last) last.focus();
 }
-function savePromoResultInline(){
+async function savePromoResultInline(){
   const p=currentPromoForRead();
   const item=currentDisplayItem || virtualCurrentItem();
   if(!p || !item) return;
@@ -2374,6 +2407,7 @@ function savePromoResultInline(){
   p.resultSlot=formatStudioTime(item.slot);
   p.resultDate=item.date || todayISO();
   saveState();
+  await persistStudioPromo(p);
   render();
 }
 
@@ -2513,7 +2547,7 @@ function closePromoReadModal(){
   selectedPromoId=null;
   render();
 }
-function confirmPromoRead(event){
+async function confirmPromoRead(event){
   if(event){
     event.preventDefault();
     event.stopPropagation();
@@ -2564,6 +2598,7 @@ function confirmPromoRead(event){
     p.readProgram=upper(item.program||'PROGRAMA');
 
     saveState();
+    await persistStudioPromo(p);
     selectedPromoId=null;
     render();
   }catch(error){
@@ -2654,7 +2689,7 @@ function openWinnerModal(){
 function closeWinnerModal(){
   $('winnerModal').classList.remove('show');
 }
-function saveWinner(){
+async function saveWinner(){
   const item=currentItemRecord();
   if(!item) return;
   const name=upper($('winnerNameInput').value);
@@ -2662,8 +2697,14 @@ function saveWinner(){
   item.winnerName=name;
   item.status='REALIZADO';
   saveState();
-  closeWinnerModal();
-  render();
+  try{
+    await persistStudioItem(item);
+    closeWinnerModal();
+    render();
+  }catch(error){
+    console.error('ERRO AO SALVAR GANHADOR:',error);
+    alert('NÃO FOI POSSÍVEL SALVAR O GANHADOR NO FIREBASE.');
+  }
 }
 function step(delta){
   const base = manualHourDateMs !== null

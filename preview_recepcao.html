@@ -774,15 +774,36 @@ function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
 }
-function saveReceptionState(){
-  return firebaseRef.set({
-    state,
+function receptionRecordMonths(collection,idValue){
+  const keys=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    if((m?.[collection]||[]).some(row=>row?.id===idValue)) keys.push(monthKey);
+  });
+  return keys.length?keys:[currentMonth||todayISO().slice(0,7)];
+}
+function saveReceptionRecord(source,record){
+  const collection=source==='item'?'items':'promos';
+  const fields=source==='item'
+    ? ['deliveredAt','deliveredAtLabel','deliveredBy']
+    : ['resultWinners','resultName','resultWinnersByHour'];
+  const patch={updatedAt:new Date().toISOString()};
+  fields.forEach(field=>{
+    if(Object.prototype.hasOwnProperty.call(record,field)) patch[field]=JSON.parse(JSON.stringify(record[field]));
+  });
+  return Promise.all(receptionRecordMonths(collection,record.id).map(monthKey=>
+    firebaseRef.child(`state/months/${monthKey}/${collection}`).transaction(current=>{
+      const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+      const index=rows.findIndex(row=>row?.id===record.id);
+      if(index<0) rows.push({...record,...patch});
+      else rows[index]={...rows[index],...patch};
+      return rows;
+    })
+  )).then(()=>firebaseRef.update({
     updatedAt:firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
     source:'PREVIEW_RECEPCAO',
-    user:'RECEPCAO',
-    version:'FIREBASE_RTDB_V1'
-  });
+    version:'FIREBASE_RTDB_V2_GRANULAR'
+  }));
 }
 
 function normalizeWinnerList(list){
@@ -898,6 +919,7 @@ function pickupButton(row){
 function setPickup(row,undo=false){
   selectMonthForDate($('dateFilter').value||todayISO());
   const now=new Date();
+  let changedRecord=null;
   if(row.source==='item'){
     const item=(monthData().items||[]).find(i=>i.id===row.id);
     if(!item) return;
@@ -910,6 +932,7 @@ function setPickup(row,undo=false){
       item.deliveredAtLabel=now.toLocaleString('pt-BR');
       item.deliveredBy='RECEPCAO';
     }
+    changedRecord=item;
   }else if(row.source==='promo'){
     const promo=(monthData().promos||[]).find(p=>p.id===row.id);
     if(!promo) return;
@@ -927,8 +950,11 @@ function setPickup(row,undo=false){
     }
     promo.resultWinners=winners;
     promo.resultName=winners.map(w=>w.name).join(', ');
+    changedRecord=promo;
   }
-  saveReceptionState().then(()=>render()).catch(err=>{console.warn('PICKUP SAVE ERROR',err);alert('NÃO FOI POSSÍVEL SALVAR A RETIRADA. TENTE NOVAMENTE.');});
+  if(!changedRecord) return;
+  localStorage.setItem('jp_programacao_brindes_distribuicao_v2',JSON.stringify(state));
+  saveReceptionRecord(row.source,changedRecord).then(()=>render()).catch(err=>{console.warn('PICKUP SAVE ERROR',err);alert('NÃO FOI POSSÍVEL SALVAR A RETIRADA. TENTE NOVAMENTE.');});
 }
 function rowStatus(row){
   if(row.deliveredAt) return 'RETIRADO';

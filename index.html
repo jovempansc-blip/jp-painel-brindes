@@ -2866,6 +2866,22 @@ body.drawer-open .distActions{
   z-index:2!important;
 }
 
+
+.smartQualityGrid{display:grid;grid-template-columns:160px 1fr;gap:12px;align-items:center;margin-bottom:12px}
+.smartQualityScore{display:grid;place-items:center;min-height:112px;border:1px solid #dfe5ec;border-radius:18px;background:#fff}
+.smartQualityScore strong{font-size:34px;line-height:1;color:#171c26}
+.smartQualityScore span{margin-top:6px;font-size:9px;color:#667283;font-weight:1000;letter-spacing:.05em}
+.smartQualityDetails{display:grid;gap:7px}
+.smartQualityBar{height:9px;border-radius:999px;background:#e8edf3;overflow:hidden}
+.smartQualityBar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#c9002b,#e49a24,#137947)}
+.smartReasonList{display:flex;gap:6px;flex-wrap:wrap}
+.smartReason{display:inline-flex;align-items:center;min-height:25px;padding:0 8px;border-radius:999px;border:1px solid #dfe5ec;background:#fff;color:#566171;font-size:8px;font-weight:1000}
+.smartReason.good{background:#effaf4;border-color:#ccefdc;color:#137947}
+.smartReason.warn{background:#fff7ec;border-color:#ffd7a8;color:#8a4b00}
+.smartReportRow{grid-template-columns:52px 115px 82px minmax(170px,1fr) minmax(230px,1.25fr)!important}
+.smartReportWhy{font-size:9px!important;line-height:1.35!important;color:#69707d!important}
+@media(max-width:900px){.smartQualityGrid{grid-template-columns:1fr}.smartReportRow{grid-template-columns:1fr!important}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2906,7 +2922,7 @@ body.drawer-open .distActions{
       <div class="panel">
         <div class="panelBody">
           <div class="filterBar programFilterBar">
-            <div class="field"><label>CANAL</label><select class="control" id="channelFilter"><option value="">TODOS</option></select></div>
+            <div class="field"><label>EMISSORA</label><select class="control" id="programStationFilter"><option value="">TODAS</option><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option></select></div>
             <div class="field"><label>SEMANA</label><select class="control" id="weekFilter"><option value="">TODAS</option></select></div>
             <div class="field"><label>STATUS</label><select class="control" id="statusFilter"><option value="">TODOS</option><option>PENDENTE</option><option>NO AR</option><option>REALIZADO</option><option>CANCELADO</option></select></div>
             <div class="programFilterActions"><button class="btn red" id="addProgramBtn" type="button" data-program-main-action="add">+ NOVO ITEM</button><button class="btn clearProgramBtn" id="clearProgramBtn" type="button" data-program-main-action="clear" title="LIMPAR PROGRAMAÇÃO" aria-label="LIMPAR PROGRAMAÇÃO"><span class="iconGlyph">🗑</span></button></div>
@@ -2969,7 +2985,7 @@ body.drawer-open .distActions{
               <button class="btn studioDayNav" type="button" id="studioPrevDayBtn" title="DIA ANTERIOR" aria-label="DIA ANTERIOR">‹</button>
               <div class="field studioDayField"><label>DIA DA PAUTA</label><input class="control" type="date" id="studioDateFilter"></div>
               <button class="btn studioDayNav" type="button" id="studioNextDayBtn" title="PRÓXIMO DIA" aria-label="PRÓXIMO DIA">›</button>
-              <div class="field studioTypeField"><label>TIPO DE PAUTA</label><select class="control" id="studioPautaType"><option value="all">TODAS</option><option value="prize">PAUTAS PRÊMIOS</option><option value="promo">PAUTAS PROMO</option></select></div>
+              <div class="field studioTypeField"><label>TIPO DE PAUTA</label><select class="control" id="studioPautaType"><option value="all">TODAS</option><option value="prize">PAUTAS PRÊMIOS</option><option value="promo">PAUTAS PROMO</option></select></div><div class="field studioTypeField"><label>EMISSORA</label><select class="control" id="studioStationFilter"><option value="ALL">TODAS</option><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option></select></div>
             </div>
             <div class="studioToolbar">
               <div class="studioMetaCard"><span>TOTAL DE BLOCOS</span><strong id="studioBlockCount">0</strong></div>
@@ -3194,7 +3210,7 @@ body.drawer-open .distActions{
           <div class="itemProgramRow top">
             <div class="field"><label>DATA</label><input class="control" type="date" id="itemDate" required></div>
             <div class="field"><label>RÁDIO DA GRADE</label><select class="control" id="itemProgramStation"><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option></select></div>
-            <div class="field"><label>HORÁRIO</label><select class="control" id="itemSlot" required><option value="">SELECIONE</option></select></div>
+            <div class="field"><label>HORÁRIO</label><select class="control" id="itemSlot" required><option value="">SELECIONE</option></select><span class="ticketFormHint">SELECIONE A HORA CHEIA. SE JÁ EXISTIR OUTRO PRÊMIO, O SISTEMA OFERECE A DIVISÃO E CRIA AUTOMATICAMENTE A MEIA HORA.</span></div>
             <div class="field programAutoField"><label>PROGRAMA AUTOMÁTICO</label><input class="control" id="itemProgram" readonly><div class="linkHint" id="itemProgramHint"></div></div>
           </div>
 
@@ -3292,13 +3308,13 @@ body.drawer-open .distActions{
             </div>
           </div>
           <div class="field full">
-            <label>HORÁRIOS DO RODÍZIO INTELIGENTE</label>
+            <label>ASSISTENTE INTELIGENTE DE DISTRIBUIÇÃO</label>
             <div class="rotationBox">
               <div class="rotationBoxTop"><strong>ESCOLHA A DISPONIBILIDADE POR PERÍODO PARA O RODÍZIO</strong><label class="promoReadAll"><input type="checkbox" id="distRotationAll" checked> TODOS</label></div>
               <div class="rotationLimitRow">
                 <div>
                   <span>QUANTAS VEZES POR DIA?</span>
-                  <div class="rotationLimitHint">O SISTEMA DISTRIBUI ENTRE MANHÃ, TARDE E NOITE, AVANÇA OS HORÁRIOS EM RODÍZIO E BLOQUEIA O MESMO PRÊMIO NO MESMO PERÍODO/HORÁRIO POR 2 DIAS.</div>
+                  <div class="rotationLimitHint">O SISTEMA USA SOMENTE OS HORÁRIOS CADASTRADOS NA ABA HORÁRIOS, EQUILIBRA MANHÃ, TARDE E NOITE, EVITA REPETIÇÃO E BLOQUEIA CONFLITOS.</div>
                 </div>
                 <input type="number" min="1" max="3" step="1" id="distDailyLimit" value="1">
               </div>
@@ -3313,7 +3329,7 @@ body.drawer-open .distActions{
             </div>
           </div>
         </div>
-        <div class="formActions"><button class="btn" type="button" id="generateDistRadioBtn">GERAR</button><button class="btn red" type="submit">SALVAR DISTRIBUIÇÃO</button><button class="btn" type="button" data-close="distDrawer">CANCELAR</button></div>
+        <div class="formActions"><button class="btn" type="button" id="generateDistRadioBtn">GERAR DISTRIBUIÇÃO INTELIGENTE</button><button class="btn red" type="submit">SALVAR DISTRIBUIÇÃO</button><button class="btn" type="button" data-close="distDrawer">CANCELAR</button></div>
       </form>
     </div>
   </div>
@@ -3405,7 +3421,7 @@ body.drawer-open .distActions{
             <div class="formGrid">
               <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
               <div class="field" id="promoDrawDateField"><label id="promoDrawDateLabel">DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate" required></div>
-              <div class="field" id="promoDrawTimeField"><label id="promoDrawTimeLabel">HORA DO SORTEIO</label><input class="control" type="time" id="promoDrawTime" required></div>
+              <div class="field" id="promoDrawTimeField"><label id="promoDrawTimeLabel">HORA DO SORTEIO</label><input class="control" type="time" id="promoDrawTime" step="3600" required></div>
               <div class="field"><label>TIPO DE CONTEÚDO</label><select class="control" id="promoKind"><option value="promo">PROMOÇÃO</option><option value="merchan">MERCHAN</option><option value="pauta">PAUTA ESPECIAL</option><option value="aviso">AVISO / COMUNICADO</option></select></div>
               <div class="field"><label>RÁDIO DA PAUTA</label><select class="control" id="promoStation"><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option><option value="ALL">AMBAS</option></select></div>
               <div class="field promoLocalField" id="promoLocalField"><label id="promoLocalLabel">CANAL DA PROMOÇÃO</label><select class="control" id="promoLocal"></select></div>
@@ -5633,6 +5649,7 @@ let firebaseLastLocalWrite = 0;
 let firebasePendingSave = false;
 let firebaseInitialSnapshotSeen = false;
 let firebaseServerLoaded = false;
+let firebaseBaselineState = null;
 
 function firebaseConfigReady(){
   return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
@@ -5659,6 +5676,125 @@ function countStateRecords(data){
   const monthTotal=Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0);
   return monthTotal + (data.schedules||[]).length + (data.programSchedules||[]).length;
 }
+function firebaseList(value){
+  if(Array.isArray(value)) return value.filter(Boolean);
+  if(value && typeof value==='object'){
+    return Object.keys(value).sort((a,b)=>Number(a)-Number(b)).map(key=>value[key]).filter(Boolean);
+  }
+  return [];
+}
+function sameValue(a,b){
+  return JSON.stringify(a)===JSON.stringify(b);
+}
+function diffNode(baseValue,localValue){
+  if(sameValue(baseValue,localValue)) return null;
+  if(localValue===undefined) return {kind:'delete'};
+  if(Array.isArray(baseValue)||Array.isArray(localValue)){
+    return {kind:'replace',value:clone(localValue)};
+  }
+  const baseObject=baseValue && typeof baseValue==='object';
+  const localObject=localValue && typeof localValue==='object';
+  if(baseObject && localObject){
+    const changes={};
+    new Set([...Object.keys(baseValue),...Object.keys(localValue)]).forEach(key=>{
+      const child=diffNode(baseValue[key],localValue[key]);
+      if(child) changes[key]=child;
+    });
+    return Object.keys(changes).length ? {kind:'object',changes} : null;
+  }
+  return {kind:'replace',value:clone(localValue)};
+}
+function applyNodeDiff(currentValue,diff){
+  if(!diff) return currentValue;
+  if(diff.kind==='replace') return clone(diff.value);
+  if(diff.kind==='delete') return undefined;
+  const target=currentValue && typeof currentValue==='object' && !Array.isArray(currentValue) ? clone(currentValue) : {};
+  Object.entries(diff.changes||{}).forEach(([key,child])=>{
+    const value=applyNodeDiff(target[key],child);
+    if(value===undefined) delete target[key];
+    else target[key]=value;
+  });
+  return target;
+}
+function recordIdentity(record,index=-1){
+  return record?.id || record?.scheduleId || record?.sourceScheduleId || (index>=0 ? `__INDEX_${index}` : '');
+}
+function collectionPlan(baseRows,localRows){
+  const base=firebaseList(baseRows), local=firebaseList(localRows);
+  const hasMissingId=[...base,...local].some((row,index)=>!recordIdentity(row,index).startsWith('__INDEX_')?false:!row?.id&&!row?.scheduleId&&!row?.sourceScheduleId);
+  if(hasMissingId){
+    return sameValue(base,local) ? {replace:false,changes:[],deleted:[]} : {replace:true,value:clone(local)};
+  }
+  const baseMap=new Map(base.map((row,index)=>[recordIdentity(row,index),row]));
+  const localMap=new Map(local.map((row,index)=>[recordIdentity(row,index),row]));
+  const changes=[];
+  localMap.forEach((row,idValue)=>{
+    const previous=baseMap.get(idValue);
+    const diff=previous===undefined ? {kind:'replace',value:clone(row)} : diffNode(previous,row);
+    if(diff) changes.push({id:idValue,diff,local:clone(row),isNew:previous===undefined});
+  });
+  const deleted=[...baseMap.keys()].filter(idValue=>!localMap.has(idValue));
+  return {replace:false,changes,deleted};
+}
+async function persistCollectionDiff(relativePath,baseRows,localRows){
+  const plan=collectionPlan(baseRows,localRows);
+  if(!plan.replace && !plan.changes.length && !plan.deleted.length) return;
+  await firebaseRef.child(`state/${relativePath}`).transaction(current=>{
+    if(plan.replace) return clone(plan.value);
+    let rows=firebaseList(current);
+    if(plan.deleted.length){
+      const removed=new Set(plan.deleted);
+      rows=rows.filter((row,index)=>!removed.has(recordIdentity(row,index)));
+    }
+    plan.changes.forEach(change=>{
+      const index=rows.findIndex((row,rowIndex)=>recordIdentity(row,rowIndex)===change.id);
+      if(index<0){
+        rows.push(clone(change.local));
+        return;
+      }
+      rows[index]=applyNodeDiff(rows[index],change.diff);
+    });
+    return rows.filter(Boolean);
+  });
+}
+async function persistGranularState(){
+  const baseline=firebaseBaselineState || {months:{},schedules:[],programSchedules:[]};
+  const tasks=[];
+  const monthKeys=new Set([...Object.keys(baseline.months||{}),...Object.keys(state.months||{})]);
+  monthKeys.forEach(key=>{
+    const baseMonth=baseline.months?.[key]||{items:[],promos:[],distributions:[]};
+    const localMonth=state.months?.[key]||{items:[],promos:[],distributions:[]};
+    ['items','promos','distributions'].forEach(collection=>{
+      tasks.push(persistCollectionDiff(`months/${key}/${collection}`,baseMonth[collection]||[],localMonth[collection]||[]));
+    });
+    if(localMonth.label && localMonth.label!==baseMonth.label){
+      tasks.push(firebaseRef.child(`state/months/${key}/label`).set(localMonth.label));
+    }
+  });
+  tasks.push(persistCollectionDiff('schedules',baseline.schedules||[],state.schedules||[]));
+  tasks.push(persistCollectionDiff('programSchedules',baseline.programSchedules||[],state.programSchedules||[]));
+  await Promise.all(tasks);
+  await firebaseRef.update({
+    updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
+    savedAt:new Date().toISOString(),
+    source:'PAINEL_PRINCIPAL',
+    version:'FIREBASE_RTDB_V2_GRANULAR'
+  });
+  const latestSnapshot=await firebaseRef.child('state').get();
+  return latestSnapshot.val();
+}
+async function forceSetStateToApi(source='PAINEL_PRINCIPAL'){
+  normalizePanelState(state);
+  await firebaseRef.set({
+    state,
+    updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
+    savedAt:new Date().toISOString(),
+    source,
+    version:'FIREBASE_RTDB_V2_FORCE'
+  });
+  firebaseBaselineState=clone(state);
+}
+
 function hasLocalPersistedState(){
   try{
     const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
@@ -5696,7 +5832,7 @@ async function importLegacyStateToFirebase(){
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       setOfficialCalendarMonth(true);
       render();
-      await saveStateToApi();
+      await forceSetStateToApi('MIGRACAO_LEGADA');
       toast('BASE MIGRADA DO GOOGLE SHEETS PARA O FIREBASE.');
       return true;
     }
@@ -5708,7 +5844,10 @@ async function importLegacyStateToFirebase(){
 function applyRemoteFirebaseState(remoteState){
   if(!remoteState || !remoteState.months) return;
   firebaseApplyingRemote = true;
-  state = normalizePanelState(remoteState);
+  const openMonth=firebaseServerLoaded ? state.currentMonth : '';
+  firebaseBaselineState=clone(remoteState);
+  state = normalizePanelState(clone(remoteState));
+  if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
   firebaseServerLoaded = true;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));
@@ -5783,21 +5922,32 @@ async function saveStateToApi(){
       console.warn('ENVIO BLOQUEADO: BASE LOCAL VAZIA.');
       return;
     }
-    await firebaseRef.set({
-      state,
-      updatedAt: window.firebase.database.ServerValue.TIMESTAMP,
-      savedAt: new Date().toISOString(),
-      source: 'PAINEL_PRINCIPAL',
-      user: 'JOVEM_PAN_FLORIPA',
-      version: 'FIREBASE_RTDB_V1'
-    });
-    localStorage.setItem('jp_painel_last_firebase_save', new Date().toLocaleString('pt-BR'));
-    firebaseServerLoaded = true;
-    firebasePendingSave = false;
+    if(!firebaseBaselineState){
+      const currentSnapshot=await firebaseRef.child('state').get();
+      const current=currentSnapshot.val();
+      if(!current || !current.months){
+        firebasePendingSave=false;
+        updateSyncStatus('error','FIREBASE VAZIO');
+        console.warn('SALVAMENTO GRANULAR BLOQUEADO: NÃO EXISTE BASE OFICIAL PARA COMPARAÇÃO.');
+        return;
+      }
+      firebaseBaselineState=clone(current);
+    }
+    const openMonth=state.currentMonth;
+    const latest=await persistGranularState();
+    if(latest?.months){
+      firebaseBaselineState=clone(latest);
+      state=normalizePanelState(clone(latest));
+      if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    }
+    localStorage.setItem('jp_painel_last_firebase_save',new Date().toLocaleString('pt-BR'));
+    firebaseServerLoaded=true;
+    firebasePendingSave=false;
     updateSyncStatus('online','FIREBASE ONLINE');
     renderBackup();
   }catch(err){
-    console.warn('FIREBASE SAVE ERROR', err);
+    console.warn('FIREBASE SAVE ERROR',err);
     updateSyncStatus('error','ERRO FIREBASE');
   }
 }
@@ -5814,7 +5964,7 @@ async function forceUploadLocalToFirebase(){
   const typed=prompt('PARA CONFIRMAR O ENVIO, DIGITE: ENVIAR');
   if(norm(typed)!=='ENVIAR') return;
   updateSyncStatus('saving','ENVIANDO');
-  await saveStateToApi();
+  await forceSetStateToApi('ENVIO_MANUAL_CONFIRMADO');
   toast('DADOS DESTE NAVEGADOR ENVIADOS PARA O FIREBASE.');
 }
 async function verifyFirebaseState(){
@@ -5941,7 +6091,20 @@ function itemOnAirNow(item){
   if(!item || !item.date || !item.slot) return false;
   const start = new Date(`${item.date}T${timeToHHMM(item.slot)}:00`);
   if(Number.isNaN(start.getTime())) return false;
-  const end = new Date(start.getTime() + 60*60*1000);
+  const parts=slotParts(item.slot);
+  const defaultMinutes=parts?.minute===30 ? 30 : 60;
+  let end = new Date(start.getTime() + defaultMinutes*60*1000);
+  const station=item.station||'JP1017';
+  const next=(monthData().items||[])
+    .filter(other=>other.id!==item.id)
+    .filter(other=>other.date===item.date)
+    .filter(other=>(other.station||'JP1017')===station)
+    .filter(other=>normalizeChannel(other.channel)==='RÁDIO')
+    .filter(other=>normalizeStatus(other.status)!=='CANCELADO')
+    .map(other=>new Date(`${other.date}T${timeToHHMM(other.slot)}:00`))
+    .filter(dt=>!Number.isNaN(dt.getTime()) && dt>start && dt<end)
+    .sort((a,b)=>a-b)[0];
+  if(next) end=next;
   const now = new Date();
   return now >= start && now < end;
 }
@@ -7008,17 +7171,44 @@ function syncRotationAllFromHours(prefix){
   const checked=Array.from(box.querySelectorAll('input:checked'));
   all.checked = checked.length===0;
 }
+function registeredRotationSlots(station='JP1017'){
+  const slots=new Set();
+  programSchedules().filter(p=>sameStation(p.station,station)).forEach(p=>{
+    const start=Math.ceil(scheduleStartMinutes(p)/60)*60;
+    const end=scheduleEndMinutes(p);
+    for(let minute=start;minute<end;minute+=60){
+      if(minute<0||minute>23*60) continue;
+      slots.add(slotFromMinutes(minute));
+    }
+  });
+  return [...slots].sort((a,b)=>slotOrder(a)-slotOrder(b));
+}
+function eligibleRotationSlotsForDate(date,station='JP1017'){
+  const slots=new Set();
+  programSchedules().filter(p=>sameStation(p.station,station)&&dayMatchesRule(date,scheduleDays(p))).forEach(p=>{
+    const start=Math.ceil(scheduleStartMinutes(p)/60)*60;
+    const end=scheduleEndMinutes(p);
+    for(let minute=start;minute<end;minute+=60){
+      if(minute<0||minute>23*60) continue;
+      slots.add(slotFromMinutes(minute));
+    }
+  });
+  return [...slots].sort((a,b)=>slotOrder(a)-slotOrder(b));
+}
 function setRotationControls(prefix,slots=[]){
   const box=$(`${prefix}RotationHours`);
   if(!box) return;
-  if(box.dataset.ready!=='1'){
+  const available=registeredRotationSlots('JP1017');
+  const source=available.length?available:RADIO_PLANNER_SLOTS;
+  const signature=source.join('|');
+  if(box.dataset.signature!==signature){
     const groups=[
-      ['manha','MANHÃ',RADIO_PLANNER_SLOTS.filter(s=>periodKey(s)==='manha')],
-      ['tarde','TARDE',RADIO_PLANNER_SLOTS.filter(s=>periodKey(s)==='tarde')],
-      ['noite','NOITE',RADIO_PLANNER_SLOTS.filter(s=>periodKey(s)==='noite')]
+      ['manha','MANHÃ',source.filter(s=>periodKey(s)==='manha')],
+      ['tarde','TARDE',source.filter(s=>periodKey(s)==='tarde')],
+      ['noite','NOITE',source.filter(s=>periodKey(s)==='noite')]
     ];
-    box.innerHTML=groups.map(([key,label,items])=>`<div class="rotationPeriodGroup" data-period="${key}"><div class="rotationPeriodTitle">${label}</div><div class="rotationPeriodItems">${items.map(s=>`<label class="rotationHour"><input type="checkbox" value="${s}"><span>${s}</span></label>`).join('')}</div></div>`).join('');
-    box.dataset.ready='1';
+    box.innerHTML=groups.map(([key,label,items])=>`<div class="rotationPeriodGroup" data-period="${key}"><div class="rotationPeriodTitle">${label}</div><div class="rotationPeriodItems">${items.length?items.map(s=>`<label class="rotationHour"><input type="checkbox" value="${s}"><span>${s}</span></label>`).join(''):'<span class="rotationLimitHint">SEM HORÁRIOS CADASTRADOS</span>'}</div></div>`).join('');
+    box.dataset.signature=signature;
   }
   const all=$(`${prefix}RotationAll`);
   if(all) all.checked=!(Array.isArray(slots)&&slots.length);
@@ -7026,8 +7216,11 @@ function setRotationControls(prefix,slots=[]){
   box.querySelectorAll('input').forEach(i=>i.checked=set.has(normalizeSlot(i.value)));
 }
 function rotationAllowedSlots(d){
-  const slots=(d&&Array.isArray(d.rotationSlots)&&d.rotationSlots.length)?d.rotationSlots.map(normalizeSlot):RADIO_PLANNER_SLOTS;
-  return slots;
+  const registered=registeredRotationSlots('JP1017');
+  const base=registered.length?registered:RADIO_PLANNER_SLOTS;
+  const selected=(d&&Array.isArray(d.rotationSlots)&&d.rotationSlots.length)?d.rotationSlots.map(normalizeSlot):base;
+  const allowed=new Set(base);
+  return [...new Set(selected)].filter(slot=>allowed.has(slot)).sort((a,b)=>slotOrder(a)-slotOrder(b));
 }
 function promoKindLabel(value){
   const k=String(value||'promo').toLowerCase();
@@ -7130,12 +7323,9 @@ function render(){
   setEmptyDateFieldsToToday();
 }
 function renderFilters(){
-  const m = monthData();
   const weekSet = monthWeekRanges(state.currentMonth).map(w=>w.label);
-  const channelSet = [...new Set([...m.items.map(i=>normalizeChannel(i.channel)), ...CHANNELS.map(c=>c[1])].filter(Boolean))].sort();
   const currentWeek=currentWeekLabelForMonth(state.currentMonth);
   fillSelect('weekFilter', weekSet, 'TODAS', currentWeek || weekSet[0] || '');
-  fillSelect('channelFilter', channelSet, 'TODOS');
 }
 function fillSelect(id, values, firstLabel, fallbackValue=''){
   const sel=$(id); const current=sel.value;
@@ -7155,12 +7345,12 @@ function passTextFilter(obj, text){
 }
 function filteredItems(){
   const week=norm($('weekFilter')?.value);
-  const channel=norm($('channelFilter')?.value);
+  const station=$('programStationFilter')?.value || '';
   const status=norm($('statusFilter')?.value);
   return monthData().items.filter(i =>
     normalizeChannel(i.channel)==='RÁDIO' &&
     (!week || norm(weekLabel(i.date)) === week) &&
-    (!channel || normalizeChannel(i.channel) === channel) &&
+    (!station || itemStation(i) === station) &&
     (!status || itemEffectiveStatus(i) === status) &&
     (!activeDistributionFilter || i.distributionId === activeDistributionFilter)
   ).sort((a,b)=> String(a.date).localeCompare(String(b.date)) || slotOrder(a.slot)-slotOrder(b.slot) || norm(a.program).localeCompare(norm(b.program)));
@@ -7168,7 +7358,7 @@ function filteredItems(){
 function periodKey(slot){
   const h = slotOrder(slot);
   if(h < 12) return 'manha';
-  if(h < 19) return 'tarde';
+  if(h < 18) return 'tarde';
   return 'noite';
 }
 function periodLabel(key){
@@ -7185,7 +7375,7 @@ function isoDayDistance(a,b){
   if(Number.isNaN(da)||Number.isNaN(db)) return Infinity;
   return Math.abs(da-db);
 }
-function samePrizeRepeatConflicts(d,date,slot,extraPlans=[],excludeId=''){
+function samePrizeRepeatConflicts(d,date,slot,extraPlans=[],excludeId='',station='JP1017'){
   if(!d || !d.id || !date || !slot) return [];
   const ns=normalizeSlot(slot);
   const period=periodKey(ns);
@@ -7194,12 +7384,14 @@ function samePrizeRepeatConflicts(d,date,slot,extraPlans=[],excludeId=''){
     if(i.id===excludeId) return;
     if(i.distributionId!==d.id) return;
     if(normalizeChannel(i.channel)!=='RÁDIO') return;
+    if(itemStation(i)!==station) return;
     const itemSlot=normalizeSlot(i.slot);
     if(itemSlot!==ns || periodKey(itemSlot)!==period) return;
     const gap=isoDayDistance(date,i.date);
     if(gap<=SMART_REPEAT_GAP_DAYS) rows.push({date:i.date,slot:itemSlot,period,gap,source:'EXISTENTE'});
   });
   (extraPlans||[]).forEach(p=>{
+    if((p.station||station)!==station) return;
     const planSlot=normalizeSlot(p.slot);
     if(planSlot!==ns || periodKey(planSlot)!==period) return;
     const gap=isoDayDistance(date,p.date);
@@ -7242,8 +7434,8 @@ function renderProgramCard(i){
   const cardSubtitle = i.title ? `${i.title}${i.program ? ' · ' + i.program : ''}` : (i.program || '');
   const winnerInfo = norm(i.winnerName || '') ? `<span class="winnerInfo" title="GANHADOR: ${esc(i.winnerName)}">I</span>` : '';
   const promoResultBadge = i.sourceType==='promo-result' ? `<span class="badge blue" title="RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR">RESULTADO</span>` : '';
-  const radioConflict = normalizeChannel(i.channel)==='RÁDIO' ? radioSlotConflicts(i.date,i.slot,i.id) : [];
-  const rotationConflict = (normalizeChannel(i.channel)==='RÁDIO' && d) ? samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id) : [];
+  const radioConflict = normalizeChannel(i.channel)==='RÁDIO' ? radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)) : [];
+  const rotationConflict = (normalizeChannel(i.channel)==='RÁDIO' && d) ? samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)) : [];
   const hasConflict = radioConflict.length || rotationConflict.length;
   const conflictBadge = radioConflict.length
     ? `<span class="badge red" title="HORÁRIO JÁ OCUPADO POR ${esc(conflictLabel(radioConflict))}">CONFLITO</span>`
@@ -7257,7 +7449,7 @@ function renderProgramCard(i){
     <div class="programInfo">
       <strong>${esc(cardTitle)}</strong>
       <em>${esc(cardSubtitle)}</em>
-      <div class="programMeta"><span class="badge dark">${esc(i.channel || 'AR')}</span>${statusBadge(i.status,i)}${promoResultBadge}${conflictBadge}${winnerInfo}<span class="programQtyInline">QTD <strong>${num(i.qty)}</strong></span></div>
+      <div class="programMeta"><span class="badge dark">${esc(stationLabel(itemStation(i)))}</span>${statusBadge(i.status,i)}${promoResultBadge}${conflictBadge}${winnerInfo}<span class="programQtyInline">QTD <strong>${num(i.qty)}</strong></span></div>
       ${conflictNote}
     </div>
     <div class="programSide">
@@ -7700,14 +7892,23 @@ function changeStudioDay(delta){
 function filteredStudioPrizeEntries(){
   ensureStudioDateFilter();
   const date=$('studioDateFilter')?.value || resolveStudioDefaultDate();
-  return studioPrizeEntries().filter(i=>i.date === date && normalizeChannel(i.channel)==='RÁDIO');
+  const station=$('studioStationFilter')?.value || 'ALL';
+  return studioPrizeEntries().filter(i=>
+    i.date === date &&
+    normalizeChannel(i.channel)==='RÁDIO' &&
+    (station==='ALL' || itemStation(i)===station)
+  );
 }
 function filteredStudioPromoEntries(){
   ensureStudioDateFilter();
   const date=$('studioDateFilter')?.value || resolveStudioDefaultDate();
+  const station=$('studioStationFilter')?.value || 'ALL';
   return studioPromoEntries().filter(p=>{
-    const refDate=p.drawDate || p.startDate || '';
-    return refDate === date;
+    const start=p.startDate || p.drawDate || '';
+    const end=p.endDate || p.drawDate || start;
+    const promoStation=p.station || 'JP1017';
+    const stationOk=station==='ALL' || promoStation==='ALL' || promoStation===station;
+    return stationOk && (!start || date>=start) && (!end || date<=end);
   });
 }
 function studioPeriod(slot){
@@ -7727,7 +7928,7 @@ function renderStudioPrizeCard(i){
   return `<article class="studioPrizeCard studioSummaryPrizeCard">
     <div class="studioPrizeHead">
       <div class="studioPrizeTime">${esc(formatStudioTime(i.slot || 'SEM HORA'))}</div>
-      <div class="studioPrizeProgram">${esc(i.program || 'PROGRAMA')}</div>
+      <div class="studioPrizeProgram">${esc(i.program || 'PROGRAMA')} · ${esc(stationLabel(itemStation(i)))}</div>
       <div class="studioPrizeDate">${esc(formatBR(i.date || ''))}</div>
     </div>
     <div class="studioCardBody studioSummaryBody">
@@ -7776,7 +7977,7 @@ function renderStudioPauta(){
     const img = p.imageData ? `<img src="${p.imageData}" alt="IMAGEM DA PROMOÇÃO">` : 'IMAGEM 1600 X 400';
     return `<article class="studioPromoCard">
       <div class="studioPromoBanner">${img}</div>
-      <div class="studioPromoHead"><span class="studioPromoLocal">${esc(p.local || 'LOCAL')}</span><div class="studioPromoStatus">${`<span class="badge ${st.cls}">${st.label}</span>`}</div></div>
+      <div class="studioPromoHead"><span class="studioPromoLocal">${esc(stationLabel(p.station||'JP1017'))} · ${esc(p.local || 'LOCAL')} · ${esc(promoReadHoursLabel(p))}</span><div class="studioPromoStatus">${`<span class="badge ${st.cls}">${st.label}</span>`}</div></div>
       <div class="studioCardBody">
         <div class="studioTitle" style="${promoInlineStyle(p.titleStyle,'title')}">${esc(p.name || p.title || 'PROMOÇÃO')}</div>
         <div class="studioDesc" style="${promoInlineStyle(p.descriptionStyle,'desc')}">${esc(p.description || 'SEM DESCRIÇÃO CADASTRADA.')}</div>
@@ -7896,7 +8097,7 @@ function clearItemForm(){
 function editItem(itemId){
   const i=monthData().items.find(x=>x.id===itemId); if(!i) return;
   clearItemForm(); $('itemDrawerTitle').textContent='EDITAR ITEM DA PROGRAMAÇÃO';
-  $('itemId').value=i.id; $('itemDate').value=i.date||todayISO(); if($('itemProgramStation')) $('itemProgramStation').value=i.station||'JP1017'; renderItemSlotOptions(false); $('itemSlot').value=normalizeSlot(i.slot||''); $('itemProgram').value=i.program||''; $('itemProgram').dataset.auto='0'; $('itemDistribution').value=i.distributionId||''; $('itemPrize').value=i.prize||''; $('itemTitle').value=i.title||''; $('itemQty').value=num(i.qty); $('itemChannel').value=normalizeChannel(i.channel)||'RÁDIO'; $('itemStatus').value=itemEffectiveStatus(i); if($('itemWinner')) $('itemWinner').value=i.winnerName||i.resultName||''; $('itemNotes').value=i.notes||''; setPromoStyleControls('itemTitle',i.titleStyle,'title'); setPromoStyleControls('itemDesc',i.descriptionStyle,'desc'); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); openDrawer('itemDrawer');
+  $('itemId').value=i.id; $('itemDate').value=i.date||todayISO(); if($('itemProgramStation')) $('itemProgramStation').value=i.station||'JP1017'; renderItemSlotOptions(false); if(isHalfHourSlot(i.slot) && ![...$('itemSlot').options].some(opt=>normalizeSlot(opt.value)===normalizeSlot(i.slot))){ const addOption=$('itemSlot').querySelector('option[value="__ADD_PROGRAM_SCHEDULE__"]'); const option=document.createElement('option'); option.value=normalizeSlot(i.slot); option.textContent=`${normalizeSlot(i.slot)} — PRÊMIO ADICIONAL / SEGUNDA METADE DA HORA`; option.dataset.program=i.program||''; option.dataset.additionalSlot='1'; $('itemSlot').insertBefore(option,addOption); } $('itemSlot').value=normalizeSlot(i.slot||''); $('itemProgram').value=i.program||''; $('itemProgram').dataset.auto='0'; $('itemDistribution').value=i.distributionId||''; $('itemPrize').value=i.prize||''; $('itemTitle').value=i.title||''; $('itemQty').value=num(i.qty); $('itemChannel').value=normalizeChannel(i.channel)||'RÁDIO'; $('itemStatus').value=itemEffectiveStatus(i); if($('itemWinner')) $('itemWinner').value=i.winnerName||i.resultName||''; $('itemNotes').value=i.notes||''; setPromoStyleControls('itemTitle',i.titleStyle,'title'); setPromoStyleControls('itemDesc',i.descriptionStyle,'desc'); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); openDrawer('itemDrawer');
 }
 function duplicateItem(itemId){
   const item=monthData().items.find(x=>x.id===itemId); if(!item) return;
@@ -7904,14 +8105,14 @@ function duplicateItem(itemId){
   copy.id=id('BR');
   if(normalizeChannel(copy.channel)==='RÁDIO'){
     const dist=distributionById(copy.distributionId) || {startDate:copy.date,endDate:monthEndDate(),date:copy.date};
-    const alt=findNextFreeRadioSlot(dist,new Set(),copy.id);
+    const alt=findNextFreeRadioSlot(dist,new Set(),copy.id,[],itemStation(copy));
     if(!alt){ alert('NÃO HÁ HORÁRIO LIVRE NO PERÍODO PARA COPIAR ESTA PAUTA DE RÁDIO.'); return; }
     if(!confirm(`COPIAR ESTA PAUTA DE RÁDIO PARA O PRÓXIMO HORÁRIO LIVRE?\n\nSUGESTÃO: ${formatBR(alt.date)} ${alt.slot}`)) return;
     copy.date=alt.date;
     copy.day=dayName(alt.date);
     copy.week=weekLabel(alt.date);
     copy.slot=alt.slot;
-    copy.program=alt.program || programForSlot(alt.date,alt.slot);
+    copy.program=alt.program || programForSlot(alt.date,alt.slot,itemStation(copy));
   }
   monthData().items.push(copy);
   saveState(true); render(); toast('ITEM COPIADO E REMANEJADO.');
@@ -8006,9 +8207,9 @@ function itemScheduleOptionsForStationDate(date,station){
       const end=scheduleEndMinutes(p);
       if(!name || !start || end<=start) return;
       const matchesDate = date ? dayMatchesRule(date,scheduleDays(p)) : true;
-      const first=Math.ceil(start/30)*30;
-      for(let minute=first; minute<end; minute+=30){
-        if(minute<6*60 || minute>22*60+30) continue;
+      const first=Math.ceil(start/60)*60;
+      for(let minute=first; minute<end; minute+=60){
+        if(minute<6*60 || minute>22*60) continue;
         const slot=slotFromMinutes(minute);
         out.push({
           slot,
@@ -8052,7 +8253,11 @@ function renderItemSlotOptions(keepCurrent=true){
     const label=`${o.slot} — ${o.program}${suffix}`;
     return `<option value="${esc(o.slot)}" data-program="${esc(o.program)}" data-schedule-id="${esc(o.id)}" data-matches-date="${o.matchesDate?'1':'0'}">${esc(label)}</option>`;
   }).join('');
-  sel.innerHTML='<option value="">SELECIONE</option>'+list+'<option value="__ADD_PROGRAM_SCHEDULE__">+ ADICIONAR NOVO HORÁRIO</option>';
+  const currentParts=slotParts(current);
+  const additionalOption=currentParts?.minute===30
+    ? `<option value="${esc(current)}" data-program="${esc(programForManualItem(date,current,station)||'')}" data-additional-slot="1">${esc(current)} — PRÊMIO ADICIONAL / SEGUNDA METADE DA HORA</option>`
+    : '';
+  sel.innerHTML='<option value="">SELECIONE</option>'+list+additionalOption+'<option value="__ADD_PROGRAM_SCHEDULE__">+ ADICIONAR NOVO HORÁRIO</option>';
   if(keepCurrent && current){
     const match=[...sel.options].find(opt=>normalizeSlot(opt.value)===current);
     if(match) sel.value=match.value;
@@ -8080,12 +8285,11 @@ function openProgramScheduleFromItem(){
 function parseTypedHourToSlot(value){
   const raw=String(value||'').trim().toUpperCase().replace(/\s+/g,'');
   if(!raw) return '';
-  const m=raw.match(/^(\d{1,2})(?:H|:)?(00|30)?$/);
+  const m=raw.match(/^(\d{1,2})(?:H|:)?(?:00)?$/);
   if(!m) return '';
   const hour=Number(m[1]);
-  const minute=Number(m[2]||0);
-  if(!Number.isInteger(hour) || hour<6 || hour>22 || ![0,30].includes(minute)) return '';
-  return slotFromMinutes(hour*60+minute);
+  if(!Number.isInteger(hour) || hour<6 || hour>22) return '';
+  return slotFromMinutes(hour*60);
 }
 function timeFromSlot(slot){
   return timeToHHMM(slot);
@@ -8101,11 +8305,11 @@ function quickAddProgramScheduleFromItem(){
   if(sel) sel.value='';
   const date=$('itemDate')?.value || todayISO();
   const station=$('itemProgramStation')?.value || 'JP1017';
-  const typed=prompt('QUAL HORÁRIO?\n\nDIGITE HORA CHEIA OU MEIA HORA. EXEMPLOS: 13H, 13H30, 13:00 OU 13:30');
+  const typed=prompt('QUAL HORÁRIO?\n\nDIGITE APENAS HORA CHEIA. EXEMPLOS: 13H OU 13:00.\nA MEIA HORA É CRIADA AUTOMATICAMENTE QUANDO UM SEGUNDO PRÊMIO DIVIDE A MESMA HORA.');
   const slot=parseTypedHourToSlot(typed);
   if(!slot){
     updateItemProgramFromSchedule(true);
-    if(typed!==null) alert('HORÁRIO INVÁLIDO. USE HORA CHEIA OU MEIA HORA ENTRE 06H E 22H30.');
+    if(typed!==null) alert('HORÁRIO INVÁLIDO. USE APENAS HORA CHEIA ENTRE 06H E 22H.');
     return;
   }
   const existing=itemScheduleOptionsForStationDate(date,station).find(o=>normalizeSlot(o.slot)===slot && o.matchesDate);
@@ -8209,19 +8413,34 @@ $('itemForm').addEventListener('submit',e=>{
   if(item.channel === 'RÁDIO'){
     const occupied=radioSlotConflicts(item.date,item.slot,item.id,item.station);
     if(occupied.length){
-      const dist=distributionById(item.distributionId) || {startDate:item.date,endDate:monthEndDate(),date:item.date};
-      const alt=findNextFreeRadioSlot(dist,new Set(),item.id);
-      const msg=`O HORÁRIO ${formatBR(item.date)} ${item.slot} JÁ TEM PAUTA DE RÁDIO: ${conflictLabel(occupied)}.`;
-      if(alt && confirm(`${msg}\n\nDESEJA REMANEJAR ESTE CADASTRO PARA ${formatBR(alt.date)} ${alt.slot}?`)){
-        item.date=alt.date;
-        item.day=dayName(alt.date);
-        item.week=weekLabel(alt.date);
-        item.slot=alt.slot;
-        item.program=alt.program || programForSlot(alt.date,alt.slot);
+      const originalSlot=normalizeSlot(item.slot);
+      const halfSlot=halfHourSlotFor(originalSlot);
+      const halfOccupied=halfSlot ? radioSlotConflicts(item.date,halfSlot,item.id,item.station) : [];
+      const msg=`O HORÁRIO ${formatBR(item.date)} ${originalSlot} JÁ TEM O PRÊMIO: ${conflictLabel(occupied)}.`;
+      if(halfSlot && !halfOccupied.length && confirm(`${msg}\n\nDESEJA DIVIDIR ESTA HORA?\n\nO PRÊMIO JÁ CADASTRADO PERMANECE EM ${originalSlot}.\nESTE NOVO PRÊMIO ENTRARÁ EM ${halfSlot}.`)){
+        item.slot=halfSlot;
+        item.program=programForSlot(item.date,halfSlot,item.station) || item.program;
+        item.additionalPrize=true;
+        item.sharedHour=originalSlot;
       }else{
-        alert(`${msg}\n\nALTERE O HORÁRIO PARA EVITAR ERRO DE PROGRAMAÇÃO.`);
-        return;
+        const dist=distributionById(item.distributionId) || {startDate:item.date,endDate:monthEndDate(),date:item.date};
+        const alt=findNextFreeRadioSlot(dist,new Set(),item.id,[],item.station);
+        if(alt && confirm(`${msg}\n\nA DIVISÃO DA HORA NÃO FOI APLICADA.\nDESEJA REMANEJAR ESTE CADASTRO PARA ${formatBR(alt.date)} ${alt.slot}?`)){
+          item.date=alt.date;
+          item.day=dayName(alt.date);
+          item.week=weekLabel(alt.date);
+          item.slot=alt.slot;
+          item.program=alt.program || programForSlot(alt.date,alt.slot,item.station);
+          item.additionalPrize=false;
+          item.sharedHour='';
+        }else{
+          alert(`${msg}\n\nMANTENHA UMA HORA CHEIA LIVRE OU USE A DIVISÃO AUTOMÁTICA EM MEIA HORA.`);
+          return;
+        }
       }
+    }else if(!isHalfHourSlot(item.slot)){
+      item.additionalPrize=false;
+      item.sharedHour='';
     }
   }
   if(item.distributionId){
@@ -8289,7 +8508,16 @@ function normalizeSlot(slot){
   const p=slotParts(slot);
   return p ? slotFromMinutes(p.hour*60+p.minute) : norm(slot).replace(/\s+/g,'');
 }
-function radioSlotKey(date,slot){ return `${date}|${normalizeSlot(slot)}`; }
+function isHalfHourSlot(slot){ return slotParts(slot)?.minute===30; }
+function fullHourSlot(slot){
+  const p=slotParts(slot);
+  return p ? slotFromMinutes(p.hour*60) : '';
+}
+function halfHourSlotFor(slot){
+  const p=slotParts(slot);
+  return p && p.minute===0 ? slotFromMinutes(p.hour*60+30) : '';
+}
+function radioSlotKey(date,slot,station='JP1017'){ return `${station}|${date}|${normalizeSlot(slot)}`; }
 function programFallbackForSlot(date,slot,station='JP1017'){
   const scheduled=programFromSchedule(date,slot,station);
   if(scheduled) return scheduled;
@@ -8324,7 +8552,7 @@ function remapRadioItem(itemId){
   const item=monthData().items.find(i=>i.id===itemId);
   if(!item) return;
   const dist=distributionById(item.distributionId) || {startDate:item.date,endDate:monthEndDate(),date:item.date};
-  const alt=findNextFreeRadioSlot(dist,new Set(),item.id);
+  const alt=findNextFreeRadioSlot(dist,new Set(),item.id,[],itemStation(item));
   if(!alt){
     alert('NÃO HÁ HORÁRIO LIVRE DENTRO DO PERÍODO DESTE PRÊMIO. ALTERE O PERÍODO OU ESCOLHA MANUALMENTE.');
     return;
@@ -8336,38 +8564,42 @@ function remapRadioItem(itemId){
   item.day=dayName(alt.date);
   item.week=weekLabel(alt.date);
   item.slot=alt.slot;
-  item.program=alt.program || programForSlot(alt.date,alt.slot);
+  item.program=alt.program || programForSlot(alt.date,alt.slot,itemStation(item));
   saveState(true);
   queueApiSave(80);
   render();
   toast('PAUTA REMANEJADA PARA HORÁRIO LIVRE.');
 }
 
-function occupiedRadioMap(start,end,excludeId=''){
+function occupiedRadioMap(start,end,excludeId='',station='JP1017'){
   const map=new Map();
-  radioItemsInPeriod(start,end).filter(i=>i.id!==excludeId).forEach(i=>{
-    const key=radioSlotKey(i.date,i.slot);
+  radioItemsInPeriod(start,end).filter(i=>i.id!==excludeId && itemStation(i)===station).forEach(i=>{
+    const key=radioSlotKey(i.date,i.slot,station);
     if(!map.has(key)) map.set(key,[]);
     map.get(key).push(i);
   });
   return map;
 }
-function radioPlannerCandidates(d,excludeId=''){
+function radioPlannerCandidates(d,excludeId='',station='JP1017'){
   const start=distStartDate(d), end=distEndDate(d);
-  const occupied=occupiedRadioMap(start,end,excludeId);
+  const occupied=occupiedRadioMap(start,end,excludeId,station);
   const dates=dateRangeBetween(start,end).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const candidates=[];
   const allowedSlots=rotationAllowedSlots(d);
-  dates.forEach((date,dayIndex)=>allowedSlots.forEach(slot=>{
-    const key=radioSlotKey(date,slot);
-    const occ=occupied.get(key)||[];
-    candidates.push({date,slot,period:periodKey(slot),dayIndex,program:programForSlot(date,slot),occupied:occ.length>0,occupiedItems:occ,key});
-  }));
+  dates.forEach((date,dayIndex)=>{
+    const dayRegistered=eligibleRotationSlotsForDate(date,station);
+    const usable=dayRegistered.length?allowedSlots.filter(slot=>dayRegistered.includes(slot)):[];
+    usable.forEach(slot=>{
+      const key=radioSlotKey(date,slot,station);
+      const occ=occupied.get(key)||[];
+      candidates.push({date,slot,station,period:periodKey(slot),dayIndex,program:programForSlot(date,slot,station),occupied:occ.length>0,occupiedItems:occ,key});
+    });
+  });
   return candidates;
 }
-function findNextFreeRadioSlot(d,avoidSet=new Set(),excludeId='',extraPlans=[]){
-  const candidates=radioPlannerCandidates(d,excludeId)
-    .filter(c=>!c.occupied && !avoidSet.has(c.key) && !samePrizeRepeatConflicts(d,c.date,c.slot,extraPlans,excludeId).length)
+function findNextFreeRadioSlot(d,avoidSet=new Set(),excludeId='',extraPlans=[],station='JP1017'){
+  const candidates=radioPlannerCandidates(d,excludeId,station)
+    .filter(c=>!c.occupied && !avoidSet.has(c.key) && !samePrizeRepeatConflicts(d,c.date,c.slot,extraPlans,excludeId,station).length)
     .sort((a,b)=>String(a.date).localeCompare(String(b.date)) || periodOrderIndex(periodKey(a.slot))-periodOrderIndex(periodKey(b.slot)) || slotOrder(a.slot)-slotOrder(b.slot));
   return candidates[0] || null;
 }
@@ -8422,10 +8654,10 @@ function renderOccupiedRadioList(d){
 }
 function radioRowStatus(date,slot,distId,avoidSet=new Set()){
   const ns=normalizeSlot(slot);
-  const occupied=radioSlotConflicts(date,ns);
+  const occupied=radioSlotConflicts(date,ns,'','JP1017');
   const d=distributionById(distId);
-  const localDuplicate=avoidSet.has(radioSlotKey(date,ns));
-  const repeatConflicts=samePrizeRepeatConflicts(d,date,ns,[]);
+  const localDuplicate=avoidSet.has(radioSlotKey(date,ns,'JP1017'));
+  const repeatConflicts=samePrizeRepeatConflicts(d,date,ns,[],'','JP1017');
   if(!occupied.length && !localDuplicate && !repeatConflicts.length) return {cls:'free',text:'LIVRE'};
   const alt=findNextFreeRadioSlot(d,avoidSet,'',[]);
   const motivo=localDuplicate ? 'REPETIDO NA SELEÇÃO' : repeatConflicts.length ? `BLOQUEADO: ${samePrizeRepeatLabel(repeatConflicts)}` : `OCUPADO POR ${conflictLabel(occupied)}`;
@@ -8662,19 +8894,74 @@ function buildSmartRadioPlans(d){
   plans.sort((a,b)=>String(a.date).localeCompare(String(b.date)) || periodOrderIndex(a.period)-periodOrderIndex(b.period) || slotOrder(a.slot)-slotOrder(b.slot));
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
 }
+function smartPlanQuality(d,plans,missing=0){
+  const rows=plans||[];
+  if(!rows.length) return {score:0,label:'SEM DISTRIBUIÇÃO',reasons:['NENHUM HORÁRIO LIVRE ENCONTRADO'],warnings:[]};
+  const periods=new Set(rows.map(p=>p.period||periodKey(p.slot)));
+  const slots=new Set(rows.map(p=>normalizeSlot(p.slot)));
+  const dates=[...new Set(rows.map(p=>p.date))].sort();
+  const sameSlotCount=Math.max(...[...slots].map(slot=>rows.filter(p=>normalizeSlot(p.slot)===slot).length));
+  let consecutive=0;
+  for(let i=1;i<dates.length;i++){
+    const a=new Date(`${dates[i-1]}T12:00:00`),b=new Date(`${dates[i]}T12:00:00`);
+    if((b-a)/86400000===1) consecutive++;
+  }
+  let score=100;
+  const reasons=[],warnings=[];
+  if(periods.size>=3) reasons.push('ALTERNÂNCIA ENTRE MANHÃ, TARDE E NOITE');
+  else if(periods.size===2){ score-=8; reasons.push('ALTERNÂNCIA ENTRE DOIS PERÍODOS'); }
+  else { score-=22; warnings.push('DISTRIBUIÇÃO CONCENTRADA EM UM ÚNICO PERÍODO'); }
+  if(slots.size===rows.length) reasons.push('HORÁRIOS SEM REPETIÇÃO');
+  else if(sameSlotCount<=2){ score-=7; reasons.push('REPETIÇÃO CONTROLADA DE HORÁRIOS'); }
+  else { score-=18; warnings.push('UM MESMO HORÁRIO FOI USADO MAIS DE DUAS VEZES'); }
+  if(consecutive===0) reasons.push('DIAS ESPAÇADOS');
+  else if(consecutive<=1){ score-=5; reasons.push('APENAS UMA SEQUÊNCIA DE DIAS CONSECUTIVOS'); }
+  else { score-=12; warnings.push('HÁ CONCENTRAÇÃO EM DIAS CONSECUTIVOS'); }
+  if(missing>0){ score-=Math.min(30,missing*8); warnings.push(`FALTAM ${missing} HORÁRIO(S) PARA COMPLETAR`); }
+  score=Math.max(0,Math.min(100,Math.round(score)));
+  const label=score>=90?'EXCELENTE':score>=75?'BOA':score>=60?'ATENÇÃO':'REFAZER';
+  return {score,label,reasons,warnings};
+}
+function smartPlanReason(plan,allPlans){
+  const samePeriodBefore=(allPlans||[]).filter(p=>p!==plan&&p.period===plan.period&&p.date<plan.date).length;
+  const sameSlotBefore=(allPlans||[]).filter(p=>p!==plan&&normalizeSlot(p.slot)===normalizeSlot(plan.slot)&&p.date<plan.date).length;
+  const parts=[];
+  if(!sameSlotBefore) parts.push('HORÁRIO AINDA NÃO UTILIZADO');
+  else parts.push('REPETIÇÃO CONTROLADA');
+  if(!samePeriodBefore) parts.push('ABRE NOVO PERÍODO NO RODÍZIO');
+  else parts.push('MANTÉM EQUILÍBRIO DO PERÍODO');
+  parts.push('SEM CONFLITO NA GRADE');
+  return parts.join(' · ');
+}
 function renderSmartRadioReport(report){
   const summary=$('smartRadioReportSummary'), list=$('smartRadioReportList'), confirmBtn=$('confirmSmartRadioBtn');
   if(!summary||!list) return;
   const d=distributionById(report.distId);
-  summary.classList.toggle('warn',report.missing>0 || !report.plans.length);
+  const quality=smartPlanQuality(d,report.plans,report.missing);
+  summary.classList.toggle('warn',report.missing>0 || !report.plans.length || quality.score<75);
   const maxPerDay=Math.max(1,Math.min(3,num(d?.radioDailyLimit)||1));
-  const main = report.plans.length ? `${report.plans.length} HORÁRIO(S) PRONTO(S) PARA LANÇAR NA ABA PROGRAMAÇÃO. LIMITE: ${maxPerDay} VEZ(ES) POR DIA, COM RODÍZIO ENTRE MANHÃ, TARDE E NOITE, AVANÇO SEQUENCIAL DOS HORÁRIOS DISPONÍVEIS E BLOQUEIO FIXO DE 2 DIAS PARA O MESMO PRÊMIO NO MESMO PERÍODO/HORÁRIO.` : 'NENHUM HORÁRIO LIVRE ENCONTRADO DENTRO DOS HORÁRIOS SELECIONADOS.';
-  summary.innerHTML = report.missing>0
-    ? `<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`
-    : `<strong>RELATÓRIO GERADO.</strong> ${main} PRÊMIO: ${esc(distributionLabel(d))}.`;
-  list.innerHTML = report.plans.length
-    ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(periodLabel(p.period||periodKey(p.slot)))} · ${esc(p.program||programForSlot(p.date,p.slot))}</span></div>`).join('')
-    : '<div class="smartReportEmpty">USE “REFAZER / AJUSTAR HORÁRIOS” PARA ESCOLHER OUTROS HORÁRIOS OU LANÇAR MANUALMENTE.</div>';
+  const registered=registeredRotationSlots('JP1017');
+  const main=report.plans.length
+    ? `${report.plans.length} HORÁRIO(S) PRONTO(S). O ASSISTENTE USOU SOMENTE A GRADE CADASTRADA NA ABA HORÁRIOS, COM LIMITE DE ${maxPerDay} VEZ(ES) POR DIA.`
+    : 'NENHUM HORÁRIO LIVRE FOI ENCONTRADO DENTRO DA GRADE CADASTRADA.';
+  summary.innerHTML=`
+    <div class="smartQualityGrid">
+      <div class="smartQualityScore"><strong>${quality.score}%</strong><span>QUALIDADE ${quality.label}</span></div>
+      <div class="smartQualityDetails">
+        <strong>${esc(main)}</strong>
+        <div class="smartQualityBar"><i style="width:${quality.score}%"></i></div>
+        <div class="smartReasonList">
+          ${quality.reasons.map(r=>`<span class="smartReason good">${esc(r)}</span>`).join('')}
+          ${quality.warnings.map(r=>`<span class="smartReason warn">${esc(r)}</span>`).join('')}
+        </div>
+        <span>HORÁRIOS DISPONÍVEIS NA GRADE: ${esc(registered.join(', ')||'NENHUM CADASTRADO')}.</span>
+      </div>
+    </div>
+    ${report.missing>0?`<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> `:''}
+    PRÊMIO: ${esc(distributionLabel(d))}.`;
+  list.innerHTML=report.plans.length
+    ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(periodLabel(p.period||periodKey(p.slot)))} · ${esc(p.program||programForSlot(p.date,p.slot))}</span><span class="smartReportWhy">${esc(smartPlanReason(p,report.plans))}</span></div>`).join('')
+    : '<div class="smartReportEmpty">CADASTRE OU AJUSTE OS HORÁRIOS NA ABA HORÁRIOS E GERE NOVAMENTE.</div>';
   if(confirmBtn) confirmBtn.disabled=!report.plans.length;
 }
 function openSmartRadioReport(d){
@@ -8705,11 +8992,11 @@ function confirmSmartRadioReport(){
   closeDrawer('smartRadioReportDrawer');
   activeDistributionFilter='';
   const targetWeek=validPlans[0] ? weekLabel(validPlans[0].date) : '';
-  if($('channelFilter')) $('channelFilter').value='';
+  if($('programStationFilter')) $('programStationFilter').value='';
   if($('statusFilter')) $('statusFilter').value='';
   setView('programacao');
   if(targetWeek && $('weekFilter')) $('weekFilter').value=targetWeek;
-  if($('channelFilter')) $('channelFilter').value='';
+  if($('programStationFilter')) $('programStationFilter').value='';
   if($('statusFilter')) $('statusFilter').value='';
   renderProgramacao();
   toast(`${newItems.length} HORÁRIO(S) LANÇADO(S) NA PROGRAMAÇÃO.`);
@@ -8817,7 +9104,7 @@ function saveRadioPlanner(){
   const targetWeek=plans[0] ? weekLabel(plans[0].date) : '';
   setView('programacao');
   if(targetWeek && $('weekFilter')) $('weekFilter').value=targetWeek;
-  if($('channelFilter')) $('channelFilter').value='';
+  if($('programStationFilter')) $('programStationFilter').value='';
   if($('statusFilter')) $('statusFilter').value='';
   renderProgramacao();
   toast(`${newItems.length} HORÁRIO(S) DE RÁDIO ADICIONADO(S) À GRADE E À PAUTA DE ESTÚDIO.`);
@@ -9336,8 +9623,77 @@ function clearPromoForm(){
   $('promoDrawerTitle').textContent='NOVA PROMOÇÃO';
   updatePromoPreview();
 }
+function promoCopiesById(idValue){
+  const rows=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    (m.promos||[]).forEach(p=>{ if(p?.id===idValue) rows.push({monthKey,p}); });
+  });
+  return rows;
+}
+function mergePromoReadLogs(rows){
+  const seen=new Set();
+  return rows.flatMap(row=>Array.isArray(row.p?.readLog)?row.p.readLog:[]).filter(log=>{
+    const key=log?.id || `${log?.key||''}|${log?.confirmedAt||log?.readAt||''}`;
+    if(!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+function consolidatedPromoById(idValue){
+  const copies=promoCopiesById(idValue);
+  if(!copies.length) return null;
+  const ordered=[...copies].sort((a,b)=>String(a.p.updatedAt||a.p.createdAt||'').localeCompare(String(b.p.updatedAt||b.p.createdAt||'')));
+  const merged=clone(ordered.at(-1).p);
+  merged.readByHour={};
+  merged.resultByHour={};
+  merged.resultWinnersByHour={};
+  ordered.forEach(({p})=>{
+    Object.assign(merged.readByHour,p.readByHour||{});
+    Object.assign(merged.resultByHour,p.resultByHour||{});
+    Object.assign(merged.resultWinnersByHour,p.resultWinnersByHour||{});
+    if(Array.isArray(p.resultWinners)&&p.resultWinners.length) merged.resultWinners=clone(p.resultWinners);
+    if(p.resultName) merged.resultName=p.resultName;
+    if(p.resultAt) merged.resultAt=p.resultAt;
+    if(p.resultAtLabel) merged.resultAtLabel=p.resultAtLabel;
+    if(p.resultDate) merged.resultDate=p.resultDate;
+    if(p.resultSlot) merged.resultSlot=p.resultSlot;
+    if(p.readAt) merged.readAt=p.readAt;
+    if(p.readAtLabel) merged.readAtLabel=p.readAtLabel;
+  });
+  merged.readLog=mergePromoReadLogs(ordered);
+  delete merged.__months;
+  return merged;
+}
+function promoMonthKeys(p){
+  const start=(p.startDate||p.drawDate||todayISO()).slice(0,7);
+  const end=(p.endDate||p.drawDate||p.startDate||todayISO()).slice(0,7);
+  const keys=[];
+  let [year,month]=start.split('-').map(Number);
+  const [endYear,endMonth]=end.split('-').map(Number);
+  while(year<endYear || (year===endYear && month<=endMonth)){
+    keys.push(`${year}-${String(month).padStart(2,'0')}`);
+    month++;
+    if(month>12){ month=1; year++; }
+  }
+  return keys;
+}
+function storePromoAcrossMonths(p){
+  Object.values(state.months||{}).forEach(m=>{ m.promos=(m.promos||[]).filter(row=>row?.id!==p.id); });
+  promoMonthKeys(p).forEach(key=>{
+    const target=monthDataForKey(key);
+    target.promos ||= [];
+    target.promos.push(clone(p));
+  });
+}
+function fullHourTimeValue(value){
+  const match=String(value||'').match(/^(\d{1,2})(?::?(\d{2}))?$/);
+  if(!match) return '';
+  const hour=Math.max(0,Math.min(23,Number(match[1])));
+  return `${String(hour).padStart(2,'0')}:00`;
+}
+
 function editPromo(pid){
-  const p=monthData().promos.find(x=>x.id===pid); if(!p)return;
+  const p=consolidatedPromoById(pid) || monthData().promos.find(x=>x.id===pid); if(!p)return;
   clearPromoForm();
   $('promoDrawerTitle').textContent='EDITAR PROMOÇÃO';
   $('promoId').value=p.id;
@@ -9358,7 +9714,7 @@ function editPromo(pid){
   updatePromoPreview();
   openDrawer('promoDrawer');
 }
-function deletePromo(pid){ if(!confirm('EXCLUIR ESTA PROMOÇÃO?')) return; monthData().promos=monthData().promos.filter(p=>p.id!==pid); removePromoResultFromProgram(pid); saveState(true); render(); toast('PROMOÇÃO EXCLUÍDA.'); }
+function deletePromo(pid){ if(!confirm('EXCLUIR ESTA PROMOÇÃO EM TODOS OS MESES DO PERÍODO?')) return; Object.values(state.months||{}).forEach(m=>{ m.promos=(m.promos||[]).filter(p=>p.id!==pid); }); removePromoResultFromProgram(pid); saveState(true); render(); toast('PROMOÇÃO EXCLUÍDA EM TODOS OS MESES.'); }
 $('promoImage').addEventListener('change',e=>{
   const file=e.target.files?.[0];
   if(!file) return;
@@ -9445,11 +9801,17 @@ function removePromoResultFromProgram(promoId){
 $('promoForm').addEventListener('submit',e=>{
   e.preventDefault();
   const idVal=$('promoId').value||id('PR');
+  const existing=consolidatedPromoById(idVal) || {};
+  const startDate=$('promoStartDate').value;
+  const drawDate=$('promoDrawDate').value;
+  if(drawDate<startDate){ alert('A DATA FINAL / SORTEIO NÃO PODE SER ANTERIOR AO INÍCIO.'); return; }
   const p={
+    ...clone(existing),
     id:idVal,
-    startDate:$('promoStartDate').value,
-    drawDate:$('promoDrawDate').value,
-    drawTime:$('promoDrawTime').value,
+    startDate,
+    drawDate,
+    endDate:drawDate,
+    drawTime:fullHourTimeValue($('promoDrawTime').value),
     kind:$('promoKind')?.value || 'promo',
     local:$('promoKind')?.value==='merchan' ? 'MERCHAN' : norm($('promoLocal').value),
     program:$('promoProgram') ? norm($('promoProgram').value) : '',
@@ -9461,21 +9823,14 @@ $('promoForm').addEventListener('submit',e=>{
     descriptionStyle:promoStyleFromForm('promoDesc','desc'),
     readMode:$('promoReadAll')?.checked ? 'all' : 'selected',
     readHours:$('promoReadAll')?.checked ? [] : getPromoReadHoursFromForm(),
-    readByHour:(monthData().promos.find(x=>x.id===idVal)||{}).readByHour || {},
-    readAt:(monthData().promos.find(x=>x.id===idVal)||{}).readAt || '',
-    readAtLabel:(monthData().promos.find(x=>x.id===idVal)||{}).readAtLabel || '',
-    resultName:(monthData().promos.find(x=>x.id===idVal)||{}).resultName || '',
-    resultAt:(monthData().promos.find(x=>x.id===idVal)||{}).resultAt || '',
-    resultAtLabel:(monthData().promos.find(x=>x.id===idVal)||{}).resultAtLabel || '',
-    resultSlot:(monthData().promos.find(x=>x.id===idVal)||{}).resultSlot || '',
-    resultDate:(monthData().promos.find(x=>x.id===idVal)||{}).resultDate || '',
-    resultByHour:(monthData().promos.find(x=>x.id===idVal)||{}).resultByHour || {},
-    imageData:$('promoImageData').value||''
+    imageData:$('promoImageData').value||existing.imageData||'',
+    createdAt:existing.createdAt||new Date().toISOString(),
+    updatedAt:new Date().toISOString()
   };
+  delete p.__months;
   syncPromoResultToProgram(p);
-  const idx=monthData().promos.findIndex(x=>x.id===idVal);
-  if(idx>=0) monthData().promos[idx]=p; else monthData().promos.push(p);
-  saveState(true); closeDrawer('promoDrawer'); render(); toast('PROMOÇÃO SALVA.');
+  storePromoAcrossMonths(p);
+  saveState(true); closeDrawer('promoDrawer'); render(); toast('PROMOÇÃO SALVA E SINCRONIZADA EM TODO O PERÍODO.');
 });
 
 function bind(id,event,handler){ const el=$(id); if(el) el.addEventListener(event,handler); }
@@ -9518,11 +9873,12 @@ bind('deleteProgramWeekBtn','click',()=>clearProgramScope('week'));
 bind('deleteProgramMonthBtn','click',()=>clearProgramScope('month'));
 bind('addPromoBtn','click',()=>{ clearPromoForm(); openDrawer('promoDrawer'); });
 bind('clearDistFiltersBtn','click',()=>{ $('distSearchInput').value=''; $('distStatusFilter').value=''; renderDistribuicao(); });
-['weekFilter','channelFilter','statusFilter'].forEach(id=>bind(id,'input',()=>{ renderProgramacao(); renderClearProgramDrawer(); }));
+['weekFilter','programStationFilter','statusFilter'].forEach(id=>bind(id,'input',()=>{ renderProgramacao(); renderClearProgramDrawer(); }));
 ['distSearchInput','distStatusFilter','distOrderFilter'].forEach(id=>bind(id,'input',renderDistribuicao));
 ['promoOrderFilter','promoTypeFilter','promoStationFilter','promoStatusFilter'].forEach(id=>bind(id,'input',renderPromos));
 bind('studioDateFilter','input',renderStudioPauta);
 bind('studioPautaType','input',renderStudioPauta);
+bind('studioStationFilter','input',renderStudioPauta);
 bind('studioPrevDayBtn','click',()=>changeStudioDay(-1));
 bind('studioNextDayBtn','click',()=>changeStudioDay(1));
 bind('exportPdfBtn','click',()=>window.print());
