@@ -2882,6 +2882,18 @@ body.drawer-open .distActions{
 .smartReportWhy{font-size:9px!important;line-height:1.35!important;color:#69707d!important}
 @media(max-width:900px){.smartQualityGrid{grid-template-columns:1fr}.smartReportRow{grid-template-columns:1fr!important}}
 
+
+.smartConcentrationBox{border:1px solid #cfe0ff;background:#f5f9ff;border-radius:16px;padding:11px 12px;margin-bottom:10px}
+.smartConcentrationBox strong{display:block;color:#1e5aa5;font-size:11px;margin-bottom:4px}
+.smartConcentrationBox span{color:#5d6b7e;font-size:9px;line-height:1.4}
+.smartQtyControl{display:flex;align-items:center;justify-content:center;gap:6px}
+.smartQtyControl button{width:28px;height:28px;border:1px solid #d8e1ec;border-radius:9px;background:#fff;color:#171c26;font-size:17px;font-weight:1000;cursor:pointer}
+.smartQtyControl button:disabled{opacity:.35;cursor:not-allowed}
+.smartQtyValue{min-width:30px;text-align:center;font-size:13px!important;color:#171c26!important;font-weight:1000!important}
+.smartQtyMeta{display:block;margin-top:3px;text-align:center;color:#667283;font-size:7.5px;font-weight:1000}
+.smartReportRow{grid-template-columns:46px 112px 78px minmax(150px,1fr) 120px minmax(190px,1.1fr)!important}
+@media(max-width:900px){.smartReportRow{grid-template-columns:1fr!important}.smartQtyControl{justify-content:flex-start}.smartQtyMeta{text-align:left}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -8954,22 +8966,62 @@ function smartPlanReason(plan,allPlans){
   parts.push('SEM CONFLITO NA GRADE');
   return parts.join(' · ');
 }
+function smartAssignedQuantity(report){
+  return (report?.plans||[]).reduce((sum,plan)=>sum+Math.max(1,num(plan.qty)||1),0);
+}
+function smartRemainingQuantity(report){
+  return Math.max(0,num(report?.needed)-smartAssignedQuantity(report));
+}
+function changeSmartPlanQuantity(index,delta){
+  const report=pendingSmartRadioReport;
+  if(!report||!report.plans?.[index]) return;
+  const plan=report.plans[index];
+  const current=Math.max(1,num(plan.qty)||1);
+  const next=Math.max(1,Math.min(4,current+delta));
+  if(next>current && smartRemainingQuantity(report)<=0) return;
+  plan.qty=next;
+  report.missing=smartRemainingQuantity(report);
+  renderSmartRadioReport(report);
+}
+function autoBalanceSmartQuantities(){
+  const report=pendingSmartRadioReport;
+  if(!report) return;
+  let remaining=smartRemainingQuantity(report);
+  let cursor=0;
+  while(remaining>0){
+    const available=report.plans.filter(plan=>Math.max(1,num(plan.qty)||1)<4);
+    if(!available.length) break;
+    const target=available[cursor%available.length];
+    target.qty=Math.max(1,num(target.qty)||1)+1;
+    remaining--;
+    cursor++;
+  }
+  report.missing=smartRemainingQuantity(report);
+  renderSmartRadioReport(report);
+}
 function renderSmartRadioReport(report){
   const summary=$('smartRadioReportSummary'), list=$('smartRadioReportList'), confirmBtn=$('confirmSmartRadioBtn');
   if(!summary||!list) return;
   const d=distributionById(report.distId);
+  report.missing=smartRemainingQuantity(report);
   const quality=smartPlanQuality(d,report.plans,report.missing);
   summary.classList.toggle('warn',report.missing>0 || !report.plans.length || quality.score<75);
-  const maxPerDay=Math.max(1,Math.min(3,num(d?.radioDailyLimit)||1));
   const registered=registeredRotationSlots('JP1017');
-  const main=report.plans.length
-    ? `${report.plans.length} HORÁRIO(S) PRONTO(S). O ASSISTENTE USOU SOMENTE A GRADE CADASTRADA NA ABA HORÁRIOS, COM LIMITE DE ${maxPerDay} VEZ(ES) POR DIA.`
-    : 'NENHUM HORÁRIO LIVRE FOI ENCONTRADO DENTRO DA GRADE CADASTRADA.';
+  const assigned=smartAssignedQuantity(report);
+  const total=num(report.needed);
+  const needsConcentration=isTicketDist(d) && total>report.plans.length;
+  const concentrationHtml=needsConcentration?`
+    <div class="smartConcentrationBox">
+      <strong>A QUANTIDADE DE ${total} ${distributionDeliveryUnit(d)==='pair'?'PARES':'PRÊMIOS'} É MAIOR QUE OS ${report.plans.length} HORÁRIOS LIVRES.</strong>
+      <span>ESCOLHA EM QUAL HORÁRIO DESEJA CONCENTRAR MAIS DE UM ${distributionDeliveryUnit(d)==='pair'?'PAR':'PRÊMIO'}. USE OS BOTÕES − E + EM CADA LINHA. LIMITE DE 4 POR HORÁRIO.</span>
+      ${report.missing>0?`<div style="margin-top:8px"><button class="btn small" type="button" onclick="autoBalanceSmartQuantities()">DISTRIBUIR EXCEDENTE AUTOMATICAMENTE</button></div>`:''}
+    </div>`:'';
   summary.innerHTML=`
+    ${concentrationHtml}
     <div class="smartQualityGrid">
       <div class="smartQualityScore"><strong>${quality.score}%</strong><span>QUALIDADE ${quality.label}</span></div>
       <div class="smartQualityDetails">
-        <strong>${esc(main)}</strong>
+        <strong>${report.plans.length} HORÁRIO(S) ENCONTRADO(S) · ${assigned} DE ${total} ${distributionDeliveryUnit(d)==='pair'?'PARES':'PRÊMIOS'} DISTRIBUÍDOS</strong>
         <div class="smartQualityBar"><i style="width:${quality.score}%"></i></div>
         <div class="smartReasonList">
           ${quality.reasons.map(r=>`<span class="smartReason good">${esc(r)}</span>`).join('')}
@@ -8978,30 +9030,43 @@ function renderSmartRadioReport(report){
         <span>HORÁRIOS DISPONÍVEIS NA GRADE: ${esc(registered.join(', ')||'NENHUM CADASTRADO')}.</span>
       </div>
     </div>
-    ${report.missing>0?`<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> `:''}
+    ${report.missing>0?`<strong>AINDA FALTAM ${report.missing} ${distributionDeliveryUnit(d)==='pair'?'PAR(ES)':'PRÊMIO(S)'} PARA DISTRIBUIR.</strong> `:''}
     PRÊMIO: ${esc(distributionLabel(d))}.`;
   list.innerHTML=report.plans.length
-    ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(periodLabel(p.period||periodKey(p.slot)))} · ${esc(p.program||programForSlot(p.date,p.slot))} · ${esc(smartQuantityLabel(d,p.qty))}</span><span class="smartReportWhy">${esc(smartPlanReason(p,report.plans))}${num(p.qty)>1?' · MÚLTIPLOS GANHADORES NESTE HORÁRIO':''}</span></div>`).join('')
+    ? report.plans.map((p,idx)=>{
+        const qty=Math.max(1,num(p.qty)||1);
+        const remaining=smartRemainingQuantity(report);
+        return `<div class="smartReportRow">
+          <span>#${idx+1}</span>
+          <strong>${esc(formatBR(p.date))}</strong>
+          <strong>${esc(normalizeSlot(p.slot))}</strong>
+          <span>${esc(periodLabel(p.period||periodKey(p.slot)))} · ${esc(p.program||programForSlot(p.date,p.slot))}</span>
+          <div>
+            <div class="smartQtyControl">
+              <button type="button" onclick="changeSmartPlanQuantity(${idx},-1)" ${qty<=1?'disabled':''}>−</button>
+              <span class="smartQtyValue">${qty}</span>
+              <button type="button" onclick="changeSmartPlanQuantity(${idx},1)" ${qty>=4||remaining<=0?'disabled':''}>+</button>
+            </div>
+            <span class="smartQtyMeta">${esc(smartQuantityLabel(d,qty))}</span>
+          </div>
+          <span class="smartReportWhy">${esc(smartPlanReason(p,report.plans))}${qty>1?' · MÚLTIPLOS GANHADORES NESTE HORÁRIO':''}</span>
+        </div>`;
+      }).join('')
     : '<div class="smartReportEmpty">CADASTRE OU AJUSTE OS HORÁRIOS NA ABA HORÁRIOS E GERE NOVAMENTE.</div>';
-  if(confirmBtn) confirmBtn.disabled=!report.plans.length;
+  if(confirmBtn) confirmBtn.disabled=!report.plans.length || report.missing>0;
 }
 function openSmartRadioReport(d){
   if(!d || num(d.ar)<=0) return false;
   const built=buildSmartRadioPlans(d);
-  let plans=built.plans.map(plan=>({...plan,qty:1}));
-  let missing=built.missing;
-  let consolidated=false;
-  if(missing>0 && plans.length && isTicketDist(d)){
-    const total=built.needed;
-    const message=`A QUANTIDADE DESTINADA À RÁDIO (${total} ${distributionDeliveryUnit(d)==='pair'?'PARES':'UNIDADES'}) É MAIOR DO QUE OS HORÁRIOS LIVRES ENCONTRADOS (${plans.length}).\n\nDESEJA EQUILIBRAR A DISTRIBUIÇÃO ENTREGANDO 2, 3 OU ATÉ 4 ${distributionDeliveryUnit(d)==='pair'?'PARES':'PRÊMIOS'} EM ALGUNS HORÁRIOS?\n\nCANCELAR MANTÉM A OPÇÃO DE ESCOLHER OUTROS HORÁRIOS MANUALMENTE.`;
-    if(confirm(message)){
-      const packed=distributeSmartQuantities(plans,total,4);
-      plans=packed.plans;
-      missing=packed.remaining;
-      consolidated=true;
-    }
-  }
-  pendingSmartRadioReport={distId:d.id,plans,missing,needed:built.needed,consolidated,createdAt:new Date().toISOString()};
+  const plans=built.plans.map(plan=>({...plan,qty:1}));
+  pendingSmartRadioReport={
+    distId:d.id,
+    plans,
+    missing:built.missing,
+    needed:built.needed,
+    manualConcentration:built.missing>0 && plans.length>0 && isTicketDist(d),
+    createdAt:new Date().toISOString()
+  };
   renderSmartRadioReport(pendingSmartRadioReport);
   openDrawer('smartRadioReportDrawer');
   return true;
