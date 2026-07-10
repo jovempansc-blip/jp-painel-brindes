@@ -587,19 +587,146 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   }
 }
 
+
+/* === V41: CABEÇALHO ÚNICO E COMPACTO DA RECEPÇÃO === */
+.receptionUnifiedHeader{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(180px,.8fr) minmax(360px,1.45fr) minmax(300px,auto);
+  align-items:center;
+  gap:18px;
+  min-height:88px;
+  margin-bottom:12px;
+  padding:13px 16px 13px 20px;
+  border:1px solid rgba(223,229,236,.94);
+  border-radius:22px;
+  background:rgba(255,255,255,.84);
+  box-shadow:0 10px 26px rgba(16,24,40,.045);
+  backdrop-filter:blur(8px);
+  overflow:hidden;
+}
+.receptionUnifiedHeader::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:linear-gradient(180deg,#cf163d,#a9475b);
+}
+.receptionUnifiedHeader .departmentBlock{
+  min-width:0;
+}
+.receptionUnifiedHeader .departmentBlock h1{
+  margin:0;
+  color:#171c26;
+  font-size:21px;
+  line-height:1;
+  letter-spacing:-.035em;
+}
+.receptionUnifiedHeader .departmentBlock span{
+  display:block;
+  margin-top:6px;
+  color:#f17b00;
+  font-size:9.5px;
+  line-height:1.1;
+  font-weight:1000;
+  letter-spacing:.065em;
+}
+.receptionUnifiedHeader .mainBlock{
+  min-width:0;
+  text-align:center;
+  padding:0 10px;
+}
+.receptionUnifiedHeader .mainBlock h2{
+  margin:0;
+  color:#171c26;
+  font-size:24px;
+  line-height:1.05;
+  letter-spacing:-.04em;
+}
+.receptionUnifiedHeader .mainBlock p{
+  margin:7px 0 0;
+  color:#637084;
+  font-size:9.5px;
+  line-height:1.25;
+  font-weight:900;
+  letter-spacing:.025em;
+}
+.receptionUnifiedHeader .controlsBlock{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  min-width:0;
+}
+.receptionUnifiedHeader .controlsBlock input{
+  width:128px;
+  height:38px!important;
+  min-height:38px!important;
+  padding:0 10px!important;
+  border-radius:12px!important;
+  font-size:10px!important;
+}
+.receptionUnifiedHeader .controlsBlock .updated{
+  max-width:220px;
+  color:#687385;
+  font-size:9px;
+  line-height:1.25;
+  font-weight:900;
+  white-space:nowrap;
+}
+@media(max-width:980px){
+  .receptionUnifiedHeader{
+    grid-template-columns:1fr auto;
+    gap:12px;
+    min-height:94px;
+  }
+  .receptionUnifiedHeader .mainBlock{
+    grid-column:1/-1;
+    grid-row:2;
+    text-align:left;
+    padding:0;
+  }
+  .receptionUnifiedHeader .mainBlock h2{
+    font-size:21px;
+  }
+  .receptionUnifiedHeader .mainBlock p{
+    margin-top:5px;
+  }
+}
+@media(max-width:650px){
+  .receptionUnifiedHeader{
+    grid-template-columns:1fr;
+    padding:14px 14px 14px 18px;
+  }
+  .receptionUnifiedHeader .controlsBlock{
+    justify-content:flex-start;
+    flex-wrap:wrap;
+  }
+  .receptionUnifiedHeader .mainBlock{
+    grid-column:auto;
+    grid-row:auto;
+  }
+}
+
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="logoBar"><img src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan Floripa"></div>
-  <header class="top">
-    <div class="brand"><div><h1>RECEPÇÃO</h1><span>CONFERÊNCIA DE SORTEIOS</span></div></div>
-    <div class="controls"><input id="dateFilter" type="date"><span class="updated" id="updated">CARREGANDO...</span></div>
+  <header class="receptionUnifiedHeader">
+    <div class="departmentBlock">
+      <h1>RECEPÇÃO</h1>
+      <span>CONFERÊNCIA DE SORTEIOS</span>
+    </div>
+    <div class="mainBlock">
+      <h2>CONTROLE DE RETIRADA</h2>
+      <p>CONFIRA GANHADOR, PRÊMIO, PRAZO E STATUS DE ENTREGA.</p>
+    </div>
+    <div class="controlsBlock">
+      <input id="dateFilter" type="date" aria-label="Data da conferência">
+      <span class="updated" id="updated">CARREGANDO...</span>
+    </div>
   </header>
-  <section class="hero receptionHero">
-    <div class="titleBox"><h2>CONTROLE DE RETIRADA</h2></div>
-    <div class="descBox"><p>CONFIRA GANHADOR, PRÊMIO, PRAZO E STATUS DE ENTREGA.</p></div>
-  </section>
   <section class="receptionToolbar" aria-label="Filtros da recepção">
     <div class="filterField searchField"><label>BUSCA</label><input id="searchFilter" type="search" placeholder="BUSCAR GANHADOR, PRÊMIO OU PROGRAMA"></div>
     <div class="filterField"><label>STATUS</label><select id="statusFilter"><option value="TODOS">TODOS</option><option value="PENDENTE">PENDENTES</option><option value="VENCE_HOJE">VENCE HOJE</option><option value="VENCE_AMANHA">VENCE AMANHÃ</option><option value="RETIRADO">RETIRADOS</option><option value="VENCIDO">VENCIDOS</option></select></div>

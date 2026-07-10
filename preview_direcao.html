@@ -3,170 +3,865 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Direção — Preview Painel Principal</title>
+<title>Painel da Direção — Jovem Pan Floripa</title>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 <style>
-:root{--ink:#171c26;--muted:#657084;--line:#dfe5ec;--red:#c9002b;--green:#137947;--bg:#f6f7fa;--studioBg:url("assets/bg-estudio.jpg")}
+:root{
+  --ink:#171c26;
+  --muted:#657084;
+  --line:#dfe5ec;
+  --soft:#f5f7fa;
+  --panel:rgba(255,255,255,.90);
+  --wine:#b90d2f;
+  --wine-soft:#fff1f4;
+  --green:#137947;
+  --green-soft:#effaf4;
+  --orange:#b76400;
+  --orange-soft:#fff6e9;
+  --blue:#2567b7;
+  --blue-soft:#eef5ff;
+  --red:#b61c32;
+  --red-soft:#fff1f3;
+  --shadow:0 12px 34px rgba(18,25,38,.07);
+}
 *{box-sizing:border-box}
-body{margin:0;background:linear-gradient(180deg,rgba(246,248,252,.90),rgba(245,247,251,.95)),var(--studioBg) center/cover fixed no-repeat;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);text-transform:uppercase;font-weight:900}
-.head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;background:rgba(255,255,255,.72);border:1px solid rgba(223,229,236,.9);border-radius:22px;padding:14px 16px;box-shadow:0 10px 26px rgba(16,24,40,.045);backdrop-filter:blur(8px)}
-.logoBar{width:min(560px,100%);display:flex;align-items:center;justify-content:center;padding:10px 18px;margin:0 auto 18px;border:1px solid rgba(223,229,236,.92);border-radius:20px;background:rgba(255,255,255,.86);box-shadow:0 10px 24px rgba(16,24,40,.055);backdrop-filter:blur(8px)}
-.logoBar img{display:block;width:min(100%,460px);max-height:58px;height:auto;object-fit:contain}
-.wrap{max-width:1320px;margin:0 auto;padding:24px}
-
-.head h1{margin:0;font-size:28px;letter-spacing:-.04em}
-.head span{color:var(--muted);font-size:11px}
-.controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}.previewControls{justify-content:center}.updated{color:#657084;font-size:10px;font-weight:1000;letter-spacing:.04em}
-input,select,button{min-height:42px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:0 12px;font-weight:1000;color:var(--ink);text-transform:uppercase}
+html,body{min-height:100%;margin:0}
+body{
+  color:var(--ink);
+  background:
+    linear-gradient(135deg,rgba(222,228,235,.38) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(45deg,rgba(222,228,235,.20) 1px,transparent 1px) 0 0/48px 48px,
+    #f6f8fb;
+  font-family:"Segoe UI",Arial,sans-serif;
+  font-weight:700;
+}
+button,input,select{font:inherit}
 button{cursor:pointer}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.tab{background:#fff;color:#5a6474}
-.tab.active{background:#171c26;color:#fff;border-color:#171c26}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
-.kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:0 8px 20px rgba(17,20,27,.04)}
-.kpi span{display:block;color:var(--muted);font-size:10px;margin-bottom:6px}
-.kpi strong{font-size:30px}
-.panel{background:#fff;border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:16px;box-shadow:0 8px 22px rgba(17,20,27,.04)}
-.panel h2{margin:0 0 12px;font-size:18px}
-.list{display:grid;gap:8px}
-.item{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid #e6eaf0;background:#fbfcff;border-radius:16px;padding:12px}
-.item.wide{grid-template-columns:minmax(0,1fr) auto}
-.time{font-size:26px;color:#697386}
-.info strong{display:block;font-size:14px;line-height:1.22}
-.info span{display:block;color:#5f6a7a;font-size:11px;margin-top:4px;line-height:1.35}
-.badge{display:inline-flex;align-items:center;min-height:26px;border-radius:999px;padding:0 9px;font-size:10px;border:1px solid #d9dee7;background:#f5f7fa;color:#566171}
-.badge.green{background:#effaf4;border-color:#ccefdc;color:#137947}
-.badge.red{background:#fff1f3;border-color:#f3b5c0;color:#a90d25}
-.empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed #cfd5df;border-radius:16px;background:#fbfcff}
-.hide{display:none!important}
-@media(max-width:900px){.grid{grid-template-columns:1fr}.item{grid-template-columns:1fr}.head{display:grid}}
-
-/* AJUSTE FINAL — ESCALA COMPACTA E RESPONSIVA */
-.wrap{padding:14px!important}.logoBar{max-width:500px!important;padding:8px 14px!important;margin-bottom:14px!important;border-radius:18px!important}.logoBar img{max-height:50px!important;max-width:420px!important}.head,.top{padding:12px 14px!important;margin-bottom:12px!important;border-radius:18px!important}.head h1,.brand h1,h1{font-size:21px!important}.controls{gap:8px!important;margin-bottom:12px!important}input,select,button,.control,.btn{min-height:34px!important;padding:7px 10px!important;border-radius:11px!important;font-size:11px!important}.panel{border-radius:20px!important;padding:13px!important;margin-bottom:12px!important}.panel h2{font-size:16px!important}.grid{gap:9px!important}.kpi{border-radius:15px!important;padding:11px!important}.kpi strong{font-size:24px!important}.item,.resultCard{gap:10px!important;padding:10px 12px!important;border-radius:15px!important}.time{font-size:22px!important}.info strong{font-size:12px!important}.info span{font-size:10px!important}.badge,.result{min-height:23px!important;font-size:9px!important;padding:0 8px!important}.titleBox,.descBox{border-radius:16px!important;padding:14px 18px!important}.titleBox h2{font-size:23px!important}.descBox p{font-size:13px!important}.body{padding:14px!important}.layout{gap:12px!important}.preview{padding:10px!important;border-radius:16px!important}.previewTitle{font-size:22px!important;padding:13px 15px!important}.previewDesc{font-size:14px!important;padding:13px 15px!important}.readHour span{min-height:25px!important;font-size:9px!important}.styleGrid{gap:6px!important;padding:7px!important}.table th,.table td{padding:8px!important;font-size:11px!important}@media(max-width:900px){.wrap{padding:10px!important}.layout,.grid{grid-template-columns:1fr!important}.logoBar img{max-width:320px!important}.head,.top{display:grid!important}}
-
+.wrap{width:min(1480px,100%);margin:0 auto;padding:18px}
+.executiveHeader{
+  display:grid;
+  grid-template-columns:minmax(310px,.95fr) minmax(420px,1.25fr) minmax(360px,1fr);
+  align-items:center;
+  gap:18px;
+  padding:14px 18px;
+  border:1px solid rgba(223,229,236,.96);
+  border-radius:24px;
+  background:rgba(255,255,255,.90);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
+}
+.brandBlock{display:flex;align-items:center;gap:15px;min-width:0}
+.brandLogo{width:220px;max-height:52px;object-fit:contain;display:block}
+.brandFallback{display:none;font-weight:1000;letter-spacing:.08em;color:#4d5562}
+.brandCopy{min-width:0;border-left:1px solid var(--line);padding-left:14px}
+.brandCopy h1{margin:0;font-size:22px;line-height:1.05;letter-spacing:-.04em}
+.brandCopy p{margin:5px 0 0;color:var(--muted);font-size:9px;letter-spacing:.055em}
+.headerFilters{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+  min-width:0;
+}
+.field{display:grid;gap:4px;min-width:0}
+.field label{font-size:7.5px;color:var(--muted);letter-spacing:.09em;font-weight:1000}
+.control{
+  width:100%;
+  min-width:0;
+  height:38px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fff;
+  color:var(--ink);
+  padding:0 10px;
+  font-size:10px;
+  font-weight:1000;
+  text-transform:uppercase;
+  outline:none;
+}
+.control:focus{border-color:#d89cac;box-shadow:0 0 0 3px rgba(185,13,47,.07)}
+.syncBlock{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.syncBadge{
+  display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 11px;
+  border:1px solid #bde9ce;border-radius:999px;background:var(--green-soft);color:var(--green);
+  font-size:8.5px;font-weight:1000;letter-spacing:.05em;white-space:nowrap;
+}
+.syncBadge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px rgba(19,121,71,.08)}
+.syncBadge.offline{border-color:#ffd7a8;background:var(--orange-soft);color:var(--orange)}
+.updated{color:var(--muted);font-size:8.5px;line-height:1.3;text-align:right}
+.tabs{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  margin:12px 0;padding:4px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.78);
+}
+.tab{
+  appearance:none;border:1px solid transparent;border-radius:12px;background:transparent;color:#5f6876;
+  min-height:34px;padding:0 13px;font-size:9px;font-weight:1000;letter-spacing:.035em;
+}
+.tab.active{background:linear-gradient(180deg,#c90b34,#ad0e2c);border-color:#ad0e2c;color:#fff;box-shadow:0 7px 16px rgba(185,13,47,.14)}
+.view{display:none}.view.active{display:block}
+.kpiGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:10px}
+.kpi{
+  min-height:96px;padding:13px;border:1px solid var(--line);border-radius:18px;background:var(--panel);
+  box-shadow:0 8px 22px rgba(18,25,38,.045);display:grid;align-content:space-between;gap:8px;
+}
+.kpi span{color:var(--muted);font-size:8px;letter-spacing:.07em;font-weight:1000}
+.kpi strong{font-size:27px;line-height:1;letter-spacing:-.05em}
+.kpi small{color:var(--muted);font-size:8px;line-height:1.25}
+.kpi.alert{border-color:#ffd7a8;background:linear-gradient(180deg,#fff,#fff8ef)}
+.kpi.danger{border-color:#f3b5c0;background:linear-gradient(180deg,#fff,#fff3f5)}
+.kpi.ok{border-color:#bde9ce;background:linear-gradient(180deg,#fff,#f2fbf6)}
+.dashboardGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:10px}
+.panel{
+  border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 9px 24px rgba(18,25,38,.045);overflow:hidden;
+}
+.panelHead{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:12px 14px;border-bottom:1px solid var(--line);background:rgba(248,250,252,.82);
+}
+.panelHead h2{margin:0;font-size:14px;letter-spacing:-.025em}
+.panelHead span{color:var(--muted);font-size:8px;letter-spacing:.05em}
+.panelBody{padding:12px}
+.nowGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.nowCard{
+  min-height:126px;padding:13px;border:1px solid var(--line);border-radius:17px;background:#fff;display:grid;gap:9px;
+}
+.nowCard .station{font-size:8px;color:var(--muted);letter-spacing:.07em}
+.nowCard .time{font-size:31px;color:#a9475b;line-height:1;font-weight:1000;letter-spacing:-.06em}
+.nowCard strong{font-size:15px;line-height:1.15}
+.nowCard p{margin:0;color:var(--muted);font-size:9px;line-height:1.4}
+.alertList,.list{display:grid;gap:8px}
+.alertItem,.listItem{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;
+  padding:10px 11px;border:1px solid var(--line);border-radius:14px;background:#fff;
+}
+.alertDot{width:9px;height:9px;border-radius:50%;background:#f2a13b;box-shadow:0 0 0 4px rgba(242,161,59,.10)}
+.alertDot.red{background:#cf3d55;box-shadow:0 0 0 4px rgba(207,61,85,.10)}
+.alertDot.green{background:#2f9a66;box-shadow:0 0 0 4px rgba(47,154,102,.10)}
+.alertItem strong,.listItem strong{display:block;font-size:10.5px;line-height:1.2}
+.alertItem span,.listItem span{display:block;margin-top:3px;color:var(--muted);font-size:8.5px;line-height:1.35}
+.empty{padding:28px;text-align:center;border:1px dashed #ccd5df;border-radius:16px;color:#7b8492;font-size:9px;background:rgba(248,250,252,.65)}
+.badge{
+  display:inline-flex;align-items:center;justify-content:center;min-height:23px;padding:0 8px;border-radius:999px;
+  border:1px solid var(--line);background:#f8fafc;color:#5f6876;font-size:7.5px;font-weight:1000;letter-spacing:.045em;white-space:nowrap;
+}
+.badge.noar{background:var(--green-soft);border-color:#bde9ce;color:var(--green)}
+.badge.pendente{background:var(--orange-soft);border-color:#ffd7a8;color:var(--orange)}
+.badge.cancelado{background:var(--red-soft);border-color:#f3b5c0;color:var(--red)}
+.badge.realizado{background:var(--blue-soft);border-color:#cfe0ff;color:var(--blue)}
+.badge.merchan{background:#edf7ff;border-color:#b9dcff;color:#1767ad}
+.badge.promo{background:#fff4e6;border-color:#f0bf7a;color:#b85f00}
+.badge.pauta{background:#f3f0ff;border-color:#d9d0ff;color:#654bb0}
+.badge.aviso{background:#f4f6f8;border-color:#dce2e8;color:#5d6673}
+.tableWrap{overflow:auto}
+.table{width:100%;border-collapse:separate;border-spacing:0;min-width:920px}
+.table th,.table td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.table th{position:sticky;top:0;background:#f8fafc;color:#657084;font-size:7.5px;letter-spacing:.075em;font-weight:1000;z-index:1}
+.table td{font-size:9px}
+.table tbody tr:last-child td{border-bottom:0}
+.table td.num,.table th.num{text-align:center}
+.table .primary{font-size:10.5px;font-weight:1000;color:var(--ink)}
+.table .secondary{margin-top:3px;color:var(--muted);font-size:8px;line-height:1.3}
+.timeCell{font-size:20px!important;font-weight:1000;color:#a9475b;letter-spacing:-.045em;white-space:nowrap}
+.detailsRow td{background:#fbfcfe;padding:8px 12px}
+.reservationList{display:flex;gap:6px;flex-wrap:wrap}
+.reservationChip{
+  display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border-radius:999px;
+  border:1px solid #ecd2d9;background:#fff7f9;color:#8f2940;font-size:7.5px;font-weight:900;
+}
+.sectionToolbar{
+  display:flex;align-items:end;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;
+}
+.toolbarTitle h2{margin:0;font-size:17px;letter-spacing:-.035em}
+.toolbarTitle p{margin:4px 0 0;color:var(--muted);font-size:8.5px}
+.toolbarStats{display:flex;gap:6px;flex-wrap:wrap}
+.statusSummary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+.statusBox{padding:10px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.statusBox span{font-size:7.5px;color:var(--muted);letter-spacing:.06em}
+.statusBox strong{display:block;margin-top:5px;font-size:19px}
+.readStatus{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.deadline.today{background:var(--red-soft);border-color:#f3b5c0;color:var(--red)}
+.deadline.tomorrow{background:var(--orange-soft);border-color:#ffd7a8;color:var(--orange)}
+.deadline.ok{background:var(--blue-soft);border-color:#cfe0ff;color:var(--blue)}
+.deadline.done{background:var(--green-soft);border-color:#bde9ce;color:var(--green)}
+.deadline.expired{background:var(--red-soft);border-color:#f3b5c0;color:var(--red)}
+@media(max-width:1200px){
+  .executiveHeader{grid-template-columns:1fr 1fr}
+  .syncBlock{grid-column:1/-1;justify-content:flex-start}
+  .kpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:850px){
+  .wrap{padding:10px}
+  .executiveHeader{grid-template-columns:1fr}
+  .headerFilters{grid-template-columns:1fr 1fr}
+  .dashboardGrid,.nowGrid{grid-template-columns:1fr}
+  .kpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .statusSummary{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .brandBlock{align-items:flex-start;flex-direction:column}
+  .brandCopy{border-left:0;padding-left:0}
+  .headerFilters{grid-template-columns:1fr}
+  .kpiGrid{grid-template-columns:1fr}
+  .syncBlock{align-items:flex-start;flex-direction:column}
+  .updated{text-align:left}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="logoBar"><img src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan Floripa"></div>
-  <div class="controls previewControls"><input id="dateFilter" type="date"><select id="monthFilter"></select><span class="updated" id="updated">CARREGANDO...</span></div>
-  <nav class="tabs">
-    <button class="tab active" data-tab="resumo">Resumo</button>
-    <button class="tab" data-tab="distribuicao">Distribuição</button>
-    <button class="tab" data-tab="programacao">Programação</button>
-    <button class="tab" data-tab="promocoes">Promoções</button>
-    <button class="tab" data-tab="estudio">Pauta de Estúdio</button>
+  <header class="executiveHeader">
+    <div class="brandBlock">
+      <img class="brandLogo" src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan Floripa" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="brandFallback">WORKSPACE | JOVEM PAN FLORIPA</div>
+      <div class="brandCopy">
+        <h1>PAINEL DA DIREÇÃO</h1>
+        <p>VISÃO EXECUTIVA DE BRINDES, PROGRAMAÇÃO E OPERAÇÃO</p>
+      </div>
+    </div>
+    <div class="headerFilters">
+      <div class="field">
+        <label>MÊS</label>
+        <select class="control" id="monthFilter"></select>
+      </div>
+      <div class="field">
+        <label>DATA</label>
+        <input class="control" id="dateFilter" type="date">
+      </div>
+      <div class="field">
+        <label>EMISSORA</label>
+        <select class="control" id="stationFilter">
+          <option value="ALL">TODAS</option>
+          <option value="JP1017">JOVEMPAN 101,7</option>
+          <option value="JPNEWS983">JPNEWS 98,3</option>
+        </select>
+      </div>
+    </div>
+    <div class="syncBlock">
+      <span class="syncBadge" id="syncBadge">FIREBASE ONLINE</span>
+      <span class="updated" id="updated">CARREGANDO DADOS...</span>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Seções do painel da direção">
+    <button class="tab active" data-tab="resumo">VISÃO GERAL</button>
+    <button class="tab" data-tab="distribuicao">DISTRIBUIÇÃO</button>
+    <button class="tab" data-tab="programacao">PROGRAMAÇÃO</button>
+    <button class="tab" data-tab="promocoes">PROMO / MERCHAN</button>
+    <button class="tab" data-tab="estudio">OPERAÇÃO DO ESTÚDIO</button>
+    <button class="tab" data-tab="retiradas">RETIRADAS</button>
   </nav>
-  <section id="tab-resumo"></section>
-  <section id="tab-distribuicao" class="hide"></section>
-  <section id="tab-programacao" class="hide"></section>
-  <section id="tab-promocoes" class="hide"></section>
-  <section id="tab-estudio" class="hide"></section>
+
+  <main>
+    <section class="view active" id="view-resumo"></section>
+    <section class="view" id="view-distribuicao"></section>
+    <section class="view" id="view-programacao"></section>
+    <section class="view" id="view-promocoes"></section>
+    <section class="view" id="view-estudio"></section>
+    <section class="view" id="view-retiradas"></section>
+  </main>
 </div>
+
 <script>
-
-const FIREBASE_CONFIG = {
-  "apiKey": "AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE",
-  "authDomain": "jp-painel-brindes.firebaseapp.com",
-  "databaseURL": "https://jp-painel-brindes-default-rtdb.firebaseio.com",
-  "projectId": "jp-painel-brindes",
-  "storageBucket": "jp-painel-brindes.firebasestorage.app",
-  "messagingSenderId": "843544648278",
-  "appId": "1:843544648278:web:066c8e64e17da046cf79f7",
-  "measurementId": "G-VB6Y2TS796"
+const FIREBASE_CONFIG={
+  apiKey:"AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE",
+  authDomain:"jp-painel-brindes.firebaseapp.com",
+  databaseURL:"https://jp-painel-brindes-default-rtdb.firebaseio.com",
+  projectId:"jp-painel-brindes",
+  storageBucket:"jp-painel-brindes.firebasestorage.app",
+  messagingSenderId:"843544648278",
+  appId:"1:843544648278:web:066c8e64e17da046cf79f7",
+  measurementId:"G-VB6Y2TS796"
 };
-const FIREBASE_ROOT_PATH='jp-painel-brindes/state';
+const FIREBASE_ROOT_PATH="jp-painel-brindes/state";
+const STORAGE_KEY="jp_programacao_brindes_distribuicao_v2";
 const $=id=>document.getElementById(id);
-const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-const upper=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
-const pad=n=>String(n).padStart(2,'0');
-const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
-const monthKey=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;}
-const formatBR=iso=>{if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
-const slotHour=slot=>{const m=String(slot||'').match(/(\d{1,2})/);return m?Number(m[1]):0;}
-const timeToHHMM=slot=>slotHour(slot)?`${pad(slotHour(slot))}:00`:String(slot||'23:59').slice(0,5);
-const formatTime=slot=>slotHour(slot)?`${pad(slotHour(slot))}H`:upper(slot||'--H');
-const statusBadge=s=>upper(s)==='REALIZADO'?'<span class="badge green">REALIZADO</span>':upper(s)==='NO AR'?'<span class="badge green">NO AR</span>':`<span class="badge">${esc(upper(s||'PENDENTE'))}</span>`;
-let state={months:{}}, currentMonth='';
-function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
-function availableMonths(){return Object.keys(state.months||{}).sort();}
-function selectMonthForDate(date){const m=String(date||todayISO()).slice(0,7); currentMonth=state.months?.[m]?m:(state.currentMonth||availableMonths().at(-1)||m);}
-function distributionById(id){return (monthData().distributions||[]).find(d=>d.id===id)||{};}
-function itemTitle(i){const d=distributionById(i.distributionId);return upper(i.title||d.title||i.prize||'SEM TÍTULO');}
-function itemDesc(i){const d=distributionById(i.distributionId);return i.notes||d.description||'';}
-function channelName(i){return upper(i.channel||'RÁDIO');}
-function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
-function promoWinnerList(p){
-  const list=Array.isArray(p.resultWinners)?p.resultWinners:[];
-  const names=list.map(w=>upper(w?.name||w)).filter(Boolean);
-  if(names.length) return names;
-  return p.resultName ? [upper(p.resultName)] : [];
-}
-function promoResultLabel(p){
-  return promoWinnerList(p).join(', ');
-}
+const esc=value=>String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+const upper=value=>String(value??"").trim().replace(/\s+/g," ").toUpperCase();
+const num=value=>Number(value)||0;
+const pad=value=>String(value).padStart(2,"0");
+const todayISO=()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;};
+const formatBR=iso=>{if(!iso)return "";const [y,m,d]=String(iso).split("-");return y&&m&&d?`${d}/${m}/${y}`:String(iso);};
+const monthLabel=key=>{if(!key)return "";const [y,m]=key.split("-").map(Number);return new Intl.DateTimeFormat("pt-BR",{month:"long",year:"numeric"}).format(new Date(y,m-1,1)).toUpperCase();};
+const dateAdd=(iso,days)=>{const [y,m,d]=String(iso).split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+days);return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;};
 
-firebase.initializeApp(FIREBASE_CONFIG);
+let state={months:{}};
+let currentMonth="";
+let activeTab="resumo";
+let firebaseReady=false;
 
-let activeTab='resumo';
-function fillMonthFilter(){
-  const opts=availableMonths().map(m=>`<option value="${m}" ${m===currentMonth?'selected':''}>${m.split('-').reverse().join('/')}</option>`).join('');
-  $('monthFilter').innerHTML=opts || `<option value="${monthKey()}">${monthKey().split('-').reverse().join('/')}</option>`;
+function slotParts(slot){
+  const raw=String(slot||"").trim().toUpperCase().replace(/\s+/g,"");
+  const match=raw.match(/^(\d{1,2})(?:H|:)?(\d{2})?$/);
+  if(!match)return null;
+  const hour=Number(match[1]);
+  const minute=Number(match[2]||0);
+  if(hour<0||hour>23||![0,30].includes(minute))return null;
+  return {hour,minute};
 }
-function isTicketDist(d){return !!d&&(d.prizeType==='ingresso'||d.ticketMode==='ingresso'||d.isTicket===true);}
-function ticketUnit(d,key){return isTicketDist(d)?((d.ticketUnits&&d.ticketUnits[key])||d.ticketDefaultUnit||'unit'):'unit';}
-function ticketMultiplier(d,key){return isTicketDist(d)&&ticketUnit(d,key)==='pair'?2:1;}
-function channelConsumed(d,key){return Number(d?.[key]||0)*ticketMultiplier(d,key);}
-function distTitle(d){return upper(d.title||d.brinde||d.prize||d.name||'SEM TÍTULO');}
-function channelTotals(d){return ['app','camarote','camarim','rua','ar','rs','reservado'].map(k=>channelConsumed(d,k)).reduce((a,b)=>a+b,0);}
-function period(d){return `${formatBR(d.startDate||d.date||'')} A ${formatBR(d.endDate||d.startDate||d.date||'')}`;}
+function slotMinutes(slot){
+  const p=slotParts(slot);
+  return p?p.hour*60+p.minute:9999;
+}
+function timeToHHMM(slot){
+  const p=slotParts(slot);
+  return p?`${pad(p.hour)}:${pad(p.minute)}`:"00:00";
+}
+function formatTime(slot){
+  const p=slotParts(slot);
+  return p?`${pad(p.hour)}H${p.minute===30?"30":""}`:upper(slot||"--H");
+}
+function stationCode(value){
+  const v=upper(value);
+  if(v.includes("NEWS")||v.includes("98"))return "JPNEWS983";
+  if(v==="ALL"||v==="AMBAS"||v==="TODAS")return "ALL";
+  return "JP1017";
+}
+function stationName(value){
+  const code=stationCode(value);
+  return code==="JPNEWS983"?"JPNEWS 98,3":code==="ALL"?"AMBAS":"JOVEMPAN 101,7";
+}
+function stationMatches(value){
+  const selected=$("stationFilter").value;
+  return selected==="ALL"||stationCode(value)===selected||stationCode(value)==="ALL";
+}
+function normalizeStatus(value){
+  const v=upper(value);
+  if(v==="NO AR"||v==="NO_AR"||v==="ATIVO")return "NO AR";
+  if(v==="REALIZADO"||v==="ENTREGUE"||v==="FINALIZADO")return "REALIZADO";
+  if(v==="CANCELADO"||v==="CANCELADA")return "CANCELADO";
+  return "PENDENTE";
+}
+function statusBadge(status,winner=""){
+  const normalized=normalizeStatus(status);
+  const cls=normalized==="NO AR"?"noar":normalized==="REALIZADO"?"realizado":normalized==="CANCELADO"?"cancelado":"pendente";
+  const title=normalized==="REALIZADO"&&winner?` title="GANHADOR: ${esc(winner)}"`:"";
+  return `<span class="badge ${cls}"${title}>${esc(normalized)}</span>`;
+}
+function monthData(){
+  return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};
+}
+function availableMonths(){
+  return Object.keys(state.months||{}).sort();
+}
+function distributionById(id){
+  return (monthData().distributions||[]).find(row=>row.id===id)||{};
+}
+function itemTitle(item){
+  const distribution=distributionById(item.distributionId);
+  return upper(item.title||distribution.title||item.prize||"SEM TÍTULO");
+}
+function itemDescription(item){
+  const distribution=distributionById(item.distributionId);
+  return String(item.description||item.notes||distribution.description||"").trim();
+}
+function itemStation(item){return stationCode(item.station||"JP1017");}
+function itemChannel(item){return upper(item.channel||"RÁDIO");}
+function itemWinner(item){return upper(item.winnerName||item.resultName||"");}
+function isRadioItem(item){return itemChannel(item)==="RÁDIO";}
+function itemDateTime(item){
+  return new Date(`${item.date||"9999-12-31"}T${timeToHHMM(item.slot)}:00`);
+}
+function itemsForDate(date,radioOnly=false){
+  return (monthData().items||[])
+    .filter(item=>item.date===date)
+    .filter(item=>stationMatches(item.station||"JP1017"))
+    .filter(item=>!radioOnly||isRadioItem(item))
+    .sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot)||itemTitle(a).localeCompare(itemTitle(b)));
+}
+function promoKind(promo){
+  const kind=upper(promo.kind||promo.promoKind||promo.type||"PROMO");
+  const local=upper(promo.local||"");
+  if(kind.includes("MERCHAN")||local.includes("MERCHAN"))return "MERCHAN";
+  if(kind.includes("PAUTA"))return "PAUTA";
+  if(kind.includes("AVISO")||kind.includes("COMUNICADO"))return "AVISO";
+  return "PROMOÇÃO";
+}
+function promoKindBadge(promo){
+  const kind=promoKind(promo);
+  const cls=kind==="MERCHAN"?"merchan":kind==="PAUTA"?"pauta":kind==="AVISO"?"aviso":"promo";
+  return `<span class="badge ${cls}">${kind}</span>`;
+}
+function promoTitle(promo){return upper(promo.name||promo.title||promoKind(promo));}
+function promoStart(promo){return promo.startDate||promo.date||promo.drawDate||promo.resultDate||"";}
+function promoEnd(promo){return promo.endDate||promo.drawDate||promo.resultDate||promo.startDate||promo.date||"";}
+function promoActiveOn(promo,date){
+  const start=promoStart(promo),end=promoEnd(promo);
+  return (!start||date>=start)&&(!end||date<=end);
+}
+function promoStationMatches(promo){
+  return stationMatches(promo.station||"ALL");
+}
+function normalizedWinnerList(list){
+  if(!Array.isArray(list))return [];
+  const seen=new Set();
+  return list.map(row=>({
+    name:upper(row?.name||row),
+    registeredAt:row?.registeredAt||"",
+    deliveredAt:row?.deliveredAt||"",
+    deliveredAtLabel:row?.deliveredAtLabel||""
+  })).filter(row=>row.name&&!seen.has(row.name)&&seen.add(row.name));
+}
+function promoWinners(promo){
+  const all=[];
+  normalizedWinnerList(promo.resultWinners).forEach(row=>all.push(row));
+  Object.values(promo.resultWinnersByHour||{}).forEach(list=>normalizedWinnerList(list).forEach(row=>all.push(row)));
+  if(promo.resultName)all.push({name:upper(promo.resultName),registeredAt:promo.resultAt||"",deliveredAt:promo.deliveredAt||"",deliveredAtLabel:promo.deliveredAtLabel||""});
+  Object.values(promo.resultByHour||{}).forEach(name=>{if(name)all.push({name:upper(name),registeredAt:promo.resultAt||"",deliveredAt:"",deliveredAtLabel:""});});
+  const seen=new Set();
+  return all.filter(row=>row.name&&!seen.has(row.name)&&seen.add(row.name));
+}
+function promoResultDate(promo){return promo.resultDate||promo.drawDate||promo.endDate||"";}
+function promoStatus(promo,date){
+  const winners=promoWinners(promo);
+  const end=promoEnd(promo);
+  if(winners.length)return "REALIZADO";
+  if(end&&date>end)return "CANCELADO";
+  if(promoActiveOn(promo,date))return "NO AR";
+  return "PENDENTE";
+}
+function promoReadHours(promo){
+  const list=Array.isArray(promo.readHours)?promo.readHours:[];
+  return [...new Set(list.map(formatTime).filter(Boolean))].sort((a,b)=>slotMinutes(a)-slotMinutes(b));
+}
+function readKeys(date,slot){
+  const hhmm=timeToHHMM(slot);
+  const compact=hhmm.replace(":","");
+  const hour=hhmm.slice(0,2);
+  const minute=hhmm.slice(3,5);
+  const keys=[`${date}-${compact}`];
+  if(minute==="00")keys.push(`${date}-${hour}`);
+  return keys;
+}
+function readValue(promo,date,slot){
+  for(const key of readKeys(date,slot)){
+    if(Object.prototype.hasOwnProperty.call(promo.readByHour||{},key))return promo.readByHour[key];
+  }
+  return "";
+}
+function pendingReadRows(date){
+  const rows=[];
+  (monthData().promos||[])
+    .filter(promo=>promoStationMatches(promo)&&promoActiveOn(promo,date))
+    .forEach(promo=>{
+      const hours=promoReadHours(promo);
+      if(hours.length){
+        hours.forEach(slot=>{
+          if(!readValue(promo,date,slot))rows.push({promo,slot});
+        });
+      }
+    });
+  return rows;
+}
+function confirmedReadRows(date){
+  const rows=[];
+  (monthData().promos||[])
+    .filter(promo=>promoStationMatches(promo)&&promoActiveOn(promo,date))
+    .forEach(promo=>promoReadHours(promo).forEach(slot=>{
+      const value=readValue(promo,date,slot);
+      if(value)rows.push({promo,slot,value});
+    }));
+  return rows;
+}
+function normalizeReservationUnit(value){
+  const unit=String(value||"").toLowerCase();
+  return unit==="pair"||unit==="par"||unit==="pares"?"pair":"unit";
+}
+function reservationEntries(distribution){
+  const source=Array.isArray(distribution.reservas)?distribution.reservas:Array.isArray(distribution.reservations)?distribution.reservations:[];
+  const rows=source.map((row,index)=>({
+    id:row.id||`R${index}`,
+    qty:num(row.qty??row.quantidade??row.total??row.value),
+    unit:normalizeReservationUnit(row.unit??row.tipo??row.mode??distribution.ticketUnits?.reservado??distribution.ticketDefaultUnit),
+    note:upper(row.note??row.observacao??row.observação??row.description??row.descricao??"")
+  })).filter(row=>row.qty>0);
+  if(rows.length)return rows;
+  const legacy=num(distribution.reservado??distribution.clientes??distribution.outros);
+  return legacy>0?[{id:"LEGACY",qty:legacy,unit:normalizeReservationUnit(distribution.ticketUnits?.reservado||distribution.ticketDefaultUnit),note:upper(distribution.reservadoNote||distribution.reservaObs||distribution.reservedNote||"")}]:[];
+}
+function isTicket(distribution){
+  return distribution.prizeType==="ingresso"||distribution.ticketMode==="ingresso"||distribution.isTicket===true;
+}
+function unitMultiplier(distribution,key){
+  if(!isTicket(distribution))return 1;
+  const unit=distribution.ticketUnits?.[key]||distribution.ticketDefaultUnit||"unit";
+  return normalizeReservationUnit(unit)==="pair"?2:1;
+}
+function channelValue(distribution,key){
+  const aliases={ar:["ar","radio"],rs:["rs","redesSociais"],rua:["rua","externa"]};
+  const keys=aliases[key]||[key];
+  const raw=keys.reduce((value,current)=>value||num(distribution[current]),0);
+  return raw*unitMultiplier(distribution,key);
+}
+function reservationConsumed(distribution){
+  return reservationEntries(distribution).reduce((sum,row)=>sum+row.qty*(row.unit==="pair"?2:1),0);
+}
+function distributionConsumed(distribution){
+  return ["app","camarote","camarim","rua","ar","rs"].reduce((sum,key)=>sum+channelValue(distribution,key),0)+reservationConsumed(distribution);
+}
+function distributionBalance(distribution){
+  return num(distribution.total)-distributionConsumed(distribution);
+}
+function distributionStatus(distribution){
+  const balance=distributionBalance(distribution);
+  if(balance<0)return "ESTOURO";
+  if(balance===0)return "ZERADO";
+  if(balance<=2)return "SALDO CRÍTICO";
+  return "OK";
+}
+function distributionStatusBadge(distribution){
+  const status=distributionStatus(distribution);
+  if(status==="ESTOURO")return `<span class="badge cancelado">${status}</span>`;
+  if(status==="ZERADO")return `<span class="badge pendente">${status}</span>`;
+  if(status==="SALDO CRÍTICO")return `<span class="badge promo">${status}</span>`;
+  return `<span class="badge noar">${status}</span>`;
+}
+function activeItemForStation(date,station){
+  const rows=(monthData().items||[])
+    .filter(item=>item.date===date&&itemStation(item)===station&&isRadioItem(item)&&normalizeStatus(item.status)!=="CANCELADO")
+    .sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot));
+  if(!rows.length)return null;
+  if(date!==todayISO())return rows[0];
+  const now=new Date();
+  const minute=now.getHours()*60+now.getMinutes();
+  let current=null;
+  rows.forEach(item=>{if(slotMinutes(item.slot)<=minute)current=item;});
+  return current||rows[0];
+}
+function nextItemForStation(date,station){
+  const rows=(monthData().items||[])
+    .filter(item=>item.date===date&&itemStation(item)===station&&isRadioItem(item)&&normalizeStatus(item.status)!=="CANCELADO")
+    .sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot));
+  if(!rows.length)return null;
+  if(date!==todayISO())return rows[1]||null;
+  const now=new Date();
+  const minute=now.getHours()*60+now.getMinutes();
+  return rows.find(item=>slotMinutes(item.slot)>minute)||null;
+}
+function addBusinessDays(dateValue,days=5){
+  const dt=new Date(dateValue);
+  if(Number.isNaN(dt.getTime()))return null;
+  let added=0;
+  dt.setHours(23,59,59,999);
+  while(added<days){
+    dt.setDate(dt.getDate()+1);
+    if(dt.getDay()!==0&&dt.getDay()!==6)added++;
+  }
+  return dt;
+}
+function deadlineInfo(registeredAt,deliveredAt=""){
+  const deadline=addBusinessDays(registeredAt,5);
+  if(!deadline)return {label:"SEM PRAZO",cls:"ok",expired:false};
+  const start=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x;};
+  const diff=Math.round((start(deadline)-start(new Date()))/86400000);
+  const date=`${deadline.getFullYear()}-${pad(deadline.getMonth()+1)}-${pad(deadline.getDate())}`;
+  if(deliveredAt)return {label:`RETIRADO · PRAZO ERA ${formatBR(date)}`,cls:"done",expired:false};
+  if(diff<0)return {label:`VENCIDO EM ${formatBR(date)}`,cls:"expired",expired:true};
+  if(diff===0)return {label:"VENCE HOJE",cls:"today",expired:false};
+  if(diff===1)return {label:"VENCE AMANHÃ",cls:"tomorrow",expired:false};
+  return {label:`PRAZO ATÉ ${formatBR(date)}`,cls:"ok",expired:false};
+}
+function pickupRows(date){
+  const rows=[];
+  (monthData().items||[]).filter(item=>item.date===date&&itemWinner(item)).forEach(item=>{
+    const registeredAt=item.resultAt||item.winnerAt||`${item.date}T${timeToHHMM(item.slot)}:00`;
+    rows.push({
+      source:"PRÊMIO",
+      time:formatTime(item.slot),
+      title:itemTitle(item),
+      winner:itemWinner(item),
+      station:stationName(item.station),
+      registeredAt,
+      deliveredAt:item.deliveredAt||"",
+      deliveredAtLabel:item.deliveredAtLabel||""
+    });
+  });
+  (monthData().promos||[]).filter(promo=>promoResultDate(promo)===date).forEach(promo=>{
+    promoWinners(promo).forEach(winner=>rows.push({
+      source:promoKind(promo),
+      time:formatTime(promo.resultSlot||promo.drawTime||""),
+      title:promoTitle(promo),
+      winner:winner.name,
+      station:stationName(promo.station),
+      registeredAt:winner.registeredAt||promo.resultAt||`${date}T${timeToHHMM(promo.resultSlot||promo.drawTime||"23:00")}:00`,
+      deliveredAt:winner.deliveredAt||"",
+      deliveredAtLabel:winner.deliveredAtLabel||""
+    }));
+  });
+  return rows;
+}
+function resultCountForDate(date){
+  const itemResults=itemsForDate(date).filter(item=>normalizeStatus(item.status)==="REALIZADO"||itemWinner(item)).length;
+  const promoResults=(monthData().promos||[]).filter(promo=>promoStationMatches(promo)&&promoResultDate(promo)===date&&promoWinners(promo).length).reduce((sum,promo)=>sum+promoWinners(promo).length,0);
+  return itemResults+promoResults;
+}
+function stationItems(date){
+  return itemsForDate(date,true);
+}
+function statusCounts(items){
+  const base={"NO AR":0,"PENDENTE":0,"CANCELADO":0,"REALIZADO":0};
+  items.forEach(item=>base[normalizeStatus(item.status)]++);
+  return base;
+}
+function renderCurrentCards(date){
+  const selected=$("stationFilter").value;
+  const stations=selected==="ALL"?["JP1017","JPNEWS983"]:[selected];
+  return stations.map(station=>{
+    const active=activeItemForStation(date,station);
+    const next=nextItemForStation(date,station);
+    if(!active)return `<div class="nowCard"><span class="station">${stationName(station)}</span><div class="empty">SEM PROGRAMAÇÃO PARA ESTA DATA.</div></div>`;
+    return `<div class="nowCard">
+      <span class="station">${stationName(station)}</span>
+      <div class="time">${esc(formatTime(active.slot))}</div>
+      <strong>${esc(itemTitle(active))}</strong>
+      <p>${esc(upper(active.program||"PROGRAMAÇÃO NORMAL"))}<br>${next?`PRÓXIMO: ${formatTime(next.slot)} · ${itemTitle(next)}`:"SEM PRÓXIMO ITEM PROGRAMADO"}</p>
+      <div>${statusBadge(active.status,itemWinner(active))}</div>
+    </div>`;
+  }).join("");
+}
+function renderAlerts(date){
+  const alerts=[];
+  const distributions=(monthData().distributions||[]);
+  distributions.filter(row=>distributionBalance(row)<0).forEach(row=>alerts.push({level:"red",title:`ESTOURO: ${upper(row.title||row.prize||"PRÊMIO")}`,detail:`SALDO ${distributionBalance(row)} UNIDADES`}));
+  distributions.filter(row=>distributionBalance(row)>=0&&distributionBalance(row)<=2).forEach(row=>alerts.push({level:"",title:`SALDO CRÍTICO: ${upper(row.title||row.prize||"PRÊMIO")}`,detail:`RESTAM ${distributionBalance(row)} UNIDADES`}));
+  pendingReadRows(date).slice(0,6).forEach(row=>alerts.push({level:"",title:`LEITURA PENDENTE: ${promoTitle(row.promo)}`,detail:`${formatTime(row.slot)} · ${stationName(row.promo.station)}`}));
+  (monthData().promos||[]).filter(promo=>promoStationMatches(promo)&&promoResultDate(promo)===date&&!promoWinners(promo).length).forEach(promo=>alerts.push({level:"red",title:`RESULTADO SEM GANHADOR: ${promoTitle(promo)}`,detail:`${formatTime(promo.resultSlot||promo.drawTime||"")} · ${stationName(promo.station)}`}));
+  pickupRows(date).forEach(row=>{
+    const deadline=deadlineInfo(row.registeredAt,row.deliveredAt);
+    if(!row.deliveredAt&&(deadline.cls==="today"||deadline.cls==="tomorrow"||deadline.expired))alerts.push({level:deadline.expired?"red":"",title:`RETIRADA: ${row.winner}`,detail:`${row.title} · ${deadline.label}`});
+  });
+  if(!alerts.length)return `<div class="empty">NENHUM ALERTA OPERACIONAL PARA A DATA SELECIONADA.</div>`;
+  return alerts.slice(0,10).map(alert=>`<div class="alertItem"><span class="alertDot ${alert.level}"></span><div><strong>${esc(alert.title)}</strong><span>${esc(alert.detail)}</span></div><span class="badge ${alert.level==="red"?"cancelado":"pendente"}">${alert.level==="red"?"CRÍTICO":"ATENÇÃO"}</span></div>`).join("");
+}
 function renderResumo(){
-  const m=monthData();
-  const date=$('dateFilter').value||todayISO();
-  const dayItems=(m.items||[]).filter(i=>i.date===date);
-  const results=[...dayItems.filter(i=>upper(i.status)==='REALIZADO'||i.winnerName),...(m.promos||[]).filter(p=>p.resultName&&(p.resultDate===date||p.drawDate===date))];
-  $('tab-resumo').innerHTML=`<div class="grid">
-    <div class="kpi"><span>Distribuições do mês</span><strong>${(m.distributions||[]).length}</strong></div>
-    <div class="kpi"><span>Pautas do dia</span><strong>${dayItems.length}</strong></div>
-    <div class="kpi"><span>Promoções do mês</span><strong>${(m.promos||[]).length}</strong></div>
-    <div class="kpi"><span>Resultados do dia</span><strong>${results.length}</strong></div>
-  </div>
-  <div class="panel"><h2>Agenda do dia</h2><div class="list">${renderProgramList(dayItems)}</div></div>`;
-}
-function renderProgramList(items){
-  const rows=[...items].sort((a,b)=>timeToHHMM(a.slot).localeCompare(timeToHHMM(b.slot)));
-  return rows.length?rows.map(i=>`<div class="item"><div class="time">${esc(formatTime(i.slot))}</div><div class="info"><strong>${esc(itemTitle(i))}</strong><span>${esc(upper(i.program||''))} · ${esc(channelName(i))}<br>${esc(itemDesc(i))}</span></div><div>${statusBadge(i.status)}</div></div>`).join(''):'<div class="empty">SEM PAUTAS PARA ESTA DATA.</div>';
+  const date=$("dateFilter").value||todayISO();
+  const items=stationItems(date);
+  const pendingReads=pendingReadRows(date);
+  const critical=(monthData().distributions||[]).filter(row=>distributionBalance(row)<=2).length;
+  const ending=(monthData().promos||[]).filter(promo=>{
+    const end=promoEnd(promo);
+    return promoStationMatches(promo)&&end&&end>=date&&end<=dateAdd(date,7)&&!promoWinners(promo).length;
+  }).length;
+  const pickups=pickupRows(date).filter(row=>{const info=deadlineInfo(row.registeredAt,row.deliveredAt);return !row.deliveredAt&&(info.cls==="today"||info.cls==="tomorrow");}).length;
+  $("view-resumo").innerHTML=`
+    <div class="kpiGrid">
+      <div class="kpi"><span>SORTEIOS DO DIA</span><strong>${items.length}</strong><small>ITENS DE RÁDIO PROGRAMADOS</small></div>
+      <div class="kpi ${pendingReads.length?"alert":"ok"}"><span>PENDÊNCIAS DO ESTÚDIO</span><strong>${pendingReads.length}</strong><small>LEITURAS AINDA NÃO CONFIRMADAS</small></div>
+      <div class="kpi ${critical?"danger":"ok"}"><span>SALDO CRÍTICO</span><strong>${critical}</strong><small>DISTRIBUIÇÕES COM ATÉ 2 UNIDADES</small></div>
+      <div class="kpi ${ending?"alert":""}"><span>ENCERRANDO EM 7 DIAS</span><strong>${ending}</strong><small>PROMOÇÕES E MERCHANS</small></div>
+      <div class="kpi"><span>RESULTADOS DO DIA</span><strong>${resultCountForDate(date)}</strong><small>PRÊMIOS E PROMOÇÕES REALIZADAS</small></div>
+      <div class="kpi ${pickups?"alert":"ok"}"><span>RETIRADAS EM ALERTA</span><strong>${pickups}</strong><small>VENCE HOJE OU AMANHÃ</small></div>
+    </div>
+    <div class="dashboardGrid">
+      <section class="panel">
+        <div class="panelHead"><h2>${date===todayISO()?"AGORA NO AR":"PROGRAMAÇÃO DE REFERÊNCIA"}</h2><span>${formatBR(date)}</span></div>
+        <div class="panelBody"><div class="nowGrid">${renderCurrentCards(date)}</div></div>
+      </section>
+      <section class="panel">
+        <div class="panelHead"><h2>ALERTAS DA DIREÇÃO</h2><span>PRIORIDADES OPERACIONAIS</span></div>
+        <div class="panelBody"><div class="alertList">${renderAlerts(date)}</div></div>
+      </section>
+    </div>`;
 }
 function renderDistribuicao(){
   const rows=[...(monthData().distributions||[])];
-  $('tab-distribuicao').innerHTML=`<div class="panel"><h2>Distribuição Geral</h2><div class="list">${rows.length?rows.map(d=>`<div class="item wide"><div class="info"><strong>${esc(distTitle(d))}</strong><span>PERÍODO: ${esc(period(d))}<br>TOTAL: ${Number(d.total||0)}${isTicketDist(d)?' INGRESSOS · '+Math.floor(Number(d.total||0)/2)+' PARES'+(Number(d.total||0)%2?' + 1 AVULSO':''):''} · CONSUMIDO: ${channelTotals(d)} · RÁDIO: ${Number(d.ar||0)} ${isTicketDist(d)?(ticketUnit(d,'ar')==='pair'?'PARES':'IND.'):''} · APP: ${Number(d.app||0)} ${isTicketDist(d)?(ticketUnit(d,'app')==='pair'?'PARES':'IND.'):''} · REDES: ${Number(d.rs||0)} ${isTicketDist(d)?(ticketUnit(d,'rs')==='pair'?'PARES':'IND.'):''} · RESERVADO: ${Number(d.reservado||0)} ${isTicketDist(d)?(ticketUnit(d,'reservado')==='pair'?'PARES':'IND.'):''}</span></div><div><span class="badge">${esc(upper(d.status||'ATIVO'))}</span></div></div>`).join(''):'<div class="empty">SEM DISTRIBUIÇÕES NO MÊS.</div>'}</div></div>`;
+  const body=rows.length?rows.map(distribution=>{
+    const reservations=reservationEntries(distribution);
+    const reservationDetail=reservations.length?`<tr class="detailsRow"><td colspan="8"><div class="reservationList">${reservations.map(row=>`<span class="reservationChip">${row.qty} ${row.unit==="pair"?"PAR":"IND."}${row.note?` · ${esc(row.note)}`:""}</span>`).join("")}</div></td></tr>`:"";
+    return `<tr>
+      <td><div class="primary">${esc(upper(distribution.title||distribution.brinde||distribution.prize||distribution.name||"SEM TÍTULO"))}</div><div class="secondary">${formatBR(distribution.startDate||distribution.date||"")} A ${formatBR(distribution.endDate||distribution.startDate||distribution.date||"")}</div></td>
+      <td class="num">${num(distribution.total)}</td>
+      <td class="num">${distributionConsumed(distribution)}</td>
+      <td class="num">${channelValue(distribution,"ar")}</td>
+      <td class="num">${reservationConsumed(distribution)}</td>
+      <td class="num">${distributionBalance(distribution)}</td>
+      <td class="num">${distributionStatusBadge(distribution)}</td>
+      <td class="num">${reservations.length?`<span class="badge">${reservations.length} RESERVA(S)</span>`:"—"}</td>
+    </tr>${reservationDetail}`;
+  }).join(""):`<tr><td colspan="8"><div class="empty">SEM DISTRIBUIÇÕES NO MÊS.</div></td></tr>`;
+  $("view-distribuicao").innerHTML=`
+    <div class="sectionToolbar">
+      <div class="toolbarTitle"><h2>DISTRIBUIÇÃO EXECUTIVA</h2><p>CONSUMO REAL, RESERVAS E SALDO DISPONÍVEL</p></div>
+      <div class="toolbarStats"><span class="badge">${rows.length} ITENS</span></div>
+    </div>
+    <section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">CONSUMIDO</th><th class="num">RÁDIO</th><th class="num">RESERVADO</th><th class="num">SALDO</th><th class="num">STATUS</th><th class="num">DETALHES</th></tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
 function renderProgramacao(){
-  const date=$('dateFilter').value||todayISO();
-  $('tab-programacao').innerHTML=`<div class="panel"><h2>Programação — ${formatBR(date)}</h2><div class="list">${renderProgramList((monthData().items||[]).filter(i=>i.date===date))}</div></div>`;
+  const date=$("dateFilter").value||todayISO();
+  const rows=stationItems(date);
+  const counts=statusCounts(rows);
+  const body=rows.length?rows.map(item=>`<tr>
+    <td class="timeCell">${esc(formatTime(item.slot))}</td>
+    <td><span class="badge">${esc(stationName(item.station))}</span></td>
+    <td><div class="primary">${esc(upper(item.program||"PROGRAMAÇÃO NORMAL"))}</div></td>
+    <td><div class="primary">${esc(itemTitle(item))}</div><div class="secondary">${esc(itemDescription(item))}</div></td>
+    <td class="num">${statusBadge(item.status,itemWinner(item))}</td>
+    <td><div class="primary">${esc(itemWinner(item)||"—")}</div></td>
+  </tr>`).join(""):`<tr><td colspan="6"><div class="empty">SEM PROGRAMAÇÃO PARA ESTA DATA.</div></td></tr>`;
+  $("view-programacao").innerHTML=`
+    <div class="sectionToolbar"><div class="toolbarTitle"><h2>PROGRAMAÇÃO — ${formatBR(date)}</h2><p>HORÁRIOS CHEIOS E DE MEIA HORA, POR EMISSORA</p></div></div>
+    <div class="statusSummary">
+      <div class="statusBox"><span>NO AR</span><strong>${counts["NO AR"]}</strong></div>
+      <div class="statusBox"><span>PENDENTES</span><strong>${counts.PENDENTE}</strong></div>
+      <div class="statusBox"><span>REALIZADOS</span><strong>${counts.REALIZADO}</strong></div>
+      <div class="statusBox"><span>CANCELADOS</span><strong>${counts.CANCELADO}</strong></div>
+    </div>
+    <section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>HORÁRIO</th><th>EMISSORA</th><th>PROGRAMA</th><th>PRÊMIO / PAUTA</th><th class="num">STATUS</th><th>GANHADOR</th></tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
 function renderPromocoes(){
-  const rows=[...(monthData().promos||[])].sort((a,b)=>(a.drawDate||'').localeCompare(b.drawDate||'')||(a.drawTime||'').localeCompare(b.drawTime||''));
-  $('tab-promocoes').innerHTML=`<div class="panel"><h2>Promoções / Merchan</h2><div class="list">${rows.length?rows.map(p=>`<div class="item"><div class="time">${esc(formatBR(p.drawDate||p.startDate||''))}<br>${esc((p.drawTime||'').slice(0,5))}</div><div class="info"><strong>${esc(promoTitle(p))}</strong><span>${esc(upper(p.local||p.type||''))}<br>${esc(p.description||'')}</span></div><div>${promoResultLabel(p)?`<span class="badge green">${esc(promoResultLabel(p))}</span>`:'<span class="badge">ATIVA</span>'}</div></div>`).join(''):'<div class="empty">SEM PROMOÇÕES NO MÊS.</div>'}</div></div>`;
+  const date=$("dateFilter").value||todayISO();
+  const rows=[...(monthData().promos||[])].filter(promo=>promoStationMatches(promo)).sort((a,b)=>(promoEnd(a)||"").localeCompare(promoEnd(b)||"")||promoTitle(a).localeCompare(promoTitle(b)));
+  const body=rows.length?rows.map(promo=>{
+    const winners=promoWinners(promo);
+    const hours=promoReadHours(promo);
+    const pending=hours.filter(slot=>promoActiveOn(promo,date)&&!readValue(promo,date,slot));
+    return `<tr>
+      <td>${promoKindBadge(promo)}</td>
+      <td><span class="badge">${esc(stationName(promo.station||"ALL"))}</span></td>
+      <td><div class="primary">${esc(promoTitle(promo))}</div><div class="secondary">${esc(promo.description||"")}</div></td>
+      <td><div class="primary">${formatBR(promoStart(promo))} A ${formatBR(promoEnd(promo))}</div><div class="secondary">${promo.resultSlot||promo.drawTime?`RESULTADO: ${formatTime(promo.resultSlot||promo.drawTime)}`:"SEM HORÁRIO DE RESULTADO"}</div></td>
+      <td><div class="readStatus">${hours.length?hours.map(slot=>`<span class="badge ${readValue(promo,date,slot)?"noar":"pendente"}">${slot}</span>`).join(""):'<span class="badge">FAIXA LIVRE</span>'}</div></td>
+      <td class="num">${pending.length?`<span class="badge pendente">${pending.length} PENDENTE(S)</span>`:`<span class="badge noar">${hours.length?"OK":"ATIVA"}</span>`}</td>
+      <td><div class="primary">${esc(winners.map(row=>row.name).join(", ")||"—")}</div></td>
+      <td class="num">${statusBadge(promoStatus(promo,date),winners.map(row=>row.name).join(", "))}</td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="8"><div class="empty">SEM PROMOÇÕES OU MERCHANS NO MÊS.</div></td></tr>`;
+  $("view-promocoes").innerHTML=`
+    <div class="sectionToolbar"><div class="toolbarTitle"><h2>PROMO / MERCHAN</h2><p>PERÍODO, LEITURAS, RESULTADO E STATUS</p></div><div class="toolbarStats"><span class="badge">${rows.length} CADASTROS</span></div></div>
+    <section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>TIPO</th><th>EMISSORA</th><th>NOME</th><th>PERÍODO / RESULTADO</th><th>HORÁRIOS</th><th class="num">LEITURAS</th><th>GANHADOR(ES)</th><th class="num">STATUS</th></tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
 function renderEstudio(){
-  const date=$('dateFilter').value||todayISO();
-  const items=(monthData().items||[]).filter(i=>i.date===date&&channelName(i)==='RÁDIO');
-  $('tab-estudio').innerHTML=`<div class="panel"><h2>Pauta de Estúdio — ${formatBR(date)}</h2><div class="list">${renderProgramList(items)}</div></div>`;
+  const date=$("dateFilter").value||todayISO();
+  const pending=pendingReadRows(date);
+  const confirmed=confirmedReadRows(date);
+  const resultsMissing=(monthData().promos||[]).filter(promo=>promoStationMatches(promo)&&promoResultDate(promo)===date&&!promoWinners(promo).length);
+  const rows=stationItems(date);
+  const operational=[
+    ...pending.map(row=>({time:formatTime(row.slot),station:stationName(row.promo.station),title:promoTitle(row.promo),detail:`${promoKind(row.promo)} · LEITURA PENDENTE`,status:"PENDENTE"})),
+    ...confirmed.map(row=>({time:formatTime(row.slot),station:stationName(row.promo.station),title:promoTitle(row.promo),detail:`LEITURA CONFIRMADA`,status:"REALIZADO"})),
+    ...resultsMissing.map(promo=>({time:formatTime(promo.resultSlot||promo.drawTime||""),station:stationName(promo.station),title:promoTitle(promo),detail:"RESULTADO SEM GANHADOR",status:"CANCELADO"}))
+  ].sort((a,b)=>slotMinutes(a.time)-slotMinutes(b.time));
+  const body=operational.length?operational.map(row=>`<div class="listItem"><div class="timeCell">${esc(row.time)}</div><div><strong>${esc(row.title)}</strong><span>${esc(row.station)} · ${esc(row.detail)}</span></div>${statusBadge(row.status)}</div>`).join(""):`<div class="empty">SEM PENDÊNCIAS OU CONFIRMAÇÕES DE LEITURA PARA ESTA DATA.</div>`;
+  $("view-estudio").innerHTML=`
+    <div class="kpiGrid">
+      <div class="kpi"><span>PAUTAS DE RÁDIO</span><strong>${rows.length}</strong><small>ITENS PROGRAMADOS NO DIA</small></div>
+      <div class="kpi ${pending.length?"alert":"ok"}"><span>LEITURAS PENDENTES</span><strong>${pending.length}</strong><small>PROMOÇÕES E MERCHANS</small></div>
+      <div class="kpi ok"><span>LEITURAS CONFIRMADAS</span><strong>${confirmed.length}</strong><small>REGISTROS DO DIA</small></div>
+      <div class="kpi ${resultsMissing.length?"danger":"ok"}"><span>SEM RESULTADO</span><strong>${resultsMissing.length}</strong><small>SORTEIOS AGUARDANDO GANHADOR</small></div>
+      <div class="kpi"><span>RESULTADOS REALIZADOS</span><strong>${resultCountForDate(date)}</strong><small>PRÊMIOS E PROMOÇÕES</small></div>
+      <div class="kpi"><span>EMISSORA</span><strong style="font-size:15px">${esc(stationName($("stationFilter").value))}</strong><small>FILTRO ATUAL</small></div>
+    </div>
+    <section class="panel"><div class="panelHead"><h2>LINHA OPERACIONAL DO ESTÚDIO</h2><span>${formatBR(date)}</span></div><div class="panelBody"><div class="list">${body}</div></div></section>`;
+}
+function renderRetiradas(){
+  const date=$("dateFilter").value||todayISO();
+  const rows=pickupRows(date).filter(row=>$("stationFilter").value==="ALL"||stationCode(row.station)===$("stationFilter").value);
+  const body=rows.length?rows.map(row=>{
+    const deadline=deadlineInfo(row.registeredAt,row.deliveredAt);
+    return `<tr>
+      <td class="timeCell">${esc(row.time||"--H")}</td>
+      <td><span class="badge">${esc(row.source)}</span></td>
+      <td><div class="primary">${esc(row.title)}</div><div class="secondary">${esc(row.station)}</div></td>
+      <td><div class="primary">${esc(row.winner)}</div></td>
+      <td><span class="badge deadline ${deadline.cls}">${esc(deadline.label)}</span></td>
+      <td class="num">${row.deliveredAt?`<span class="badge noar">RETIRADO</span>`:deadline.expired?`<span class="badge cancelado">VENCIDO</span>`:`<span class="badge pendente">PENDENTE</span>`}</td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="6"><div class="empty">SEM GANHADORES REGISTRADOS PARA ESTA DATA.</div></td></tr>`;
+  $("view-retiradas").innerHTML=`
+    <div class="sectionToolbar"><div class="toolbarTitle"><h2>CONTROLE DE RETIRADAS</h2><p>PRAZO DE 5 DIAS ÚTEIS APÓS A CONFIRMAÇÃO</p></div><div class="toolbarStats"><span class="badge">${rows.length} GANHADOR(ES)</span></div></div>
+    <section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>HORÁRIO</th><th>ORIGEM</th><th>PRÊMIO</th><th>GANHADOR</th><th>PRAZO</th><th class="num">STATUS</th></tr></thead><tbody>${body}</tbody></table></div></section>`;
+}
+function fillMonthFilter(){
+  const months=availableMonths();
+  $("monthFilter").innerHTML=(months.length?months:[todayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");
+}
+function setMonthFromDate(date){
+  const key=String(date||todayISO()).slice(0,7);
+  currentMonth=state.months?.[key]?key:(state.currentMonth||availableMonths().at(-1)||key);
 }
 function render(){
-  selectMonthForDate($('dateFilter').value||todayISO());
   fillMonthFilter();
-  renderResumo();renderDistribuicao();renderProgramacao();renderPromocoes();renderEstudio();
-  document.querySelectorAll('[id^="tab-"]').forEach(s=>s.classList.toggle('hide',s.id!==`tab-${activeTab}`));
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===activeTab));
+  renderResumo();
+  renderDistribuicao();
+  renderProgramacao();
+  renderPromocoes();
+  renderEstudio();
+  renderRetiradas();
+  document.querySelectorAll(".view").forEach(view=>view.classList.toggle("active",view.id===`view-${activeTab}`));
+  document.querySelectorAll(".tab").forEach(button=>button.classList.toggle("active",button.dataset.tab===activeTab));
 }
-$('dateFilter').value=todayISO();
-$('dateFilter').addEventListener('change',render);
-$('monthFilter').addEventListener('change',()=>{currentMonth=$('monthFilter').value;state.currentMonth=currentMonth;render();});
-document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{activeTab=b.dataset.tab;render();}));
-firebase.database().ref(FIREBASE_ROOT_PATH).on('value',snap=>{const payload=snap.val();if(payload&&payload.state){state=payload.state;selectMonthForDate($('dateFilter').value);render();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}});
+function updateConnection(online,message){
+  const badge=$("syncBadge");
+  badge.classList.toggle("offline",!online);
+  badge.textContent=online?"FIREBASE ONLINE":"BASE LOCAL / OFFLINE";
+  $("updated").textContent=message;
+}
+function applyPayload(payload,source){
+  const next=payload?.state||payload;
+  if(!next||!next.months)throw new Error("BASE SEM ESTRUTURA DE MESES");
+  state=next;
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  const selectedDate=$("dateFilter").value||todayISO();
+  setMonthFromDate(selectedDate);
+  fillMonthFilter();
+  render();
+  updateConnection(source==="firebase",`${source==="firebase"?"ATUALIZADO":"DADOS LOCAIS"}: ${new Date().toLocaleString("pt-BR")}`);
+}
+function loadLocalFallback(){
+  try{
+    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");
+    if(local?.months){
+      applyPayload(local,"local");
+      return true;
+    }
+  }catch(error){}
+  return false;
+}
+
+$("dateFilter").value=todayISO();
+$("stationFilter").value="ALL";
+document.querySelectorAll(".tab").forEach(button=>button.addEventListener("click",()=>{
+  activeTab=button.dataset.tab;
+  render();
+}));
+$("dateFilter").addEventListener("change",()=>{
+  const date=$("dateFilter").value||todayISO();
+  setMonthFromDate(date);
+  fillMonthFilter();
+  render();
+});
+$("monthFilter").addEventListener("change",()=>{
+  currentMonth=$("monthFilter").value;
+  state.currentMonth=currentMonth;
+  const currentDate=$("dateFilter").value||todayISO();
+  const day=String(currentDate).slice(8,10)||"01";
+  const candidate=`${currentMonth}-${day}`;
+  const dt=new Date(`${candidate}T12:00:00`);
+  $("dateFilter").value=Number.isNaN(dt.getTime())||String(dt.getMonth()+1).padStart(2,"0")!==currentMonth.slice(5,7)?`${currentMonth}-01`:candidate;
+  render();
+});
+$("stationFilter").addEventListener("change",render);
+
+try{
+  firebase.initializeApp(FIREBASE_CONFIG);
+  firebase.database().ref(FIREBASE_ROOT_PATH).on("value",snapshot=>{
+    try{
+      const value=snapshot.val();
+      if(!value)throw new Error("BASE VAZIA");
+      firebaseReady=true;
+      applyPayload(value,"firebase");
+    }catch(error){
+      if(!loadLocalFallback())updateConnection(false,`FALHA AO PROCESSAR DADOS: ${error.message}`);
+    }
+  },error=>{
+    firebaseReady=false;
+    if(!loadLocalFallback())updateConnection(false,`FIREBASE INDISPONÍVEL: ${error.message||"ERRO DE CONEXÃO"}`);
+  });
+}catch(error){
+  if(!loadLocalFallback())updateConnection(false,`FIREBASE NÃO INICIALIZADO: ${error.message}`);
+}
+setTimeout(()=>{
+  if(!firebaseReady&&!state.months?.[currentMonth])loadLocalFallback();
+},2500);
 </script>
 </body>
 </html>
