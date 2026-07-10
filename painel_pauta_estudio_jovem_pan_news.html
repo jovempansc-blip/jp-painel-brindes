@@ -1682,6 +1682,14 @@ body{
   pointer-events:none!important;
 }
 
+
+#winnerInputsList{display:grid;gap:8px;margin-top:12px}
+.winnerInputLine{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px}
+.winnerInputLine input{min-height:44px;border:1px solid #d8dee7;border-radius:13px;padding:0 13px;font-size:15px;font-weight:900;color:#171c26;text-transform:uppercase}
+.winnerRemoveBtn{min-height:44px;border:1px solid #f3b5c0;border-radius:13px;background:#fff5f7;color:#c9002b;font-size:20px;font-weight:1000;cursor:pointer}
+#addWinnerBtn{width:44px;margin-top:8px}
+.winnerCapacityNote{display:inline-flex;margin-top:8px;padding:6px 9px;border-radius:999px;background:#eef5ff;border:1px solid #cfe0ff;color:#2567b7;font-size:9px;font-weight:1000}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1699,15 +1707,13 @@ body{
 
 <div class="modalBackdrop" id="winnerModal">
   <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="winnerModalTitle">
-    <h3 id="winnerModalTitle">INDICAR GANHADOR</h3>
-    <p>DIGITE O NOME DO OUVINTE SORTEADO. AO SALVAR, A PAUTA FICA MARCADA COMO REALIZADA E O PAINEL PRINCIPAL RECEBE A INFORMAÇÃO.</p>
-    <div class="modalField">
-      <label for="winnerNameInput">NOME DO GANHADOR</label>
-      <input id="winnerNameInput" type="text" maxlength="120" autocomplete="off">
-    </div>
+    <h3 id="winnerModalTitle">INDICAR GANHADOR(ES)</h3>
+    <p id="winnerModalHint">DIGITE O NOME DO OUVINTE SORTEADO. USE O BOTÃO + QUANDO HOUVER MAIS DE UM GANHADOR PARA O MESMO HORÁRIO.</p>
+    <div class="resultWinnersList" id="winnerInputsList"></div>
+    <button class="resultAddBtn" type="button" id="addWinnerBtn" title="ADICIONAR OUTRO GANHADOR">+</button>
     <div class="modalActions">
       <button class="modalBtn" type="button" id="cancelWinnerBtn">CANCELAR</button>
-      <button class="modalBtn primary" type="button" id="saveWinnerBtn">SALVAR GANHADOR</button>
+      <button class="modalBtn primary" type="button" id="saveWinnerBtn">SALVAR GANHADOR(ES)</button>
     </div>
   </div>
 </div>
@@ -1828,7 +1834,7 @@ function persistStudioPromo(record){
 }
 function persistStudioItem(record){
   return persistStudioRecord('items',record,[
-    'winnerName','status','resultAt','resultAtLabel','deliveredAt','deliveredAtLabel','deliveredBy'
+    'winnerName','winnerNames','winnerCapacity','status','resultAt','resultAtLabel','deliveredAt','deliveredAtLabel','deliveredBy'
   ]);
 }
 
@@ -2679,12 +2685,45 @@ function currentItemRecord(){
   if(!currentDisplayItem || currentDisplayItem.__virtual) return null;
   return monthData().items?.find(i=>i.id===currentDisplayItem.id) || null;
 }
+function winnerCapacity(item){
+  return Math.max(1,Number(item?.winnerCapacity||item?.qty||1)||1);
+}
+function existingWinnerNames(item){
+  const list=Array.isArray(item?.winnerNames)?item.winnerNames:[];
+  const names=list.map(upper).filter(Boolean);
+  if(names.length) return names;
+  return String(item?.winnerName||'').split(',').map(upper).filter(Boolean);
+}
+function renderWinnerInputs(names=[]){
+  const item=currentItemRecord();
+  const max=winnerCapacity(item);
+  const list=$('winnerInputsList');
+  const rows=(names.length?names:['']).slice(0,max);
+  list.innerHTML=rows.map((name,index)=>`<div class="winnerInputLine"><input class="winnerNameField" type="text" maxlength="120" autocomplete="off" value="${esc(name)}" placeholder="GANHADOR ${index+1}"><button class="winnerRemoveBtn" type="button" onclick="removeWinnerInput(${index})" ${rows.length===1?'disabled':''}>×</button></div>`).join('');
+  const hint=$('winnerModalHint');
+  if(hint) hint.innerHTML=`ESTE HORÁRIO POSSUI <span class="winnerCapacityNote">${max} ${max===1?'PRÊMIO / GANHADOR':'PRÊMIOS / GANHADORES'}</span>. USE O BOTÃO + PARA ADICIONAR OS NOMES.`;
+  if($('addWinnerBtn')) $('addWinnerBtn').disabled=rows.length>=max;
+}
+function addWinnerInput(){
+  const values=Array.from(document.querySelectorAll('.winnerNameField')).map(input=>input.value);
+  const item=currentItemRecord();
+  if(values.length>=winnerCapacity(item)) return;
+  values.push('');
+  renderWinnerInputs(values);
+  setTimeout(()=>document.querySelectorAll('.winnerNameField')[values.length-1]?.focus(),20);
+}
+function removeWinnerInput(index){
+  const values=Array.from(document.querySelectorAll('.winnerNameField')).map(input=>input.value);
+  if(values.length<=1) return;
+  values.splice(index,1);
+  renderWinnerInputs(values);
+}
 function openWinnerModal(){
   const item=currentItemRecord();
   if(!item) return;
-  $('winnerNameInput').value=item.winnerName||'';
+  renderWinnerInputs(existingWinnerNames(item));
   $('winnerModal').classList.add('show');
-  setTimeout(()=>{$('winnerNameInput').focus();$('winnerNameInput').select();},30);
+  setTimeout(()=>document.querySelector('.winnerNameField')?.focus(),30);
 }
 function closeWinnerModal(){
   $('winnerModal').classList.remove('show');
@@ -2692,9 +2731,13 @@ function closeWinnerModal(){
 async function saveWinner(){
   const item=currentItemRecord();
   if(!item) return;
-  const name=upper($('winnerNameInput').value);
-  if(!name){ $('winnerNameInput').focus(); return; }
-  item.winnerName=name;
+  const names=Array.from(document.querySelectorAll('.winnerNameField')).map(input=>upper(input.value)).filter(Boolean);
+  if(!names.length){ document.querySelector('.winnerNameField')?.focus(); return; }
+  const max=winnerCapacity(item);
+  if(names.length>max){ alert(`ESTE HORÁRIO PERMITE NO MÁXIMO ${max} GANHADOR(ES).`); return; }
+  item.winnerNames=names;
+  item.winnerName=names.join(', ');
+  item.winnerCapacity=max;
   item.status='REALIZADO';
   saveState();
   try{
@@ -2702,8 +2745,8 @@ async function saveWinner(){
     closeWinnerModal();
     render();
   }catch(error){
-    console.error('ERRO AO SALVAR GANHADOR:',error);
-    alert('NÃO FOI POSSÍVEL SALVAR O GANHADOR NO FIREBASE.');
+    console.error('ERRO AO SALVAR GANHADORES:',error);
+    alert('NÃO FOI POSSÍVEL SALVAR OS GANHADORES NO FIREBASE.');
   }
 }
 function step(delta){
@@ -2845,9 +2888,10 @@ function render(){
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
+$('addWinnerBtn').addEventListener('click',addWinnerInput);
 $('winnerModal').addEventListener('click',e=>{ if(e.target.id==='winnerModal') closeWinnerModal(); });
-$('winnerNameInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){ e.preventDefault(); saveWinner(); }
+$('winnerModal').addEventListener('keydown',e=>{
+  if(e.key==='Enter' && e.target.classList.contains('winnerNameField')){ e.preventDefault(); saveWinner(); }
   if(e.key==='Escape'){ closeWinnerModal(); }
 });
 

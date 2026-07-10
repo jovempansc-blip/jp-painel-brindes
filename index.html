@@ -7688,7 +7688,8 @@ function reuseReturnedPrize(recordId){
     distributionId:d.id||'',
     prize:distributionLabel(d) || r.prize,
     title:d.title || r.prize,
-    qty:1,
+    qty:Math.max(1,num(plan.qty)||1),
+    winnerCapacity:Math.max(1,num(plan.qty)||1),
     channel:'RÁDIO',
     station:'JP1017',
     status:'PENDENTE',
@@ -8894,6 +8895,26 @@ function buildSmartRadioPlans(d){
   plans.sort((a,b)=>String(a.date).localeCompare(String(b.date)) || periodOrderIndex(a.period)-periodOrderIndex(b.period) || slotOrder(a.slot)-slotOrder(b.slot));
   return {needed,plans,missing:Math.max(0,needed-plans.length)};
 }
+function distributeSmartQuantities(plans,total,maxPerSlot=4){
+  const rows=(plans||[]).map(plan=>({...plan,qty:1}));
+  if(!rows.length) return {plans:rows,remaining:total};
+  let assigned=rows.length;
+  let cursor=0;
+  while(assigned<total){
+    const available=rows.filter(row=>num(row.qty)<maxPerSlot);
+    if(!available.length) break;
+    const target=available[cursor%available.length];
+    target.qty=num(target.qty)+1;
+    assigned++;
+    cursor++;
+  }
+  return {plans:rows,remaining:Math.max(0,total-assigned)};
+}
+function smartQuantityLabel(d,qty){
+  const amount=Math.max(1,num(qty)||1);
+  if(isTicketDist(d) && distributionDeliveryUnit(d)==='pair') return `${amount} ${amount===1?'PAR':'PARES'}`;
+  return `${amount} ${amount===1?'GANHADOR':'GANHADORES'}`;
+}
 function smartPlanQuality(d,plans,missing=0){
   const rows=plans||[];
   if(!rows.length) return {score:0,label:'SEM DISTRIBUIÇÃO',reasons:['NENHUM HORÁRIO LIVRE ENCONTRADO'],warnings:[]};
@@ -8960,14 +8981,27 @@ function renderSmartRadioReport(report){
     ${report.missing>0?`<strong>AINDA FALTAM ${report.missing} HORÁRIO(S).</strong> `:''}
     PRÊMIO: ${esc(distributionLabel(d))}.`;
   list.innerHTML=report.plans.length
-    ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(periodLabel(p.period||periodKey(p.slot)))} · ${esc(p.program||programForSlot(p.date,p.slot))}</span><span class="smartReportWhy">${esc(smartPlanReason(p,report.plans))}</span></div>`).join('')
+    ? report.plans.map((p,idx)=>`<div class="smartReportRow"><span>#${idx+1}</span><strong>${esc(formatBR(p.date))}</strong><strong>${esc(normalizeSlot(p.slot))}</strong><span>${esc(periodLabel(p.period||periodKey(p.slot)))} · ${esc(p.program||programForSlot(p.date,p.slot))} · ${esc(smartQuantityLabel(d,p.qty))}</span><span class="smartReportWhy">${esc(smartPlanReason(p,report.plans))}${num(p.qty)>1?' · MÚLTIPLOS GANHADORES NESTE HORÁRIO':''}</span></div>`).join('')
     : '<div class="smartReportEmpty">CADASTRE OU AJUSTE OS HORÁRIOS NA ABA HORÁRIOS E GERE NOVAMENTE.</div>';
   if(confirmBtn) confirmBtn.disabled=!report.plans.length;
 }
 function openSmartRadioReport(d){
   if(!d || num(d.ar)<=0) return false;
   const built=buildSmartRadioPlans(d);
-  pendingSmartRadioReport={distId:d.id,plans:built.plans,missing:built.missing,needed:built.needed,createdAt:new Date().toISOString()};
+  let plans=built.plans.map(plan=>({...plan,qty:1}));
+  let missing=built.missing;
+  let consolidated=false;
+  if(missing>0 && plans.length && isTicketDist(d)){
+    const total=built.needed;
+    const message=`A QUANTIDADE DESTINADA À RÁDIO (${total} ${distributionDeliveryUnit(d)==='pair'?'PARES':'UNIDADES'}) É MAIOR DO QUE OS HORÁRIOS LIVRES ENCONTRADOS (${plans.length}).\n\nDESEJA EQUILIBRAR A DISTRIBUIÇÃO ENTREGANDO 2, 3 OU ATÉ 4 ${distributionDeliveryUnit(d)==='pair'?'PARES':'PRÊMIOS'} EM ALGUNS HORÁRIOS?\n\nCANCELAR MANTÉM A OPÇÃO DE ESCOLHER OUTROS HORÁRIOS MANUALMENTE.`;
+    if(confirm(message)){
+      const packed=distributeSmartQuantities(plans,total,4);
+      plans=packed.plans;
+      missing=packed.remaining;
+      consolidated=true;
+    }
+  }
+  pendingSmartRadioReport={distId:d.id,plans,missing,needed:built.needed,consolidated,createdAt:new Date().toISOString()};
   renderSmartRadioReport(pendingSmartRadioReport);
   openDrawer('smartRadioReportDrawer');
   return true;
@@ -8979,9 +9013,9 @@ function confirmSmartRadioReport(){
   if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA. SALVE A DISTRIBUIÇÃO NOVAMENTE.'); return; }
   const validPlans=[];
   (report.plans||[]).forEach(p=>{
-    if(radioSlotConflicts(p.date,p.slot).length) return;
-    if(samePrizeRepeatConflicts(d,p.date,p.slot,validPlans).length) return;
-    validPlans.push(p);
+    if(radioSlotConflicts(p.date,p.slot,'','JP1017').length) return;
+    if(samePrizeRepeatConflicts(d,p.date,p.slot,validPlans,'','JP1017').length) return;
+    validPlans.push({...p,qty:Math.max(1,num(p.qty)||1)});
   });
   if(!validPlans.length){ alert('NENHUM HORÁRIO LIVRE PARA LANÇAR SEM VIOLAR A REGRA DE 2 DIAS. CLIQUE EM REFAZER / AJUSTAR HORÁRIOS.'); return; }
   const newItems=validPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
@@ -8999,7 +9033,7 @@ function confirmSmartRadioReport(){
   if($('programStationFilter')) $('programStationFilter').value='';
   if($('statusFilter')) $('statusFilter').value='';
   renderProgramacao();
-  toast(`${newItems.length} HORÁRIO(S) LANÇADO(S) NA PROGRAMAÇÃO.`);
+  toast(`${newItems.length} HORÁRIO(S) E ${newItems.reduce((sum,item)=>sum+num(item.qty),0)} PRÊMIO(S) LANÇADO(S) NA PROGRAMAÇÃO.`);
 }
 function redoSmartRadioReport(){
   const report=pendingSmartRadioReport;

@@ -784,7 +784,7 @@ function receptionRecordMonths(collection,idValue){
 function saveReceptionRecord(source,record){
   const collection=source==='item'?'items':'promos';
   const fields=source==='item'
-    ? ['deliveredAt','deliveredAtLabel','deliveredBy']
+    ? ['deliveredAt','deliveredAtLabel','deliveredBy','winnerNames','winnerDeliveries']
     : ['resultWinners','resultName','resultWinnersByHour'];
   const patch={updatedAt:new Date().toISOString()};
   fields.forEach(field=>{
@@ -860,26 +860,37 @@ function isExpiredNoPickup(dateValue){
 }
 function resultRowsForDate(date){
   selectMonthForDate(date);
-  const items=(monthData().items||[])
-    .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || upper(i.winnerName)))
-    .map(i=>{
-      const reg=i.resultAt || i.winnerAt || `${i.date||date}T${timeToHHMM(i.slot||'23:59')}:00`;
-      const deadline=deadlineInfo(reg,i.deliveredAt||'');
-      return {
-        source:'item',
-        id:i.id,
-        winnerIndex:-1,
-        time:formatTime(i.slot),
-        sort:`${date}T${timeToHHMM(i.slot)}`,
-        title:itemTitle(i),
-        sub:`${upper(i.program||'')} · ${channelName(i)}`,
-        result:upper(i.winnerName||'REALIZADO'),
-        deliveredAt:i.deliveredAt||'',
-        deliveredAtLabel:i.deliveredAtLabel||'',
-        deadlineLabel:deadline.label,
-        deadlineClass:deadline.className,
-        expired:!i.deliveredAt && deadline.expired
-      };
+  const items=[];
+  (monthData().items||[])
+    .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || upper(i.winnerName) || (Array.isArray(i.winnerNames)&&i.winnerNames.length)))
+    .forEach(i=>{
+      const names=(Array.isArray(i.winnerNames)&&i.winnerNames.length)
+        ? i.winnerNames.map(upper).filter(Boolean)
+        : String(i.winnerName||'').split(',').map(upper).filter(Boolean);
+      const winners=names.length?names:['REALIZADO'];
+      const deliveries=Array.isArray(i.winnerDeliveries)?i.winnerDeliveries:[];
+      winners.forEach((name,idx)=>{
+        const delivery=deliveries[idx]||{};
+        const reg=i.resultAt || i.winnerAt || `${i.date||date}T${timeToHHMM(i.slot||'23:59')}:00`;
+        const deliveredAt=delivery.deliveredAt || (winners.length===1?i.deliveredAt:'') || '';
+        const deliveredAtLabel=delivery.deliveredAtLabel || (winners.length===1?i.deliveredAtLabel:'') || '';
+        const deadline=deadlineInfo(reg,deliveredAt);
+        items.push({
+          source:'item',
+          id:i.id,
+          winnerIndex:idx,
+          time:formatTime(i.slot),
+          sort:`${date}T${timeToHHMM(i.slot)}`,
+          title:itemTitle(i),
+          sub:`${upper(i.program||'')} · ${channelName(i)}`,
+          result:name,
+          deliveredAt,
+          deliveredAtLabel,
+          deadlineLabel:deadline.label,
+          deadlineClass:deadline.className,
+          expired:!deliveredAt && deadline.expired
+        });
+      });
     });
   const promos=[];
   (monthData().promos||[])
@@ -923,14 +934,27 @@ function setPickup(row,undo=false){
   if(row.source==='item'){
     const item=(monthData().items||[]).find(i=>i.id===row.id);
     if(!item) return;
+    const names=(Array.isArray(item.winnerNames)&&item.winnerNames.length)
+      ? item.winnerNames.map(upper).filter(Boolean)
+      : String(item.winnerName||'').split(',').map(upper).filter(Boolean);
+    const idx=Math.max(0,Number(row.winnerIndex)||0);
+    item.winnerNames=names;
+    item.winnerDeliveries=Array.isArray(item.winnerDeliveries)?item.winnerDeliveries:[];
+    while(item.winnerDeliveries.length<names.length) item.winnerDeliveries.push({});
     if(undo){
-      item.deliveredAt='';
-      item.deliveredAtLabel='';
-      item.deliveredBy='';
+      item.winnerDeliveries[idx]={};
     }else{
-      item.deliveredAt=now.toISOString();
-      item.deliveredAtLabel=now.toLocaleString('pt-BR');
-      item.deliveredBy='RECEPCAO';
+      item.winnerDeliveries[idx]={
+        deliveredAt:now.toISOString(),
+        deliveredAtLabel:now.toLocaleString('pt-BR'),
+        deliveredBy:'RECEPCAO'
+      };
+    }
+    if(names.length===1){
+      const delivery=item.winnerDeliveries[0]||{};
+      item.deliveredAt=delivery.deliveredAt||'';
+      item.deliveredAtLabel=delivery.deliveredAtLabel||'';
+      item.deliveredBy=delivery.deliveredBy||'';
     }
     changedRecord=item;
   }else if(row.source==='promo'){
