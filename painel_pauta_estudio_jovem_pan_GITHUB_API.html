@@ -1928,7 +1928,10 @@ function slotHour(slot){const p=slotParts(slot);return p?p.hour:0;}
 function slotMinute(slot){const p=slotParts(slot);return p?p.minute:0;}
 function formatStudioTime(slot){const p=slotParts(slot);return p?`${pad(p.hour)}H${p.minute===30?'30':''}`:upper(slot||'--H');}
 function timeToHHMM(slot){const p=slotParts(slot);return p?`${pad(p.hour)}:${pad(p.minute)}`:'00:00';}
-function currentHourKey(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}`;}
+function currentHourKey(){
+  const d=currentSlotDate();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}-${pad(d.getMinutes())}`;
+}
 function dateISO(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
 function todayISO(){
   try{
@@ -1948,14 +1951,20 @@ function selectStudioMonth(){
 }
 
 function hourDateFromItem(item){return itemDateTime(item);}
-function currentHourDate(){const d=new Date();d.setMinutes(0,0,0);return d;}
+function currentSlotDate(){
+  const d=new Date();
+  d.setSeconds(0,0);
+  d.setMinutes(d.getMinutes()<30?0:30);
+  return d;
+}
+function currentHourDate(){return currentSlotDate();}
 function virtualItemFromDate(d){
   const date=dateISO(d);
-  const slot=`${pad(d.getHours())}:00`;
+  const slot=formatStudioTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
   const program=programFromSchedule(date,slot,STUDIO_STATION) || 'PROMOÇÕES';
-  return {id:'__VIRTUAL__',date,slot,program,title:'PROMOÇÕES',notes:'',__virtual:true};
+  return {id:'__VIRTUAL__',date,slot,program,title:'PROMOÇÕES',notes:'',__virtual:true,__hasScheduledPrize:false};
 }
-function virtualCurrentItem(){return virtualItemFromDate(currentHourDate());}
+function virtualCurrentItem(){return virtualItemFromDate(currentSlotDate());}
 function distributionById(id){return monthData().distributions?.find(d=>d.id===id)||null;}
 function safeFont(font){
   const opts=['Segoe UI','Arial','Calibri','Tahoma','Verdana','Trebuchet MS','Times New Roman','Georgia','Courier New','Impact','Lucida Console'];
@@ -2508,10 +2517,17 @@ function confirmPromoRead(){
   selectedPromoId=null;
   render();
 }
+function isScheduledStudioPrize(item){
+  if(!item || !item.date || !item.slot) return false;
+  if((item.station||'JP1017')!==STUDIO_STATION) return false;
+  const channel=upper(item.channel||'RÁDIO');
+  if(channel && channel!=='RÁDIO') return false;
+  if(upper(item.status||'')==='CANCELADO') return false;
+  return !!(item.prize || item.title || item.distributionId);
+}
 function allPrizeRows(){
   const items=[...(monthData().items||[])]
-    .filter(i=>i && i.date)
-    .filter(i=>(i.station||'JP1017')===STUDIO_STATION);
+    .filter(isScheduledStudioPrize);
   const virtualResults=promoResultVirtualRows();
   return [...items,...virtualResults]
     .sort((a,b)=>itemDateTime(a)-itemDateTime(b)||upper(a.program).localeCompare(upper(b.program)));
@@ -2520,28 +2536,38 @@ function sameHour(a,b){
   return a.getFullYear()===b.getFullYear() &&
          a.getMonth()===b.getMonth() &&
          a.getDate()===b.getDate() &&
-         a.getHours()===b.getHours();
+         a.getHours()===b.getHours() &&
+         a.getMinutes()===b.getMinutes();
 }
 function itemIndexForDate(rows,target){
   return rows.findIndex(i=>sameHour(itemDateTime(i),target));
 }
+function adaptiveItemIndexForDate(rows,target){
+  const exact=itemIndexForDate(rows,target);
+  if(exact>=0) return exact;
+
+  // Se o bloco atual é de meia hora e não existe item às HH30,
+  // mantém o prêmio da hora cheia durante a segunda metade da hora.
+  if(target.getMinutes()>=30){
+    const fullHour=new Date(target);
+    fullHour.setMinutes(0,0,0);
+    const fullIndex=itemIndexForDate(rows,fullHour);
+    if(fullIndex>=0) return fullIndex;
+  }
+  return -1;
+}
 function itemForDate(rows,target){
-  const idx=itemIndexForDate(rows,target);
-  return {idx,item:idx>=0?rows[idx]:virtualItemFromDate(target)};
+  const idx=adaptiveItemIndexForDate(rows,target);
+  if(idx>=0) return {idx,item:rows[idx],hasScheduledItem:true};
+  return {idx:-1,item:virtualItemFromDate(target),hasScheduledItem:false};
 }
 function currentHourIndex(rows){
-  return itemIndexForDate(rows,currentHourDate());
+  return adaptiveItemIndexForDate(rows,currentSlotDate());
 }
 function autoIndex(rows){
   if(!rows.length)return -1;
   const now=new Date();
-  const current = rows.findIndex(i=>{
-    const dt=itemDateTime(i);
-    return dt.getFullYear()===now.getFullYear() &&
-           dt.getMonth()===now.getMonth() &&
-           dt.getDate()===now.getDate() &&
-           dt.getHours()===now.getHours();
-  });
+  const current=adaptiveItemIndexForDate(rows,currentSlotDate());
   if(current>=0)return current;
   const upcoming=rows.findIndex(i=>itemDateTime(i)>=now);
   if(upcoming>=0)return upcoming;
@@ -2550,12 +2576,9 @@ function autoIndex(rows){
 function timeClass(item){
   const now=new Date();
   const dt=itemDateTime(item);
-  if(
-    dt.getFullYear()===now.getFullYear() &&
-    dt.getMonth()===now.getMonth() &&
-    dt.getDate()===now.getDate() &&
-    dt.getHours()===now.getHours()
-  ) return 'time-now';
+  const active=itemForDate(allPrizeRows(),currentSlotDate()).item;
+  if(item && active && !active.__virtual && item.id===active.id) return 'time-now';
+  if(item?.__virtual && sameHour(dt,currentSlotDate())) return 'time-now';
   if(dt < now) return 'time-past';
   return 'time-next';
 }
@@ -2587,8 +2610,8 @@ function saveWinner(){
 function step(delta){
   const base = manualHourDateMs !== null
     ? new Date(manualHourDateMs)
-    : (currentDisplayItem ? hourDateFromItem(currentDisplayItem) : currentHourDate());
-  base.setHours(base.getHours()+delta,0,0,0);
+    : (currentDisplayItem ? hourDateFromItem(currentDisplayItem) : currentSlotDate());
+  base.setMinutes(base.getMinutes()+(delta*30),0,0);
   manualHourDateMs=base.getTime();
   manual=true;
   selectedPromoId=null;
@@ -2652,6 +2675,7 @@ function render(){
     selectedIndex=found.idx;
     item=found.item;
   }
+  if(item && !item.__virtual) item.__hasScheduledPrize = item.sourceType!=='promo-result';
   currentDisplayItem=item;
   if(selectedPromoId && item && !allPautasForItemHour(item,true).some(p=>p.id===selectedPromoId)){
     selectedPromoId=null;
