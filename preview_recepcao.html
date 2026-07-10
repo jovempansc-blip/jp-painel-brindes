@@ -509,6 +509,84 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   }
 }
 
+
+/* === V33: AJUSTE FINO — CARD MAIS BAIXO, GANHADOR NO CENTRO REAL E BOTÕES MENORES === */
+.resultCard{
+  grid-template-columns:minmax(300px,1fr) minmax(220px,1fr) minmax(220px,1fr)!important;
+  min-height:72px!important;
+  padding:9px 14px!important;
+  gap:14px!important;
+}
+.resultLeft{
+  align-self:center!important;
+}
+.resultLeft .time{
+  flex:0 0 72px!important;
+  font-size:33px!important;
+}
+.winnerCenter{
+  align-self:center!important;
+  justify-self:center!important;
+  width:100%!important;
+  min-width:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+.winnerCenter .resultNameTag{
+  font-size:18px!important;
+  line-height:1!important;
+  transform:translateX(0)!important;
+}
+.resultRight{
+  min-width:0!important;
+  width:100%!important;
+  justify-self:end!important;
+  align-self:center!important;
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  gap:3px!important;
+}
+.resultRight .deadlineNote{
+  min-height:20px!important;
+  padding:0 7px!important;
+  font-size:7.4px!important;
+  max-width:200px!important;
+}
+.resultRight .pickupStatus{
+  min-height:24px!important;
+  padding:0 9px!important;
+  font-size:8px!important;
+  letter-spacing:.035em!important;
+}
+.resultRight .undoPickupBtn{
+  min-height:18px!important;
+  padding:0 7px!important;
+  font-size:6.7px!important;
+  line-height:1!important;
+}
+.resultRight .pickupBtn{
+  min-height:26px!important;
+  padding:0 10px!important;
+  font-size:8.5px!important;
+}
+@media(max-width:900px){
+  .resultCard{
+    grid-template-columns:1fr!important;
+    min-height:auto!important;
+  }
+  .winnerCenter{
+    justify-content:flex-start!important;
+    text-align:left!important;
+  }
+  .resultRight{
+    align-items:flex-start!important;
+    justify-content:flex-start!important;
+  }
+}
+
 </style>
 </head>
 <body>

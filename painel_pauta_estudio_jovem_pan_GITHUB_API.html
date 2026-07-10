@@ -1664,6 +1664,24 @@ body{
   }
 }
 
+
+/* === V34: CAMADAS DOS MODAIS DO ESTÚDIO === */
+.modalBackdrop{
+  z-index:10000!important;
+  isolation:isolate!important;
+}
+.modalBackdrop.show{
+  display:flex!important;
+}
+.modalBackdrop .modalCard{
+  position:relative!important;
+  z-index:10001!important;
+}
+.modalBackdrop.show ~ .promoList,
+.modalBackdrop.show ~ .headNav{
+  pointer-events:none!important;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>

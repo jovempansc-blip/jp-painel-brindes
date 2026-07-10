@@ -2817,6 +2817,55 @@ button.danger,
   opacity:.92;
 }
 
+
+/* === V34: CORREÇÃO GLOBAL DE CAMADAS / MODAIS ===
+   Garante que nenhum botão de card/tabela fique por cima de drawer/modal aberto. */
+.drawer{
+  z-index:10000!important;
+  isolation:isolate!important;
+}
+.drawer.open{
+  display:flex!important;
+}
+.drawerCard{
+  position:relative!important;
+  z-index:10001!important;
+}
+.toast{
+  z-index:10020!important;
+}
+body.drawer-open{
+  overflow:hidden!important;
+}
+body.drawer-open #view-programacao .programActions,
+body.drawer-open #view-programacao .programSide,
+body.drawer-open #view-programacao .programActions button,
+body.drawer-open #view-programacao .programFilterActions,
+body.drawer-open #view-programacao #addProgramBtn,
+body.drawer-open #view-programacao #clearProgramBtn,
+body.drawer-open .promoActions,
+body.drawer-open .distActions,
+body.drawer-open .programActions,
+body.drawer-open .actionIcon,
+body.drawer-open .iconBtn:not(.drawer .iconBtn),
+body.drawer-open .btn:not(.drawer .btn){
+  z-index:1!important;
+}
+body.drawer-open #view-programacao .programActions,
+body.drawer-open .promoActions,
+body.drawer-open .distActions{
+  pointer-events:none!important;
+  opacity:.08!important;
+}
+.drawer .btn,
+.drawer .iconBtn,
+.drawer .actionIcon,
+.drawer button{
+  pointer-events:auto!important;
+  position:relative;
+  z-index:2!important;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -7782,9 +7831,37 @@ function setView(view){
   if(view !== 'programacao') activeDistributionFilter='';
   render();
 }
-function openDrawer(id){ const el=$(id); el.classList.add('open'); el.setAttribute('aria-hidden','false'); setEmptyDateFieldsToToday(el); }
-function closeDrawer(id){ $(id).classList.remove('open'); $(id).setAttribute('aria-hidden','true'); }
+function syncDrawerLayerState(){
+  const hasOpen=!!document.querySelector('.drawer.open');
+  document.body.classList.toggle('drawer-open',hasOpen);
+}
+function openDrawer(id){
+  const el=$(id);
+  if(!el) return;
+  el.classList.add('open');
+  el.setAttribute('aria-hidden','false');
+  document.body.classList.add('drawer-open');
+  setEmptyDateFieldsToToday(el);
+}
+function closeDrawer(id){
+  const el=$(id);
+  if(!el) return;
+  el.classList.remove('open');
+  el.setAttribute('aria-hidden','true');
+  syncDrawerLayerState();
+}
 $$('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeDrawer(btn.dataset.close)));
+
+document.addEventListener('keydown',event=>{
+  if(event.key!=='Escape') return;
+  const openDrawers=$$('.drawer.open');
+  if(!openDrawers.length) return;
+  const top=openDrawers[openDrawers.length-1];
+  top.classList.remove('open');
+  top.setAttribute('aria-hidden','true');
+  syncDrawerLayerState();
+});
+
 $$('.tabBtn').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.view)));
 
 
