@@ -2894,6 +2894,37 @@ body.drawer-open .distActions{
 .smartReportRow{grid-template-columns:46px 112px 78px minmax(150px,1fr) 120px minmax(190px,1.1fr)!important}
 @media(max-width:900px){.smartReportRow{grid-template-columns:1fr!important}.smartQtyControl{justify-content:flex-start}.smartQtyMeta{text-align:left}}
 
+
+.smartPlanDate,.smartPlanSlot{
+  width:100%;
+  min-height:34px;
+  border:1px solid #d8e1ec;
+  border-radius:10px;
+  background:#fff;
+  color:#171c26;
+  padding:0 8px;
+  font-size:10px;
+  font-weight:1000;
+  text-transform:uppercase;
+}
+.smartPlanDate:focus,.smartPlanSlot:focus{
+  outline:none;
+  border-color:#b90d2f;
+  box-shadow:0 0 0 3px rgba(185,13,47,.08);
+}
+.smartPlanProgram{
+  display:block;
+  margin-top:4px;
+  color:#667283;
+  font-size:8px;
+  font-weight:1000;
+  line-height:1.3;
+}
+.smartPlanInvalid{
+  border-color:#f3b5c0!important;
+  background:#fff5f7!important;
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -8791,7 +8822,8 @@ function buildSmartRadioPlans(d){
   const allowed=[...new Set(rotationAllowedSlots(d).map(normalizeSlot))].sort((a,b)=>slotOrder(a)-slotOrder(b));
   const slotsByPeriod=rotationSlotsByPeriod(allowed);
   const maxPerDay=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1));
-  const dates=dateRangeBetween(distStartDate(d),distEndDate(d)).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
+  const dates=dateRangeBetween(distStartDate(d),distEndDate(d))
+    .filter(date=>eligibleRotationSlotsForDate(date,'JP1017').length>0);
   const seed=smartRadioSeed(`${d.id}|${distributionLabel(d)}|${distStartDate(d)}|${distEndDate(d)}|${allowed.join(',')}`);
 
   const existingRadio=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
@@ -8816,12 +8848,17 @@ function buildSmartRadioPlans(d){
   const candidatesByDay=new Map();
   dates.forEach((date,dayIndex)=>{
     const dayCandidates=[];
-    allowed.forEach(slot=>{
+    const validDaySlots=eligibleRotationSlotsForDate(date,'JP1017');
+    const usableSlots=allowed.filter(slot=>validDaySlots.includes(slot));
+    usableSlots.forEach(slot=>{
+      const program=programFromSchedule(date,slot,'JP1017');
+      if(!program) return;
       const period=periodKey(slot);
-      if(radioSlotConflicts(date,slot).length) return;
+      if(radioSlotConflicts(date,slot,'','JP1017').length) return;
       dayCandidates.push({
         date,
         slot,
+        program,
         period,
         dayIndex,
         targetSlot:periodRotationTargetSlot(slotsByPeriod[period]||[],dayIndex,0,seed),
@@ -8891,7 +8928,7 @@ function buildSmartRadioPlans(d){
       plans.push({
         date:chosen.date,
         slot:chosen.slot,
-        program:programForSlot(chosen.date,chosen.slot),
+        program:chosen.program||programFromSchedule(chosen.date,chosen.slot,'JP1017'),
         key:radioSlotKey(chosen.date,chosen.slot),
         period:chosen.period
       });
@@ -8999,6 +9036,57 @@ function autoBalanceSmartQuantities(){
   report.missing=smartRemainingQuantity(report);
   renderSmartRadioReport(report);
 }
+function smartValidDates(report){
+  const d=distributionById(report?.distId);
+  if(!d) return [];
+  return dateRangeBetween(distStartDate(d),distEndDate(d))
+    .filter(date=>eligibleRotationSlotsForDate(date,'JP1017').length>0);
+}
+function smartValidSlots(report,date){
+  const d=distributionById(report?.distId);
+  if(!d||!date) return [];
+  const allowed=new Set(rotationAllowedSlots(d));
+  return eligibleRotationSlotsForDate(date,'JP1017')
+    .filter(slot=>allowed.has(slot))
+    .filter(slot=>!!programFromSchedule(date,slot,'JP1017'))
+    .sort((a,b)=>slotOrder(a)-slotOrder(b));
+}
+function updateSmartPlanDate(index,date){
+  const report=pendingSmartRadioReport;
+  const plan=report?.plans?.[index];
+  if(!plan) return;
+  const slots=smartValidSlots(report,date);
+  if(!slots.length) return;
+  const nextSlot=slots.includes(normalizeSlot(plan.slot))?normalizeSlot(plan.slot):slots[0];
+  plan.date=date;
+  plan.slot=nextSlot;
+  plan.program=programFromSchedule(date,nextSlot,'JP1017');
+  plan.period=periodKey(nextSlot);
+  plan.key=radioSlotKey(date,nextSlot,'JP1017');
+  renderSmartRadioReport(report);
+}
+function updateSmartPlanSlot(index,slot){
+  const report=pendingSmartRadioReport;
+  const plan=report?.plans?.[index];
+  if(!plan) return;
+  const normalized=normalizeSlot(slot);
+  const valid=smartValidSlots(report,plan.date);
+  if(!valid.includes(normalized)) return;
+  plan.slot=normalized;
+  plan.program=programFromSchedule(plan.date,normalized,'JP1017');
+  plan.period=periodKey(normalized);
+  plan.key=radioSlotKey(plan.date,normalized,'JP1017');
+  renderSmartRadioReport(report);
+}
+function smartPlanIssue(report,plan,index){
+  const validSlots=smartValidSlots(report,plan.date);
+  if(!validSlots.includes(normalizeSlot(plan.slot))) return 'HORÁRIO FORA DA GRADE DESTE DIA';
+  if(!programFromSchedule(plan.date,plan.slot,'JP1017')) return 'PROGRAMA NÃO CADASTRADO PARA ESTE DIA';
+  if(radioSlotConflicts(plan.date,plan.slot,'','JP1017').length) return 'HORÁRIO JÁ OCUPADO';
+  const duplicate=(report.plans||[]).some((other,otherIndex)=>otherIndex!==index&&other.date===plan.date&&normalizeSlot(other.slot)===normalizeSlot(plan.slot));
+  if(duplicate) return 'DATA E HORÁRIO REPETIDOS NA SELEÇÃO';
+  return '';
+}
 function renderSmartRadioReport(report){
   const summary=$('smartRadioReportSummary'), list=$('smartRadioReportList'), confirmBtn=$('confirmSmartRadioBtn');
   if(!summary||!list) return;
@@ -9036,11 +9124,19 @@ function renderSmartRadioReport(report){
     ? report.plans.map((p,idx)=>{
         const qty=Math.max(1,num(p.qty)||1);
         const remaining=smartRemainingQuantity(report);
-        return `<div class="smartReportRow">
+        const dates=smartValidDates(report);
+        const slots=smartValidSlots(report,p.date);
+        const issue=smartPlanIssue(report,p,idx);
+        const program=programFromSchedule(p.date,p.slot,'JP1017');
+        return `<div class="smartReportRow ${issue?'smartPlanInvalid':''}">
           <span>#${idx+1}</span>
-          <strong>${esc(formatBR(p.date))}</strong>
-          <strong>${esc(normalizeSlot(p.slot))}</strong>
-          <span>${esc(periodLabel(p.period||periodKey(p.slot)))} · ${esc(p.program||programForSlot(p.date,p.slot))}</span>
+          <select class="smartPlanDate" onchange="updateSmartPlanDate(${idx},this.value)">
+            ${dates.map(date=>`<option value="${esc(date)}" ${date===p.date?'selected':''}>${esc(formatBR(date))}</option>`).join('')}
+          </select>
+          <select class="smartPlanSlot" onchange="updateSmartPlanSlot(${idx},this.value)">
+            ${slots.map(slot=>`<option value="${esc(slot)}" ${normalizeSlot(slot)===normalizeSlot(p.slot)?'selected':''}>${esc(slot)}</option>`).join('')}
+          </select>
+          <span>${esc(periodLabel(p.period||periodKey(p.slot)))}<span class="smartPlanProgram">${esc(program||'SEM PROGRAMA CADASTRADO')}</span></span>
           <div>
             <div class="smartQtyControl">
               <button type="button" onclick="changeSmartPlanQuantity(${idx},-1)" ${qty<=1?'disabled':''}>−</button>
@@ -9049,11 +9145,12 @@ function renderSmartRadioReport(report){
             </div>
             <span class="smartQtyMeta">${esc(smartQuantityLabel(d,qty))}</span>
           </div>
-          <span class="smartReportWhy">${esc(smartPlanReason(p,report.plans))}${qty>1?' · MÚLTIPLOS GANHADORES NESTE HORÁRIO':''}</span>
+          <span class="smartReportWhy">${issue?esc(issue):esc(smartPlanReason(p,report.plans))}${qty>1?' · MÚLTIPLOS GANHADORES NESTE HORÁRIO':''}</span>
         </div>`;
       }).join('')
     : '<div class="smartReportEmpty">CADASTRE OU AJUSTE OS HORÁRIOS NA ABA HORÁRIOS E GERE NOVAMENTE.</div>';
-  if(confirmBtn) confirmBtn.disabled=!report.plans.length || report.missing>0;
+  const hasInvalid=(report.plans||[]).some((plan,index)=>!!smartPlanIssue(report,plan,index));
+  if(confirmBtn) confirmBtn.disabled=!report.plans.length || report.missing>0 || hasInvalid;
 }
 function openSmartRadioReport(d){
   if(!d || num(d.ar)<=0) return false;
@@ -9076,13 +9173,26 @@ function confirmSmartRadioReport(){
   if(!report){ alert('NENHUM RELATÓRIO GERADO.'); return; }
   const d=distributionById(report.distId);
   if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA. SALVE A DISTRIBUIÇÃO NOVAMENTE.'); return; }
+  if(smartRemainingQuantity(report)>0){
+    alert(`AINDA FALTAM ${smartRemainingQuantity(report)} PRÊMIO(S) PARA DISTRIBUIR.`);
+    return;
+  }
+  const issues=(report.plans||[]).map((p,index)=>smartPlanIssue(report,p,index)).filter(Boolean);
+  if(issues.length){
+    alert(`CORRIJA A DISTRIBUIÇÃO ANTES DE CONFIRMAR:\n\n${[...new Set(issues)].join('\n')}`);
+    return;
+  }
   const validPlans=[];
   (report.plans||[]).forEach(p=>{
-    if(radioSlotConflicts(p.date,p.slot,'','JP1017').length) return;
+    const program=programFromSchedule(p.date,p.slot,'JP1017');
+    if(!program) return;
     if(samePrizeRepeatConflicts(d,p.date,p.slot,validPlans,'','JP1017').length) return;
-    validPlans.push({...p,qty:Math.max(1,num(p.qty)||1)});
+    validPlans.push({...p,program,qty:Math.max(1,num(p.qty)||1)});
   });
-  if(!validPlans.length){ alert('NENHUM HORÁRIO LIVRE PARA LANÇAR SEM VIOLAR A REGRA DE 2 DIAS. CLIQUE EM REFAZER / AJUSTAR HORÁRIOS.'); return; }
+  if(validPlans.length!==(report.plans||[]).length){
+    alert('UM OU MAIS HORÁRIOS VIOLAM A REGRA DE RODÍZIO. AJUSTE DATA OU HORÁRIO.');
+    return;
+  }
   const newItems=validPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
   monthData().items.push(...newItems);
   pendingSmartRadioReport=null;
