@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Painel da Direção — Jovem Pan Floripa</title>
+<title>Painel de Operação e Programação — Jovem Pan Floripa</title>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 <style>
@@ -209,6 +209,109 @@ button{cursor:pointer}
   .syncBlock{align-items:flex-start;flex-direction:column}
   .updated{text-align:left}
 }
+
+/* === V44: CABEÇALHO COM MAIS RESPIRO === */
+.executiveHeader{
+  grid-template-columns:minmax(0,1fr) auto!important;
+  grid-template-areas:
+    "brand sync"
+    "filters filters"!important;
+  gap:13px 22px!important;
+  padding:16px 20px!important;
+}
+.brandBlock{
+  grid-area:brand;
+  gap:18px!important;
+  min-width:0;
+}
+.brandLogo{
+  width:245px!important;
+  max-height:56px!important;
+}
+.brandCopy{
+  padding-left:18px!important;
+  min-width:0;
+}
+.brandCopy h1{
+  max-width:520px;
+  font-size:21px!important;
+  line-height:1.08!important;
+  letter-spacing:-.035em!important;
+  white-space:normal;
+}
+.brandCopy p{
+  display:none!important;
+}
+.headerFilters{
+  grid-area:filters;
+  width:min(760px,100%);
+  grid-template-columns:repeat(3,minmax(180px,1fr))!important;
+  gap:10px!important;
+  justify-self:center;
+}
+.field{
+  gap:5px!important;
+}
+.field label{
+  font-size:8px!important;
+}
+.control{
+  height:40px!important;
+  font-size:10.5px!important;
+  padding:0 12px!important;
+}
+.syncBlock{
+  grid-area:sync;
+  justify-content:flex-end!important;
+  align-self:center;
+}
+.syncBadge{
+  min-height:30px!important;
+  padding:0 10px!important;
+}
+.updated{
+  max-width:220px;
+  line-height:1.25!important;
+}
+@media(max-width:1080px){
+  .executiveHeader{
+    grid-template-columns:1fr!important;
+    grid-template-areas:
+      "brand"
+      "filters"
+      "sync"!important;
+  }
+  .syncBlock{
+    justify-content:flex-start!important;
+  }
+  .headerFilters{
+    justify-self:stretch;
+  }
+}
+@media(max-width:680px){
+  .brandBlock{
+    flex-direction:column;
+    align-items:flex-start!important;
+  }
+  .brandCopy{
+    border-left:0!important;
+    padding-left:0!important;
+  }
+  .brandLogo{
+    width:min(290px,100%)!important;
+  }
+  .headerFilters{
+    grid-template-columns:1fr!important;
+  }
+  .syncBlock{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .updated{
+    text-align:left!important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -218,8 +321,7 @@ button{cursor:pointer}
       <img class="brandLogo" src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan Floripa" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
       <div class="brandFallback">WORKSPACE | JOVEM PAN FLORIPA</div>
       <div class="brandCopy">
-        <h1>PAINEL DA DIREÇÃO</h1>
-        <p>VISÃO EXECUTIVA DE BRINDES, PROGRAMAÇÃO E OPERAÇÃO</p>
+        <h1>PAINEL DE OPERAÇÃO E PROGRAMAÇÃO</h1>
       </div>
     </div>
     <div class="headerFilters">
