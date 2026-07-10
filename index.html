@@ -2925,6 +2925,78 @@ body.drawer-open .distActions{
   background:#fff5f7!important;
 }
 
+
+.smartChoicePanel{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:10px;
+}
+.smartChoiceCard{
+  border:1px solid #dfe5ec;
+  border-radius:14px;
+  background:#fff;
+  padding:10px;
+}
+.smartChoiceCard strong{
+  display:block;
+  margin-bottom:6px;
+  color:#273142;
+  font-size:10px;
+}
+.smartChoiceRow{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 78px auto;
+  gap:7px;
+  align-items:center;
+}
+.smartChoiceRow.two{
+  grid-template-columns:1fr 1fr auto;
+}
+.smartChoiceRow select,
+.smartChoiceRow input{
+  width:100%;
+  min-height:34px;
+  border:1px solid #d9e1eb;
+  border-radius:10px;
+  background:#fff;
+  color:#263142;
+  padding:0 9px;
+  font-size:9px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.smartChoiceRow .btn{
+  min-height:34px;
+  padding:0 10px;
+  font-size:9px;
+  border-radius:10px;
+}
+.smartChoiceHint{
+  display:block;
+  margin-top:6px;
+  color:#6b7687;
+  font-size:8px;
+  line-height:1.35;
+}
+.smartExistingTag{
+  display:inline-flex;
+  align-items:center;
+  min-height:22px;
+  padding:0 7px;
+  margin-top:5px;
+  border-radius:999px;
+  border:1px solid #cfe0ff;
+  background:#eef5ff;
+  color:#2567b7;
+  font-size:7.5px;
+  font-weight:1000;
+}
+@media(max-width:900px){
+  .smartChoicePanel{grid-template-columns:1fr}
+  .smartChoiceRow,.smartChoiceRow.two{grid-template-columns:1fr}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -8765,7 +8837,8 @@ function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
     distributionId:d.id,
     prize:distributionLabel(d),
     title:d.title||distributionLabel(d),
-    qty:1,
+    qty:Math.max(1,num(plan.qty)||1),
+    winnerCapacity:Math.max(1,num(plan.qty)||1),
     channel:'RÁDIO',
     status:'PENDENTE',
     notes:d.description||d.notes||'',
@@ -9082,10 +9155,87 @@ function smartPlanIssue(report,plan,index){
   const validSlots=smartValidSlots(report,plan.date);
   if(!validSlots.includes(normalizeSlot(plan.slot))) return 'HORÁRIO FORA DA GRADE DESTE DIA';
   if(!programFromSchedule(plan.date,plan.slot,'JP1017')) return 'PROGRAMA NÃO CADASTRADO PARA ESTE DIA';
+  if(plan.existingItemId){
+    const linked=smartExistingItems(report).find(item=>item.id===plan.existingItemId);
+    if(!linked) return 'HORÁRIO PROGRAMADO NÃO ENCONTRADO';
+    return '';
+  }
   if(radioSlotConflicts(plan.date,plan.slot,'','JP1017').length) return 'HORÁRIO JÁ OCUPADO';
-  const duplicate=(report.plans||[]).some((other,otherIndex)=>otherIndex!==index&&other.date===plan.date&&normalizeSlot(other.slot)===normalizeSlot(plan.slot));
+  const duplicate=(report.plans||[]).some((other,otherIndex)=>otherIndex!==index&&!other.existingItemId&&other.date===plan.date&&normalizeSlot(other.slot)===normalizeSlot(plan.slot));
   if(duplicate) return 'DATA E HORÁRIO REPETIDOS NA SELEÇÃO';
   return '';
+}
+function smartExistingItems(report){
+  const d=distributionById(report?.distId);
+  if(!d) return [];
+  return radioItemsInPeriod(distStartDate(d),distEndDate(d))
+    .filter(item=>itemStation(item)==='JP1017')
+    .filter(item=>normalizeChannel(item.channel)==='RÁDIO')
+    .filter(item=>normalizeStatus(item.status)!=='CANCELADO')
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||slotOrder(a.slot)-slotOrder(b.slot));
+}
+function smartFreeChoices(report){
+  const d=distributionById(report?.distId);
+  if(!d) return [];
+  const rows=[];
+  smartValidDates(report).forEach(date=>{
+    smartValidSlots(report,date).forEach(slot=>{
+      if(radioSlotConflicts(date,slot,'','JP1017').length) return;
+      rows.push({date,slot,program:programFromSchedule(date,slot,'JP1017')});
+    });
+  });
+  return rows;
+}
+function addSmartExistingSchedule(){
+  const report=pendingSmartRadioReport;
+  if(!report) return;
+  const select=$('smartExistingSchedule');
+  const qtyInput=$('smartExistingQty');
+  const itemId=select?.value||'';
+  const qty=Math.max(1,Math.min(4,num(qtyInput?.value)||1));
+  const item=smartExistingItems(report).find(row=>row.id===itemId);
+  if(!item) return;
+  const remaining=smartRemainingQuantity(report);
+  if(remaining<=0) return;
+  const addQty=Math.min(qty,remaining);
+  const existingPlan=report.plans.find(plan=>plan.existingItemId===item.id);
+  if(existingPlan) existingPlan.qty=Math.min(4,num(existingPlan.qty)+addQty);
+  else report.plans.push({
+    date:item.date,
+    slot:normalizeSlot(item.slot),
+    program:item.program||programFromSchedule(item.date,item.slot,'JP1017'),
+    period:periodKey(item.slot),
+    qty:addQty,
+    existingItemId:item.id,
+    existingBaseQty:Math.max(1,num(item.qty)||1),
+    key:radioSlotKey(item.date,item.slot,'JP1017')
+  });
+  report.missing=smartRemainingQuantity(report);
+  renderSmartRadioReport(report);
+}
+function addSmartNewSchedule(){
+  const report=pendingSmartRadioReport;
+  if(!report) return;
+  const select=$('smartNewSchedule');
+  const qtyInput=$('smartNewQty');
+  const value=select?.value||'';
+  if(!value) return;
+  const [date,slot]=value.split('|');
+  const choice=smartFreeChoices(report).find(row=>row.date===date&&normalizeSlot(row.slot)===normalizeSlot(slot));
+  if(!choice) return;
+  const remaining=smartRemainingQuantity(report);
+  if(remaining<=0) return;
+  const qty=Math.min(Math.max(1,Math.min(4,num(qtyInput?.value)||1)),remaining);
+  report.plans.push({
+    date:choice.date,
+    slot:normalizeSlot(choice.slot),
+    program:choice.program,
+    period:periodKey(choice.slot),
+    qty,
+    key:radioSlotKey(choice.date,choice.slot,'JP1017')
+  });
+  report.missing=smartRemainingQuantity(report);
+  renderSmartRadioReport(report);
 }
 function renderSmartRadioReport(report){
   const summary=$('smartRadioReportSummary'), list=$('smartRadioReportList'), confirmBtn=$('confirmSmartRadioBtn');
@@ -9098,11 +9248,39 @@ function renderSmartRadioReport(report){
   const assigned=smartAssignedQuantity(report);
   const total=num(report.needed);
   const needsConcentration=isTicketDist(d) && total>report.plans.length;
+  const existingChoices=smartExistingItems(report);
+  const freeChoices=smartFreeChoices(report);
   const concentrationHtml=needsConcentration?`
     <div class="smartConcentrationBox">
-      <strong>A QUANTIDADE DE ${total} ${distributionDeliveryUnit(d)==='pair'?'PARES':'PRÊMIOS'} É MAIOR QUE OS ${report.plans.length} HORÁRIOS LIVRES.</strong>
-      <span>ESCOLHA EM QUAL HORÁRIO DESEJA CONCENTRAR MAIS DE UM ${distributionDeliveryUnit(d)==='pair'?'PAR':'PRÊMIO'}. USE OS BOTÕES − E + EM CADA LINHA. LIMITE DE 4 POR HORÁRIO.</span>
-      ${report.missing>0?`<div style="margin-top:8px"><button class="btn small" type="button" onclick="autoBalanceSmartQuantities()">DISTRIBUIR EXCEDENTE AUTOMATICAMENTE</button></div>`:''}
+      <strong>A QUANTIDADE DE ${total} ${distributionDeliveryUnit(d)==='pair'?'PARES':'PRÊMIOS'} É MAIOR QUE OS HORÁRIOS LIVRES.</strong>
+      <span>ESCOLHA UM HORÁRIO JÁ PROGRAMADO PARA ACRESCENTAR MAIS GANHADORES OU CRIE UM NOVO HORÁRIO VÁLIDO DENTRO DA GRADE.</span>
+      <div class="smartChoicePanel">
+        <div class="smartChoiceCard">
+          <strong>USAR HORÁRIO JÁ PROGRAMADO</strong>
+          <div class="smartChoiceRow">
+            <select id="smartExistingSchedule">
+              <option value="">SELECIONE O DIA E HORÁRIO</option>
+              ${existingChoices.map(item=>`<option value="${esc(item.id)}">${esc(formatBR(item.date))} · ${esc(normalizeSlot(item.slot))} · ${esc(item.program||programFromSchedule(item.date,item.slot,'JP1017'))} · ATUAL ${Math.max(1,num(item.qty)||1)}</option>`).join('')}
+            </select>
+            <input id="smartExistingQty" type="number" min="1" max="4" value="1" title="QUANTIDADE ADICIONAL">
+            <button class="btn small" type="button" onclick="addSmartExistingSchedule()" ${!existingChoices.length?'disabled':''}>ADICIONAR</button>
+          </div>
+          <span class="smartChoiceHint">A QUANTIDADE SERÁ SOMADA AO PRÊMIO JÁ EXISTENTE E O ESTÚDIO LIBERARÁ MAIS GANHADORES.</span>
+        </div>
+        <div class="smartChoiceCard">
+          <strong>CRIAR NOVO HORÁRIO</strong>
+          <div class="smartChoiceRow">
+            <select id="smartNewSchedule">
+              <option value="">SELECIONE O DIA E HORÁRIO</option>
+              ${freeChoices.map(row=>`<option value="${esc(row.date)}|${esc(normalizeSlot(row.slot))}">${esc(formatBR(row.date))} · ${esc(normalizeSlot(row.slot))} · ${esc(row.program)}</option>`).join('')}
+            </select>
+            <input id="smartNewQty" type="number" min="1" max="4" value="1" title="QUANTIDADE">
+            <button class="btn small" type="button" onclick="addSmartNewSchedule()" ${!freeChoices.length?'disabled':''}>CRIAR</button>
+          </div>
+          <span class="smartChoiceHint">${freeChoices.length?'SOMENTE DIAS E HORÁRIOS VÁLIDOS DA ABA HORÁRIOS SÃO MOSTRADOS.':'NÃO HÁ NOVO HORÁRIO LIVRE NA GRADE; USE UM HORÁRIO JÁ PROGRAMADO.'}</span>
+        </div>
+      </div>
+      ${report.missing>0&&report.plans.length?`<div style="margin-top:8px"><button class="btn small" type="button" onclick="autoBalanceSmartQuantities()">DISTRIBUIR EXCEDENTE AUTOMATICAMENTE</button></div>`:''}
     </div>`:'';
   summary.innerHTML=`
     ${concentrationHtml}
@@ -9136,7 +9314,7 @@ function renderSmartRadioReport(report){
           <select class="smartPlanSlot" onchange="updateSmartPlanSlot(${idx},this.value)">
             ${slots.map(slot=>`<option value="${esc(slot)}" ${normalizeSlot(slot)===normalizeSlot(p.slot)?'selected':''}>${esc(slot)}</option>`).join('')}
           </select>
-          <span>${esc(periodLabel(p.period||periodKey(p.slot)))}<span class="smartPlanProgram">${esc(program||'SEM PROGRAMA CADASTRADO')}</span></span>
+          <span>${esc(periodLabel(p.period||periodKey(p.slot)))}<span class="smartPlanProgram">${esc(program||'SEM PROGRAMA CADASTRADO')}</span>${p.existingItemId?'<span class="smartExistingTag">ACRÉSCIMO EM HORÁRIO EXISTENTE</span>':''}</span>
           <div>
             <div class="smartQtyControl">
               <button type="button" onclick="changeSmartPlanQuantity(${idx},-1)" ${qty<=1?'disabled':''}>−</button>
@@ -9186,14 +9364,23 @@ function confirmSmartRadioReport(){
   (report.plans||[]).forEach(p=>{
     const program=programFromSchedule(p.date,p.slot,'JP1017');
     if(!program) return;
-    if(samePrizeRepeatConflicts(d,p.date,p.slot,validPlans,'','JP1017').length) return;
+    if(!p.existingItemId && samePrizeRepeatConflicts(d,p.date,p.slot,validPlans,'','JP1017').length) return;
     validPlans.push({...p,program,qty:Math.max(1,num(p.qty)||1)});
   });
   if(validPlans.length!==(report.plans||[]).length){
     alert('UM OU MAIS HORÁRIOS VIOLAM A REGRA DE RODÍZIO. AJUSTE DATA OU HORÁRIO.');
     return;
   }
-  const newItems=validPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
+  const newPlans=validPlans.filter(plan=>!plan.existingItemId);
+  const linkedPlans=validPlans.filter(plan=>plan.existingItemId);
+  linkedPlans.forEach(plan=>{
+    const item=(monthData().items||[]).find(row=>row.id===plan.existingItemId);
+    if(!item) return;
+    item.qty=Math.max(1,num(item.qty)||1)+Math.max(1,num(plan.qty)||1);
+    item.winnerCapacity=item.qty;
+    item.updatedAt=new Date().toISOString();
+  });
+  const newItems=newPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
   monthData().items.push(...newItems);
   pendingSmartRadioReport=null;
   saveState(true);
@@ -9208,7 +9395,9 @@ function confirmSmartRadioReport(){
   if($('programStationFilter')) $('programStationFilter').value='';
   if($('statusFilter')) $('statusFilter').value='';
   renderProgramacao();
-  toast(`${newItems.length} HORÁRIO(S) E ${newItems.reduce((sum,item)=>sum+num(item.qty),0)} PRÊMIO(S) LANÇADO(S) NA PROGRAMAÇÃO.`);
+  const addedToExisting=linkedPlans.reduce((sum,plan)=>sum+num(plan.qty),0);
+  const createdQty=newItems.reduce((sum,item)=>sum+num(item.qty),0);
+  toast(`${newItems.length} NOVO(S) HORÁRIO(S) · ${addedToExisting+createdQty} PRÊMIO(S) DISTRIBUÍDO(S).`);
 }
 function redoSmartRadioReport(){
   const report=pendingSmartRadioReport;
