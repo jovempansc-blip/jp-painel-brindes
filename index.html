@@ -6107,17 +6107,22 @@ async function importLegacyStateToFirebase(){
 function applyRemoteFirebaseState(remoteState){
   if(!remoteState || !remoteState.months) return;
   firebaseApplyingRemote = true;
-  const openMonth=firebaseServerLoaded ? state.currentMonth : '';
-  firebaseBaseEmpty = false;
-  firebaseBaselineState=clone(remoteState);
-  state = normalizePanelState(clone(remoteState));
-  if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
-  firebaseServerLoaded = true;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));
-  setOfficialCalendarMonth(false);
-  render();
-  firebaseApplyingRemote = false;
+  try{
+    const openMonth=firebaseServerLoaded ? state.currentMonth : '';
+    firebaseBaseEmpty = false;
+    firebaseBaselineState=clone(remoteState);
+    state = normalizePanelState(clone(remoteState));
+    if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
+    firebaseServerLoaded = true;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));
+    setOfficialCalendarMonth(false);
+    render();
+  }catch(error){
+    console.error('FIREBASE STATE RENDER ERROR',error);
+  }finally{
+    firebaseApplyingRemote = false;
+  }
 }
 async function handleEmptyFirebase(){
   // O Firebase é a fonte oficial. Navegador local nunca envia dados automaticamente
@@ -8303,11 +8308,16 @@ function winnerRegisteredDate(p,w){
   const dt=new Date(value);
   return Number.isNaN(dt.getTime()) ? null : dt;
 }
+function returnItemPrize(item,month){
+  const distribution=(month?.distributions||[]).find(d=>d?.id===item?.distributionId)||{};
+  return norm(item?.prize||item?.title||distribution.prize||distribution.title||'PRÊMIO');
+}
 function returnRecords(includeHandled=false){
   const now=new Date();
   const records=[];
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
-    (m.promos||[]).forEach(p=>{
+    if(!m) return;
+    (m.promos||[]).filter(Boolean).forEach(p=>{
       normalizeWinnerListForReturn(p).forEach(w=>{
         if(w.deliveredAt) return;
         const registered=winnerRegisteredDate(p,w);
@@ -8334,7 +8344,7 @@ function returnRecords(includeHandled=false){
         });
       });
     });
-    (m.items||[]).forEach(i=>{
+    (m.items||[]).filter(Boolean).forEach(i=>{
       if(!i.winnerName || i.deliveredAt) return;
       const registered=new Date(i.resultAt || i.winnerAt || `${i.date || monthKey+'-01'}T${timeToHHMM(i.slot||'23:59')}:00`);
       const deadline=Number.isNaN(registered.getTime()) ? null : addBusinessDaysFrom(registered,5);
@@ -8346,7 +8356,7 @@ function returnRecords(includeHandled=false){
         itemId:i.id,
         id:returnRecordId('item',i.id,0),
         distributionId:i.distributionId||'',
-        prize:itemTitle(i),
+        prize:returnItemPrize(i,m),
         winner:norm(i.winnerName),
         deadline,
         deadlineLabel:deadline.toLocaleDateString('pt-BR'),
@@ -8357,7 +8367,7 @@ function returnRecords(includeHandled=false){
       });
     });
   });
-  return records.sort((a,b)=>a.deadline-b.deadline || a.prize.localeCompare(b.prize));
+  return records.sort((a,b)=>a.deadline-b.deadline || String(a.prize||'').localeCompare(String(b.prize||'')));
 }
 function pendingReturnRecords(){ return returnRecords(false); }
 function returnCountsByDistribution(){
@@ -8372,8 +8382,8 @@ function returnCountsByDistribution(){
   });
   return counts;
 }
-function returnCell(d){
-  const c=returnCountsByDistribution()[d.id] || {pending:0,sobra:0,realocado:0,total:0};
+function returnCell(d,counts=null){
+  const c=(counts||returnCountsByDistribution())[d.id] || {pending:0,sobra:0,realocado:0,total:0};
   if(!c.total) return '<span class="badge">0</span>';
   const cls=c.pending?'red':(c.sobra?'amber':'green');
   const label=c.pending?`${c.pending} PEND.`:(c.sobra?`${c.sobra} SOBRA`:`${c.realocado} REAP.`);
@@ -8505,6 +8515,12 @@ function renderDistribuicao(){
     return;
   }
   const inlineNum = (d,key,label) => `<div class="distNumStack"><input class="distInlineNum" type="number" min="0" step="1" value="${num(d[key])}" data-dist-id="${esc(d.id)}" data-key="${esc(key)}" aria-label="${esc(label || key)}">${ticketUnitSelect(d,key)}</div>`;
+  let distributionReturnCounts={};
+  try{
+    distributionReturnCounts=returnCountsByDistribution();
+  }catch(error){
+    console.warn('DISTRIBUTION RETURN COUNT ERROR',error);
+  }
   tb.innerHTML = rows.map(d=>{
     const left=leftTotal(d); const prog=programmed(d.id,'RÁDIO');
     const titleLine = norm(d.title || '') ? `<span>${esc(d.title)}</span>` : '';
@@ -8522,7 +8538,7 @@ function renderDistribuicao(){
       <td class="num reserveSummaryDistCell">${reservationSummaryCell(d)}</td>
       <td class="num" data-prog-id="${esc(d.id)}">${programmed(d.id,'RÁDIO')}</td>
       <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${distributionBalanceCell(d)}</td>
-      <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d)}</td>
+      <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d,distributionReturnCounts)}</td>
       <td class="distGenerateCell"><button class="btn small distGenerateBtn" type="button" title="GERAR RODÍZIO" aria-label="GERAR RODÍZIO" onclick="generateRadioFromDist('${d.id}')">GERAR</button></td>
       <td class="distActionsCell"><div class="actions distActions"><button class="actionIcon ghost" title="PROGRAMAR MANUAL" aria-label="PROGRAMAR MANUAL" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
     </tr>`;
@@ -11049,9 +11065,13 @@ populatePromoReadHours();
 updatePromoReadScheduleState();
 setOfficialCalendarMonth(true);
 console.info('PAINEL JP — MÊS OFICIAL:', currentCalendarMonth(), 'MÊS ABERTO:', state.currentMonth);
-render();
 syncStateFromApi(true);
 initWinnerBank(true);
+try{
+  render();
+}catch(error){
+  console.error('INITIAL PANEL RENDER ERROR',error);
+}
 window.addEventListener('beforeunload',()=>{ normalizePanelState(state); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); });
 setInterval(()=>{ syncCalendarMonthIfChanged(); },60000);
 setInterval(()=>syncStateFromApi(false),30000);
