@@ -1773,6 +1773,34 @@ body{
   box-shadow:0 7px 16px rgba(185,13,47,.13)!important;
 }
 
+/* V55 — CONSULTA CENTRAL DE GANHADORES */
+#winnerModal .modalCard{width:min(780px,94vw)!important;max-height:92vh!important;overflow:auto!important}
+.winnerBankModalState{margin:10px 0 4px;padding:9px 11px;border:1px solid #d8dee7;border-radius:12px;background:#f8fafc;color:#566273;font-size:9px;font-weight:950;letter-spacing:.025em}
+.winnerBankModalState.online{border-color:#b9e6cd;background:#effaf4;color:#08713f}
+.winnerBankModalState.error{border-color:#efabb8;background:#fff1f4;color:#a90d25}
+#winnerModal .winnerCandidate{display:grid;gap:7px;padding:9px;border:1px solid #e2e7ee;border-radius:15px;background:#fbfcfe}
+#winnerModal .winnerInputLine{display:grid;grid-template-columns:minmax(0,1fr) 36px!important;gap:7px!important}
+.winnerEligibility{display:grid;gap:6px;padding:10px 11px;border:1px solid #d8dee7;border-radius:12px;background:#f8fafc;color:#536071}
+.winnerEligibility.neutral{background:#f8fafc;border-color:#d8dee7;color:#667085}
+.winnerEligibility.apto{background:#effaf4;border-color:#b9e6cd;color:#08713f}
+.winnerEligibility.atencao{background:#fff7e9;border-color:#f2c676;color:#965800}
+.winnerEligibility.bloqueado{background:#fff0f3;border-color:#efa9b6;color:#a90d25}
+.winnerEligibilityHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.winnerEligibilityHead strong{font-size:10.5px;font-weight:1000;line-height:1.2}
+.winnerEligibilityHead span{flex:0 0 auto;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.72);font-size:7.5px;font-weight:1000}
+.winnerEligibility p{margin:0!important;color:inherit!important;font-size:8.5px!important;font-weight:850!important;line-height:1.35!important;letter-spacing:0!important}
+.winnerEligibilityHistory{display:grid;gap:4px}
+.winnerEligibilityHistory div{display:grid;grid-template-columns:74px minmax(100px,.75fr) minmax(140px,1.25fr);gap:7px;padding-top:5px;border-top:1px solid rgba(70,86,108,.14);font-size:8px;font-weight:850}
+.winnerEligibilityHistory strong{font-size:8px}.winnerEligibilityHistory span:last-child{font-weight:1000}
+.winnerSuggestions{display:flex;gap:5px;flex-wrap:wrap}
+.winnerSuggestion{border:1px solid #cbd5e1;border-radius:999px;background:#fff;padding:5px 8px;color:#344054;font-size:8px;font-weight:950;cursor:pointer}
+.winnerSuggestion:hover{border-color:#9b1731;color:#9b1731}
+#saveWinnerBtn:disabled{opacity:.45;cursor:not-allowed}
+.promoWinnerCandidate{display:grid;gap:6px;padding:8px;border:1px solid #e2e7ee;border-radius:14px;background:#fbfcfe}
+.promoWinnerEligibility{font-size:9px;text-align:left}
+#savePromoResultInline:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:620px){.winnerEligibilityHistory div{grid-template-columns:1fr}.winnerEligibilityHead{align-items:flex-start;flex-direction:column}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1792,6 +1820,7 @@ body{
   <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="winnerModalTitle">
     <h3 id="winnerModalTitle">INDICAR GANHADOR(ES)</h3>
     <p id="winnerModalHint">DIGITE O NOME DO OUVINTE SORTEADO. USE O BOTÃO + QUANDO HOUVER MAIS DE UM GANHADOR PARA O MESMO HORÁRIO.</p>
+    <div class="winnerBankModalState" id="winnerBankModalState">CONECTANDO AO BANCO DE GANHADORES...</div>
     <div class="resultWinnersList" id="winnerInputsList"></div>
     <button class="resultAddBtn" type="button" id="addWinnerBtn" title="ADICIONAR OUTRO GANHADOR">+</button>
     <div class="modalActions">
@@ -1850,6 +1879,8 @@ const FIREBASE_CONFIG = {
   "measurementId": "G-VB6Y2TS796"
 };
 const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
+const WINNER_BANK_PATH = "jp-painel-brindes/winnerBank";
+const WINNER_BLOCK_MONTHS = 8;
 const LEGACY_API_URL = "https://script.google.com/macros/s/AKfycbzaeiSMNoo4miaB7ABVku3hxUsg5dr6egLE9-fltQaIUPzHr0RKFMR5nXr7ATbD4evJ/exec";
 
 let firebaseStarted=false;
@@ -1860,6 +1891,12 @@ let firebaseApplyingRemote=false;
 let firebaseLastLocalWrite=0;
 let firebasePendingSave=false;
 let firebaseServerLoaded=false;
+let winnerBankRef=null;
+let winnerBankStarted=false;
+let winnerBankReady=false;
+let winnerBankRecords=[];
+let winnerInputChecks=[];
+let promoWinnerChecks=[];
 
 function firebaseConfigReady(){
   return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
@@ -2030,6 +2067,219 @@ async function saveStateToApi(){
   }catch(err){
     console.warn('FIREBASE SAVE ERROR',err);
   }
+}
+
+function winnerPlain(value){
+  return upper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function winnerPersonKey(name){
+  return winnerPlain(name).replace(/\s+/g,'_').slice(0,180);
+}
+function winnerPrizeKey(prize){
+  return winnerPlain(prize).replace(/\s+/g,'_').slice(0,220);
+}
+function winnerRecordList(value){
+  if(Array.isArray(value)) return value.filter(Boolean).map((row,index)=>({...row,id:row.id||`LEGACY_${index}`}));
+  if(value&&typeof value==='object') return Object.entries(value).map(([key,row])=>({...row,id:row?.id||key})).filter(row=>row.name&&row.date);
+  return [];
+}
+function winnerRecordMap(value){
+  const map={};
+  winnerRecordList(value).forEach((record,index)=>{ const key=record.id||`LEGACY_${index}`; map[key]={...record,id:key}; });
+  return map;
+}
+function winnerAddMonthsISO(iso,months=WINNER_BLOCK_MONTHS){
+  const [year,month,day]=String(iso||'').split('-').map(Number);
+  if(!year||!month||!day) return '';
+  const first=new Date(year,month-1+months,1,12);
+  const lastDay=new Date(first.getFullYear(),first.getMonth()+1,0,12).getDate();
+  const result=new Date(first.getFullYear(),first.getMonth(),Math.min(day,lastDay),12);
+  return `${result.getFullYear()}-${String(result.getMonth()+1).padStart(2,'0')}-${String(result.getDate()).padStart(2,'0')}`;
+}
+function winnerCycleInfo(records,asOf=todayISO()){
+  const sorted=[...records].filter(record=>record?.date&&record.date<=asOf).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  let cycleCount=0;
+  let blockedUntil='';
+  sorted.forEach(record=>{
+    if(blockedUntil&&record.date>=blockedUntil){ cycleCount=0; blockedUntil=''; }
+    if(blockedUntil&&record.date<blockedUntil) return;
+    cycleCount+=1;
+    if(cycleCount===3) blockedUntil=winnerAddMonthsISO(record.date);
+  });
+  if(blockedUntil&&asOf>=blockedUntil){ cycleCount=0; blockedUntil=''; }
+  return {cycleCount,blocked:!!blockedUntil,blockedUntil};
+}
+function winnerEvaluateAgainst(records,name,prize,asOf=todayISO()){
+  const personKey=winnerPersonKey(name);
+  const history=records
+    .filter(record=>(record.personKey||winnerPersonKey(record.name))===personKey)
+    .filter(record=>!record.date||record.date<=asOf)
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const cycle=winnerCycleInfo(history,asOf);
+  const prizeKey=winnerPrizeKey(prize);
+  const samePrize=!!prizeKey&&history.some(record=>(record.prizeKey||winnerPrizeKey(record.prize))===prizeKey);
+  let status='APTO';
+  let title=history.length?'APTO':'PRIMEIRA PREMIAÇÃO / APTO';
+  let reason=history.length?'OUVINTE LIBERADO PARA NOVA PREMIAÇÃO.':'NENHUM HISTÓRICO LOCALIZADO PARA ESTE NOME.';
+  if(samePrize){
+    const previous=history.find(record=>(record.prizeKey||winnerPrizeKey(record.prize))===prizeKey);
+    status='BLOQUEADO';
+    title='JÁ GANHOU ESTE PRÊMIO';
+    reason=previous?`MESMO PRÊMIO REGISTRADO EM ${formatBR(previous.date)} · ${upper(previous.program||'PROGRAMA')}.`:'ESTE PRÊMIO JÁ CONSTA NO HISTÓRICO.';
+  }else if(cycle.blocked){
+    status='BLOQUEADO';
+    title='BLOQUEADO';
+    reason=`LIBERAÇÃO AUTOMÁTICA EM ${formatBR(cycle.blockedUntil)}.`;
+  }else if(cycle.cycleCount===2){
+    status='ATENCAO';
+    title='ATENÇÃO — ESTA SERÁ A 3ª PREMIAÇÃO';
+    reason='A CONFIRMAÇÃO INICIARÁ O BLOQUEIO DE 8 MESES.';
+  }
+  return {name:upper(name),personKey,history,total:history.length,cycleCount:cycle.cycleCount,blockedUntil:cycle.blockedUntil,samePrize,status,title,reason,allowed:status!=='BLOQUEADO'};
+}
+function winnerContextForItem(item){
+  return {sourceRef:`ITEM:${item?.id||''}`,date:item?.date||todayISO(),program:upper(item?.program||programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||'PROGRAMA'),prize:upper(item?.prize||item?.title||'PRÊMIO')};
+}
+function winnerContextForPromo(promo,item){
+  const date=item?.date||promo?.drawDate||todayISO();
+  const slot=formatStudioTime(item?.slot||promo?.drawTime||'');
+  return {sourceRef:`PROMO:${promo?.id||''}:${date}:${slot}`,date,program:upper(item?.program||programFromSchedule(date,slot,STUDIO_STATION)||promo?.program||'RESULTADO PROMOÇÃO'),prize:upper(promo?.prize||promo?.name||promo?.title||item?.prize||'PROMOÇÃO')};
+}
+function winnerSuggestions(name){
+  const query=winnerPlain(name);
+  if(query.length<3) return [];
+  const seen=new Set();
+  return winnerBankRecords
+    .map(record=>upper(record.name))
+    .filter(candidate=>{
+      const key=winnerPersonKey(candidate);
+      if(!key||seen.has(key)){ return false; }
+      seen.add(key);
+      return winnerPlain(candidate).includes(query)&&winnerPersonKey(candidate)!==winnerPersonKey(name);
+    })
+    .slice(0,5);
+}
+function setWinnerBankModalState(mode,text){
+  const box=$('winnerBankModalState');
+  if(!box) return;
+  box.className=`winnerBankModalState ${mode||''}`.trim();
+  box.textContent=text;
+}
+function applyWinnerBankSnapshot(value){
+  winnerBankRecords=winnerRecordList(value?.records??value??{}).map(record=>({...record,name:upper(record.name),program:upper(record.program),prize:upper(record.prize),personKey:record.personKey||winnerPersonKey(record.name),prizeKey:record.prizeKey||winnerPrizeKey(record.prize)}));
+  winnerBankReady=value?.initialized===true||winnerBankRecords.length>0;
+  if(winnerBankReady) setWinnerBankModalState('online',`BANCO FIREBASE CONECTADO · ${winnerBankRecords.length} PREMIAÇÃO(ÕES) NO HISTÓRICO.`);
+  else setWinnerBankModalState('error','IMPORTAÇÃO INICIAL PENDENTE. A CONFIRMAÇÃO DE GANHADORES ESTÁ BLOQUEADA.');
+  if($('winnerModal')?.classList.contains('show')) validateAllWinnerInputs();
+  if($('promoResultWinnersList')) validateAllPromoWinnerInputs();
+}
+function initWinnerBank(force=false){
+  if(!firebaseConfigReady()){
+    winnerBankReady=false;
+    setWinnerBankModalState('error','BANCO DE GANHADORES INDISPONÍVEL. A CONFIRMAÇÃO ESTÁ BLOQUEADA.');
+    updateWinnerSaveState();
+    return;
+  }
+  try{
+    const app=window.firebase.apps&&window.firebase.apps.length?window.firebase.app():window.firebase.initializeApp(FIREBASE_CONFIG);
+    winnerBankRef=window.firebase.database(app).ref(WINNER_BANK_PATH);
+    if(!winnerBankStarted){
+      winnerBankStarted=true;
+      winnerBankRef.on('value',snapshot=>applyWinnerBankSnapshot(snapshot.val()||{}),error=>{
+        console.error('WINNER BANK LOAD ERROR',error);
+        winnerBankReady=false;
+        setWinnerBankModalState('error','ERRO AO CONSULTAR O BANCO. A CONFIRMAÇÃO ESTÁ BLOQUEADA.');
+        updateWinnerSaveState();
+      });
+    }
+    if(force){
+      setWinnerBankModalState('','ATUALIZANDO BANCO DE GANHADORES...');
+      winnerBankRef.get().then(snapshot=>applyWinnerBankSnapshot(snapshot.val()||{})).catch(error=>{
+        console.error('WINNER BANK REFRESH ERROR',error);
+        winnerBankReady=false;
+        setWinnerBankModalState('error','NÃO FOI POSSÍVEL ATUALIZAR O BANCO. A CONFIRMAÇÃO ESTÁ BLOQUEADA.');
+        updateWinnerSaveState();
+      });
+    }
+  }catch(error){
+    console.error('WINNER BANK INIT ERROR',error);
+    winnerBankReady=false;
+    setWinnerBankModalState('error','ERRO AO INICIAR O BANCO. A CONFIRMAÇÃO ESTÁ BLOQUEADA.');
+    updateWinnerSaveState();
+  }
+}
+function winnerEligibilityHtml(result,suggestions=[]){
+  if(!result) return '<div class="winnerEligibilityHead"><strong>DIGITE O NOME COMPLETO PARA CONSULTAR</strong><span>AGUARDANDO</span></div><p>A PESQUISA SERÁ FEITA AUTOMATICAMENTE NO HISTÓRICO DO FIREBASE.</p>';
+  const history=result.history.map(record=>`<div><strong>${formatBR(record.date)}</strong><span>${esc(upper(record.program||'PROGRAMA'))}</span><span>${esc(upper(record.prize||'PRÊMIO'))}</span></div>`).join('');
+  const suggestionHtml=suggestions.length?`<div class="winnerSuggestions">${suggestions.map(name=>`<button class="winnerSuggestion" type="button" data-winner-name="${esc(name)}">LOCALIZADO: ${esc(name)}</button>`).join('')}</div>`:'';
+  const statusLabel=result.status==='ATENCAO'?'ATENÇÃO':result.status;
+  const located=result.total?`NOME LOCALIZADO: ${result.name}. `:'';
+  return `<div class="winnerEligibilityHead"><strong>${esc(result.title)}</strong><span>${esc(statusLabel)} · ${result.total} PREMIAÇÃO(ÕES)</span></div><p>${esc(located+result.reason)}</p>${history?`<div class="winnerEligibilityHistory">${history}</div>`:''}${suggestionHtml}`;
+}
+function validateAllWinnerInputs(){
+  const item=currentItemRecord();
+  const fields=Array.from(document.querySelectorAll('.winnerNameField'));
+  if(!item||!fields.length){ winnerInputChecks=[]; updateWinnerSaveState(); return; }
+  const context=winnerContextForItem(item);
+  const counts=new Map();
+  fields.forEach(field=>{ const key=winnerPersonKey(field.value); if(key) counts.set(key,(counts.get(key)||0)+1); });
+  winnerInputChecks=fields.map((field,index)=>{
+    const name=upper(field.value);
+    const host=$(`winnerEligibility${index}`);
+    if(!name){
+      if(host){ host.className='winnerEligibility neutral'; host.innerHTML=winnerEligibilityHtml(null); }
+      return {name:'',allowed:false,status:'PENDENTE'};
+    }
+    const availableHistory=winnerBankRecords.filter(record=>!(record.source==='ESTUDIO_JP1017'&&record.sourceRef===context.sourceRef));
+    const suggestions=winnerSuggestions(name);
+    let result=winnerEvaluateAgainst(availableHistory,name,context.prize,context.date);
+    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL NOME LOCALIZADO',reason:'SELECIONE O CADASTRO CORRETO ABAIXO OU COMPLETE O NOME.',allowed:false};
+    if((counts.get(result.personKey)||0)>1) result={...result,status:'BLOQUEADO',title:'NOME REPETIDO NESTE SORTEIO',reason:'CADA PESSOA DEVE APARECER APENAS UMA VEZ.',allowed:false};
+    if(!winnerBankReady) result={...result,status:'BLOQUEADO',title:'CONSULTA INDISPONÍVEL',reason:'AGUARDE A CONEXÃO COM O FIREBASE ANTES DE CONFIRMAR.',allowed:false};
+    if(host){ host.className=`winnerEligibility ${result.status==='ATENCAO'?'atencao':result.status==='BLOQUEADO'?'bloqueado':result.status==='PENDENTE'?'neutral':'apto'}`; host.innerHTML=winnerEligibilityHtml(result,suggestions); }
+    return result;
+  });
+  updateWinnerSaveState();
+}
+function updateWinnerSaveState(){
+  const button=$('saveWinnerBtn');
+  if(!button) return;
+  const fields=Array.from(document.querySelectorAll('.winnerNameField'));
+  const ready=winnerBankReady&&fields.length>0&&winnerInputChecks.length===fields.length&&winnerInputChecks.every(check=>check.name&&check.allowed);
+  button.disabled=!ready;
+  button.title=ready?'CONFIRMAR E REGISTRAR NO FIREBASE':'TODOS OS GANHADORES PRECISAM ESTAR APTOS E VALIDADOS';
+}
+async function commitWinnerHistory(names,context){
+  initWinnerBank();
+  if(!winnerBankReady||!winnerBankRef) throw new Error('BANCO DE GANHADORES INDISPONÍVEL.');
+  const now=new Date();
+  const ids=names.map(()=>winnerBankRef.child('records').push().key);
+  let rejection=null;
+  const result=await winnerBankRef.child('records').transaction(current=>{
+    rejection=null;
+    const map=winnerRecordMap(current||{});
+    Object.keys(map).forEach(key=>{
+      const record=map[key];
+      if(record.source==='ESTUDIO_JP1017'&&record.sourceRef===context.sourceRef) delete map[key];
+    });
+    const working=winnerRecordList(map);
+    for(let index=0;index<names.length;index+=1){
+      const name=upper(names[index]);
+      const eligibility=winnerEvaluateAgainst(working,name,context.prize,context.date);
+      if(!eligibility.allowed){ rejection=eligibility; return; }
+      const recordId=ids[index];
+      const record={id:recordId,name,date:context.date,program:context.program,prize:context.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(context.prize),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:'ESTUDIO_JP1017'};
+      map[recordId]=record;
+      working.push(record);
+    }
+    return map;
+  },undefined,false);
+  if(!result.committed){
+    const error=new Error(rejection?.reason||'UM DOS GANHADORES NÃO ESTÁ APTO.');
+    error.eligibility=rejection;
+    throw error;
+  }
+  await winnerBankRef.update({schemaVersion:1,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'});
 }
 
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
@@ -2461,43 +2711,91 @@ function collectPromoWinnerInputs(){
     .map(input=>({name:upper(input.value||'')}))
     .filter(w=>w.name);
 }
+function promoWinnerInputRow(w={},index=0){
+  return `<div class="promoWinnerCandidate" data-promo-winner-index="${index}"><div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(w.name||'')}" placeholder="NOME DO GANHADOR"><button class="${index?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${index?'REMOVER':'ADICIONAR GANHADOR'}">${index?'×':'+'}</button></div><div class="winnerEligibility neutral promoWinnerEligibility" id="promoWinnerEligibility${index}">${winnerEligibilityHtml(null)}</div></div>`;
+}
+function updatePromoWinnerSaveState(){
+  const button=$('savePromoResultInline');
+  if(!button) return;
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
+  const ready=winnerBankReady&&fields.length>0&&promoWinnerChecks.length===fields.length&&promoWinnerChecks.every(check=>check.name&&check.allowed);
+  button.disabled=!ready;
+  button.title=ready?'CONFIRMAR RESULTADO E REGISTRAR NO FIREBASE':'TODOS OS GANHADORES PRECISAM ESTAR APTOS E VALIDADOS';
+}
+function validateAllPromoWinnerInputs(){
+  const promo=currentPromoForRead();
+  const item=currentDisplayItem||virtualCurrentItem();
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
+  if(!promo||!item||!fields.length){ promoWinnerChecks=[]; updatePromoWinnerSaveState(); return; }
+  const context=winnerContextForPromo(promo,item);
+  const availableHistory=winnerBankRecords.filter(record=>!(record.source==='ESTUDIO_JP1017'&&record.sourceRef===context.sourceRef));
+  const counts=new Map();
+  fields.forEach(field=>{ const key=winnerPersonKey(field.value); if(key) counts.set(key,(counts.get(key)||0)+1); });
+  promoWinnerChecks=fields.map((field,index)=>{
+    const name=upper(field.value);
+    const host=$(`promoWinnerEligibility${index}`);
+    if(!name){ if(host){ host.className='winnerEligibility neutral promoWinnerEligibility'; host.innerHTML=winnerEligibilityHtml(null); } return {name:'',allowed:false,status:'PENDENTE'}; }
+    const suggestions=winnerSuggestions(name);
+    let result=winnerEvaluateAgainst(availableHistory,name,context.prize,context.date);
+    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL NOME LOCALIZADO',reason:'SELECIONE O CADASTRO CORRETO ABAIXO OU COMPLETE O NOME.',allowed:false};
+    if((counts.get(result.personKey)||0)>1) result={...result,status:'BLOQUEADO',title:'NOME REPETIDO NESTE SORTEIO',reason:'CADA PESSOA DEVE APARECER APENAS UMA VEZ.',allowed:false};
+    if(!winnerBankReady) result={...result,status:'BLOQUEADO',title:'CONSULTA INDISPONÍVEL',reason:'AGUARDE A CONEXÃO COM O FIREBASE ANTES DE CONFIRMAR.',allowed:false};
+    if(host){ host.className=`winnerEligibility promoWinnerEligibility ${result.status==='ATENCAO'?'atencao':result.status==='BLOQUEADO'?'bloqueado':result.status==='PENDENTE'?'neutral':'apto'}`; host.innerHTML=winnerEligibilityHtml(result,suggestions); }
+    return result;
+  });
+  updatePromoWinnerSaveState();
+}
 function addPromoWinnerField(value=''){
   const list=$('promoResultWinnersList');
   if(!list) return;
-  const count=list.querySelectorAll('.resultWinnerLine').length;
-  list.insertAdjacentHTML('beforeend', `<div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(value)}" placeholder="NOME DO GANHADOR"><button class="${count?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${count?'REMOVER':'ADICIONAR GANHADOR'}">${count?'×':'+'}</button></div>`);
-  const last=list.querySelector('.resultWinnerLine:last-child input');
+  const values=Array.from(list.querySelectorAll('.promoResultWinnerInput')).map(input=>input.value);
+  values.push(value);
+  list.innerHTML=values.map((name,index)=>promoWinnerInputRow({name},index)).join('');
+  const last=list.querySelector('.promoWinnerCandidate:last-child input');
   if(last) last.focus();
+  validateAllPromoWinnerInputs();
 }
 async function savePromoResultInline(){
   const p=currentPromoForRead();
   const item=currentDisplayItem || virtualCurrentItem();
   if(!p || !item) return;
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
   const winners=collectPromoWinnerInputs();
-  if(!winners.length){
-    const first=document.querySelector('.promoResultWinnerInput');
-    if(first) first.focus();
-    return;
+  if(!winners.length||fields.some(field=>!upper(field.value))){ fields.find(field=>!upper(field.value))?.focus(); return; }
+  validateAllPromoWinnerInputs();
+  if(!winnerBankReady||promoWinnerChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
+  const button=$('savePromoResultInline');
+  button.disabled=true;
+  button.textContent='VALIDANDO E SALVANDO...';
+  try{
+    const context=winnerContextForPromo(p,item);
+    await commitWinnerHistory(winners.map(w=>w.name),context);
+    const now=new Date();
+    const key=readHourKey(item,p);
+    const previous=promoWinnerList(p,item);
+    const prepared=winners.map(w=>({...w,registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')}));
+    const merged=mergeWinnerDelivery(previous,prepared);
+    const joined=merged.map(w=>w.name).join(', ');
+    p.resultByHour ||= {};
+    p.resultByHour[key]=joined;
+    p.resultWinnersByHour ||= {};
+    p.resultWinnersByHour[key]=merged;
+    p.resultWinners=merged;
+    p.resultName=joined;
+    p.resultAt=now.toISOString();
+    p.resultAtLabel=now.toLocaleString('pt-BR');
+    p.resultSlot=formatStudioTime(item.slot);
+    p.resultDate=item.date || todayISO();
+    saveState();
+    await persistStudioPromo(p);
+    render();
+  }catch(error){
+    console.error('ERRO AO SALVAR RESULTADO DA PROMOÇÃO:',error);
+    alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR O RESULTADO.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`);
+    initWinnerBank(true);
+  }finally{
+    if(button){ button.textContent='SALVAR RESULTADO'; updatePromoWinnerSaveState(); }
   }
-  const now=new Date();
-  const key=readHourKey(item,p);
-  const previous=promoWinnerList(p,item);
-  const prepared=winners.map(w=>({...w,registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')}));
-  const merged=mergeWinnerDelivery(previous,prepared);
-  const joined=merged.map(w=>w.name).join(', ');
-  p.resultByHour ||= {};
-  p.resultByHour[key]=joined;
-  p.resultWinnersByHour ||= {};
-  p.resultWinnersByHour[key]=merged;
-  p.resultWinners=merged;
-  p.resultName=joined;
-  p.resultAt=now.toISOString();
-  p.resultAtLabel=now.toLocaleString('pt-BR');
-  p.resultSlot=formatStudioTime(item.slot);
-  p.resultDate=item.date || todayISO();
-  saveState();
-  await persistStudioPromo(p);
-  render();
 }
 
 function shouldShowPromoResultBox(p,item){
@@ -2507,7 +2805,7 @@ function shouldShowPromoResultBox(p,item){
 
 function buildPromoResultBox(p,item){
   const winners=promoWinnerList(p,item);
-  const inputRows=(winners.length?winners:[{name:''}]).map((w,idx)=>`<div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(w.name||'')}" placeholder="NOME DO GANHADOR"><button class="${idx?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${idx?'REMOVER':'ADICIONAR GANHADOR'}">${idx?'×':'+'}</button></div>`).join('');
+  const inputRows=(winners.length?winners:[{name:''}]).map((w,idx)=>promoWinnerInputRow(w,idx)).join('');
   const saved=winners.length ? `<div class="resultSavedList">${winners.map(w=>`<div class="resultSaved">GANHADOR: ${esc(w.name)}${w.deliveredAtLabel?` · RETIRADO ${esc(w.deliveredAtLabel)}`:''}</div>`).join('')}</div>` : '';
   return `<div class="resultBox">
     <label>RESULTADO / GANHADOR DO SORTEIO</label>
@@ -2782,10 +3080,13 @@ function renderWinnerInputs(names=[]){
   const max=winnerCapacity(item);
   const list=$('winnerInputsList');
   const rows=(names.length?names:['']).slice(0,max);
-  list.innerHTML=rows.map((name,index)=>`<div class="winnerInputLine"><input class="winnerNameField" type="text" maxlength="120" autocomplete="off" value="${esc(name)}" placeholder="GANHADOR ${index+1}"><button class="winnerRemoveBtn" type="button" onclick="removeWinnerInput(${index})" ${rows.length===1?'disabled':''}>×</button></div>`).join('');
+  list.innerHTML=rows.map((name,index)=>`<div class="winnerCandidate" data-winner-index="${index}"><div class="winnerInputLine"><input class="winnerNameField" type="text" maxlength="120" autocomplete="off" value="${esc(name)}" placeholder="GANHADOR ${index+1}"><button class="winnerRemoveBtn" type="button" onclick="removeWinnerInput(${index})" ${rows.length===1?'disabled':''}>×</button></div><div class="winnerEligibility neutral" id="winnerEligibility${index}">${winnerEligibilityHtml(null)}</div></div>`).join('');
   const hint=$('winnerModalHint');
   if(hint) hint.innerHTML=`ESTE HORÁRIO POSSUI <span class="winnerCapacityNote">${max} ${max===1?'PRÊMIO / GANHADOR':'PRÊMIOS / GANHADORES'}</span>. USE O BOTÃO + PARA ADICIONAR OS NOMES.`;
   if($('addWinnerBtn')) $('addWinnerBtn').disabled=rows.length>=max;
+  winnerInputChecks=[];
+  updateWinnerSaveState();
+  setTimeout(validateAllWinnerInputs,20);
 }
 function addWinnerInput(){
   const values=Array.from(document.querySelectorAll('.winnerNameField')).map(input=>input.value);
@@ -2804,32 +3105,52 @@ function removeWinnerInput(index){
 function openWinnerModal(){
   const item=currentItemRecord();
   if(!item) return;
+  initWinnerBank(true);
   renderWinnerInputs(existingWinnerNames(item));
   $('winnerModal').classList.add('show');
   setTimeout(()=>document.querySelector('.winnerNameField')?.focus(),30);
 }
 function closeWinnerModal(){
   $('winnerModal').classList.remove('show');
+  winnerInputChecks=[];
 }
 async function saveWinner(){
   const item=currentItemRecord();
   if(!item) return;
-  const names=Array.from(document.querySelectorAll('.winnerNameField')).map(input=>upper(input.value)).filter(Boolean);
-  if(!names.length){ document.querySelector('.winnerNameField')?.focus(); return; }
+  const fields=Array.from(document.querySelectorAll('.winnerNameField'));
+  const names=fields.map(input=>upper(input.value));
+  if(!names.length||names.some(name=>!name)){ fields.find(input=>!upper(input.value))?.focus(); return; }
   const max=winnerCapacity(item);
   if(names.length>max){ alert(`ESTE HORÁRIO PERMITE NO MÁXIMO ${max} GANHADOR(ES).`); return; }
-  item.winnerNames=names;
-  item.winnerName=names.join(', ');
-  item.winnerCapacity=max;
-  item.status='REALIZADO';
-  saveState();
+  validateAllWinnerInputs();
+  if(!winnerBankReady||winnerInputChecks.some(check=>!check.allowed)){
+    alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.');
+    return;
+  }
+  const button=$('saveWinnerBtn');
+  button.disabled=true;
+  button.textContent='VALIDANDO E SALVANDO...';
   try{
+    const context=winnerContextForItem(item);
+    await commitWinnerHistory(names,context);
+    item.winnerNames=names;
+    item.winnerName=names.join(', ');
+    item.winnerCapacity=max;
+    item.status='REALIZADO';
+    item.resultAt=new Date().toISOString();
+    item.resultAtLabel=new Date().toLocaleString('pt-BR');
+    saveState();
     await persistStudioItem(item);
     closeWinnerModal();
     render();
   }catch(error){
     console.error('ERRO AO SALVAR GANHADORES:',error);
-    alert('NÃO FOI POSSÍVEL SALVAR OS GANHADORES NO FIREBASE.');
+    alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR OS GANHADORES.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`);
+    initWinnerBank(true);
+    validateAllWinnerInputs();
+  }finally{
+    button.textContent='SALVAR GANHADOR(ES)';
+    updateWinnerSaveState();
   }
 }
 function step(delta){
@@ -2958,12 +3279,30 @@ function render(){
   const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.onclick=confirmPromoRead;
   const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);
   const resultList=$('promoResultWinnersList');
-  if(resultList) resultList.addEventListener('click',e=>{
-    const add=e.target.closest('.resultAddBtn');
-    const remove=e.target.closest('.resultRemoveBtn');
-    if(add) addPromoWinnerField('');
-    if(remove) remove.closest('.resultWinnerLine')?.remove();
-  });
+  if(resultList){
+    resultList.addEventListener('input',e=>{ if(e.target.classList.contains('promoResultWinnerInput')) validateAllPromoWinnerInputs(); });
+    resultList.addEventListener('click',e=>{
+      const suggestion=e.target.closest('[data-winner-name]');
+      if(suggestion){
+        const candidate=suggestion.closest('.promoWinnerCandidate');
+        const input=candidate?.querySelector('.promoResultWinnerInput');
+        if(input){ input.value=upper(suggestion.dataset.winnerName||''); validateAllPromoWinnerInputs(); input.focus(); }
+        return;
+      }
+      const add=e.target.closest('.resultAddBtn');
+      const remove=e.target.closest('.resultRemoveBtn');
+      if(add) addPromoWinnerField('');
+      if(remove){
+        const candidate=remove.closest('.promoWinnerCandidate');
+        const values=Array.from(resultList.querySelectorAll('.promoResultWinnerInput')).map(input=>input.value);
+        const index=Array.from(resultList.querySelectorAll('.promoWinnerCandidate')).indexOf(candidate);
+        if(index>=0) values.splice(index,1);
+        resultList.innerHTML=(values.length?values:['']).map((name,rowIndex)=>promoWinnerInputRow({name},rowIndex)).join('');
+        validateAllPromoWinnerInputs();
+      }
+    });
+    setTimeout(validateAllPromoWinnerInputs,20);
+  }
   const promoBtn=$('promoListBtn');
   if(promoBtn) promoBtn.onclick=e=>studioShortcutClick(e,'promo');
   const merchanBtn=$('merchanListBtn');
@@ -2975,6 +3314,14 @@ function render(){
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
 $('addWinnerBtn').addEventListener('click',addWinnerInput);
+$('winnerInputsList').addEventListener('input',event=>{ if(event.target.classList.contains('winnerNameField')) validateAllWinnerInputs(); });
+$('winnerInputsList').addEventListener('click',event=>{
+  const suggestion=event.target.closest('[data-winner-name]');
+  if(!suggestion) return;
+  const candidate=suggestion.closest('.winnerCandidate');
+  const input=candidate?.querySelector('.winnerNameField');
+  if(input){ input.value=upper(suggestion.dataset.winnerName||''); validateAllWinnerInputs(); input.focus(); }
+});
 $('winnerModal').addEventListener('click',e=>{ if(e.target.id==='winnerModal') closeWinnerModal(); });
 $('winnerModal').addEventListener('keydown',e=>{
   if(e.key==='Enter' && e.target.classList.contains('winnerNameField')){ e.preventDefault(); saveWinner(); }
@@ -3018,6 +3365,7 @@ selectStudioMonth();
 if($('historyDateInput')) $('historyDateInput').value=todayISO();
 render();
 syncStateFromApi(true);
+initWinnerBank(true);
 setTimeout(()=>syncStateFromApi(true),1800);
 setTimeout(()=>syncStateFromApi(true),6000);
 </script>

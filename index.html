@@ -3023,10 +3023,52 @@ body.drawer-open .distActions{
   .smartChoiceRow.calendarRow .btn{grid-column:auto}
 }
 
+/* V55 — BANCO CENTRAL DE GANHADORES */
+.winnerBankKpis{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:8px;margin-bottom:12px}
+.winnerBankKpi{border:1px solid var(--line);border-radius:17px;background:#fff;padding:12px 14px;box-shadow:var(--soft-shadow)}
+.winnerBankKpi span{display:block;color:var(--muted);font-size:8.5px;font-weight:950;letter-spacing:.06em}
+.winnerBankKpi strong{display:block;margin-top:5px;color:#171c26;font-size:23px;font-weight:1000}
+.winnerBankToolbar{display:grid;grid-template-columns:minmax(220px,1fr) 190px auto;gap:8px;align-items:end;margin-bottom:10px}
+.winnerBankActions{display:flex;gap:7px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
+.winnerBankState{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:9px 11px;border:1px solid #dbe2ea;border-radius:13px;background:#f8fafc;color:#536071;font-size:9px;font-weight:900}
+.winnerBankState.online{border-color:#b9e6cd;background:#effaf4;color:#0b6f40}
+.winnerBankState.error{border-color:#efb2bd;background:#fff2f4;color:#a90d25}
+.winnerStateBadge{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:4px 9px;border-radius:999px;font-size:8.5px;font-weight:1000;letter-spacing:.035em;white-space:nowrap}
+.winnerStateBadge.apto{background:#eaf8f0;border:1px solid #b8e4ca;color:#08733f}
+.winnerStateBadge.atencao{background:#fff6e6;border:1px solid #f2cc87;color:#995900}
+.winnerStateBadge.bloqueado{background:#fff0f3;border:1px solid #efa9b6;color:#ae102c}
+.winnerBankName strong{display:block;color:#171c26;font-size:11.5px;font-weight:1000}
+.winnerBankName small{display:block;margin-top:3px;color:var(--muted);font-size:8px;font-weight:850}
+.winnerBankTable td{vertical-align:middle}
+.winnerBankTable .winnerRelease{color:#9d1730;font-weight:950}
+.winnerDetailHero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px;border:1px solid var(--line);border-radius:16px;background:#f8fafc;margin-bottom:10px}
+.winnerDetailHero h4{margin:0;color:#171c26;font-size:18px;font-weight:1000}
+.winnerDetailHero p{margin:4px 0 0;color:var(--muted);font-size:9px;font-weight:850}
+.winnerHistoryList{display:grid;gap:7px}
+.winnerHistoryRow{display:grid;grid-template-columns:90px minmax(120px,.8fr) minmax(180px,1.2fr) auto;gap:9px;align-items:center;padding:9px 10px;border:1px solid var(--line);border-radius:13px;background:#fff}
+.winnerHistoryRow strong{font-size:10px;color:#171c26}
+.winnerHistoryRow span{font-size:9px;color:#4f5b6b;font-weight:850}
+.winnerHistoryRow .winnerHistoryPrize{color:#86152c;font-weight:1000}
+.winnerHistoryRow .winnerHistoryActions{display:flex;gap:5px}
+.winnerImportSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.winnerImportMetric{padding:11px;border:1px solid var(--line);border-radius:14px;background:#f8fafc;text-align:center}
+.winnerImportMetric span{display:block;color:var(--muted);font-size:8px;font-weight:900}
+.winnerImportMetric strong{display:block;margin-top:5px;font-size:20px;font-weight:1000;color:#171c26}
+.winnerImportMetric.good{background:#effaf4;border-color:#b9e6cd}.winnerImportMetric.good strong{color:#0b6f40}
+.winnerImportMetric.warn{background:#fff7e9;border-color:#f3c476}.winnerImportMetric.warn strong{color:#9a5b00}
+.winnerImportMetric.bad{background:#fff0f3;border-color:#ef9aaa}.winnerImportMetric.bad strong{color:#a90d25}
+.winnerImportFile{padding:10px 12px;border:1px dashed #c7d0dc;border-radius:14px;background:#f8fafc;color:#475467;font-size:9px;font-weight:900;margin-bottom:10px}
+.winnerImportIssues{max-height:220px;overflow:auto;display:grid;gap:6px}
+.winnerImportIssue{padding:8px 10px;border:1px solid #f0c3cb;border-radius:11px;background:#fff5f7;color:#9d1730;font-size:8.5px;font-weight:850}
+.winnerEmpty{padding:24px;text-align:center;color:var(--muted);font-size:10px;font-weight:900}
+@media(max-width:900px){.winnerBankKpis{grid-template-columns:1fr 1fr}.winnerBankToolbar{grid-template-columns:1fr 1fr}.winnerBankActions{grid-column:1/-1;justify-content:flex-start}.winnerHistoryRow{grid-template-columns:1fr 1fr}.winnerHistoryActions{grid-column:1/-1}}
+@media(max-width:600px){.winnerBankKpis,.winnerBankToolbar,.winnerImportSummary{grid-template-columns:1fr}.winnerBankActions{grid-column:auto}.winnerDetailHero{grid-template-columns:1fr}.winnerHistoryRow{grid-template-columns:1fr}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 </head>
 <body>
@@ -3053,6 +3095,7 @@ body.drawer-open .distActions{
     <button class="tabBtn" data-view="pauta">PAUTA DE ESTÚDIO</button>
     <button class="tabBtn" data-view="horarios">HORÁRIOS</button>
     <button class="tabBtn" data-view="agendamento">AGENDAMENTO</button>
+    <button class="tabBtn" data-view="ganhadores">BANCO DE GANHADORES</button>
     <button class="tabBtn" data-view="backup">BACKUP</button>
   </nav>
 
@@ -3234,6 +3277,30 @@ body.drawer-open .distActions{
           </div>
 
           <div class="tableWrap"><table class="promoMainTable scheduleTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO</th><th>ENTRAR NO PAINEL</th><th>STATUS</th><th>PENDÊNCIA</th><th>OBSERVAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="scheduleTable"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-ganhadores">
+      <div class="panel">
+        <div class="panelHead">
+          <div><h2>BANCO DE GANHADORES</h2><p>HISTÓRICO CENTRAL, ELEGIBILIDADE E BLOQUEIO AUTOMÁTICO DOS OUVINTES.</p></div>
+          <div class="panelActions winnerBankActions">
+            <button class="btn" id="importWinnersBtn" type="button">IMPORTAR EXCEL</button>
+            <button class="btn red" id="addWinnerRecordBtn" type="button">+ NOVO REGISTRO</button>
+            <input id="winnerImportFileInput" type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" style="display:none">
+          </div>
+        </div>
+        <div class="panelBody">
+          <div class="winnerBankKpis" id="winnerBankKpis"></div>
+          <div class="winnerBankState" id="winnerBankState">CONECTANDO AO BANCO CENTRAL DE GANHADORES...</div>
+          <div class="serverSourceBox"><strong>IDENTIFICAÇÃO POR NOME:</strong> acentos, diferenças entre maiúsculas/minúsculas e espaços extras são normalizados. Nomes completos idênticos compartilham o mesmo histórico.</div>
+          <div class="winnerBankToolbar">
+            <div class="field"><label>PESQUISAR NOME, PROGRAMA OU PRÊMIO</label><input class="control" id="winnerBankSearch" autocomplete="off" placeholder="DIGITE PARA PESQUISAR"></div>
+            <div class="field"><label>SITUAÇÃO ATUAL</label><select class="control" id="winnerBankStatusFilter"><option value="">TODAS</option><option value="APTO">APTO</option><option value="ATENCAO">ATENÇÃO</option><option value="BLOQUEADO">BLOQUEADO</option></select></div>
+            <button class="btn" id="refreshWinnerBankBtn" type="button">ATUALIZAR BANCO</button>
+          </div>
+          <div class="tableWrap"><table class="promoMainTable winnerBankTable"><thead><tr><th>OUVINTE</th><th>PREMIAÇÕES</th><th>ÚLTIMA DATA</th><th>SITUAÇÃO</th><th>LIBERAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="winnerBankTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -3609,6 +3676,42 @@ body.drawer-open .distActions{
           </aside>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<div class="drawer" id="winnerDetailDrawer" aria-hidden="true">
+  <div class="drawerCard">
+    <div class="drawerHead"><h3>HISTÓRICO DO OUVINTE</h3><button class="btn small" data-close="winnerDetailDrawer">FECHAR</button></div>
+    <div class="drawerBody" id="winnerDetailBody"></div>
+  </div>
+</div>
+
+<div class="drawer" id="winnerRecordDrawer" aria-hidden="true">
+  <div class="drawerCard">
+    <div class="drawerHead"><h3 id="winnerRecordDrawerTitle">NOVO REGISTRO DE PREMIAÇÃO</h3><button class="btn small" data-close="winnerRecordDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <form id="winnerRecordForm">
+        <input type="hidden" id="winnerRecordId">
+        <div class="formGrid two">
+          <div class="field full"><label>NOME COMPLETO</label><input class="control" id="winnerRecordName" maxlength="140" autocomplete="off" required></div>
+          <div class="field"><label>DATA</label><input class="control" id="winnerRecordDate" type="date" required></div>
+          <div class="field"><label>PROGRAMA</label><input class="control" id="winnerRecordProgram" maxlength="140" required></div>
+          <div class="field full"><label>PRÊMIO</label><input class="control" id="winnerRecordPrize" maxlength="180" required></div>
+        </div>
+        <div class="formActions"><button class="btn red" type="submit">SALVAR REGISTRO</button><button class="btn" type="button" data-close="winnerRecordDrawer">CANCELAR</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="drawer" id="winnerImportDrawer" aria-hidden="true">
+  <div class="drawerCard">
+    <div class="drawerHead"><h3>IMPORTAR HISTÓRICO DO EXCEL</h3><button class="btn small" data-close="winnerImportDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <div class="winnerImportFile" id="winnerImportFileLabel">NENHUM ARQUIVO ANALISADO.</div>
+      <div id="winnerImportPreview"><div class="winnerEmpty">SELECIONE UM ARQUIVO COM AS COLUNAS NOME / DATA / PROGRAMA / PRÊMIO.</div></div>
+      <div class="formActions"><button class="btn red" id="confirmWinnerImportBtn" type="button" disabled>CONFIRMAR IMPORTAÇÃO</button><button class="btn" type="button" data-close="winnerImportDrawer">CANCELAR</button></div>
     </div>
   </div>
 </div>
@@ -5779,6 +5882,8 @@ const FIREBASE_CONFIG = {
   "measurementId": "G-VB6Y2TS796"
 };
 const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
+const WINNER_BANK_PATH = "jp-painel-brindes/winnerBank";
+const WINNER_BLOCK_MONTHS = 8;
 const LEGACY_API_URL = "https://script.google.com/macros/s/AKfycbzaeiSMNoo4miaB7ABVku3hxUsg5dr6egLE9-fltQaIUPzHr0RKFMR5nXr7ATbD4evJ/exec";
 
 let firebaseStarted = false;
@@ -5791,6 +5896,11 @@ let firebasePendingSave = false;
 let firebaseInitialSnapshotSeen = false;
 let firebaseServerLoaded = false;
 let firebaseBaselineState = null;
+let winnerBankRef = null;
+let winnerBankStarted = false;
+let winnerBankReady = false;
+let winnerBankRecords = [];
+let winnerBankImport = null;
 
 function firebaseConfigReady(){
   return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
@@ -6090,6 +6200,420 @@ async function saveStateToApi(){
   }catch(err){
     console.warn('FIREBASE SAVE ERROR',err);
     updateSyncStatus('error','ERRO FIREBASE');
+  }
+}
+
+function winnerUpper(value){
+  return String(value??'').trim().replace(/\s+/g,' ').toUpperCase();
+}
+function winnerPlain(value){
+  return winnerUpper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function winnerPersonKey(name){
+  return winnerPlain(name).replace(/\s+/g,'_').slice(0,180);
+}
+function winnerPrizeKey(prize){
+  return winnerPlain(prize).replace(/\s+/g,'_').slice(0,220);
+}
+function winnerFingerprint(record){
+  return [winnerPersonKey(record?.name),record?.date||'',winnerPrizeKey(record?.prize)].join('|');
+}
+function winnerRecordList(value){
+  const source=value?.records ?? value ?? {};
+  if(Array.isArray(source)) return source.filter(Boolean).map((row,index)=>({...row,id:row.id||`LEGACY_${index}`}));
+  if(source && typeof source==='object') return Object.entries(source).map(([key,row])=>({...row,id:row?.id||key})).filter(row=>row.name&&row.date);
+  return [];
+}
+function winnerAddMonthsISO(iso,months=WINNER_BLOCK_MONTHS){
+  const [year,month,day]=String(iso||'').split('-').map(Number);
+  if(!year||!month||!day) return '';
+  const first=new Date(year,month-1+months,1,12);
+  const lastDay=new Date(first.getFullYear(),first.getMonth()+1,0,12).getDate();
+  const result=new Date(first.getFullYear(),first.getMonth(),Math.min(day,lastDay),12);
+  return `${result.getFullYear()}-${String(result.getMonth()+1).padStart(2,'0')}-${String(result.getDate()).padStart(2,'0')}`;
+}
+function winnerCycleInfo(records,asOf=todayISO()){
+  const sorted=[...records]
+    .filter(record=>record?.date && record.date<=asOf)
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  let cycleCount=0;
+  let blockedUntil='';
+  let thirdDate='';
+  sorted.forEach(record=>{
+    if(blockedUntil && record.date>=blockedUntil){
+      cycleCount=0;
+      blockedUntil='';
+      thirdDate='';
+    }
+    if(blockedUntil && record.date<blockedUntil) return;
+    cycleCount+=1;
+    if(cycleCount===3){
+      thirdDate=record.date;
+      blockedUntil=winnerAddMonthsISO(record.date);
+    }
+  });
+  if(blockedUntil && asOf>=blockedUntil){
+    cycleCount=0;
+    blockedUntil='';
+    thirdDate='';
+  }
+  return {cycleCount,blocked:!!blockedUntil,blockedUntil,thirdDate};
+}
+function winnerHistoryFor(name,{excludeSourceRef='',asOf='9999-12-31'}={}){
+  const key=winnerPersonKey(name);
+  if(!key) return [];
+  return winnerBankRecords
+    .filter(record=>(record.personKey||winnerPersonKey(record.name))===key)
+    .filter(record=>!excludeSourceRef || record.sourceRef!==excludeSourceRef)
+    .filter(record=>!record.date || record.date<=asOf)
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+}
+function evaluateWinnerEligibility(name,prize,asOf=todayISO(),excludeSourceRef=''){
+  const history=winnerHistoryFor(name,{excludeSourceRef,asOf});
+  const cycle=winnerCycleInfo(history,asOf);
+  const prizeKey=winnerPrizeKey(prize);
+  const samePrize=!!prizeKey && history.some(record=>(record.prizeKey||winnerPrizeKey(record.prize))===prizeKey);
+  let status='APTO';
+  let title=history.length?'APTO':'PRIMEIRA PREMIAÇÃO / APTO';
+  let reason=history.length?'OUVINTE LIBERADO PARA NOVA PREMIAÇÃO.':'NENHUM HISTÓRICO LOCALIZADO PARA ESTE NOME.';
+  if(samePrize){
+    status='BLOQUEADO';
+    title='JÁ GANHOU ESTE PRÊMIO';
+    const previous=history.find(record=>(record.prizeKey||winnerPrizeKey(record.prize))===prizeKey);
+    reason=previous?`MESMO PRÊMIO REGISTRADO EM ${formatBR(previous.date)} · ${winnerUpper(previous.program||'PROGRAMA')}.`:'ESTE PRÊMIO JÁ CONSTA NO HISTÓRICO.';
+  }else if(cycle.blocked){
+    status='BLOQUEADO';
+    title='BLOQUEADO';
+    reason=`LIBERAÇÃO AUTOMÁTICA EM ${formatBR(cycle.blockedUntil)}.`;
+  }else if(cycle.cycleCount===2){
+    status='ATENCAO';
+    title='ATENÇÃO — ESTA SERÁ A 3ª PREMIAÇÃO';
+    reason='A CONFIRMAÇÃO INICIARÁ O BLOQUEIO DE 8 MESES.';
+  }
+  return {name:winnerUpper(name),history,total:history.length,cycleCount:cycle.cycleCount,blockedUntil:cycle.blockedUntil,samePrize,status,title,reason,allowed:status!=='BLOQUEADO'};
+}
+function winnerStatusClass(status){
+  return status==='BLOQUEADO'?'bloqueado':status==='ATENCAO'?'atencao':'apto';
+}
+function winnerStatusLabel(status){
+  return status==='ATENCAO'?'ATENÇÃO':status;
+}
+function winnerPeople(){
+  const map=new Map();
+  winnerBankRecords.forEach(record=>{
+    const key=record.personKey||winnerPersonKey(record.name);
+    if(!key) return;
+    if(!map.has(key)) map.set(key,{key,name:winnerUpper(record.name),records:[]});
+    const person=map.get(key);
+    person.records.push(record);
+    if(String(record.date||'')>=String(person.lastDate||'')){ person.name=winnerUpper(record.name); person.lastDate=record.date||''; }
+  });
+  return [...map.values()].map(person=>{
+    const eligibility=evaluateWinnerEligibility(person.name,'',todayISO());
+    return {...person,eligibility,lastDate:person.records.map(r=>r.date||'').sort().pop()||''};
+  });
+}
+function setWinnerBankState(mode,text){
+  const box=$('winnerBankState');
+  if(!box) return;
+  box.className=`winnerBankState ${mode||''}`.trim();
+  box.textContent=text;
+}
+function applyWinnerBankSnapshot(value){
+  winnerBankRecords=winnerRecordList(value).map(record=>({
+    ...record,
+    name:winnerUpper(record.name),
+    program:winnerUpper(record.program),
+    prize:winnerUpper(record.prize),
+    personKey:record.personKey||winnerPersonKey(record.name),
+    prizeKey:record.prizeKey||winnerPrizeKey(record.prize)
+  }));
+  winnerBankReady=true;
+  setWinnerBankState('online',`${winnerBankRecords.length} PREMIAÇÃO(ÕES) CARREGADA(S) DO FIREBASE.`);
+  renderWinnerBank();
+}
+function initWinnerBank(force=false){
+  if(!firebaseConfigReady()){
+    winnerBankReady=false;
+    setWinnerBankState('error','FIREBASE INDISPONÍVEL PARA O BANCO DE GANHADORES.');
+    return;
+  }
+  try{
+    const app=window.firebase.apps&&window.firebase.apps.length?window.firebase.app():window.firebase.initializeApp(FIREBASE_CONFIG);
+    winnerBankRef=window.firebase.database(app).ref(WINNER_BANK_PATH);
+    if(!winnerBankStarted){
+      winnerBankStarted=true;
+      winnerBankRef.on('value',snapshot=>applyWinnerBankSnapshot(snapshot.val()||{}),error=>{
+        console.error('WINNER BANK LOAD ERROR',error);
+        winnerBankReady=false;
+        setWinnerBankState('error','ERRO AO CARREGAR O BANCO DE GANHADORES.');
+      });
+    }
+    if(force){
+      setWinnerBankState('','ATUALIZANDO O BANCO CENTRAL DE GANHADORES...');
+      winnerBankRef.get().then(snapshot=>applyWinnerBankSnapshot(snapshot.val()||{})).catch(error=>{
+        console.error('WINNER BANK REFRESH ERROR',error);
+        setWinnerBankState('error','NÃO FOI POSSÍVEL ATUALIZAR O BANCO DE GANHADORES.');
+      });
+    }
+  }catch(error){
+    console.error('WINNER BANK INIT ERROR',error);
+    winnerBankReady=false;
+    setWinnerBankState('error','ERRO AO INICIAR O BANCO DE GANHADORES.');
+  }
+}
+function renderWinnerBank(){
+  const table=$('winnerBankTable');
+  const kpis=$('winnerBankKpis');
+  if(!table||!kpis) return;
+  const people=winnerPeople();
+  const blocked=people.filter(person=>person.eligibility.status==='BLOQUEADO').length;
+  const attention=people.filter(person=>person.eligibility.status==='ATENCAO').length;
+  kpis.innerHTML=`
+    <div class="winnerBankKpi"><span>OUVINTES NO BANCO</span><strong>${people.length}</strong></div>
+    <div class="winnerBankKpi"><span>PREMIAÇÕES REGISTRADAS</span><strong>${winnerBankRecords.length}</strong></div>
+    <div class="winnerBankKpi"><span>BLOQUEADOS AGORA</span><strong>${blocked}</strong></div>
+    <div class="winnerBankKpi"><span>PRÓXIMOS DA 3ª PREMIAÇÃO</span><strong>${attention}</strong></div>`;
+  const query=winnerPlain($('winnerBankSearch')?.value||'');
+  const status=$('winnerBankStatusFilter')?.value||'';
+  const rows=people
+    .filter(person=>{
+      if(!query) return true;
+      return winnerPlain(person.name).includes(query)||person.records.some(record=>winnerPlain(record.program).includes(query)||winnerPlain(record.prize).includes(query));
+    })
+    .filter(person=>!status||person.eligibility.status===status)
+    .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+  table.innerHTML=rows.length?rows.map(person=>{
+    const e=person.eligibility;
+    return `<tr><td class="winnerBankName"><strong>${esc(person.name)}</strong><small>${esc(person.key.replace(/_/g,' '))}</small></td><td class="num">${person.records.length}</td><td>${formatBR(person.lastDate)||'-'}</td><td><span class="winnerStateBadge ${winnerStatusClass(e.status)}">${esc(winnerStatusLabel(e.status))}</span></td><td class="winnerRelease">${e.blockedUntil?formatBR(e.blockedUntil):'-'}</td><td><div class="distActions"><button class="btn small" type="button" onclick="openWinnerDetails('${esc(person.key)}')">VER HISTÓRICO</button><button class="actionIcon" type="button" title="ADICIONAR PREMIAÇÃO" onclick="openWinnerRecord('', '${esc(person.key)}')"><span class="iconGlyph">＋</span></button></div></td></tr>`;
+  }).join(''):`<tr><td colspan="6"><div class="winnerEmpty">${winnerBankReady?'NENHUM OUVINTE ENCONTRADO.':'CARREGANDO BANCO DE GANHADORES...'}</div></td></tr>`;
+}
+function openWinnerDetails(personKey){
+  const person=winnerPeople().find(row=>row.key===personKey);
+  if(!person) return;
+  const e=person.eligibility;
+  const records=[...person.records].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  $('winnerDetailBody').innerHTML=`
+    <div class="winnerDetailHero"><div><h4>${esc(person.name)}</h4><p>${person.records.length} PREMIAÇÃO(ÕES) NO HISTÓRICO · CICLO ATUAL: ${e.cycleCount} DE 3</p></div><span class="winnerStateBadge ${winnerStatusClass(e.status)}">${esc(winnerStatusLabel(e.status))}${e.blockedUntil?` · ATÉ ${formatBR(e.blockedUntil)}`:''}</span></div>
+    <div class="winnerHistoryList">${records.map(record=>`<div class="winnerHistoryRow"><strong>${formatBR(record.date)}</strong><span>${esc(record.program||'PROGRAMA NÃO INFORMADO')}</span><span class="winnerHistoryPrize">${esc(record.prize||'PRÊMIO NÃO INFORMADO')}</span><div class="winnerHistoryActions"><button class="actionIcon" type="button" title="EDITAR" onclick="openWinnerRecord('${esc(record.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" type="button" title="EXCLUIR" onclick="deleteWinnerRecord('${esc(record.id)}')"><span class="iconGlyph">🗑</span></button></div></div>`).join('')}</div>`;
+  openDrawer('winnerDetailDrawer');
+}
+function openWinnerRecord(recordId='',personKey=''){
+  const record=recordId?winnerBankRecords.find(row=>row.id===recordId):null;
+  const person=personKey?winnerPeople().find(row=>row.key===personKey):null;
+  $('winnerRecordForm').reset();
+  $('winnerRecordId').value=record?.id||'';
+  $('winnerRecordName').value=record?.name||person?.name||'';
+  $('winnerRecordDate').value=record?.date||todayISO();
+  $('winnerRecordProgram').value=record?.program||'';
+  $('winnerRecordPrize').value=record?.prize||'';
+  $('winnerRecordDrawerTitle').textContent=record?'EDITAR REGISTRO DE PREMIAÇÃO':'NOVO REGISTRO DE PREMIAÇÃO';
+  openDrawer('winnerRecordDrawer');
+  setTimeout(()=>$(record||person?'winnerRecordProgram':'winnerRecordName')?.focus(),30);
+}
+async function saveWinnerRecord(event){
+  event.preventDefault();
+  initWinnerBank();
+  if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL.'); return; }
+  const recordId=$('winnerRecordId').value||winnerBankRef.child('records').push().key;
+  const name=winnerUpper($('winnerRecordName').value);
+  const date=$('winnerRecordDate').value;
+  const program=winnerUpper($('winnerRecordProgram').value);
+  const prize=winnerUpper($('winnerRecordPrize').value);
+  if(!name||!date||!program||!prize){ alert('PREENCHA NOME, DATA, PROGRAMA E PRÊMIO.'); return; }
+  const previous=winnerBankRecords.find(row=>row.id===recordId);
+  const now=new Date();
+  const record={id:recordId,name,date,program,prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(prize),source:previous?.source||'PAINEL_PRINCIPAL',sourceRef:previous?.sourceRef||'',createdAt:previous?.createdAt||now.toISOString(),createdAtLabel:previous?.createdAtLabel||now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:'PAINEL_PRINCIPAL'};
+  const duplicate=winnerBankRecords.some(row=>row.id!==recordId&&winnerFingerprint(row)===winnerFingerprint(record));
+  if(duplicate){ alert('ESTE REGISTRO JÁ EXISTE NO BANCO DE GANHADORES.'); return; }
+  try{
+    await winnerBankRef.child(`records/${recordId}`).set(record);
+    await winnerBankRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'PAINEL_PRINCIPAL',schemaVersion:1});
+    closeDrawer('winnerRecordDrawer');
+    closeDrawer('winnerDetailDrawer');
+    toast('REGISTRO DO GANHADOR SALVO NO FIREBASE.');
+  }catch(error){
+    console.error('WINNER RECORD SAVE ERROR',error);
+    alert('NÃO FOI POSSÍVEL SALVAR O REGISTRO NO FIREBASE.');
+  }
+}
+async function deleteWinnerRecord(recordId){
+  const record=winnerBankRecords.find(row=>row.id===recordId);
+  if(!record||!confirm(`EXCLUIR ESTE REGISTRO DO HISTÓRICO?\n\n${record.name}\n${formatBR(record.date)} · ${record.prize}`)) return;
+  try{
+    await winnerBankRef.child(`records/${recordId}`).remove();
+    closeDrawer('winnerDetailDrawer');
+    toast('REGISTRO EXCLUÍDO DO BANCO DE GANHADORES.');
+  }catch(error){
+    console.error('WINNER RECORD DELETE ERROR',error);
+    alert('NÃO FOI POSSÍVEL EXCLUIR O REGISTRO.');
+  }
+}
+function winnerValidISO(year,month,day){
+  const y=Number(year),m=Number(month),d=Number(day);
+  const date=new Date(y,m-1,d,12);
+  if(!y||!m||!d||date.getFullYear()!==y||date.getMonth()!==m-1||date.getDate()!==d) return '';
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+function winnerExcelDate(value){
+  if(value instanceof Date && !Number.isNaN(value.getTime())) return winnerValidISO(value.getFullYear(),value.getMonth()+1,value.getDate());
+  if(typeof value==='number' && window.XLSX?.SSF?.parse_date_code){
+    const parsed=window.XLSX.SSF.parse_date_code(value);
+    if(parsed) return winnerValidISO(parsed.y,parsed.m,parsed.d);
+  }
+  const raw=String(value??'').trim();
+  if(!raw) return '';
+  let match=raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+  if(match) return winnerValidISO(match[1],match[2],match[3]);
+  match=raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+  if(match){
+    const year=Number(match[3])<100?2000+Number(match[3]):Number(match[3]);
+    return winnerValidISO(year,match[2],match[1]);
+  }
+  return '';
+}
+function winnerHeaderKey(value){
+  return winnerPlain(value).replace(/\s+/g,' ');
+}
+function winnerHeaderMapping(rows){
+  const aliases={
+    name:['NOME','NOME COMPLETO','NOME DO GANHADOR','GANHADOR','OUVINTE'],
+    date:['DATA','DATA DO SORTEIO','DATA DA PREMIACAO','DATA PREMIACAO'],
+    program:['PROGRAMA','PROGRAMA DE RADIO','PROGRAMACAO'],
+    prize:['PREMIO','PREMIO GANHO','BRINDE','BRINDE GANHO']
+  };
+  for(let rowIndex=0;rowIndex<Math.min(rows.length,20);rowIndex+=1){
+    const headers=(rows[rowIndex]||[]).map(winnerHeaderKey);
+    const mapping={};
+    Object.entries(aliases).forEach(([field,options])=>{
+      mapping[field]=headers.findIndex(header=>options.includes(header));
+    });
+    if(Object.values(mapping).every(index=>index>=0)) return {rowIndex,headers,mapping};
+  }
+  return null;
+}
+function renderWinnerImportPreview(){
+  const host=$('winnerImportPreview');
+  const confirmBtn=$('confirmWinnerImportBtn');
+  if(!host||!confirmBtn) return;
+  if(!winnerBankImport){
+    host.innerHTML='<div class="winnerEmpty">SELECIONE UM ARQUIVO COM AS COLUNAS NOME / DATA / PROGRAMA / PRÊMIO.</div>';
+    confirmBtn.disabled=true;
+    return;
+  }
+  const data=winnerBankImport;
+  confirmBtn.disabled=!data.valid.length;
+  const issues=[...data.invalid.map(row=>`LINHA ${row.row}: ${row.reason}`),...data.duplicates.slice(0,20).map(row=>`LINHA ${row.row}: REGISTRO DUPLICADO — ${row.name} · ${formatBR(row.date)} · ${row.prize}`)];
+  host.innerHTML=`
+    <div class="winnerImportSummary">
+      <div class="winnerImportMetric good"><span>PRONTOS PARA IMPORTAR</span><strong>${data.valid.length}</strong></div>
+      <div class="winnerImportMetric warn"><span>DUPLICADOS IGNORADOS</span><strong>${data.duplicates.length}</strong></div>
+      <div class="winnerImportMetric bad"><span>LINHAS COM ERRO</span><strong>${data.invalid.length}</strong></div>
+    </div>
+    <div class="winnerImportFile">PLANILHA: ${esc(data.sheetName)} · CABEÇALHO NA LINHA ${data.headerRow+1} · ${data.totalRows} LINHA(S) COM CONTEÚDO.</div>
+    ${issues.length?`<div class="winnerImportIssues">${issues.slice(0,40).map(issue=>`<div class="winnerImportIssue">${esc(issue)}</div>`).join('')}${issues.length>40?`<div class="winnerImportIssue">MAIS ${issues.length-40} OCORRÊNCIA(S) NÃO EXIBIDA(S).</div>`:''}</div>`:'<div class="winnerBankState online">TODAS AS LINHAS VÁLIDAS FORAM RECONHECIDAS.</div>'}`;
+}
+async function parseWinnerImportFile(file){
+  if(!file) return;
+  $('winnerImportFileLabel').textContent=file.name;
+  winnerBankImport=null;
+  renderWinnerImportPreview();
+  openDrawer('winnerImportDrawer');
+  if(!window.XLSX){
+    $('winnerImportPreview').innerHTML='<div class="winnerImportIssue">O LEITOR DE EXCEL NÃO FOI CARREGADO. VERIFIQUE A CONEXÃO E TENTE NOVAMENTE.</div>';
+    return;
+  }
+  try{
+    const buffer=await file.arrayBuffer();
+    const workbook=window.XLSX.read(buffer,{type:'array',cellDates:true});
+    if(!workbook.SheetNames.length) throw new Error('A PLANILHA NÃO POSSUI ABAS.');
+    let sheetName='';
+    let rows=[];
+    let header=null;
+    for(const candidateName of workbook.SheetNames){
+      const candidateRows=window.XLSX.utils.sheet_to_json(workbook.Sheets[candidateName],{header:1,defval:'',raw:true,blankrows:false});
+      const candidateHeader=winnerHeaderMapping(candidateRows);
+      if(candidateHeader){ sheetName=candidateName; rows=candidateRows; header=candidateHeader; break; }
+    }
+    if(!header) throw new Error('NÃO FOI POSSÍVEL LOCALIZAR AS COLUNAS NOME / DATA / PROGRAMA / PRÊMIO.');
+    const existing=new Set(winnerBankRecords.map(winnerFingerprint));
+    const fileSeen=new Set();
+    const valid=[];
+    const invalid=[];
+    const duplicates=[];
+    let totalRows=0;
+    rows.slice(header.rowIndex+1).forEach((row,offset)=>{
+      const rowNumber=header.rowIndex+offset+2;
+      const rawName=row[header.mapping.name];
+      const rawDate=row[header.mapping.date];
+      const rawProgram=row[header.mapping.program];
+      const rawPrize=row[header.mapping.prize];
+      if([rawName,rawDate,rawProgram,rawPrize].every(value=>String(value??'').trim()==='')) return;
+      totalRows+=1;
+      const name=winnerUpper(rawName);
+      const date=winnerExcelDate(rawDate);
+      const program=winnerUpper(rawProgram);
+      const prize=winnerUpper(rawPrize);
+      const missing=[];
+      if(!name) missing.push('NOME');
+      if(!date) missing.push('DATA VÁLIDA');
+      if(!program) missing.push('PROGRAMA');
+      if(!prize) missing.push('PRÊMIO');
+      if(missing.length){ invalid.push({row:rowNumber,reason:`CAMPO(S) AUSENTE(S) OU INVÁLIDO(S): ${missing.join(', ')}.`}); return; }
+      const record={name,date,program,prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(prize),row:rowNumber};
+      const fingerprint=winnerFingerprint(record);
+      if(existing.has(fingerprint)||fileSeen.has(fingerprint)){ duplicates.push(record); return; }
+      fileSeen.add(fingerprint);
+      valid.push(record);
+    });
+    winnerBankImport={fileName:file.name,sheetName,headerRow:header.rowIndex,totalRows,valid,invalid,duplicates};
+    renderWinnerImportPreview();
+  }catch(error){
+    console.error('WINNER EXCEL PARSE ERROR',error);
+    winnerBankImport=null;
+    $('winnerImportPreview').innerHTML=`<div class="winnerImportIssue">${esc(error.message||'NÃO FOI POSSÍVEL LER O ARQUIVO.')}</div>`;
+    $('confirmWinnerImportBtn').disabled=true;
+  }
+}
+async function confirmWinnerImport(){
+  if(!winnerBankImport?.valid?.length) return;
+  initWinnerBank();
+  if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL.'); return; }
+  const button=$('confirmWinnerImportBtn');
+  button.disabled=true;
+  button.textContent='IMPORTANDO...';
+  try{
+    const latestSnapshot=await winnerBankRef.child('records').get();
+    const latest=winnerRecordList(latestSnapshot.val()||{});
+    const fingerprints=new Set(latest.map(winnerFingerprint));
+    const rows=winnerBankImport.valid.filter(record=>!fingerprints.has(winnerFingerprint(record)));
+    if(!rows.length){
+      alert('TODOS OS REGISTROS VÁLIDOS JÁ EXISTEM NO BANCO.');
+      closeDrawer('winnerImportDrawer');
+      return;
+    }
+    const now=new Date();
+    const batchId=`IMP_${now.getTime().toString(36).toUpperCase()}`;
+    for(let start=0;start<rows.length;start+=250){
+      const updates={};
+      rows.slice(start,start+250).forEach(source=>{
+        const recordId=winnerBankRef.child('records').push().key;
+        updates[recordId]={id:recordId,name:source.name,date:source.date,program:source.program,prize:source.prize,personKey:source.personKey,prizeKey:source.prizeKey,source:'EXCEL_IMPORT',sourceRef:'',importBatchId:batchId,sourceRow:source.row,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:'PAINEL_PRINCIPAL'};
+      });
+      await winnerBankRef.child('records').update(updates);
+    }
+    await winnerBankRef.update({schemaVersion:1,initialized:true,initializedAt:now.toISOString(),updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'IMPORTACAO_EXCEL'});
+    await winnerBankRef.child(`imports/${batchId}`).set({id:batchId,fileName:winnerBankImport.fileName,sheetName:winnerBankImport.sheetName,imported:rows.length,duplicates:winnerBankImport.duplicates.length+(winnerBankImport.valid.length-rows.length),invalid:winnerBankImport.invalid.length,importedAt:now.toISOString(),importedAtLabel:now.toLocaleString('pt-BR'),source:'PAINEL_PRINCIPAL'});
+    winnerBankImport=null;
+    $('winnerImportFileInput').value='';
+    closeDrawer('winnerImportDrawer');
+    toast(`${rows.length} REGISTRO(S) IMPORTADO(S) PARA O FIREBASE.`);
+  }catch(error){
+    console.error('WINNER EXCEL IMPORT ERROR',error);
+    alert('A IMPORTAÇÃO NÃO FOI CONCLUÍDA. NENHUM REGISTRO EXISTENTE FOI APAGADO.');
+  }finally{
+    button.textContent='CONFIRMAR IMPORTAÇÃO';
+    button.disabled=!winnerBankImport?.valid?.length;
   }
 }
 
@@ -7456,6 +7980,7 @@ function render(){
   renderProgramSchedules();
   renderStudioPauta();
   renderBackup();
+  renderWinnerBank();
   renderReturnAlerts();
   renderMiniAlerts();
   populateDatalists();
@@ -10379,6 +10904,13 @@ bind('clearBackupLocalBtn','click',()=>{ localStorage.removeItem('jp_painel_last
 bind('forceUploadFirebaseBtn','click',forceUploadLocalToFirebase);
 bind('forceLoadFirebaseBtn','click',forceLoadFirebaseToLocal);
 bind('verifyFirebaseBtn','click',verifyFirebaseState);
+bind('importWinnersBtn','click',()=>$('winnerImportFileInput')?.click());
+bind('winnerImportFileInput','change',event=>parseWinnerImportFile(event.target.files?.[0]));
+bind('confirmWinnerImportBtn','click',confirmWinnerImport);
+bind('addWinnerRecordBtn','click',()=>openWinnerRecord());
+bind('winnerRecordForm','submit',saveWinnerRecord);
+bind('refreshWinnerBankBtn','click',()=>initWinnerBank(true));
+['winnerBankSearch','winnerBankStatusFilter'].forEach(id=>bind(id,'input',renderWinnerBank));
 
 bind('monthInput','change',()=>{ const key=$('monthInput').value; if(!key) return toast('ESCOLHA UM MÊS.'); manualMonthOverride=true; if(!state.months[key]) createBlankMonth(key); state.currentMonth=key; saveState(true); render(); toast('MÊS ABERTO COM SALVAMENTO AUTOMÁTICO.'); });
 function downloadFile(name, content, type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
@@ -10397,6 +10929,9 @@ window.duplicateSchedule=duplicateSchedule;
 window.editSchedule=editSchedule;
 window.deleteSchedule=deleteSchedule;
 window.openMonthKey=openMonthKey;
+window.openWinnerDetails=openWinnerDetails;
+window.openWinnerRecord=openWinnerRecord;
+window.deleteWinnerRecord=deleteWinnerRecord;
 window.generateRadioFromDist=generateRadioFromDist;
 window.confirmSmartRadioReport=confirmSmartRadioReport;
 window.redoSmartRadioReport=redoSmartRadioReport;
@@ -10413,6 +10948,7 @@ setOfficialCalendarMonth(true);
 console.info('PAINEL JP — MÊS OFICIAL:', currentCalendarMonth(), 'MÊS ABERTO:', state.currentMonth);
 render();
 syncStateFromApi(true);
+initWinnerBank(true);
 window.addEventListener('beforeunload',()=>{ normalizePanelState(state); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); });
 setInterval(()=>{ syncCalendarMonthIfChanged(); },60000);
 setInterval(()=>syncStateFromApi(false),30000);
