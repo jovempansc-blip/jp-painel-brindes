@@ -3050,7 +3050,7 @@ body.drawer-open .distActions{
 .winnerHistoryRow span{font-size:9px;color:#4f5b6b;font-weight:850}
 .winnerHistoryRow .winnerHistoryPrize{color:#86152c;font-weight:1000}
 .winnerHistoryRow .winnerHistoryActions{display:flex;gap:5px}
-.winnerImportSummary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px}
+.winnerImportSummary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px}
 .winnerImportMetric{padding:11px;border:1px solid var(--line);border-radius:14px;background:#f8fafc;text-align:center}
 .winnerImportMetric span{display:block;color:var(--muted);font-size:8px;font-weight:900}
 .winnerImportMetric strong{display:block;margin-top:5px;font-size:20px;font-weight:1000;color:#171c26}
@@ -3060,9 +3060,20 @@ body.drawer-open .distActions{
 .winnerImportFile{padding:10px 12px;border:1px dashed #c7d0dc;border-radius:14px;background:#f8fafc;color:#475467;font-size:9px;font-weight:900;margin-bottom:10px}
 .winnerImportIssues{max-height:220px;overflow:auto;display:grid;gap:6px}
 .winnerImportIssue{padding:8px 10px;border:1px solid #f0c3cb;border-radius:11px;background:#fff5f7;color:#9d1730;font-size:8.5px;font-weight:850}
+.winnerSimilarityReview{display:grid;gap:8px;margin-bottom:9px;padding:11px 12px;border:1px solid #f0c36f;border-radius:14px;background:#fff8ea;color:#694100}
+.winnerSimilarityReview strong{font-size:9.5px;font-weight:1000}
+.winnerSimilarityCompare{display:grid;grid-template-columns:1fr auto 1fr;gap:9px;align-items:center}
+.winnerSimilarityName{display:grid;gap:3px;padding:8px 9px;border:1px solid rgba(154,91,0,.18);border-radius:11px;background:rgba(255,255,255,.76)}
+.winnerSimilarityName span{color:#8a640f;font-size:7.5px;font-weight:900}
+.winnerSimilarityName b{color:#362600;font-size:9.5px;font-weight:1000}
+.winnerSimilarityScore{display:inline-flex;align-items:center;justify-content:center;min-height:28px;padding:0 8px;border-radius:999px;background:#fff;border:1px solid #efc878;color:#8d5700;font-size:8px;font-weight:1000}
+.winnerSimilarityActions{display:flex;gap:7px;flex-wrap:wrap}
+.winnerSimilarityActions .btn{min-height:30px;padding:0 10px;font-size:8px}
+.winnerSimilarityConfirmed{margin-bottom:9px;padding:9px 11px;border:1px solid #b9e6cd;border-radius:12px;background:#effaf4;color:#08713f;font-size:8.5px;font-weight:950}
 .winnerEmpty{padding:24px;text-align:center;color:var(--muted);font-size:10px;font-weight:900}
-@media(max-width:900px){.winnerBankKpis{grid-template-columns:1fr 1fr}.winnerBankToolbar{grid-template-columns:1fr 1fr}.winnerBankActions{grid-column:1/-1;justify-content:flex-start}.winnerHistoryRow{grid-template-columns:1fr 1fr}.winnerHistoryActions{grid-column:1/-1}}
+@media(max-width:900px){.winnerBankKpis{grid-template-columns:1fr 1fr}.winnerBankToolbar{grid-template-columns:1fr 1fr}.winnerBankActions{grid-column:1/-1;justify-content:flex-start}.winnerHistoryRow{grid-template-columns:1fr 1fr}.winnerHistoryActions{grid-column:1/-1}.winnerImportSummary{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.winnerBankKpis,.winnerBankToolbar,.winnerImportSummary{grid-template-columns:1fr}.winnerBankActions{grid-column:auto}.winnerDetailHero{grid-template-columns:1fr}.winnerHistoryRow{grid-template-columns:1fr}}
+@media(max-width:600px){.winnerSimilarityCompare{grid-template-columns:1fr}.winnerSimilarityScore{justify-self:start}}
 
 </style>
 
@@ -3694,7 +3705,7 @@ body.drawer-open .distActions{
       <form id="winnerRecordForm">
         <input type="hidden" id="winnerRecordId">
         <div class="formGrid two">
-          <div class="field full"><label>NOME COMPLETO</label><input class="control" id="winnerRecordName" maxlength="140" autocomplete="off" required></div>
+          <div class="field full"><label>NOME COMPLETO</label><input class="control" id="winnerRecordName" maxlength="140" autocomplete="off" required><div id="winnerRecordSimilarity"></div></div>
           <div class="field"><label>DATA</label><input class="control" id="winnerRecordDate" type="date" required></div>
           <div class="field"><label>PROGRAMA</label><input class="control" id="winnerRecordProgram" maxlength="140" required></div>
           <div class="field full"><label>PRÊMIO</label><input class="control" id="winnerRecordPrize" maxlength="180" required></div>
@@ -6275,6 +6286,111 @@ function winnerUpper(value){
 function winnerPlain(value){
   return winnerUpper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
 }
+const WINNER_SIMILARITY_MIN=0.86;
+const WINNER_NAME_PARTICLES=new Set(['DA','DAS','DE','DO','DOS','E']);
+function winnerNameProfile(value){
+  const plain=winnerPlain(value);
+  const tokens=plain.split(' ').filter(Boolean);
+  const filtered=tokens.filter(token=>!WINNER_NAME_PARTICLES.has(token));
+  const core=filtered.length?filtered:tokens;
+  return {plain,tokens,core,compact:core.join(''),sorted:[...core].sort().join(' '),first:core[0]||'',last:core[core.length-1]||''};
+}
+function winnerLevenshtein(a,b){
+  const left=String(a||''),right=String(b||'');
+  if(left===right) return 0;
+  if(!left.length) return right.length;
+  if(!right.length) return left.length;
+  let previous=Array.from({length:right.length+1},(_,index)=>index);
+  for(let i=1;i<=left.length;i+=1){
+    const current=[i];
+    for(let j=1;j<=right.length;j+=1){
+      current[j]=Math.min(current[j-1]+1,previous[j]+1,previous[j-1]+(left[i-1]===right[j-1]?0:1));
+    }
+    previous=current;
+  }
+  return previous[right.length];
+}
+function winnerEditSimilarity(a,b){
+  const max=Math.max(String(a||'').length,String(b||'').length);
+  return max?1-(winnerLevenshtein(a,b)/max):1;
+}
+function winnerJaroWinkler(a,b){
+  const left=String(a||''),right=String(b||'');
+  if(left===right) return 1;
+  if(!left.length||!right.length) return 0;
+  const range=Math.max(0,Math.floor(Math.max(left.length,right.length)/2)-1);
+  const leftMatches=new Array(left.length).fill(false);
+  const rightMatches=new Array(right.length).fill(false);
+  let matches=0;
+  for(let i=0;i<left.length;i+=1){
+    const start=Math.max(0,i-range);
+    const end=Math.min(i+range+1,right.length);
+    for(let j=start;j<end;j+=1){
+      if(rightMatches[j]||left[i]!==right[j]) continue;
+      leftMatches[i]=true;
+      rightMatches[j]=true;
+      matches+=1;
+      break;
+    }
+  }
+  if(!matches) return 0;
+  const leftOrdered=[],rightOrdered=[];
+  leftMatches.forEach((matched,index)=>{ if(matched) leftOrdered.push(left[index]); });
+  rightMatches.forEach((matched,index)=>{ if(matched) rightOrdered.push(right[index]); });
+  let transpositions=0;
+  leftOrdered.forEach((char,index)=>{ if(char!==rightOrdered[index]) transpositions+=1; });
+  const jaro=((matches/left.length)+(matches/right.length)+((matches-transpositions/2)/matches))/3;
+  let prefix=0;
+  while(prefix<4&&prefix<left.length&&prefix<right.length&&left[prefix]===right[prefix]) prefix+=1;
+  return jaro+(prefix*.1*(1-jaro));
+}
+function winnerTokenSimilarity(leftTokens,rightTokens){
+  if(!leftTokens.length||!rightTokens.length) return 0;
+  const shorter=leftTokens.length<=rightTokens.length?leftTokens:rightTokens;
+  const longer=leftTokens.length<=rightTokens.length?rightTokens:leftTokens;
+  const average=shorter.reduce((total,token)=>{
+    const best=longer.reduce((score,candidate)=>Math.max(score,winnerEditSimilarity(token,candidate)),0);
+    return total+best;
+  },0)/shorter.length;
+  const coverage=shorter.length/longer.length;
+  return average*(.88+.12*coverage);
+}
+function winnerNameSimilarity(leftName,rightName){
+  const left=winnerNameProfile(leftName),right=winnerNameProfile(rightName);
+  if(!left.plain||!right.plain) return 0;
+  if(left.plain===right.plain) return 1;
+  if(left.sorted&&left.sorted===right.sorted) return .99;
+  const jaro=winnerJaroWinkler(left.compact,right.compact);
+  const edit=winnerEditSimilarity(left.compact,right.compact);
+  const token=winnerTokenSimilarity(left.core,right.core);
+  let score=(jaro*.43)+(edit*.24)+(token*.33);
+  const shorter=left.core.length<=right.core.length?left.core:right.core;
+  const longer=left.core.length<=right.core.length?right.core:left.core;
+  const contained=shorter.length>=2&&shorter.every(tokenValue=>longer.some(candidate=>winnerEditSimilarity(tokenValue,candidate)>=.92));
+  if(contained) score=Math.max(score,.86+(.1*(shorter.length/longer.length)));
+  const firstScore=winnerEditSimilarity(left.first,right.first);
+  const lastScore=winnerEditSimilarity(left.last,right.last);
+  if(firstScore<.55&&lastScore<.72) score-=.12;
+  else if(firstScore<.48) score-=.05;
+  return Math.max(0,Math.min(1,score));
+}
+function winnerSimilarityCandidates(name,candidates=[],limit=3){
+  const profile=winnerNameProfile(name);
+  if(profile.plain.length<4) return [];
+  const source=candidates.length?candidates:winnerPeople();
+  const inputKey=winnerPersonKey(name);
+  const seen=new Set();
+  const threshold=profile.core.length<=1?.94:WINNER_SIMILARITY_MIN;
+  return source.map((candidate,index)=>{
+    const candidateName=winnerUpper(candidate?.name??candidate);
+    const candidateKey=candidate?.key||candidate?.personKey||winnerPersonKey(candidateName);
+    const candidateId=String(candidate?.similarityId||candidate?.id||candidateKey||index);
+    if(!candidateName||!candidateKey||candidateKey===inputKey||seen.has(candidateId)) return null;
+    seen.add(candidateId);
+    const score=winnerNameSimilarity(name,candidateName);
+    return score>=threshold?{...candidate,name:candidateName,key:candidateKey,similarityId:candidateId,score}:null;
+  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,'pt-BR')).slice(0,limit);
+}
 function winnerPersonKey(name){
   return winnerPlain(name).replace(/\s+/g,'_').slice(0,180);
 }
@@ -6470,12 +6586,64 @@ function openWinnerRecord(recordId='',personKey=''){
   $('winnerRecordForm').reset();
   $('winnerRecordId').value=record?.id||'';
   $('winnerRecordName').value=record?.name||person?.name||'';
+  $('winnerRecordName').dataset.similarityInputKey='';
+  $('winnerRecordName').dataset.similarityRejected='';
+  $('winnerRecordName').dataset.similarityConfirmed='';
   $('winnerRecordDate').value=record?.date||todayISO();
   $('winnerRecordProgram').value=record?.program||'';
   $('winnerRecordPrize').value=record?.prize||'';
   $('winnerRecordDrawerTitle').textContent=record?'EDITAR REGISTRO DE PREMIAÇÃO':'NOVO REGISTRO DE PREMIAÇÃO';
+  renderWinnerRecordSimilarity();
   openDrawer('winnerRecordDrawer');
   setTimeout(()=>$(record||person?'winnerRecordProgram':'winnerRecordName')?.focus(),30);
+}
+function winnerSimilarityRejected(input,name){
+  const inputKey=winnerPersonKey(name);
+  if(input.dataset.similarityInputKey!==inputKey){
+    input.dataset.similarityInputKey=inputKey;
+    input.dataset.similarityRejected='';
+    input.dataset.similarityConfirmed='';
+  }
+  return new Set(String(input.dataset.similarityRejected||'').split(',').filter(Boolean));
+}
+function winnerRecordSimilarityState(){
+  const input=$('winnerRecordName');
+  const name=winnerUpper(input?.value||'');
+  if(!input||!name) return {name,candidates:[],rejected:new Set()};
+  const rejected=winnerSimilarityRejected(input,name);
+  const candidates=winnerSimilarityCandidates(name,winnerPeople(),6).filter(candidate=>!rejected.has(candidate.similarityId));
+  return {name,candidates,rejected};
+}
+function renderWinnerRecordSimilarity(){
+  const host=$('winnerRecordSimilarity');
+  const input=$('winnerRecordName');
+  if(!host||!input) return;
+  const state=winnerRecordSimilarityState();
+  const candidate=state.candidates[0];
+  if(candidate){
+    input.dataset.similarityConfirmed='';
+    host.innerHTML=`<div class="winnerSimilarityReview"><strong>POSSÍVEL CADASTRO EXISTENTE</strong><div class="winnerSimilarityCompare"><div class="winnerSimilarityName"><span>NOME DIGITADO</span><b>${esc(state.name)}</b></div><span class="winnerSimilarityScore">${Math.round(candidate.score*100)}% PARECIDO</span><div class="winnerSimilarityName"><span>NOME NO BANCO</span><b>${esc(candidate.name)}</b></div></div><div class="winnerSimilarityActions"><button class="btn red" type="button" data-winner-record-similarity="same" data-candidate-id="${esc(candidate.similarityId)}" data-candidate-name="${esc(candidate.name)}">É A MESMA PESSOA</button><button class="btn" type="button" data-winner-record-similarity="different" data-candidate-id="${esc(candidate.similarityId)}">SÃO PESSOAS DIFERENTES</button></div></div>`;
+    return;
+  }
+  host.innerHTML=input.dataset.similarityConfirmed==='different'?'<div class="winnerSimilarityConfirmed">REVISÃO CONCLUÍDA: PESSOAS DIFERENTES.</div>':input.dataset.similarityConfirmed==='same'?`<div class="winnerSimilarityConfirmed">NOME VINCULADO AO CADASTRO: ${esc(winnerUpper(input.value))}.</div>`:'';
+}
+function resolveWinnerRecordSimilarity(action,candidateId,candidateName=''){
+  const input=$('winnerRecordName');
+  if(!input) return;
+  const name=winnerUpper(input.value);
+  const rejected=winnerSimilarityRejected(input,name);
+  if(action==='same'){
+    input.value=winnerUpper(candidateName);
+    input.dataset.similarityInputKey=winnerPersonKey(input.value);
+    input.dataset.similarityRejected='';
+    input.dataset.similarityConfirmed='same';
+  }else{
+    rejected.add(String(candidateId||''));
+    input.dataset.similarityRejected=[...rejected].join(',');
+    input.dataset.similarityConfirmed='different';
+  }
+  renderWinnerRecordSimilarity();
+  input.focus();
 }
 async function saveWinnerRecord(event){
   event.preventDefault();
@@ -6487,6 +6655,13 @@ async function saveWinnerRecord(event){
   const program=winnerUpper($('winnerRecordProgram').value);
   const prize=winnerUpper($('winnerRecordPrize').value);
   if(!name||!date||!program||!prize){ alert('PREENCHA NOME, DATA, PROGRAMA E PRÊMIO.'); return; }
+  const similarity=winnerRecordSimilarityState();
+  if(similarity.candidates.length){
+    renderWinnerRecordSimilarity();
+    alert('REVISE O POSSÍVEL CADASTRO EXISTENTE ANTES DE SALVAR.');
+    $('winnerRecordName').focus();
+    return;
+  }
   const previous=winnerBankRecords.find(row=>row.id===recordId);
   const now=new Date();
   const record={id:recordId,name,date,program,prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(prize),source:previous?.source||'PAINEL_PRINCIPAL',sourceRef:previous?.sourceRef||'',createdAt:previous?.createdAt||now.toISOString(),createdAtLabel:previous?.createdAtLabel||now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:'PAINEL_PRINCIPAL'};
@@ -6558,6 +6733,47 @@ function winnerHeaderMapping(rows){
   }
   return null;
 }
+function winnerImportCandidateValue(candidate){
+  if(candidate?.record) return {name:winnerUpper(candidate.record.name),key:candidate.record.personKey||winnerPersonKey(candidate.record.name)};
+  return {name:winnerUpper(candidate?.name),key:candidate?.key||winnerPersonKey(candidate?.name)};
+}
+function winnerImportActiveCandidate(issue){
+  return (issue?.candidates||[]).find(candidate=>!issue.rejectedIds.includes(candidate.similarityId))||null;
+}
+function normalizeWinnerImportSimilarityLinks(){
+  if(!winnerBankImport?.similarities) return;
+  for(let pass=0;pass<4;pass+=1){
+    winnerBankImport.similarities.forEach(issue=>{
+      if(issue.decision!=='same'||!issue.matchedCandidate) return;
+      const target=winnerImportCandidateValue(issue.matchedCandidate);
+      if(target.name&&target.key){
+        issue.record.name=target.name;
+        issue.record.personKey=target.key;
+      }
+    });
+  }
+}
+function unresolvedWinnerImportSimilarities(){
+  return (winnerBankImport?.similarities||[]).filter(issue=>!issue.decision);
+}
+function resolveWinnerImportSimilarity(issueId,action){
+  const issue=winnerBankImport?.similarities?.find(row=>row.id===issueId);
+  if(!issue) return;
+  const candidate=winnerImportActiveCandidate(issue);
+  if(!candidate) return;
+  if(action==='same'){
+    const target=winnerImportCandidateValue(candidate);
+    issue.record.name=target.name;
+    issue.record.personKey=target.key;
+    issue.decision='same';
+    issue.matchedCandidate=candidate;
+  }else{
+    issue.rejectedIds.push(candidate.similarityId);
+    if(!winnerImportActiveCandidate(issue)) issue.decision='different';
+  }
+  normalizeWinnerImportSimilarityLinks();
+  renderWinnerImportPreview();
+}
 function renderWinnerImportPreview(){
   const host=$('winnerImportPreview');
   const confirmBtn=$('confirmWinnerImportBtn');
@@ -6568,16 +6784,28 @@ function renderWinnerImportPreview(){
     return;
   }
   const data=winnerBankImport;
-  confirmBtn.disabled=!data.valid.length;
+  normalizeWinnerImportSimilarityLinks();
+  const unresolved=unresolvedWinnerImportSimilarities();
+  confirmBtn.disabled=!data.valid.length||unresolved.length>0;
   const issues=[...data.invalid.map(row=>`LINHA ${row.row}: ${row.reason}`),...data.duplicates.slice(0,20).map(row=>`LINHA ${row.row}: REGISTRO DUPLICADO — ${row.name} · ${formatBR(row.date)} · ${row.prize}`)];
+  const similarityReviews=(data.similarities||[]).map(issue=>{
+    const candidate=winnerImportActiveCandidate(issue);
+    if(issue.decision==='same') return `<div class="winnerSimilarityConfirmed">LINHA ${issue.row}: UNIFICADA COMO ${esc(issue.record.name)}.</div>`;
+    if(issue.decision==='different') return `<div class="winnerSimilarityConfirmed">LINHA ${issue.row}: CONFIRMADA COMO PESSOA DIFERENTE — ${esc(issue.record.name)}.</div>`;
+    if(!candidate) return '';
+    const target=winnerImportCandidateValue(candidate);
+    return `<div class="winnerSimilarityReview"><strong>LINHA ${issue.row} — POSSÍVEL CADASTRO EXISTENTE</strong><div class="winnerSimilarityCompare"><div class="winnerSimilarityName"><span>NOME NA PLANILHA</span><b>${esc(issue.record.name)}</b></div><span class="winnerSimilarityScore">${Math.round(candidate.score*100)}% PARECIDO</span><div class="winnerSimilarityName"><span>${candidate.source==='PLANILHA'?'OUTRO NOME NA PLANILHA':'NOME NO FIREBASE'}</span><b>${esc(target.name)}</b></div></div><div class="winnerSimilarityActions"><button class="btn red" type="button" onclick="resolveWinnerImportSimilarity('${esc(issue.id)}','same')">É A MESMA PESSOA</button><button class="btn" type="button" onclick="resolveWinnerImportSimilarity('${esc(issue.id)}','different')">SÃO PESSOAS DIFERENTES</button></div></div>`;
+  }).join('');
   host.innerHTML=`
     <div class="winnerImportSummary">
       <div class="winnerImportMetric good"><span>PRONTOS PARA IMPORTAR</span><strong>${data.valid.length}</strong></div>
+      <div class="winnerImportMetric warn"><span>POSSÍVEIS NOMES REPETIDOS</span><strong>${unresolved.length}</strong></div>
       <div class="winnerImportMetric warn"><span>DUPLICADOS IGNORADOS</span><strong>${data.duplicates.length}</strong></div>
       <div class="winnerImportMetric bad"><span>LINHAS COM ERRO</span><strong>${data.invalid.length}</strong></div>
     </div>
     <div class="winnerImportFile">PLANILHA: ${esc(data.sheetName)} · CABEÇALHO NA LINHA ${data.headerRow+1} · ${data.totalRows} LINHA(S) COM CONTEÚDO.</div>
-    ${issues.length?`<div class="winnerImportIssues">${issues.slice(0,40).map(issue=>`<div class="winnerImportIssue">${esc(issue)}</div>`).join('')}${issues.length>40?`<div class="winnerImportIssue">MAIS ${issues.length-40} OCORRÊNCIA(S) NÃO EXIBIDA(S).</div>`:''}</div>`:'<div class="winnerBankState online">TODAS AS LINHAS VÁLIDAS FORAM RECONHECIDAS.</div>'}`;
+    ${similarityReviews}
+    ${issues.length?`<div class="winnerImportIssues">${issues.slice(0,40).map(issue=>`<div class="winnerImportIssue">${esc(issue)}</div>`).join('')}${issues.length>40?`<div class="winnerImportIssue">MAIS ${issues.length-40} OCORRÊNCIA(S) NÃO EXIBIDA(S).</div>`:''}</div>`:unresolved.length?'':'<div class="winnerBankState online">TODAS AS LINHAS VÁLIDAS FORAM RECONHECIDAS E REVISADAS.</div>'}`;
 }
 async function parseWinnerImportFile(file){
   if(!file) return;
@@ -6604,9 +6832,11 @@ async function parseWinnerImportFile(file){
     if(!header) throw new Error('NÃO FOI POSSÍVEL LOCALIZAR AS COLUNAS NOME / DATA / PROGRAMA / PRÊMIO.');
     const existing=new Set(winnerBankRecords.map(winnerFingerprint));
     const fileSeen=new Set();
+    const similarityPool=winnerPeople().map(person=>({name:person.name,key:person.key,similarityId:`FIREBASE:${person.key}`,source:'FIREBASE'}));
     const valid=[];
     const invalid=[];
     const duplicates=[];
+    const similarities=[];
     let totalRows=0;
     rows.slice(header.rowIndex+1).forEach((row,offset)=>{
       const rowNumber=header.rowIndex+offset+2;
@@ -6630,9 +6860,14 @@ async function parseWinnerImportFile(file){
       const fingerprint=winnerFingerprint(record);
       if(existing.has(fingerprint)||fileSeen.has(fingerprint)){ duplicates.push(record); return; }
       fileSeen.add(fingerprint);
+      const candidates=winnerSimilarityCandidates(record.name,similarityPool,3);
+      if(candidates.length){
+        similarities.push({id:`SIM_${rowNumber}`,row:rowNumber,record,candidates,rejectedIds:[],decision:'',matchedCandidate:null});
+      }
       valid.push(record);
+      similarityPool.push({name:record.name,key:record.personKey,similarityId:`PLANILHA:${rowNumber}`,source:'PLANILHA',record});
     });
-    winnerBankImport={fileName:file.name,sheetName,headerRow:header.rowIndex,totalRows,valid,invalid,duplicates};
+    winnerBankImport={fileName:file.name,sheetName,headerRow:header.rowIndex,totalRows,valid,invalid,duplicates,similarities};
     renderWinnerImportPreview();
   }catch(error){
     console.error('WINNER EXCEL PARSE ERROR',error);
@@ -6643,6 +6878,12 @@ async function parseWinnerImportFile(file){
 }
 async function confirmWinnerImport(){
   if(!winnerBankImport?.valid?.length) return;
+  if(unresolvedWinnerImportSimilarities().length){
+    alert('REVISE TODOS OS POSSÍVEIS NOMES REPETIDOS ANTES DE IMPORTAR.');
+    renderWinnerImportPreview();
+    return;
+  }
+  normalizeWinnerImportSimilarityLinks();
   initWinnerBank();
   if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL.'); return; }
   const button=$('confirmWinnerImportBtn');
@@ -6652,7 +6893,14 @@ async function confirmWinnerImport(){
     const latestSnapshot=await winnerBankRef.child('records').get();
     const latest=winnerRecordList(latestSnapshot.val()||{});
     const fingerprints=new Set(latest.map(winnerFingerprint));
-    const rows=winnerBankImport.valid.filter(record=>!fingerprints.has(winnerFingerprint(record)));
+    const rows=[];
+    let duplicateOnConfirm=0;
+    winnerBankImport.valid.forEach(record=>{
+      const fingerprint=winnerFingerprint(record);
+      if(fingerprints.has(fingerprint)){ duplicateOnConfirm+=1; return; }
+      fingerprints.add(fingerprint);
+      rows.push(record);
+    });
     if(!rows.length){
       alert('TODOS OS REGISTROS VÁLIDOS JÁ EXISTEM NO BANCO.');
       closeDrawer('winnerImportDrawer');
@@ -6669,7 +6917,9 @@ async function confirmWinnerImport(){
       await winnerBankRef.child('records').update(updates);
     }
     await winnerBankRef.update({schemaVersion:1,initialized:true,initializedAt:now.toISOString(),updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'IMPORTACAO_EXCEL'});
-    await winnerBankRef.child(`imports/${batchId}`).set({id:batchId,fileName:winnerBankImport.fileName,sheetName:winnerBankImport.sheetName,imported:rows.length,duplicates:winnerBankImport.duplicates.length+(winnerBankImport.valid.length-rows.length),invalid:winnerBankImport.invalid.length,importedAt:now.toISOString(),importedAtLabel:now.toLocaleString('pt-BR'),source:'PAINEL_PRINCIPAL'});
+    const similarityMerged=(winnerBankImport.similarities||[]).filter(issue=>issue.decision==='same').length;
+    const similarityDifferent=(winnerBankImport.similarities||[]).filter(issue=>issue.decision==='different').length;
+    await winnerBankRef.child(`imports/${batchId}`).set({id:batchId,fileName:winnerBankImport.fileName,sheetName:winnerBankImport.sheetName,imported:rows.length,duplicates:winnerBankImport.duplicates.length+duplicateOnConfirm,invalid:winnerBankImport.invalid.length,similarityReviewed:similarityMerged+similarityDifferent,similarityMerged,similarityDifferent,importedAt:now.toISOString(),importedAtLabel:now.toLocaleString('pt-BR'),source:'PAINEL_PRINCIPAL'});
     winnerBankImport=null;
     $('winnerImportFileInput').value='';
     closeDrawer('winnerImportDrawer');
@@ -11027,6 +11277,12 @@ bind('winnerImportFileInput','change',event=>parseWinnerImportFile(event.target.
 bind('confirmWinnerImportBtn','click',confirmWinnerImport);
 bind('addWinnerRecordBtn','click',()=>openWinnerRecord());
 bind('winnerRecordForm','submit',saveWinnerRecord);
+bind('winnerRecordName','input',renderWinnerRecordSimilarity);
+bind('winnerRecordSimilarity','click',event=>{
+  const button=event.target.closest('[data-winner-record-similarity]');
+  if(!button) return;
+  resolveWinnerRecordSimilarity(button.dataset.winnerRecordSimilarity,button.dataset.candidateId,button.dataset.candidateName||'');
+});
 bind('refreshWinnerBankBtn','click',()=>initWinnerBank(true));
 ['winnerBankSearch','winnerBankStatusFilter'].forEach(id=>bind(id,'input',renderWinnerBank));
 

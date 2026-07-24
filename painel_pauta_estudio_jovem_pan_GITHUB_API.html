@@ -1792,14 +1792,23 @@ body{
 .winnerEligibilityHistory{display:grid;gap:4px}
 .winnerEligibilityHistory div{display:grid;grid-template-columns:74px minmax(100px,.75fr) minmax(140px,1.25fr);gap:7px;padding-top:5px;border-top:1px solid rgba(70,86,108,.14);font-size:8px;font-weight:850}
 .winnerEligibilityHistory strong{font-size:8px}.winnerEligibilityHistory span:last-child{font-weight:1000}
-.winnerSuggestions{display:flex;gap:5px;flex-wrap:wrap}
-.winnerSuggestion{border:1px solid #cbd5e1;border-radius:999px;background:#fff;padding:5px 8px;color:#344054;font-size:8px;font-weight:950;cursor:pointer}
-.winnerSuggestion:hover{border-color:#9b1731;color:#9b1731}
+.winnerSuggestions{display:grid;gap:7px;padding-top:5px;border-top:1px solid rgba(70,86,108,.14)}
+.winnerSimilarityPrompt{font-size:8px;font-weight:1000;color:inherit}
+.winnerSimilarityCompare{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:7px;align-items:center}
+.winnerSimilarityName{display:grid;gap:2px;padding:7px 8px;border:1px solid rgba(70,86,108,.15);border-radius:10px;background:rgba(255,255,255,.74)}
+.winnerSimilarityName span{font-size:6.8px;font-weight:900;opacity:.78}
+.winnerSimilarityName b{font-size:8px;font-weight:1000}
+.winnerSimilarityScore{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:0 7px;border-radius:999px;border:1px solid rgba(70,86,108,.18);background:#fff;font-size:7px;font-weight:1000}
+.winnerSimilarityActions{display:flex;gap:5px;flex-wrap:wrap}
+.winnerSuggestion{border:1px solid #cbd5e1;border-radius:999px;background:#fff;padding:5px 8px;color:#344054;font-size:7.5px;font-weight:950;cursor:pointer}
+.winnerSuggestion.same{border-color:#9b1731;color:#9b1731}
+.winnerSuggestion:hover{transform:translateY(-1px)}
+.winnerSimilarityDone{padding-top:5px;border-top:1px solid rgba(70,86,108,.14);font-size:8px;font-weight:950}
 #saveWinnerBtn:disabled{opacity:.45;cursor:not-allowed}
 .promoWinnerCandidate{display:grid;gap:6px;padding:8px;border:1px solid #e2e7ee;border-radius:14px;background:#fbfcfe}
 .promoWinnerEligibility{font-size:9px;text-align:left}
 #savePromoResultInline:disabled{opacity:.45;cursor:not-allowed}
-@media(max-width:620px){.winnerEligibilityHistory div{grid-template-columns:1fr}.winnerEligibilityHead{align-items:flex-start;flex-direction:column}}
+@media(max-width:620px){.winnerEligibilityHistory div,.winnerSimilarityCompare{grid-template-columns:1fr}.winnerEligibilityHead{align-items:flex-start;flex-direction:column}.winnerSimilarityScore{justify-self:start}}
 
 </style>
 
@@ -2072,6 +2081,111 @@ async function saveStateToApi(){
 function winnerPlain(value){
   return upper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
 }
+const WINNER_SIMILARITY_MIN=0.86;
+const WINNER_NAME_PARTICLES=new Set(['DA','DAS','DE','DO','DOS','E']);
+function winnerNameProfile(value){
+  const plain=winnerPlain(value);
+  const tokens=plain.split(' ').filter(Boolean);
+  const filtered=tokens.filter(token=>!WINNER_NAME_PARTICLES.has(token));
+  const core=filtered.length?filtered:tokens;
+  return {plain,tokens,core,compact:core.join(''),sorted:[...core].sort().join(' '),first:core[0]||'',last:core[core.length-1]||''};
+}
+function winnerLevenshtein(a,b){
+  const left=String(a||''),right=String(b||'');
+  if(left===right) return 0;
+  if(!left.length) return right.length;
+  if(!right.length) return left.length;
+  let previous=Array.from({length:right.length+1},(_,index)=>index);
+  for(let i=1;i<=left.length;i+=1){
+    const current=[i];
+    for(let j=1;j<=right.length;j+=1){
+      current[j]=Math.min(current[j-1]+1,previous[j]+1,previous[j-1]+(left[i-1]===right[j-1]?0:1));
+    }
+    previous=current;
+  }
+  return previous[right.length];
+}
+function winnerEditSimilarity(a,b){
+  const max=Math.max(String(a||'').length,String(b||'').length);
+  return max?1-(winnerLevenshtein(a,b)/max):1;
+}
+function winnerJaroWinkler(a,b){
+  const left=String(a||''),right=String(b||'');
+  if(left===right) return 1;
+  if(!left.length||!right.length) return 0;
+  const range=Math.max(0,Math.floor(Math.max(left.length,right.length)/2)-1);
+  const leftMatches=new Array(left.length).fill(false);
+  const rightMatches=new Array(right.length).fill(false);
+  let matches=0;
+  for(let i=0;i<left.length;i+=1){
+    const start=Math.max(0,i-range);
+    const end=Math.min(i+range+1,right.length);
+    for(let j=start;j<end;j+=1){
+      if(rightMatches[j]||left[i]!==right[j]) continue;
+      leftMatches[i]=true;
+      rightMatches[j]=true;
+      matches+=1;
+      break;
+    }
+  }
+  if(!matches) return 0;
+  const leftOrdered=[],rightOrdered=[];
+  leftMatches.forEach((matched,index)=>{ if(matched) leftOrdered.push(left[index]); });
+  rightMatches.forEach((matched,index)=>{ if(matched) rightOrdered.push(right[index]); });
+  let transpositions=0;
+  leftOrdered.forEach((char,index)=>{ if(char!==rightOrdered[index]) transpositions+=1; });
+  const jaro=((matches/left.length)+(matches/right.length)+((matches-transpositions/2)/matches))/3;
+  let prefix=0;
+  while(prefix<4&&prefix<left.length&&prefix<right.length&&left[prefix]===right[prefix]) prefix+=1;
+  return jaro+(prefix*.1*(1-jaro));
+}
+function winnerTokenSimilarity(leftTokens,rightTokens){
+  if(!leftTokens.length||!rightTokens.length) return 0;
+  const shorter=leftTokens.length<=rightTokens.length?leftTokens:rightTokens;
+  const longer=leftTokens.length<=rightTokens.length?rightTokens:leftTokens;
+  const average=shorter.reduce((total,token)=>{
+    const best=longer.reduce((score,candidate)=>Math.max(score,winnerEditSimilarity(token,candidate)),0);
+    return total+best;
+  },0)/shorter.length;
+  const coverage=shorter.length/longer.length;
+  return average*(.88+.12*coverage);
+}
+function winnerNameSimilarity(leftName,rightName){
+  const left=winnerNameProfile(leftName),right=winnerNameProfile(rightName);
+  if(!left.plain||!right.plain) return 0;
+  if(left.plain===right.plain) return 1;
+  if(left.sorted&&left.sorted===right.sorted) return .99;
+  const jaro=winnerJaroWinkler(left.compact,right.compact);
+  const edit=winnerEditSimilarity(left.compact,right.compact);
+  const token=winnerTokenSimilarity(left.core,right.core);
+  let score=(jaro*.43)+(edit*.24)+(token*.33);
+  const shorter=left.core.length<=right.core.length?left.core:right.core;
+  const longer=left.core.length<=right.core.length?right.core:left.core;
+  const contained=shorter.length>=2&&shorter.every(tokenValue=>longer.some(candidate=>winnerEditSimilarity(tokenValue,candidate)>=.92));
+  if(contained) score=Math.max(score,.86+(.1*(shorter.length/longer.length)));
+  const firstScore=winnerEditSimilarity(left.first,right.first);
+  const lastScore=winnerEditSimilarity(left.last,right.last);
+  if(firstScore<.55&&lastScore<.72) score-=.12;
+  else if(firstScore<.48) score-=.05;
+  return Math.max(0,Math.min(1,score));
+}
+function winnerSimilarityCandidates(name,limit=3){
+  const profile=winnerNameProfile(name);
+  if(profile.plain.length<4) return [];
+  const inputKey=winnerPersonKey(name);
+  const people=new Map();
+  winnerBankRecords.forEach(record=>{
+    const candidateName=upper(record.name);
+    const candidateKey=record.personKey||winnerPersonKey(candidateName);
+    if(candidateName&&candidateKey&&!people.has(candidateKey)) people.set(candidateKey,{name:candidateName,key:candidateKey});
+  });
+  const threshold=profile.core.length<=1?.94:WINNER_SIMILARITY_MIN;
+  return [...people.values()].map(candidate=>{
+    if(candidate.key===inputKey) return null;
+    const score=winnerNameSimilarity(name,candidate.name);
+    return score>=threshold?{...candidate,score}:null;
+  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,'pt-BR')).slice(0,limit);
+}
 function winnerPersonKey(name){
   return winnerPlain(name).replace(/\s+/g,'_').slice(0,180);
 }
@@ -2146,18 +2260,35 @@ function winnerContextForPromo(promo,item){
   return {sourceRef:`PROMO:${promo?.id||''}:${date}:${slot}`,date,program:upper(item?.program||programFromSchedule(date,slot,STUDIO_STATION)||promo?.program||'RESULTADO PROMOÇÃO'),prize:upper(promo?.prize||promo?.name||promo?.title||item?.prize||'PROMOÇÃO')};
 }
 function winnerSuggestions(name){
-  const query=winnerPlain(name);
-  if(query.length<3) return [];
-  const seen=new Set();
-  return winnerBankRecords
-    .map(record=>upper(record.name))
-    .filter(candidate=>{
-      const key=winnerPersonKey(candidate);
-      if(!key||seen.has(key)){ return false; }
-      seen.add(key);
-      return winnerPlain(candidate).includes(query)&&winnerPersonKey(candidate)!==winnerPersonKey(name);
-    })
-    .slice(0,5);
+  return winnerSimilarityCandidates(name,5);
+}
+function winnerSimilarityRejected(field,name){
+  const inputKey=winnerPersonKey(name);
+  if(field.dataset.similarityInputKey!==inputKey){
+    field.dataset.similarityInputKey=inputKey;
+    field.dataset.similarityRejected='';
+  }
+  return new Set(String(field.dataset.similarityRejected||'').split(',').filter(Boolean));
+}
+function winnerSuggestionsForField(field,name){
+  const rejected=winnerSimilarityRejected(field,name);
+  return winnerSuggestions(name).filter(candidate=>!rejected.has(candidate.key));
+}
+function resolveStudioWinnerSimilarity(input,button,validate){
+  if(!input||!button) return;
+  const action=button.dataset.winnerSimilarity;
+  const candidateKey=button.dataset.candidateKey||'';
+  if(action==='same'){
+    input.value=upper(button.dataset.candidateName||'');
+    input.dataset.similarityInputKey=winnerPersonKey(input.value);
+    input.dataset.similarityRejected='';
+  }else{
+    const rejected=winnerSimilarityRejected(input,input.value);
+    rejected.add(candidateKey);
+    input.dataset.similarityRejected=[...rejected].join(',');
+  }
+  validate();
+  input.focus();
 }
 function setWinnerBankModalState(mode,text){
   const box=$('winnerBankModalState');
@@ -2211,7 +2342,8 @@ function initWinnerBank(force=false){
 function winnerEligibilityHtml(result,suggestions=[]){
   if(!result) return '<div class="winnerEligibilityHead"><strong>DIGITE O NOME COMPLETO PARA CONSULTAR</strong><span>AGUARDANDO</span></div><p>A PESQUISA SERÁ FEITA AUTOMATICAMENTE NO HISTÓRICO DO FIREBASE.</p>';
   const history=result.history.map(record=>`<div><strong>${formatBR(record.date)}</strong><span>${esc(upper(record.program||'PROGRAMA'))}</span><span>${esc(upper(record.prize||'PRÊMIO'))}</span></div>`).join('');
-  const suggestionHtml=suggestions.length?`<div class="winnerSuggestions">${suggestions.map(name=>`<button class="winnerSuggestion" type="button" data-winner-name="${esc(name)}">LOCALIZADO: ${esc(name)}</button>`).join('')}</div>`:'';
+  const candidate=suggestions[0];
+  const suggestionHtml=candidate?`<div class="winnerSuggestions"><div class="winnerSimilarityPrompt">POSSÍVEL CADASTRO EXISTENTE — CONFIRME ANTES DE CONTINUAR</div><div class="winnerSimilarityCompare"><div class="winnerSimilarityName"><span>NOME DIGITADO</span><b>${esc(result.name)}</b></div><span class="winnerSimilarityScore">${Math.round(candidate.score*100)}% PARECIDO</span><div class="winnerSimilarityName"><span>NOME NO FIREBASE</span><b>${esc(candidate.name)}</b></div></div><div class="winnerSimilarityActions"><button class="winnerSuggestion same" type="button" data-winner-similarity="same" data-candidate-key="${esc(candidate.key)}" data-candidate-name="${esc(candidate.name)}">É A MESMA PESSOA</button><button class="winnerSuggestion" type="button" data-winner-similarity="different" data-candidate-key="${esc(candidate.key)}">SÃO PESSOAS DIFERENTES</button></div></div>`:result.similarityDifferent?'<div class="winnerSimilarityDone">REVISÃO CONCLUÍDA: PESSOAS DIFERENTES.</div>':'';
   const statusLabel=result.status==='ATENCAO'?'ATENÇÃO':result.status;
   const located=result.total?`NOME LOCALIZADO: ${result.name}. `:'';
   return `<div class="winnerEligibilityHead"><strong>${esc(result.title)}</strong><span>${esc(statusLabel)} · ${result.total} PREMIAÇÃO(ÕES)</span></div><p>${esc(located+result.reason)}</p>${history?`<div class="winnerEligibilityHistory">${history}</div>`:''}${suggestionHtml}`;
@@ -2231,9 +2363,11 @@ function validateAllWinnerInputs(){
       return {name:'',allowed:false,status:'PENDENTE'};
     }
     const availableHistory=winnerBankRecords.filter(record=>!(record.source==='ESTUDIO_JP1017'&&record.sourceRef===context.sourceRef));
-    const suggestions=winnerSuggestions(name);
+    const rejected=winnerSimilarityRejected(field,name);
+    const suggestions=winnerSuggestionsForField(field,name);
     let result=winnerEvaluateAgainst(availableHistory,name,context.prize,context.date);
-    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL NOME LOCALIZADO',reason:'SELECIONE O CADASTRO CORRETO ABAIXO OU COMPLETE O NOME.',allowed:false};
+    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL CADASTRO EXISTENTE',reason:'CONFIRME SE É A MESMA PESSOA OU SE SÃO PESSOAS DIFERENTES.',allowed:false};
+    else if(!result.total&&rejected.size) result={...result,similarityDifferent:true,reason:`${result.reason} REVISÃO DE NOME CONCLUÍDA.`};
     if((counts.get(result.personKey)||0)>1) result={...result,status:'BLOQUEADO',title:'NOME REPETIDO NESTE SORTEIO',reason:'CADA PESSOA DEVE APARECER APENAS UMA VEZ.',allowed:false};
     if(!winnerBankReady) result={...result,status:'BLOQUEADO',title:'CONSULTA INDISPONÍVEL',reason:'AGUARDE A CONEXÃO COM O FIREBASE ANTES DE CONFIRMAR.',allowed:false};
     if(host){ host.className=`winnerEligibility ${result.status==='ATENCAO'?'atencao':result.status==='BLOQUEADO'?'bloqueado':result.status==='PENDENTE'?'neutral':'apto'}`; host.innerHTML=winnerEligibilityHtml(result,suggestions); }
@@ -2735,9 +2869,11 @@ function validateAllPromoWinnerInputs(){
     const name=upper(field.value);
     const host=$(`promoWinnerEligibility${index}`);
     if(!name){ if(host){ host.className='winnerEligibility neutral promoWinnerEligibility'; host.innerHTML=winnerEligibilityHtml(null); } return {name:'',allowed:false,status:'PENDENTE'}; }
-    const suggestions=winnerSuggestions(name);
+    const rejected=winnerSimilarityRejected(field,name);
+    const suggestions=winnerSuggestionsForField(field,name);
     let result=winnerEvaluateAgainst(availableHistory,name,context.prize,context.date);
-    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL NOME LOCALIZADO',reason:'SELECIONE O CADASTRO CORRETO ABAIXO OU COMPLETE O NOME.',allowed:false};
+    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL CADASTRO EXISTENTE',reason:'CONFIRME SE É A MESMA PESSOA OU SE SÃO PESSOAS DIFERENTES.',allowed:false};
+    else if(!result.total&&rejected.size) result={...result,similarityDifferent:true,reason:`${result.reason} REVISÃO DE NOME CONCLUÍDA.`};
     if((counts.get(result.personKey)||0)>1) result={...result,status:'BLOQUEADO',title:'NOME REPETIDO NESTE SORTEIO',reason:'CADA PESSOA DEVE APARECER APENAS UMA VEZ.',allowed:false};
     if(!winnerBankReady) result={...result,status:'BLOQUEADO',title:'CONSULTA INDISPONÍVEL',reason:'AGUARDE A CONEXÃO COM O FIREBASE ANTES DE CONFIRMAR.',allowed:false};
     if(host){ host.className=`winnerEligibility promoWinnerEligibility ${result.status==='ATENCAO'?'atencao':result.status==='BLOQUEADO'?'bloqueado':result.status==='PENDENTE'?'neutral':'apto'}`; host.innerHTML=winnerEligibilityHtml(result,suggestions); }
@@ -3282,11 +3418,11 @@ function render(){
   if(resultList){
     resultList.addEventListener('input',e=>{ if(e.target.classList.contains('promoResultWinnerInput')) validateAllPromoWinnerInputs(); });
     resultList.addEventListener('click',e=>{
-      const suggestion=e.target.closest('[data-winner-name]');
-      if(suggestion){
-        const candidate=suggestion.closest('.promoWinnerCandidate');
+      const similarity=e.target.closest('[data-winner-similarity]');
+      if(similarity){
+        const candidate=similarity.closest('.promoWinnerCandidate');
         const input=candidate?.querySelector('.promoResultWinnerInput');
-        if(input){ input.value=upper(suggestion.dataset.winnerName||''); validateAllPromoWinnerInputs(); input.focus(); }
+        resolveStudioWinnerSimilarity(input,similarity,validateAllPromoWinnerInputs);
         return;
       }
       const add=e.target.closest('.resultAddBtn');
@@ -3316,11 +3452,11 @@ $('saveWinnerBtn').addEventListener('click',saveWinner);
 $('addWinnerBtn').addEventListener('click',addWinnerInput);
 $('winnerInputsList').addEventListener('input',event=>{ if(event.target.classList.contains('winnerNameField')) validateAllWinnerInputs(); });
 $('winnerInputsList').addEventListener('click',event=>{
-  const suggestion=event.target.closest('[data-winner-name]');
-  if(!suggestion) return;
-  const candidate=suggestion.closest('.winnerCandidate');
+  const similarity=event.target.closest('[data-winner-similarity]');
+  if(!similarity) return;
+  const candidate=similarity.closest('.winnerCandidate');
   const input=candidate?.querySelector('.winnerNameField');
-  if(input){ input.value=upper(suggestion.dataset.winnerName||''); validateAllWinnerInputs(); input.focus(); }
+  resolveStudioWinnerSimilarity(input,similarity,validateAllWinnerInputs);
 });
 $('winnerModal').addEventListener('click',e=>{ if(e.target.id==='winnerModal') closeWinnerModal(); });
 $('winnerModal').addEventListener('keydown',e=>{
