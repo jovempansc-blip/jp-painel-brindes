@@ -3081,7 +3081,7 @@ body.drawer-open .distActions{
     <div class="topTools">
       <div class="field monthHeaderField"><label>MÊS</label><input class="control" type="month" id="monthInput" value=""></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
-        <button class="btn syncStatusBtn local" id="syncStatusBtn" type="button" title="STATUS DO BANCO">LOCAL</button>
+        <button class="btn syncStatusBtn saving" id="syncStatusBtn" type="button" title="STATUS DO BANCO">CONECTANDO</button>
         <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
         <button class="btn iconBtn returnBellBtn" id="returnBellBtn" title="RETORNOS / REAPROVEITAMENTO" aria-label="RETORNOS / REAPROVEITAMENTO" data-tip="ALERTAS"><span class="iconGlyph">🔔</span><span class="returnBellCount" id="returnBellCount">0</span><span class="visuallyHidden">RETORNOS</span></button>
       </div>
@@ -5889,6 +5889,11 @@ const LEGACY_API_URL = "https://script.google.com/macros/s/AKfycbzaeiSMNoo4miaB7
 let firebaseStarted = false;
 let firebaseReady = false;
 let firebaseRef = null;
+let firebaseConnectionRef = null;
+let firebaseConnected = false;
+let firebaseConnectionKnown = false;
+let firebaseBaseEmpty = false;
+let firebaseUsesWrappedState = null;
 let firebaseSaveTimer = null;
 let firebaseApplyingRemote = false;
 let firebaseLastLocalWrite = 0;
@@ -5904,6 +5909,11 @@ let winnerBankImport = null;
 
 function firebaseConfigReady(){
   return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
+}
+function firebaseStateFromPayload(payload){
+  if(payload?.state?.months) return payload.state;
+  if(payload?.months) return payload;
+  return null;
 }
 function loadState(){
   try{
@@ -6044,6 +6054,8 @@ async function forceSetStateToApi(source='PAINEL_PRINCIPAL'){
     version:'FIREBASE_RTDB_V2_FORCE'
   });
   firebaseBaselineState=clone(state);
+  firebaseUsesWrappedState=true;
+  firebaseBaseEmpty=false;
 }
 
 function hasLocalPersistedState(){
@@ -6058,7 +6070,7 @@ function updateSyncStatus(mode='local',text='LOCAL'){
   btn.classList.remove('online','saving','error','local');
   btn.classList.add(mode);
   btn.textContent=text;
-  btn.title = mode==='online' ? 'FIREBASE ONLINE' : mode==='saving' ? 'SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'DADOS LOCAIS NESTE NAVEGADOR';
+  btn.title = mode==='online' ? (firebaseBaseEmpty?'FIREBASE CONECTADO — BASE OFICIAL VAZIA':'FIREBASE ONLINE') : mode==='saving' ? 'CONECTANDO OU SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'SEM CONEXÃO COM O FIREBASE — RECONECTANDO';
 }
 function apiJsonp(params={}){
   return new Promise((resolve,reject)=>{
@@ -6096,6 +6108,7 @@ function applyRemoteFirebaseState(remoteState){
   if(!remoteState || !remoteState.months) return;
   firebaseApplyingRemote = true;
   const openMonth=firebaseServerLoaded ? state.currentMonth : '';
+  firebaseBaseEmpty = false;
   firebaseBaselineState=clone(remoteState);
   state = normalizePanelState(clone(remoteState));
   if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
@@ -6109,38 +6122,64 @@ function applyRemoteFirebaseState(remoteState){
 async function handleEmptyFirebase(){
   // O Firebase é a fonte oficial. Navegador local nunca envia dados automaticamente
   // quando o servidor está vazio, para evitar sobrescrever/apagar a base oficial.
+  firebaseBaseEmpty = true;
   firebaseServerLoaded = true;
   normalizePanelState(state);
-  updateSyncStatus('local','FIREBASE VAZIO');
+  updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
   renderBackup();
 }
 function initFirebaseSync(){
   if(firebaseStarted) return;
-  firebaseStarted = true;
   if(!firebaseConfigReady()){
     console.warn('Firebase ainda não configurado. Substitua FIREBASE_CONFIG nos arquivos HTML.');
+    updateSyncStatus('error','ERRO FIREBASE');
     return;
   }
+  firebaseStarted = true;
   try{
     const app = window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
-    firebaseRef = window.firebase.database(app).ref(FIREBASE_ROOT_PATH);
+    const database = window.firebase.database(app);
+    firebaseRef = database.ref(FIREBASE_ROOT_PATH);
+    firebaseConnectionRef = database.ref('.info/connected');
     firebaseReady = true;
-    updateSyncStatus('online','FIREBASE ONLINE');
+    updateSyncStatus('saving','CONECTANDO');
+    firebaseConnectionRef.on('value', snapshot=>{
+      firebaseConnectionKnown = true;
+      firebaseConnected = snapshot.val() === true;
+      if(firebaseConnected){
+        updateSyncStatus('online','FIREBASE ONLINE');
+        if(firebasePendingSave && firebaseServerLoaded) queueApiSave(80);
+      }else{
+        updateSyncStatus('local','RECONECTANDO');
+      }
+    }, err=>{
+      firebaseConnectionKnown = true;
+      firebaseConnected = false;
+      console.warn('FIREBASE CONNECTION ERROR', err);
+      updateSyncStatus('error','ERRO FIREBASE');
+    });
     firebaseRef.on('value', async snapshot=>{
       firebaseInitialSnapshotSeen = true;
       const payload = snapshot.val();
-      if(!payload || !payload.state){
+      const remoteState = firebaseStateFromPayload(payload);
+      if(!remoteState){
         await handleEmptyFirebase();
         return;
       }
-      if(firebasePendingSave && Date.now()-firebaseLastLocalWrite<1200) return;
-      applyRemoteFirebaseState(payload.state);
+      firebaseUsesWrappedState = !!payload?.state?.months;
+      firebaseBaseEmpty = false;
+      if(firebasePendingSave && firebaseServerLoaded) return;
+      applyRemoteFirebaseState(remoteState);
       firebasePendingSave = false;
+      if(firebaseConnected) updateSyncStatus('online','FIREBASE ONLINE');
     }, err=>{
       console.warn('FIREBASE LOAD ERROR', err);
       updateSyncStatus('error','ERRO FIREBASE');
     });
   }catch(err){
+    firebaseStarted = false;
+    firebaseReady = false;
+    firebaseConnected = false;
     console.warn('FIREBASE INIT ERROR', err);
     updateSyncStatus('error','ERRO FIREBASE');
   }
@@ -6150,7 +6189,12 @@ function syncStateFromApi(force=false){
   if(force && firebaseReady && firebaseRef){
     firebaseRef.get().then(snapshot=>{
       const payload=snapshot.val();
-      if(payload && payload.state) applyRemoteFirebaseState(payload.state);
+      const remoteState=firebaseStateFromPayload(payload);
+      if(remoteState && !(firebasePendingSave && firebaseServerLoaded)){
+        firebaseUsesWrappedState=!!payload?.state?.months;
+        applyRemoteFirebaseState(remoteState);
+        firebasePendingSave=false;
+      }
     }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
   }
 }
@@ -6164,6 +6208,10 @@ async function saveStateToApi(){
     initFirebaseSync();
     if(!firebaseReady || !firebaseRef) return;
   }
+  if(!firebaseConnected){
+    updateSyncStatus(firebaseConnectionKnown?'local':'saving',firebaseConnectionKnown?'RECONECTANDO':'CONECTANDO');
+    return;
+  }
   try{
     normalizePanelState(state);
     if(countStateRecords(state)===0){
@@ -6173,14 +6221,26 @@ async function saveStateToApi(){
       console.warn('ENVIO BLOQUEADO: BASE LOCAL VAZIA.');
       return;
     }
+    if(firebaseUsesWrappedState===false && firebaseBaselineState?.months){
+      await firebaseRef.child('state').set(clone(firebaseBaselineState));
+      firebaseUsesWrappedState=true;
+    }
     if(!firebaseBaselineState){
-      const currentSnapshot=await firebaseRef.child('state').get();
-      const current=currentSnapshot.val();
+      const currentSnapshot=await firebaseRef.get();
+      const currentPayload=currentSnapshot.val();
+      const current=firebaseStateFromPayload(currentPayload);
       if(!current || !current.months){
         firebasePendingSave=false;
-        updateSyncStatus('error','FIREBASE VAZIO');
+        firebaseBaseEmpty=true;
+        updateSyncStatus('online','FIREBASE ONLINE');
         console.warn('SALVAMENTO GRANULAR BLOQUEADO: NÃO EXISTE BASE OFICIAL PARA COMPARAÇÃO.');
         return;
+      }
+      if(!currentPayload?.state?.months && currentPayload?.months){
+        await firebaseRef.child('state').set(clone(current));
+        firebaseUsesWrappedState=true;
+      }else{
+        firebaseUsesWrappedState=!!currentPayload?.state?.months;
       }
       firebaseBaselineState=clone(current);
     }
@@ -6193,9 +6253,10 @@ async function saveStateToApi(){
       localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
     }
     localStorage.setItem('jp_painel_last_firebase_save',new Date().toLocaleString('pt-BR'));
+    firebaseBaseEmpty=false;
     firebaseServerLoaded=true;
     firebasePendingSave=false;
-    updateSyncStatus('online','FIREBASE ONLINE');
+    updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
     renderBackup();
   }catch(err){
     console.warn('FIREBASE SAVE ERROR',err);
@@ -6628,9 +6689,26 @@ async function forceUploadLocalToFirebase(){
   if(!confirm(`ENVIAR OS DADOS DESTE NAVEGADOR PARA O FIREBASE?\n\nTOTAL LOCAL: ${total}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\nAGENDAMENTOS: ${c.schedules}\n\nUse apenas se este navegador contém a base correta.`)) return;
   const typed=prompt('PARA CONFIRMAR O ENVIO, DIGITE: ENVIAR');
   if(norm(typed)!=='ENVIAR') return;
-  updateSyncStatus('saving','ENVIANDO');
-  await forceSetStateToApi('ENVIO_MANUAL_CONFIRMADO');
-  toast('DADOS DESTE NAVEGADOR ENVIADOS PARA O FIREBASE.');
+  initFirebaseSync();
+  if(!firebaseReady || !firebaseRef || !firebaseConnected){
+    alert('FIREBASE NÃO CONECTADO. AGUARDE A RECONEXÃO ANTES DE ENVIAR A BASE.');
+    updateSyncStatus(firebaseConnectionKnown?'local':'saving',firebaseConnectionKnown?'RECONECTANDO':'CONECTANDO');
+    return;
+  }
+  try{
+    updateSyncStatus('saving','ENVIANDO');
+    await forceSetStateToApi('ENVIO_MANUAL_CONFIRMADO');
+    firebaseBaseEmpty=false;
+    firebaseUsesWrappedState=true;
+    firebaseServerLoaded=true;
+    firebasePendingSave=false;
+    updateSyncStatus('online','FIREBASE ONLINE');
+    toast('DADOS DESTE NAVEGADOR ENVIADOS PARA O FIREBASE.');
+  }catch(error){
+    console.warn('FORCE FIREBASE UPLOAD ERROR',error);
+    updateSyncStatus('error','ERRO FIREBASE');
+    alert('NÃO FOI POSSÍVEL ENVIAR A BASE PARA O FIREBASE.');
+  }
 }
 async function verifyFirebaseState(){
   initFirebaseSync();
@@ -6639,10 +6717,12 @@ async function verifyFirebaseState(){
     updateSyncStatus('saving','VERIFICANDO');
     const snapshot=await firebaseRef.get();
     const payload=snapshot.val();
-    const remote=payload && payload.state ? normalizePanelState(clone(payload.state)) : null;
+    const remoteState=firebaseStateFromPayload(payload);
+    const remote=remoteState ? normalizePanelState(clone(remoteState)) : null;
     if(!remote){
       lastFirebaseDiagnostic={counts:{months:0,items:0,distributions:0,promos:0,schedules:0,programSchedules:0},checkedAtLabel:new Date().toLocaleString('pt-BR')};
-      updateSyncStatus('local','FIREBASE VAZIO');
+      firebaseBaseEmpty=true;
+      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
       renderBackup();
       alert('FIREBASE VAZIO. NÃO HÁ BASE OFICIAL SALVA.');
       return;
@@ -6665,14 +6745,18 @@ async function forceLoadFirebaseToLocal(){
     updateSyncStatus('saving','CARREGANDO');
     const snapshot=await firebaseRef.get();
     const payload=snapshot.val();
-    if(payload && payload.state){
-      lastFirebaseDiagnostic={counts:backupCounts(payload.state),checkedAtLabel:new Date().toLocaleString('pt-BR'),savedAt:payload.savedAt||''};
-      applyRemoteFirebaseState(payload.state);
-      updateSyncStatus('online','FIREBASE ONLINE');
+    const remoteState=firebaseStateFromPayload(payload);
+    if(remoteState){
+      firebaseUsesWrappedState=!!payload?.state?.months;
+      lastFirebaseDiagnostic={counts:backupCounts(remoteState),checkedAtLabel:new Date().toLocaleString('pt-BR'),savedAt:payload?.savedAt||''};
+      applyRemoteFirebaseState(remoteState);
+      firebasePendingSave=false;
+      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
       toast('DADOS DO FIREBASE CARREGADOS NESTE NAVEGADOR.');
     }else{
       alert('O FIREBASE AINDA NÃO TEM DADOS SALVOS. ENVIE OS DADOS A PARTIR DO NAVEGADOR ONDE ELES APARECEM.');
-      updateSyncStatus('local','LOCAL');
+      firebaseBaseEmpty=true;
+      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
     }
   }catch(err){
     console.warn('FORCE LOAD FIREBASE ERROR',err);
@@ -6744,6 +6828,21 @@ function openMonthKey(key){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   render();
   toast(`MÊS ${key} ABERTO.`);
+}
+function alignPanelMonthWithInput({persist=false}={}){
+  const key=$('monthInput')?.value||'';
+  if(!key || key===state.currentMonth) return false;
+  manualMonthOverride=true;
+  if(!state.months[key]) createBlankMonth(key);
+  state.currentMonth=key;
+  if(persist) saveState(true);
+  else localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  return true;
+}
+function commitMonthInputSelection(){
+  if(!alignPanelMonthWithInput({persist:true})) return;
+  render();
+  toast('MÊS ABERTO COM SALVAMENTO AUTOMÁTICO.');
 }
 function normalizeStatus(value){
   const v = norm(value);
@@ -8149,11 +8248,11 @@ function renderProgramacao(){
     </article>`;
   }).join('');
 }
-function filteredDistributions(){
+function filteredDistributions(monthKey=state.currentMonth){
   const text=norm($('distSearchInput').value);
   const status=$('distStatusFilter').value;
   const order=$('distOrderFilter')?.value || 'alpha';
-  const rows = monthData().distributions.filter(d=>{
+  const rows = monthDataForKey(monthKey).distributions.filter(d=>{
     const left=leftTotal(d);
     const passStatus = !status || (status==='OK' && left>=0) || (status==='SOBRA' && left>0) || (status==='ZERADO' && left===0) || (status==='ESTOURO' && left<0);
     return passTextFilter(d,text) && passStatus;
@@ -8161,10 +8260,10 @@ function filteredDistributions(){
   if(order==='alpha') rows.sort((a,b)=> norm(distributionLabel(a)).localeCompare(norm(distributionLabel(b))));
   return rows;
 }
-function renderReservations(){
+function renderReservations(monthKey=state.currentMonth){
   const board=$('reservationBoard');
   if(!board) return;
-  const reservations = monthData().distributions
+  const reservations = monthDataForKey(monthKey).distributions
     .map(d=>({d,entries:reservationEntries(d),packages:reservationPackageTotal(d),consumed:reservationConsumed(d)}))
     .filter(r=>r.entries.length && r.consumed>0);
   if(!reservations.length){ board.classList.remove('show'); board.innerHTML=''; return; }
@@ -8387,14 +8486,17 @@ function markReturnedAsSobra(recordId){
 }
 
 function renderDistribuicao(){
-  const rows=filteredDistributions();
+  alignPanelMonthWithInput();
+  const monthKey=state.currentMonth;
+  const openedMonth=monthDataForKey(monthKey);
+  const rows=filteredDistributions(monthKey);
   const tb=$('distTable');
-  renderReservations();
+  renderReservations(monthKey);
   if(!rows.length){
-    const currentTotal=(monthData().distributions||[]).length;
-    const otherMonths=monthSummaryList(state).filter(m=>m.key!==state.currentMonth && m.distributions>0);
+    const currentTotal=(openedMonth.distributions||[]).length;
+    const otherMonths=monthSummaryList(state).filter(m=>m.key!==monthKey && m.distributions>0);
     if(currentTotal===0 && otherMonths.length){
-      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA DISTRIBUIÇÃO NO MÊS ${esc(state.currentMonth)}.</strong><span>EXISTEM DISTRIBUIÇÕES SALVAS EM OUTRO(S) MÊS(ES). ABRA O MÊS CORRETO ABAIXO.</span><div class="monthDataButtons">${otherMonths.map(m=>`<button class="btn small" type="button" onclick="openMonthKey('${esc(m.key)}')">${esc(m.key)} · ${m.distributions} DISTR.</button>`).join('')}</div></div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA DISTRIBUIÇÃO NO MÊS ${esc(monthKey)}.</strong><span>EXISTEM DISTRIBUIÇÕES SALVAS EM OUTRO(S) MÊS(ES). ABRA O MÊS CORRETO ABAIXO.</span><div class="monthDataButtons">${otherMonths.map(m=>`<button class="btn small" type="button" onclick="openMonthKey('${esc(m.key)}')">${esc(m.key)} · ${m.distributions} DISTR.</button>`).join('')}</div></div></td></tr>`;
     }else if(currentTotal>0){
       tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>AS DISTRIBUIÇÕES EXISTEM, MAS O FILTRO ESTÁ ESCONDENDO.</strong><span>LIMPE A BUSCA OU MUDE O STATUS DO SALDO PARA TODOS.</span></div></td></tr>`;
     }else{
@@ -10912,7 +11014,8 @@ bind('winnerRecordForm','submit',saveWinnerRecord);
 bind('refreshWinnerBankBtn','click',()=>initWinnerBank(true));
 ['winnerBankSearch','winnerBankStatusFilter'].forEach(id=>bind(id,'input',renderWinnerBank));
 
-bind('monthInput','change',()=>{ const key=$('monthInput').value; if(!key) return toast('ESCOLHA UM MÊS.'); manualMonthOverride=true; if(!state.months[key]) createBlankMonth(key); state.currentMonth=key; saveState(true); render(); toast('MÊS ABERTO COM SALVAMENTO AUTOMÁTICO.'); });
+bind('monthInput','input',commitMonthInputSelection);
+bind('monthInput','change',commitMonthInputSelection);
 function downloadFile(name, content, type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
 function csvCell(v){ return `"${String(v??'').replace(/"/g,'""')}"`; }
 function toCsv(){
