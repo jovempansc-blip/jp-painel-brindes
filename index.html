@@ -2866,6 +2866,50 @@ body.drawer-open .distActions{
   pointer-events:none!important;
   opacity:.08!important;
 }
+
+
+/* === V35: ÁREA SEGURA PARA O RODAPÉ FIXO NA ABA PROGRAMAÇÃO ===
+   Evita que os botões inferiores da programação encostem ou fiquem por trás do rodapé fixo ao rolar. */
+:root{
+  --program-footer-safe:92px;
+}
+main{
+  padding-bottom:calc(var(--program-footer-safe) + 10px);
+}
+#view-programacao .panel,
+#view-programacao .panelBody,
+#view-programacao .weeklyBoard{
+  overflow:visible!important;
+}
+#view-programacao .panelBody{
+  padding-bottom:calc(var(--program-footer-safe) + 18px)!important;
+}
+#view-programacao .weeklyBoard{
+  padding-bottom:calc(var(--program-footer-safe) + 8px);
+}
+#view-programacao .programFilterBar,
+#view-programacao .weeklyHeader,
+#view-programacao .periodCell:last-child{
+  margin-bottom:0!important;
+}
+@media(max-width:1180px){
+  :root{
+    --program-footer-safe:102px;
+  }
+}
+@media(max-width:900px){
+  :root{
+    --program-footer-safe:116px;
+  }
+  #view-programacao .panelBody{
+    padding-bottom:calc(var(--program-footer-safe) + 14px)!important;
+  }
+}
+@media(max-width:620px){
+  :root{
+    --program-footer-safe:132px;
+  }
+}
 .drawer .btn,
 .drawer .iconBtn,
 .drawer .actionIcon,
