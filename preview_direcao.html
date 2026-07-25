@@ -467,6 +467,7 @@ button{cursor:pointer}
     <button class="tab" data-tab="promocoes">PROMO / MERCHAN</button>
     <button class="tab" data-tab="estudio">OPERAÇÃO DO ESTÚDIO</button>
     <button class="tab" data-tab="retiradas">RETIRADAS</button>
+    <button class="tab" data-tab="relatorios">RELATÓRIOS</button>
   </nav>
 
   <main>
@@ -476,6 +477,7 @@ button{cursor:pointer}
     <section class="view" id="view-promocoes"></section>
     <section class="view" id="view-estudio"></section>
     <section class="view" id="view-retiradas"></section>
+    <section class="view" id="view-relatorios"></section>
   </main>
 </div>
 
@@ -506,6 +508,8 @@ let state={months:{}};
 let currentMonth="";
 let activeTab="resumo";
 let firebaseReady=false;
+let reportFrom="";
+let reportTo="";
 
 function slotParts(slot){
   const raw=String(slot||"").trim().toUpperCase().replace(/\s+/g,"");
@@ -619,14 +623,14 @@ function normalizedWinnerList(list){
     deliveredAtLabel:row?.deliveredAtLabel||""
   })).filter(row=>row.name&&!seen.has(row.name)&&seen.add(row.name));
 }
+function promoWinnerOccurrences(promo){
+  const all=[];const byHour=Object.entries(promo.resultWinnersByHour||{}).filter(([,list])=>Array.isArray(list)&&list.length);
+  if(byHour.length){byHour.forEach(([key,list])=>{const date=String(key).match(/^(\d{4}-\d{2}-\d{2})/)?.[1]||promo.resultDate||promo.drawDate||"",tm=String(key).match(/-(\d{2})(\d{2})$/),time=tm?`${tm[1]}:${tm[2]}`:timeToHHMM(promo.resultSlot||promo.drawTime||"");normalizedWinnerList(list).forEach((row,index)=>all.push({...row,occurrenceKey:key,occurrenceDate:date,occurrenceTime:time,winnerIndex:index}));});return all;}
+  const base=normalizedWinnerList(promo.resultWinners);if(base.length)return base.map((row,index)=>({...row,occurrenceKey:"",occurrenceDate:promo.resultDate||promo.drawDate||"",occurrenceTime:timeToHHMM(promo.resultSlot||promo.drawTime||""),winnerIndex:index}));
+  if(promo.resultName)return [{name:upper(promo.resultName),registeredAt:promo.resultAt||"",deliveredAt:promo.deliveredAt||"",deliveredAtLabel:promo.deliveredAtLabel||"",occurrenceKey:"",occurrenceDate:promo.resultDate||promo.drawDate||"",occurrenceTime:timeToHHMM(promo.resultSlot||promo.drawTime||"")}];return[];
+}
 function promoWinners(promo){
-  const all=[];
-  normalizedWinnerList(promo.resultWinners).forEach(row=>all.push(row));
-  Object.values(promo.resultWinnersByHour||{}).forEach(list=>normalizedWinnerList(list).forEach(row=>all.push(row)));
-  if(promo.resultName)all.push({name:upper(promo.resultName),registeredAt:promo.resultAt||"",deliveredAt:promo.deliveredAt||"",deliveredAtLabel:promo.deliveredAtLabel||""});
-  Object.values(promo.resultByHour||{}).forEach(name=>{if(name)all.push({name:upper(name),registeredAt:promo.resultAt||"",deliveredAt:"",deliveredAtLabel:""});});
-  const seen=new Set();
-  return all.filter(row=>row.name&&!seen.has(row.name)&&seen.add(row.name));
+  const seen=new Set();return promoWinnerOccurrences(promo).filter(row=>{if(seen.has(row.name))return false;seen.add(row.name);return true;});
 }
 function promoResultDate(promo){return promo.resultDate||promo.drawDate||promo.endDate||"";}
 function promoStatus(promo,date){
@@ -766,8 +770,8 @@ function addBusinessDays(dateValue,days=5){
   }
   return dt;
 }
-function deadlineInfo(registeredAt,deliveredAt=""){
-  const deadline=addBusinessDays(registeredAt,5);
+function deadlineInfo(registeredAt,deliveredAt="",days=5){
+  const deadline=addBusinessDays(registeredAt,Math.max(1,Number(days)||5));
   if(!deadline)return {label:"SEM PRAZO",cls:"ok",expired:false};
   const start=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x;};
   const diff=Math.round((start(deadline)-start(new Date()))/86400000);
@@ -793,23 +797,16 @@ function pickupRows(date){
       deliveredAtLabel:item.deliveredAtLabel||""
     });
   });
-  (monthData().promos||[]).filter(promo=>promoResultDate(promo)===date).forEach(promo=>{
-    promoWinners(promo).forEach(winner=>rows.push({
-      source:promoKind(promo),
-      time:formatTime(promo.resultSlot||promo.drawTime||""),
-      title:promoTitle(promo),
-      winner:winner.name,
-      station:stationName(promo.station),
-      registeredAt:winner.registeredAt||promo.resultAt||`${date}T${timeToHHMM(promo.resultSlot||promo.drawTime||"23:00")}:00`,
-      deliveredAt:winner.deliveredAt||"",
-      deliveredAtLabel:winner.deliveredAtLabel||""
+  (monthData().promos||[]).forEach(promo=>{
+    promoWinnerOccurrences(promo).filter(winner=>winner.occurrenceDate===date).forEach(winner=>rows.push({
+      source:promoKind(promo),time:formatTime(winner.occurrenceTime||promo.resultSlot||promo.drawTime||""),title:promoTitle(promo),winner:winner.name,station:stationName(promo.station),registeredAt:winner.registeredAt||promo.resultAt||`${date}T${winner.occurrenceTime||timeToHHMM(promo.resultSlot||promo.drawTime||"23:00")}:00`,deliveredAt:winner.deliveredAt||"",deliveredAtLabel:winner.deliveredAtLabel||"",pickupBusinessDays:Math.max(1,Math.min(5,Number(promo.pickupBusinessDays)||5))
     }));
   });
   return rows;
 }
 function resultCountForDate(date){
   const itemResults=itemsForDate(date).filter(item=>normalizeStatus(item.status)==="REALIZADO"||itemWinner(item)).length;
-  const promoResults=(monthData().promos||[]).filter(promo=>promoStationMatches(promo)&&promoResultDate(promo)===date&&promoWinners(promo).length).reduce((sum,promo)=>sum+promoWinners(promo).length,0);
+  const promoResults=(monthData().promos||[]).filter(promo=>promoStationMatches(promo)).reduce((sum,promo)=>sum+promoWinnerOccurrences(promo).filter(w=>w.occurrenceDate===date).length,0);
   return itemResults+promoResults;
 }
 function stationItems(date){
@@ -844,7 +841,7 @@ function renderAlerts(date){
   pendingReadRows(date).slice(0,6).forEach(row=>alerts.push({level:"",title:`LEITURA PENDENTE: ${promoTitle(row.promo)}`,detail:`${formatTime(row.slot)} · ${stationName(row.promo.station)}`}));
   (monthData().promos||[]).filter(promo=>promoStationMatches(promo)&&promoResultDate(promo)===date&&!promoWinners(promo).length).forEach(promo=>alerts.push({level:"red",title:`RESULTADO SEM GANHADOR: ${promoTitle(promo)}`,detail:`${formatTime(promo.resultSlot||promo.drawTime||"")} · ${stationName(promo.station)}`}));
   pickupRows(date).forEach(row=>{
-    const deadline=deadlineInfo(row.registeredAt,row.deliveredAt);
+    const deadline=deadlineInfo(row.registeredAt,row.deliveredAt,row.pickupBusinessDays||5);
     if(!row.deliveredAt&&(deadline.cls==="today"||deadline.cls==="tomorrow"||deadline.expired))alerts.push({level:deadline.expired?"red":"",title:`RETIRADA: ${row.winner}`,detail:`${row.title} · ${deadline.label}`});
   });
   if(!alerts.length)return `<div class="empty">NENHUM ALERTA OPERACIONAL PARA A DATA SELECIONADA.</div>`;
@@ -981,9 +978,33 @@ function renderRetiradas(){
     </tr>`;
   }).join(""):`<tr><td colspan="6"><div class="empty">SEM GANHADORES REGISTRADOS PARA ESTA DATA.</div></td></tr>`;
   $("view-retiradas").innerHTML=`
-    <div class="sectionToolbar"><div class="toolbarTitle"><h2>CONTROLE DE RETIRADAS</h2><p>PRAZO DE 5 DIAS ÚTEIS APÓS A CONFIRMAÇÃO</p></div><div class="toolbarStats"><span class="badge">${rows.length} GANHADOR(ES)</span></div></div>
+    <div class="sectionToolbar"><div class="toolbarTitle"><h2>CONTROLE DE RETIRADAS</h2><p>PRAZO PADRÃO DE 5 DIAS ÚTEIS, COM EXCEÇÕES DEFINIDAS POR PROMOÇÃO</p></div><div class="toolbarStats"><span class="badge">${rows.length} GANHADOR(ES)</span></div></div>
     <section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>HORÁRIO</th><th>ORIGEM</th><th>PRÊMIO</th><th>GANHADOR</th><th>PRAZO</th><th class="num">STATUS</th></tr></thead><tbody>${body}</tbody></table></div></section>`;
 }
+function reportDateRange(){
+  const base=currentMonth||todayISO().slice(0,7),[y,m]=base.split('-').map(Number),last=new Date(y,m,0).getDate();
+  if(!reportFrom)reportFrom=`${base}-01`;if(!reportTo)reportTo=`${base}-${pad(last)}`;return{from:reportFrom,to:reportTo};
+}
+function inReportRange(date){const r=reportDateRange();return !!date&&date>=r.from&&date<=r.to;}
+function setReportRange(mode){
+  const today=todayISO(),d=new Date(`${today}T12:00:00`);
+  if(mode==='today'){reportFrom=today;reportTo=today;}
+  else if(mode==='week'){const dow=d.getDay()||7,start=new Date(d);start.setDate(d.getDate()-dow+1);const end=new Date(start);end.setDate(start.getDate()+6);reportFrom=`${start.getFullYear()}-${pad(start.getMonth()+1)}-${pad(start.getDate())}`;reportTo=`${end.getFullYear()}-${pad(end.getMonth()+1)}-${pad(end.getDate())}`;}
+  else{reportFrom='';reportTo='';reportDateRange();}
+  renderRelatorios();
+}
+function renderRelatorios(){
+  const r=reportDateRange(),month=monthData(),items=(month.items||[]).filter(i=>inReportRange(i.date)&&stationMatches(i.station)),promos=(month.promos||[]).filter(p=>promoStationMatches(p)&&(promoStart(p)<=r.to&&promoEnd(p)>=r.from)),dists=(month.distributions||[]);
+  const promoWins=promos.reduce((sum,p)=>sum+promoWinnerOccurrences(p).filter(w=>inReportRange(w.occurrenceDate)).length,0),itemWins=items.reduce((sum,i)=>sum+(itemWinner(i)?String(itemWinner(i)).split(',').filter(Boolean).length:0),0),pickup=[];
+  for(let dt=new Date(`${r.from}T12:00:00`),end=new Date(`${r.to}T12:00:00`);dt<=end;dt.setDate(dt.getDate()+1)){const iso=`${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;pickup.push(...pickupRows(iso));}
+  const delivered=pickup.filter(x=>x.deliveredAt).length,pending=pickup.length-delivered,totalReceived=dists.reduce((s,d)=>s+num(d.total),0),totalConsumed=dists.reduce((s,d)=>s+distributionConsumed(d),0),balance=dists.reduce((s,d)=>s+distributionBalance(d),0);
+  $("view-relatorios").innerHTML=`<div class="sectionToolbar"><div class="toolbarTitle"><h2>RELATÓRIOS CONSOLIDADOS</h2><p>VISÃO EXECUTIVA DO PERÍODO</p></div><div class="toolbarStats"><button class="badge" type="button" onclick="window.print()">EXPORTAR PDF</button><button class="badge" type="button" onclick="window.print()">IMPRIMIR</button></div></div>
+  <section class="panel"><div class="panelBody"><div class="headerFilters" style="justify-content:flex-start"><div class="field"><label>DE</label><input class="control" type="date" id="reportFrom" value="${esc(r.from)}"></div><div class="field"><label>ATÉ</label><input class="control" type="date" id="reportTo" value="${esc(r.to)}"></div><div class="field"><label>ATALHOS</label><div style="display:flex;gap:6px"><button class="badge" type="button" onclick="setReportRange('today')">HOJE</button><button class="badge" type="button" onclick="setReportRange('week')">SEMANA</button><button class="badge" type="button" onclick="setReportRange('month')">MÊS</button></div></div></div></div></section>
+  <div class="kpiGrid"><div class="kpi"><span>PRÊMIOS RECEBIDOS</span><strong>${totalReceived}</strong><small>COMPETÊNCIA ${monthLabel(currentMonth)}</small></div><div class="kpi"><span>DISTRIBUÍDO / CONSUMIDO</span><strong>${totalConsumed}</strong><small>SALDO ${balance}</small></div><div class="kpi"><span>PROGRAMAÇÃO</span><strong>${items.length}</strong><small>ITENS NO PERÍODO</small></div><div class="kpi"><span>PROMOÇÕES</span><strong>${promos.length}</strong><small>ATIVAS NO PERÍODO</small></div><div class="kpi"><span>GANHADORES</span><strong>${promoWins+itemWins}</strong><small>RESULTADOS CONFIRMADOS</small></div><div class="kpi"><span>RETIRADAS</span><strong>${delivered}</strong><small>${pending} PENDENTE(S)</small></div></div>
+  <section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>INDICADOR</th><th class="num">TOTAL</th><th>OBSERVAÇÃO</th></tr></thead><tbody><tr><td>PRÊMIOS RECEBIDOS</td><td class="num">${totalReceived}</td><td>${monthLabel(currentMonth)}</td></tr><tr><td>CONSUMIDO / DISTRIBUÍDO</td><td class="num">${totalConsumed}</td><td>SALDO CONSOLIDADO ${balance}</td></tr><tr><td>RESULTADOS / GANHADORES</td><td class="num">${promoWins+itemWins}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>RETIRADAS CONFIRMADAS</td><td class="num">${delivered}</td><td>${pending} PENDENTE(S)</td></tr></tbody></table></div></section>`;
+  $("reportFrom")?.addEventListener("change",e=>{reportFrom=e.target.value;renderRelatorios();});$("reportTo")?.addEventListener("change",e=>{reportTo=e.target.value;renderRelatorios();});
+}
+window.setReportRange=setReportRange;
 function fillMonthFilter(){
   const months=availableMonths();
   $("monthFilter").innerHTML=(months.length?months:[todayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");
@@ -1000,6 +1021,7 @@ function render(){
   renderPromocoes();
   renderEstudio();
   renderRetiradas();
+  renderRelatorios();
   document.querySelectorAll(".view").forEach(view=>view.classList.toggle("active",view.id===`view-${activeTab}`));
   document.querySelectorAll(".tab").forEach(button=>button.classList.toggle("active",button.dataset.tab===activeTab));
 }
@@ -1046,6 +1068,7 @@ $("dateFilter").addEventListener("change",()=>{
 $("monthFilter").addEventListener("change",()=>{
   currentMonth=$("monthFilter").value;
   state.currentMonth=currentMonth;
+  reportFrom="";reportTo="";
   const currentDate=$("dateFilter").value||todayISO();
   const day=String(currentDate).slice(8,10)||"01";
   const candidate=`${currentMonth}-${day}`;

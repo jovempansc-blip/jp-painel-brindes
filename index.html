@@ -223,6 +223,15 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 .promoReadHour span{width:100%;min-height:28px;display:flex;align-items:center;justify-content:center;border-radius:10px;border:1px solid #dce2eb;background:#fff;color:#667283;font-size:10px;font-weight:900;cursor:pointer}
 .promoReadHour input:checked+span{background:#c9002b;border-color:#c9002b;color:#fff}
 .promoReadSchedule.locked .promoReadHours{opacity:.38;pointer-events:none}
+.promoOccurrencesEditor{display:grid;gap:7px;border:1px solid #e4e8ef;border-radius:14px;background:#f8f9fc;padding:10px 11px}
+.promoOccurrenceRow{display:grid;grid-template-columns:92px 78px minmax(86px,110px) minmax(0,1fr);gap:7px;align-items:center;padding:7px 8px;border:1px solid #e2e7ef;border-radius:11px;background:#fff}
+.promoOccurrenceRow strong{font-size:10px;color:#273142}
+.promoOccurrenceRow span{font-size:9px;color:#697386;font-weight:900}
+.promoOccurrenceRow input,.promoOccurrenceRow select{min-height:31px;border:1px solid #d8dee7;border-radius:9px;background:#fff;padding:0 8px;font-size:9px;font-weight:1000;color:#171c26;text-transform:uppercase}
+.promoOccurrenceRow.realized{background:#effaf4;border-color:#bde9ce}
+.promoOccurrenceRow.realized strong{color:#137947}
+.promoOccurrenceEmpty{padding:8px 4px;color:#697386;font-size:9px;font-weight:900;text-align:center}
+@media(max-width:620px){.promoOccurrenceRow{grid-template-columns:1fr 1fr}.promoOccurrenceRow strong{grid-column:1/-1}}
 .uploadHint{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.25}
 .promoThumb{width:76px;height:19px;border:1px solid var(--line);border-radius:6px;object-fit:cover;background:#eef1f5;display:block}
 
@@ -3077,6 +3086,10 @@ body.drawer-open .distActions{
 
 </style>
 
+
+<style>
+.globalSearchField{min-width:230px}.systemKpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:12px}.systemKpi{border:1px solid var(--line);border-radius:14px;background:#fff;padding:11px}.systemKpi span{display:block;color:var(--muted);font-size:8px;font-weight:900}.systemKpi strong{display:block;margin-top:5px;font-size:20px}.systemGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.systemCard{border:1px solid var(--line);border-radius:16px;background:#fff;padding:12px;min-width:0}.systemCardHead{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-bottom:9px;border-bottom:1px solid var(--line)}.systemCardHead strong{font-size:11px}.systemCardHead span{font-size:8px;color:var(--muted);font-weight:850}.systemList{display:grid;gap:7px;margin-top:9px;max-height:360px;overflow:auto}.systemRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;border:1px solid #e5e9ef;border-radius:11px;padding:8px 9px;background:#fafbfc}.systemRow strong{display:block;font-size:9px}.systemRow span{display:block;margin-top:3px;color:var(--muted);font-size:8px;line-height:1.35}.systemRow.critical{border-color:#f1bcc5;background:#fff5f7}.systemRow.attention{border-color:#f4d49c;background:#fffaf0}.systemRow.info{border-color:#cfe0ff;background:#f5f9ff}.systemTag{display:inline-flex;align-items:center;min-height:23px;padding:0 7px;border-radius:999px;border:1px solid #dce2ea;font-size:7px;font-weight:1000;white-space:nowrap}.systemRowActions{display:flex;gap:5px;align-items:center}.systemRowActions .btn{min-height:27px;padding:0 8px;font-size:7.5px}.globalSearchResultsCard{margin-top:12px}.programPublishActions{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}.programPublishActions .btn{min-height:30px;padding:0 9px;font-size:8px}@media(max-width:900px){.systemGrid{grid-template-columns:1fr}.systemKpis{grid-template-columns:1fr 1fr}.globalSearchField{min-width:0;width:100%}}@media(max-width:580px){.systemKpis{grid-template-columns:1fr}}
+</style>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -3091,6 +3104,7 @@ body.drawer-open .distActions{
     </div>
     <div class="topTools">
       <div class="field monthHeaderField"><label>MÊS</label><input class="control" type="month" id="monthInput" value=""></div>
+      <div class="field globalSearchField"><label>BUSCA GLOBAL</label><input class="control" id="globalSearchInput" type="search" autocomplete="off" placeholder="PRÊMIO, GANHADOR, PROMOÇÃO..."></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
         <button class="btn syncStatusBtn saving" id="syncStatusBtn" type="button" title="STATUS DO BANCO">CONECTANDO</button>
         <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
@@ -3108,6 +3122,8 @@ body.drawer-open .distActions{
     <button class="tabBtn" data-view="agendamento">AGENDAMENTO</button>
     <button class="tabBtn" data-view="ganhadores">BANCO DE GANHADORES</button>
     <button class="tabBtn" data-view="backup">BACKUP</button>
+    <button class="tabBtn" data-view="sistema">SISTEMA</button>
+    <button class="tabBtn" data-view="relatorios">RELATÓRIOS</button>
   </nav>
 
   <div class="miniAlertHost" id="miniAlertHost"></div>
@@ -3364,6 +3380,26 @@ body.drawer-open .distActions{
       </div>
     </section>
 
+    <section class="view" id="view-relatorios">
+      <div class="panel"><div class="panelHead"><div><h2>RELATÓRIOS CONSOLIDADOS</h2><p>CONSULTA POR PERÍODO PARA IMPRESSÃO OU PDF.</p></div><div class="panelActions"><button class="btn" id="adminReportPdfBtn" type="button">EXPORTAR PDF</button><button class="btn" id="adminReportPrintBtn" type="button">IMPRIMIR</button></div></div><div class="panelBody"><div class="filterBar"><div class="field"><label>DE</label><input class="control" type="date" id="adminReportFrom"></div><div class="field"><label>ATÉ</label><input class="control" type="date" id="adminReportTo"></div><div class="field"><label>TIPO</label><select class="control" id="adminReportType"><option value="all">TODOS</option><option value="prizes">PRÊMIOS</option><option value="promos">PROMOÇÕES</option><option value="winners">GANHADORES</option><option value="withdrawals">RETIRADAS</option><option value="program">PROGRAMAÇÃO</option></select></div></div><div id="adminReportContent"></div></div></div>
+    </section>
+
+    <section class="view" id="view-sistema">
+      <div class="panel">
+        <div class="panelHead"><div><h2>CONTROLE E INTEGRIDADE</h2><p>PENDÊNCIAS, AUDITORIA, RECUPERAÇÃO E PUBLICAÇÃO DA PROGRAMAÇÃO.</p></div><div class="panelActions"><button class="btn" id="systemCheckBtn" type="button">VERIFICAR AGORA</button><button class="btn" id="monthCloseBtn" type="button">FECHAR MÊS</button></div></div>
+        <div class="panelBody">
+          <div class="systemKpis" id="systemKpis"></div>
+          <div class="systemGrid">
+            <div class="systemCard"><div class="systemCardHead"><strong>PENDÊNCIAS</strong><span id="systemLastCheck">AGUARDANDO VERIFICAÇÃO</span></div><div id="systemPendingList" class="systemList"></div></div>
+            <div class="systemCard"><div class="systemCardHead"><strong>PROGRAMAÇÃO</strong><span>RASCUNHO / PUBLICADA</span></div><div id="systemProgramPublish" class="systemList"></div></div>
+            <div class="systemCard"><div class="systemCardHead"><strong>LIXEIRA</strong><span>EXCLUSÃO SEGURA</span></div><div id="systemTrashList" class="systemList"></div></div>
+            <div class="systemCard"><div class="systemCardHead"><strong>LOG ADMINISTRATIVO</strong><span>ÚLTIMAS ALTERAÇÕES</span></div><div id="systemAuditList" class="systemList"></div></div>
+          </div>
+          <div class="systemCard globalSearchResultsCard"><div class="systemCardHead"><strong>RESULTADOS DA BUSCA GLOBAL</strong><span id="globalSearchCount">DIGITE NO CAMPO DO TOPO</span></div><div id="globalSearchResults" class="systemList"></div></div>
+        </div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -3439,8 +3475,7 @@ body.drawer-open .distActions{
             <div class="field prizeField"><label>PRÊMIO / EVENTO</label><input class="control" id="itemPrize" required></div>
             <div class="field"><label>QTD</label><input class="control" type="number" min="0" step="1" id="itemQty" value="1"></div>
             <div class="field"><label>CANAL</label><select class="control" id="itemChannel"><option>RÁDIO</option></select><span class="ticketFormHint">A PROGRAMAÇÃO RECEBE APENAS O DESTINO RÁDIO. OS DEMAIS SEGMENTOS FICAM NO CONTROLE DE DISTRIBUIÇÃO.</span></div>
-            <div class="field"><label>STATUS</label><select class="control" id="itemStatus"><option>PENDENTE</option><option>NO AR</option><option>REALIZADO</option><option>CANCELADO</option></select></div>
-            <div class="field"><label>GANHADOR / RESULTADO</label><input class="control" id="itemWinner" placeholder="NOME DO GANHADOR"></div>
+            <div class="field"><label>STATUS ADMINISTRATIVO</label><select class="control" id="itemStatus"><option>PENDENTE</option><option>NO AR</option><option>CANCELADO</option></select><span class="ticketFormHint">RESULTADO / REALIZADO É CONFIRMADO EXCLUSIVAMENTE PELO PAINEL DO ESTÚDIO.</span></div>
           </div>
 
           <div class="field full"><label>TÍTULO PARA O LOCUTOR</label><input class="control" id="itemTitle">
@@ -3607,7 +3642,7 @@ body.drawer-open .distActions{
     <div class="drawerBody">
       <div class="backupInfoBox backupWarning" style="margin-bottom:12px">
         <strong>ALERTA DE RETIRADA:</strong><br>
-        O SISTEMA CONTA 5 DIAS ÚTEIS A PARTIR DO REGISTRO DO GANHADOR. SE NÃO HOUVER BAIXA NA RECEPÇÃO, O PRÊMIO ENTRA NESTE PAINEL PARA REAPROVEITAMENTO OU SOBRA.
+        O PRAZO PADRÃO É DE 5 DIAS ÚTEIS A PARTIR DO REGISTRO DO GANHADOR. PROMOÇÕES PODEM TER PRAZO MENOR DEFINIDO NO CADASTRO. SEM BAIXA NA RECEPÇÃO, O PRÊMIO ENTRA NESTE PAINEL PARA REAPROVEITAMENTO OU SOBRA.
       </div>
       <div class="returnDrawerList" id="returnAlertList"></div>
     </div>
@@ -3641,6 +3676,14 @@ body.drawer-open .distActions{
               <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
               <div class="field" id="promoDrawDateField"><label id="promoDrawDateLabel">DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate" required></div>
               <div class="field" id="promoDrawTimeField"><label id="promoDrawTimeLabel">HORA DO SORTEIO</label><input class="control" type="time" id="promoDrawTime" step="3600" required></div>
+              <div class="field"><label>ENCERRAMENTO</label><input class="control" type="date" id="promoEndDate" required></div>
+              <div class="field"><label>PRAZO DE RETIRADA</label><select class="control" id="promoPickupDays"><option value="5">PADRÃO · 5 DIAS ÚTEIS</option><option value="4">4 DIAS ÚTEIS</option><option value="3">3 DIAS ÚTEIS</option><option value="2">2 DIAS ÚTEIS</option><option value="1">1 DIA ÚTIL</option></select></div>
+              <div class="field"><label>RECORRÊNCIA DO SORTEIO</label><select class="control" id="promoRecurrence"><option value="single">SORTEIO ÚNICO</option><option value="weekly">SEMANAL ATÉ O ENCERRAMENTO</option></select></div>
+              <div class="field"><label>QTD POR SORTEIO</label><input class="control" type="number" min="1" step="1" id="promoQtyPerDraw" value="1"></div>
+              <div class="field wide"><label>VINCULAR À DISTRIBUIÇÃO (OPCIONAL)</label><select class="control" id="promoDistributionId"><option value="">SEM VÍNCULO</option></select></div>
+              <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
+              <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SEM VÍNCULO"></div>
+              <div class="field full" id="promoOccurrencesField"><label>AGENDA DE SORTEIOS</label><div class="promoOccurrencesEditor" id="promoOccurrencesEditor"><div class="promoOccurrenceEmpty">A AGENDA SERÁ GERADA A PARTIR DAS DATAS ACIMA.</div></div></div>
               <div class="field"><label>TIPO DE CONTEÚDO</label><select class="control" id="promoKind"><option value="promo">PROMOÇÃO</option><option value="merchan">MERCHAN</option><option value="pauta">PAUTA ESPECIAL</option><option value="aviso">AVISO / COMUNICADO</option></select></div>
               <div class="field"><label>RÁDIO DA PAUTA</label><select class="control" id="promoStation"><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option><option value="ALL">AMBAS</option></select></div>
               <div class="field promoLocalField" id="promoLocalField"><label id="promoLocalLabel">CANAL DA PROMOÇÃO</label><select class="control" id="promoLocal"></select></div>
@@ -5866,7 +5909,7 @@ const PT_MONTHS = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO'
 const PT_DAYS = ['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];
 const $ = id => document.getElementById(id);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
-const clone = obj => JSON.parse(JSON.stringify(obj));
+const clone = obj => obj === undefined ? undefined : JSON.parse(JSON.stringify(obj));
 const norm = v => String(v ?? '').trim().replace(/\s+/g,' ').toUpperCase();
 const textNorm = v => String(v ?? '')
   .replace(/\r\n/g,'\n')
@@ -5895,6 +5938,7 @@ const FIREBASE_CONFIG = {
 const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
 const WINNER_BANK_PATH = "jp-painel-brindes/winnerBank";
 const WINNER_BLOCK_MONTHS = 8;
+const WINNER_SHORT_BLOCK_DAYS = 28;
 const LEGACY_API_URL = "https://script.google.com/macros/s/AKfycbzaeiSMNoo4miaB7ABVku3hxUsg5dr6egLE9-fltQaIUPzHr0RKFMR5nXr7ATbD4evJ/exec";
 
 let firebaseStarted = false;
@@ -5916,15 +5960,53 @@ let winnerBankRef = null;
 let winnerBankStarted = false;
 let winnerBankReady = false;
 let winnerBankRecords = [];
+let winnerBankSnapshot = {};
 let winnerBankImport = null;
 
 function firebaseConfigReady(){
   return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
 }
+function mergeFirebaseStates(primary,secondary){
+  const sources=[primary,secondary].filter(source=>source&&source.months);
+  if(!sources.length) return null;
+  const out={currentMonth:'',months:{},schedules:[],programSchedules:[]};
+  const rootCollections=['schedules','programSchedules','auditLog','trash'];
+  const mergeRows=(targetRows=[],sourceRows=[])=>{
+    const rows=firebaseList(targetRows);
+    const map=new Map(rows.map((row,index)=>[recordIdentity(row,index),clone(row)]));
+    firebaseList(sourceRows).forEach((row,index)=>{
+      const key=recordIdentity(row,index);
+      const current=map.get(key);
+      if(!current){ map.set(key,clone(row)); return; }
+      const currentTime=String(current.updatedAt||current.createdAt||'');
+      const incomingTime=String(row.updatedAt||row.createdAt||'');
+      map.set(key,incomingTime>=currentTime?{...current,...clone(row)}:{...clone(row),...current});
+    });
+    return [...map.values()].filter(Boolean);
+  };
+  sources.forEach(source=>{
+    if(source.currentMonth) out.currentMonth=source.currentMonth;
+    Object.entries(source.months||{}).forEach(([monthKey,month])=>{
+      const target=out.months[monthKey]||{label:monthKey,items:[],promos:[],distributions:[]};
+      target.label=month?.label||target.label||monthKey;
+      ['items','promos','distributions'].forEach(collection=>{
+        target[collection]=mergeRows(target[collection]||[],month?.[collection]||[]);
+      });
+      out.months[monthKey]=target;
+    });
+    rootCollections.forEach(collection=>{ out[collection]=mergeRows(out[collection]||[],source[collection]||[]); });
+    ['publishedPrograms','programVersions','systemMeta','pendingOps'].forEach(key=>{
+      if(source[key]!==undefined) out[key]=clone(source[key]);
+    });
+  });
+  if(!out.currentMonth) out.currentMonth=Object.keys(out.months).sort().at(-1)||currentCalendarMonth();
+  return out;
+}
 function firebaseStateFromPayload(payload){
-  if(payload?.state?.months) return payload.state;
-  if(payload?.months) return payload;
-  return null;
+  const flat=payload?.months ? payload : null;
+  const nested=payload?.state?.months ? payload.state : null;
+  if(flat&&nested) return mergeFirebaseStates(flat,nested);
+  return nested||flat||null;
 }
 function loadState(){
   try{
@@ -5941,7 +6023,7 @@ function saveState(silent=false){
     firebasePendingSave = true;
     queueApiSave(silent ? 350 : 120);
   }
-  if(!silent) toast('SALVO COM SUCESSO.');
+  if(!silent) toast('ALTERAÇÃO REGISTRADA · SINCRONIZANDO COM FIREBASE...');
 }
 function countStateRecords(data){
   if(!data || !data.months) return 0;
@@ -6011,7 +6093,7 @@ function collectionPlan(baseRows,localRows){
 async function persistCollectionDiff(relativePath,baseRows,localRows){
   const plan=collectionPlan(baseRows,localRows);
   if(!plan.replace && !plan.changes.length && !plan.deleted.length) return;
-  await firebaseRef.child(`state/${relativePath}`).transaction(current=>{
+  await firebaseRef.child(relativePath).transaction(current=>{
     if(plan.replace) return clone(plan.value);
     let rows=firebaseList(current);
     if(plan.deleted.length){
@@ -6029,43 +6111,114 @@ async function persistCollectionDiff(relativePath,baseRows,localRows){
     return rows.filter(Boolean);
   });
 }
-async function persistGranularState(){
-  const baseline=firebaseBaselineState || {months:{},schedules:[],programSchedules:[]};
-  const tasks=[];
-  const monthKeys=new Set([...Object.keys(baseline.months||{}),...Object.keys(state.months||{})]);
-  monthKeys.forEach(key=>{
-    const baseMonth=baseline.months?.[key]||{items:[],promos:[],distributions:[]};
-    const localMonth=state.months?.[key]||{items:[],promos:[],distributions:[]};
-    ['items','promos','distributions'].forEach(collection=>{
-      tasks.push(persistCollectionDiff(`months/${key}/${collection}`,baseMonth[collection]||[],localMonth[collection]||[]));
-    });
-    if(localMonth.label && localMonth.label!==baseMonth.label){
-      tasks.push(firebaseRef.child(`state/months/${key}/label`).set(localMonth.label));
+function applyCollectionPlanToRows(currentRows,baseRows,localRows,context='REGISTRO'){
+  const plan=collectionPlan(baseRows,localRows);
+  if(!plan.replace && !plan.changes.length && !plan.deleted.length) return firebaseList(currentRows);
+  const base=firebaseList(baseRows), local=firebaseList(localRows), current=firebaseList(currentRows);
+  const baseMap=new Map(base.map((row,index)=>[recordIdentity(row,index),row]));
+  const currentMap=new Map(current.map((row,index)=>[recordIdentity(row,index),row]));
+  if(plan.replace){
+    if(!sameValue(current,base) && !sameValue(current,local)){
+      throw new Error(`CONFLITO DE EDIÇÃO EM ${context}. OUTRO COMPUTADOR ALTEROU ESTES DADOS.`);
     }
+    return clone(plan.value);
+  }
+  const rows=clone(current);
+  const rowIndex=idValue=>rows.findIndex((row,index)=>recordIdentity(row,index)===idValue);
+  const assertNotChangedRemotely=(idValue,localValue,mode='alterar')=>{
+    const baseValue=baseMap.get(idValue);
+    const currentValue=currentMap.get(idValue);
+    if(baseValue===undefined){
+      if(currentValue!==undefined && !sameValue(currentValue,localValue)) throw new Error(`CONFLITO DE EDIÇÃO EM ${context}: ${idValue}.`);
+      return;
+    }
+    if(currentValue===undefined){
+      if(mode!=='excluir') throw new Error(`REGISTRO REMOVIDO EM OUTRO COMPUTADOR (${context}: ${idValue}).`);
+      return;
+    }
+    if(!sameValue(currentValue,baseValue) && !sameValue(currentValue,localValue)){
+      throw new Error(`CONFLITO DE EDIÇÃO EM ${context}: ${idValue}. ATUALIZE OS DADOS ANTES DE SALVAR.`);
+    }
+  };
+  plan.deleted.forEach(idValue=>{
+    assertNotChangedRemotely(idValue,undefined,'excluir');
+    const index=rowIndex(idValue);
+    if(index>=0) rows.splice(index,1);
   });
-  tasks.push(persistCollectionDiff('schedules',baseline.schedules||[],state.schedules||[]));
-  tasks.push(persistCollectionDiff('programSchedules',baseline.programSchedules||[],state.programSchedules||[]));
-  await Promise.all(tasks);
-  await firebaseRef.update({
-    updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
-    savedAt:new Date().toISOString(),
-    source:'PAINEL_PRINCIPAL',
-    version:'FIREBASE_RTDB_V2_GRANULAR'
+  plan.changes.forEach(change=>{
+    assertNotChangedRemotely(change.id,change.local,'alterar');
+    const index=rowIndex(change.id);
+    if(index<0) rows.push(clone(change.local));
+    else rows[index]=applyNodeDiff(rows[index],change.diff);
   });
-  const latestSnapshot=await firebaseRef.child('state').get();
-  return latestSnapshot.val();
+  return rows.filter(Boolean);
+}
+function mergeAuditRows(remoteRows,localRows){
+  const map=new Map();
+  [...firebaseList(remoteRows),...firebaseList(localRows)].forEach((row,index)=>{
+    const key=row?.id||`${row?.createdAt||row?.timestamp||''}:${row?.action||''}:${row?.targetId||''}:${index}`;
+    map.set(key,clone(row));
+  });
+  return [...map.values()].sort((a,b)=>String(a.createdAt||a.timestamp||'').localeCompare(String(b.createdAt||b.timestamp||''))).slice(-2500);
+}
+async function persistGranularState(){
+  const baseline=normalizePanelState(clone(firebaseBaselineState || {months:{},schedules:[],programSchedules:[]}));
+  normalizePanelState(state);
+  let conflictMessage='';
+  const result=await firebaseRef.transaction(currentPayload=>{
+    try{
+      const canonical=normalizePanelState(clone(firebaseStateFromPayload(currentPayload) || baseline));
+      canonical.months ||= {};
+      const monthKeys=new Set([...Object.keys(baseline.months||{}),...Object.keys(state.months||{}),...Object.keys(canonical.months||{})]);
+      monthKeys.forEach(key=>{
+        const baseMonth=baseline.months?.[key]||{label:key,items:[],promos:[],distributions:[]};
+        const localMonth=state.months?.[key]||{label:key,items:[],promos:[],distributions:[]};
+        const currentMonth=canonical.months?.[key]||{label:key,items:[],promos:[],distributions:[]};
+        canonical.months[key] ||= {label:localMonth.label||baseMonth.label||key,items:[],promos:[],distributions:[]};
+        ['items','promos','distributions'].forEach(collection=>{
+          canonical.months[key][collection]=applyCollectionPlanToRows(
+            currentMonth[collection]||[],baseMonth[collection]||[],localMonth[collection]||[],`${key}/${collection.toUpperCase()}`
+          );
+        });
+        if(localMonth.label && localMonth.label!==baseMonth.label){
+          if(currentMonth.label && currentMonth.label!==baseMonth.label && currentMonth.label!==localMonth.label) throw new Error(`CONFLITO DE EDIÇÃO NO MÊS ${key}.`);
+          canonical.months[key].label=localMonth.label;
+        }
+      });
+      canonical.schedules=applyCollectionPlanToRows(canonical.schedules||[],baseline.schedules||[],state.schedules||[],'AGENDAMENTO');
+      canonical.programSchedules=applyCollectionPlanToRows(canonical.programSchedules||[],baseline.programSchedules||[],state.programSchedules||[],'HORÁRIOS');
+      canonical.auditLog=mergeAuditRows(canonical.auditLog||[],state.auditLog||[]);
+      canonical.trash=mergeAuditRows(canonical.trash||[],state.trash||[]);
+      canonical.pendingOps=mergeAuditRows(canonical.pendingOps||[],state.pendingOps||[]);
+      canonical.publishedPrograms=clone(state.publishedPrograms||canonical.publishedPrograms||{});
+      canonical.programVersions=clone(state.programVersions||canonical.programVersions||{});
+      canonical.systemMeta={...(canonical.systemMeta||{}),...(clone(state.systemMeta||{}))};
+      canonical.currentMonth=state.currentMonth||canonical.currentMonth;
+      canonical.updatedAt=Date.now();
+      canonical.savedAt=new Date().toISOString();
+      canonical.source='PAINEL_PRINCIPAL';
+      canonical.version='FIREBASE_RTDB_V3_FLAT_ATOMIC';
+      return canonical;
+    }catch(error){
+      conflictMessage=String(error?.message||error||'CONFLITO DE EDIÇÃO.');
+      return; // aborta a transação sem gravação parcial
+    }
+  },undefined,false);
+  if(!result.committed){
+    throw new Error(conflictMessage||'A OPERAÇÃO NÃO FOI CONCLUÍDA. OS DADOS FORAM ALTERADOS EM OUTRO COMPUTADOR.');
+  }
+  return result.snapshot.val();
 }
 async function forceSetStateToApi(source='PAINEL_PRINCIPAL'){
   normalizePanelState(state);
-  await firebaseRef.set({
-    state,
-    updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
-    savedAt:new Date().toISOString(),
-    source,
-    version:'FIREBASE_RTDB_V2_FORCE'
-  });
+  const payload=clone(state);
+  payload.updatedAt=window.firebase.database.ServerValue.TIMESTAMP;
+  payload.savedAt=new Date().toISOString();
+  payload.source=source;
+  payload.version='FIREBASE_RTDB_V3_FLAT';
+  await firebaseRef.set(payload);
   firebaseBaselineState=clone(state);
-  firebaseUsesWrappedState=true;
+  firebaseUsesWrappedState=false;
   firebaseBaseEmpty=false;
 }
 
@@ -6229,6 +6382,7 @@ async function saveStateToApi(){
     return;
   }
   try{
+    const hadPendingSave=!!firebasePendingSave;
     normalizePanelState(state);
     if(countStateRecords(state)===0){
       firebasePendingSave=false;
@@ -6236,10 +6390,6 @@ async function saveStateToApi(){
       renderBackup();
       console.warn('ENVIO BLOQUEADO: BASE LOCAL VAZIA.');
       return;
-    }
-    if(firebaseUsesWrappedState===false && firebaseBaselineState?.months){
-      await firebaseRef.child('state').set(clone(firebaseBaselineState));
-      firebaseUsesWrappedState=true;
     }
     if(!firebaseBaselineState){
       const currentSnapshot=await firebaseRef.get();
@@ -6249,16 +6399,19 @@ async function saveStateToApi(){
         firebasePendingSave=false;
         firebaseBaseEmpty=true;
         updateSyncStatus('online','FIREBASE ONLINE');
-        console.warn('SALVAMENTO GRANULAR BLOQUEADO: NÃO EXISTE BASE OFICIAL PARA COMPARAÇÃO.');
+        console.warn('SALVAMENTO BLOQUEADO: NÃO EXISTE BASE OFICIAL PARA COMPARAÇÃO.');
         return;
       }
-      if(!currentPayload?.state?.months && currentPayload?.months){
-        await firebaseRef.child('state').set(clone(current));
-        firebaseUsesWrappedState=true;
-      }else{
-        firebaseUsesWrappedState=!!currentPayload?.state?.months;
+      firebaseBaselineState=normalizePanelState(clone(current));
+      if(currentPayload?.state?.months){
+        const migrated=clone(firebaseBaselineState);
+        migrated.updatedAt=window.firebase.database.ServerValue.TIMESTAMP;
+        migrated.savedAt=new Date().toISOString();
+        migrated.source='MIGRACAO_ESTRUTURA_V55';
+        migrated.version='FIREBASE_RTDB_V3_FLAT';
+        await firebaseRef.set(migrated);
       }
-      firebaseBaselineState=clone(current);
+      firebaseUsesWrappedState=false;
     }
     const openMonth=state.currentMonth;
     const latest=await persistGranularState();
@@ -6274,9 +6427,11 @@ async function saveStateToApi(){
     firebasePendingSave=false;
     updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
     renderBackup();
+    if(hadPendingSave) toast('ALTERAÇÕES CONFIRMADAS NO FIREBASE.');
   }catch(err){
     console.warn('FIREBASE SAVE ERROR',err);
     updateSyncStatus('error','ERRO FIREBASE');
+    toast('GRAVAÇÃO NÃO CONFIRMADA PELO FIREBASE. A ALTERAÇÃO CONTINUA PENDENTE.');
   }
 }
 
@@ -6414,32 +6569,41 @@ function winnerAddMonthsISO(iso,months=WINNER_BLOCK_MONTHS){
   const result=new Date(first.getFullYear(),first.getMonth(),Math.min(day,lastDay),12);
   return `${result.getFullYear()}-${String(result.getMonth()+1).padStart(2,'0')}-${String(result.getDate()).padStart(2,'0')}`;
 }
+function winnerAddDaysISO(iso,days=WINNER_SHORT_BLOCK_DAYS){
+  const [year,month,day]=String(iso||'').split('-').map(Number);
+  if(!year||!month||!day) return '';
+  const result=new Date(year,month-1,day+Number(days||0),12);
+  return `${result.getFullYear()}-${String(result.getMonth()+1).padStart(2,'0')}-${String(result.getDate()).padStart(2,'0')}`;
+}
 function winnerCycleInfo(records,asOf=todayISO()){
   const sorted=[...records]
     .filter(record=>record?.date && record.date<=asOf)
     .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
   let cycleCount=0;
   let blockedUntil='';
+  let blockKind='';
   let thirdDate='';
   sorted.forEach(record=>{
-    if(blockedUntil && record.date>=blockedUntil){
-      cycleCount=0;
-      blockedUntil='';
-      thirdDate='';
-    }
-    if(blockedUntil && record.date<blockedUntil) return;
-    cycleCount+=1;
     if(cycleCount===3){
+      const release=winnerAddMonthsISO(thirdDate||record.date);
+      if(record.date>=release){ cycleCount=0; blockedUntil=''; blockKind=''; thirdDate=''; }
+      else return;
+    }
+    cycleCount+=1;
+    if(cycleCount===1 || cycleCount===2){
+      blockedUntil=winnerAddDaysISO(record.date);
+      blockKind='SHORT';
+    }else if(cycleCount===3){
       thirdDate=record.date;
       blockedUntil=winnerAddMonthsISO(record.date);
+      blockKind='LONG';
     }
   });
-  if(blockedUntil && asOf>=blockedUntil){
-    cycleCount=0;
-    blockedUntil='';
-    thirdDate='';
+  if(cycleCount===3 && blockedUntil && asOf>=blockedUntil){
+    cycleCount=0; blockedUntil=''; blockKind=''; thirdDate='';
   }
-  return {cycleCount,blocked:!!blockedUntil,blockedUntil,thirdDate};
+  const blocked=!!blockedUntil && asOf<blockedUntil;
+  return {cycleCount,blocked,blockedUntil:blockKind&&blocked?blockedUntil:'',nextAllowedAt:blocked?blockedUntil:'',blockKind:blocked?blockKind:'',thirdDate};
 }
 function winnerHistoryFor(name,{excludeSourceRef='',asOf='9999-12-31'}={}){
   const key=winnerPersonKey(name);
@@ -6465,7 +6629,7 @@ function evaluateWinnerEligibility(name,prize,asOf=todayISO(),excludeSourceRef='
     reason=previous?`MESMO PRÊMIO REGISTRADO EM ${formatBR(previous.date)} · ${winnerUpper(previous.program||'PROGRAMA')}.`:'ESTE PRÊMIO JÁ CONSTA NO HISTÓRICO.';
   }else if(cycle.blocked){
     status='BLOQUEADO';
-    title='BLOQUEADO';
+    title=cycle.blockKind==='LONG'?'BLOQUEADO — 3ª PREMIAÇÃO':'BLOQUEADO — 28 DIAS';
     reason=`LIBERAÇÃO AUTOMÁTICA EM ${formatBR(cycle.blockedUntil)}.`;
   }else if(cycle.cycleCount===2){
     status='ATENCAO';
@@ -6502,6 +6666,7 @@ function setWinnerBankState(mode,text){
   box.textContent=text;
 }
 function applyWinnerBankSnapshot(value){
+  winnerBankSnapshot=clone(value||{});
   winnerBankRecords=winnerRecordList(value).map(record=>({
     ...record,
     name:winnerUpper(record.name),
@@ -6622,7 +6787,7 @@ function renderWinnerRecordSimilarity(){
   const candidate=state.candidates[0];
   if(candidate){
     input.dataset.similarityConfirmed='';
-    host.innerHTML=`<div class="winnerSimilarityReview"><strong>POSSÍVEL CADASTRO EXISTENTE</strong><div class="winnerSimilarityCompare"><div class="winnerSimilarityName"><span>NOME DIGITADO</span><b>${esc(state.name)}</b></div><span class="winnerSimilarityScore">${Math.round(candidate.score*100)}% PARECIDO</span><div class="winnerSimilarityName"><span>NOME NO BANCO</span><b>${esc(candidate.name)}</b></div></div><div class="winnerSimilarityActions"><button class="btn red" type="button" data-winner-record-similarity="same" data-candidate-id="${esc(candidate.similarityId)}" data-candidate-name="${esc(candidate.name)}">É A MESMA PESSOA</button><button class="btn" type="button" data-winner-record-similarity="different" data-candidate-id="${esc(candidate.similarityId)}">SÃO PESSOAS DIFERENTES</button></div></div>`;
+    host.innerHTML=`<div class="winnerSimilarityReview"><strong>POSSÍVEL CADASTRO EXISTENTE</strong><div class="winnerSimilarityCompare"><div class="winnerSimilarityName"><span>NOME DIGITADO</span><b>${esc(state.name)}</b></div><span class="winnerSimilarityScore">${Math.round(candidate.score*100)}% PARECIDO</span><div class="winnerSimilarityName"><span>NOME NO BANCO</span><b>${esc(candidate.name)}</b></div></div><div class="winnerSimilarityActions"><button class="btn red" type="button" data-winner-record-similarity="same" data-candidate-id="${esc(candidate.similarityId)}" data-candidate-name="${esc(candidate.name)}">É A MESMA PESSOA</button><button class="btn" type="button" data-winner-record-similarity="different" data-candidate-id="${esc(candidate.similarityId)}" data-candidate-name="${esc(candidate.name)}">SÃO PESSOAS DIFERENTES</button></div></div>`;
     return;
   }
   host.innerHTML=input.dataset.similarityConfirmed==='different'?'<div class="winnerSimilarityConfirmed">REVISÃO CONCLUÍDA: PESSOAS DIFERENTES.</div>':input.dataset.similarityConfirmed==='same'?`<div class="winnerSimilarityConfirmed">NOME VINCULADO AO CADASTRO: ${esc(winnerUpper(input.value))}.</div>`:'';
@@ -6633,15 +6798,19 @@ function resolveWinnerRecordSimilarity(action,candidateId,candidateName=''){
   const name=winnerUpper(input.value);
   const rejected=winnerSimilarityRejected(input,name);
   if(action==='same'){
-    input.value=winnerUpper(candidateName);
+    const selected=winnerUpper(candidateName);
+    auditEvent('DECISÃO DE SIMILARIDADE — MESMA PESSOA',name,{targetId:candidateId||'',before:name,after:selected,origin:'BANCO DE GANHADORES'});
+    input.value=selected;
     input.dataset.similarityInputKey=winnerPersonKey(input.value);
     input.dataset.similarityRejected='';
     input.dataset.similarityConfirmed='same';
   }else{
+    auditEvent('DECISÃO DE SIMILARIDADE — PESSOAS DIFERENTES',name,{targetId:candidateId||'',before:name,after:winnerUpper(candidateName)||candidateId||'',origin:'BANCO DE GANHADORES'});
     rejected.add(String(candidateId||''));
     input.dataset.similarityRejected=[...rejected].join(',');
     input.dataset.similarityConfirmed='different';
   }
+  saveState(true);
   renderWinnerRecordSimilarity();
   input.focus();
 }
@@ -6670,6 +6839,8 @@ async function saveWinnerRecord(event){
   try{
     await winnerBankRef.child(`records/${recordId}`).set(record);
     await winnerBankRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'PAINEL_PRINCIPAL',schemaVersion:1});
+    auditEvent(previous?'ALTERAÇÃO DE GANHADOR':'CADASTRO MANUAL DE GANHADOR',name,{targetId:recordId,before:previous||'',after:record});
+    saveState(true);
     closeDrawer('winnerRecordDrawer');
     closeDrawer('winnerDetailDrawer');
     toast('REGISTRO DO GANHADOR SALVO NO FIREBASE.');
@@ -6680,14 +6851,16 @@ async function saveWinnerRecord(event){
 }
 async function deleteWinnerRecord(recordId){
   const record=winnerBankRecords.find(row=>row.id===recordId);
-  if(!record||!confirm(`EXCLUIR ESTE REGISTRO DO HISTÓRICO?\n\n${record.name}\n${formatBR(record.date)} · ${record.prize}`)) return;
+  if(!record||!confirm(`REMOVER ESTE REGISTRO DO HISTÓRICO?\n\n${record.name}\n${formatBR(record.date)} · ${record.prize}\n\nELE PODERÁ SER RESTAURADO PELA LIXEIRA ADMINISTRATIVA.`)) return;
   try{
+    trashRecord('GANHADOR',record.name,record,{sourceId:record.id,monthKey:String(record.date||state.currentMonth).slice(0,7)});
     await winnerBankRef.child(`records/${recordId}`).remove();
+    saveState(true);
     closeDrawer('winnerDetailDrawer');
-    toast('REGISTRO EXCLUÍDO DO BANCO DE GANHADORES.');
+    toast('REGISTRO REMOVIDO COM POSSIBILIDADE DE RESTAURAÇÃO.');
   }catch(error){
     console.error('WINNER RECORD DELETE ERROR',error);
-    alert('NÃO FOI POSSÍVEL EXCLUIR O REGISTRO.');
+    alert('NÃO FOI POSSÍVEL REMOVER O REGISTRO.');
   }
 }
 function winnerValidISO(year,month,day){
@@ -6761,16 +6934,20 @@ function resolveWinnerImportSimilarity(issueId,action){
   if(!issue) return;
   const candidate=winnerImportActiveCandidate(issue);
   if(!candidate) return;
+  const originalName=winnerUpper(issue.record?.name||'');
+  const target=winnerImportCandidateValue(candidate);
   if(action==='same'){
-    const target=winnerImportCandidateValue(candidate);
     issue.record.name=target.name;
     issue.record.personKey=target.key;
     issue.decision='same';
     issue.matchedCandidate=candidate;
+    auditEvent('IMPORTAÇÃO — MESMA PESSOA',originalName,{targetId:candidate.similarityId||'',before:originalName,after:target.name,origin:'IMPORTAÇÃO EXCEL'});
   }else{
+    auditEvent('IMPORTAÇÃO — PESSOAS DIFERENTES',originalName,{targetId:candidate.similarityId||'',before:originalName,after:target.name,origin:'IMPORTAÇÃO EXCEL'});
     issue.rejectedIds.push(candidate.similarityId);
     if(!winnerImportActiveCandidate(issue)) issue.decision='different';
   }
+  saveState(true);
   normalizeWinnerImportSimilarityLinks();
   renderWinnerImportPreview();
 }
@@ -6954,7 +7131,7 @@ async function forceUploadLocalToFirebase(){
     updateSyncStatus('saving','ENVIANDO');
     await forceSetStateToApi('ENVIO_MANUAL_CONFIRMADO');
     firebaseBaseEmpty=false;
-    firebaseUsesWrappedState=true;
+    firebaseUsesWrappedState=false;
     firebaseServerLoaded=true;
     firebasePendingSave=false;
     updateSyncStatus('online','FIREBASE ONLINE');
@@ -7097,7 +7274,7 @@ function alignPanelMonthWithInput({persist=false}={}){
 function commitMonthInputSelection(){
   if(!alignPanelMonthWithInput({persist:true})) return;
   render();
-  toast('MÊS ABERTO COM SALVAMENTO AUTOMÁTICO.');
+  toast('MÊS ABERTO · SINCRONIZANDO COM FIREBASE...');
 }
 function normalizeStatus(value){
   const v = norm(value);
@@ -7153,6 +7330,12 @@ function normalizePanelState(data){
   if(!data || !data.months) return data;
   data.schedules ||= [];
   data.programSchedules ||= [];
+  data.auditLog ||= [];
+  data.trash ||= [];
+  data.pendingOps ||= [];
+  data.publishedPrograms ||= {};
+  data.programVersions ||= {};
+  data.systemMeta ||= {};
   data.schedules ||= [];
   data.schedules.forEach(s=>{ s.type=normalizeScheduleType(s.type); s.status=legacyStatusToScheduleMeta(s); s.pending=normalizeSchedulePending(s.pending||s.pendencia||s.status); s.destination=normalizeScheduleDestination(s.destination); s.station ||= 'JP1017'; s.notes=textNorm(s.notes||''); });
   Object.values(data.months).forEach(m=>{
@@ -7242,6 +7425,180 @@ function currentWeekLabelForMonth(key=state.currentMonth){
   return monthWeekRanges(key).some(w=>w.label===label) ? label : '';
 }
 function id(prefix){ return prefix + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,6).toUpperCase(); }
+function auditEvent(action,target='',details={}){
+  normalizePanelState(state);
+  const now=new Date();
+  const row={id:id('LOG'),action:norm(action||'ALTERAÇÃO'),target:norm(target||''),targetId:details?.targetId||'',before:details?.before===undefined?'':clone(details.before),after:details?.after===undefined?'':clone(details.after),origin:details?.origin||'PAINEL PRINCIPAL',note:textNorm(details?.note||''),createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')};
+  state.auditLog.push(row);
+  if(state.auditLog.length>2500) state.auditLog=state.auditLog.slice(-2500);
+  return row;
+}
+function trashRecord(type,label,payload,meta={}){
+  normalizePanelState(state);
+  const now=new Date();
+  const row={id:id('TR'),type:norm(type),label:norm(label),payload:clone(payload),monthKey:meta.monthKey||state.currentMonth,sourceId:meta.sourceId||payload?.id||'',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),origin:meta.origin||'PAINEL PRINCIPAL'};
+  state.trash.push(row);
+  auditEvent('EXCLUSÃO SEGURA',label,{targetId:row.sourceId,before:payload,note:`TIPO: ${type}`});
+  return row;
+}
+function pendingSeverityRank(level){ return level==='CRÍTICO'?0:level==='ATENÇÃO'?1:2; }
+function systemPendingRecords(){
+  const rows=[];
+  const push=(level,title,detail,action='')=>rows.push({id:`P${rows.length+1}`,level,title,detail,action});
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    (m.distributions||[]).forEach(d=>{
+      const left=leftTotal(d);
+      if(left<0) push('CRÍTICO',`${distributionLabel(d)} — SALDO NEGATIVO`,`${labelMonth(monthKey)} · ESTOURO DE ${Math.abs(left)} UNIDADE(S).`,'distribuicao');
+      if(distStartDate(d)&&distEndDate(d)&&distEndDate(d)<distStartDate(d)) push('CRÍTICO',`${distributionLabel(d)} — PERÍODO INVÁLIDO`,`${formatBR(distStartDate(d))} A ${formatBR(distEndDate(d))}.`,'distribuicao');
+      CHANNELS.forEach(([key,label])=>{ const amount=num(d[key]); const used=programmedForMonth?.(d.id,label,monthKey) ?? (monthKey===state.currentMonth?programmed(d.id,label):0); if(used>amount) push('CRÍTICO',`${distributionLabel(d)} — ${label}`,`PROGRAMADO/UTILIZADO ${used} · DEFINIDO ${amount}.`,'programacao'); });
+    });
+    (m.items||[]).forEach(i=>{
+      if(!i.distributionId && norm(i.prize)!=='A DEFINIR' && i.sourceType!=='promo-result') push('ATENÇÃO',`${i.prize||i.title||'ITEM'} — SEM VÍNCULO`,`PROGRAMAÇÃO ${formatBR(i.date)} ${i.slot||''}.`,'programacao');
+    });
+    (m.promos||[]).forEach(p=>{
+      const end=p.endDate||p.drawDate||'';
+      if(p.startDate&&end&&end<p.startDate) push('CRÍTICO',`${p.name||p.title||'PROMOÇÃO'} — DATAS INVÁLIDAS`,`${formatBR(p.startDate)} A ${formatBR(end)}.`,'digital');
+      if(p.drawDate&&p.startDate&&p.drawDate<p.startDate) push('CRÍTICO',`${p.name||p.title||'PROMOÇÃO'} — SORTEIO INVÁLIDO`,`${formatBR(p.drawDate)} ANTES DO INÍCIO.`,'digital');
+      const segment=promoSegmentStatus(p);
+      if(segment && segment.commitment>segment.available) push('ATENÇÃO',`${p.name||p.title||'PROMOÇÃO'} — SALDO PREVISTO INSUFICIENTE`,`${segment.label}: COMPROMETIDO ${segment.commitment} · DISPONÍVEL ${segment.available}.`,'digital');
+    });
+  });
+  if(firebasePendingSave) push('ATENÇÃO','SINCRONIZAÇÃO PENDENTE','EXISTEM ALTERAÇÕES LOCAIS AINDA NÃO CONFIRMADAS PELO FIREBASE.','backup');
+  const pub=state.publishedPrograms?.[state.currentMonth];
+  const draftSignature=JSON.stringify((monthData().items||[]).map(i=>[i.id,i.date,i.slot,i.qty,i.status,i.updatedAt]));
+  if(!pub) push('INFORMATIVO','PROGRAMAÇÃO AINDA NÃO PUBLICADA',`${labelMonth(state.currentMonth)} ESTÁ SOMENTE EM RASCUNHO.`,'programacao');
+  else if(pub.signature!==draftSignature) push('ATENÇÃO','RASCUNHO DIFERENTE DA PROGRAMAÇÃO PUBLICADA','EXISTEM ALTERAÇÕES AINDA NÃO PUBLICADAS PARA O ESTÚDIO.','programacao');
+  return rows.sort((a,b)=>pendingSeverityRank(a.level)-pendingSeverityRank(b.level));
+}
+function programmedForMonth(distId,channel,monthKey){
+  const ch=normalizeChannel(channel);
+  return (state.months?.[monthKey]?.items||[]).filter(i=>i.distributionId===distId&&normalizeChannel(i.channel)===ch&&normalizeStatus(i.status)!=='CANCELADO').reduce((sum,i)=>sum+num(i.qty),0);
+}
+function validateProgramDraft(monthKey=state.currentMonth){
+  const m=state.months?.[monthKey];
+  if(!m) return {ok:false,issues:['MÊS NÃO ENCONTRADO.']};
+  const issues=[];
+  const slotSeen=new Map();
+  (m.items||[]).filter(i=>normalizeStatus(i.status)!=='CANCELADO').forEach(i=>{
+    if(!i.date||!i.slot) issues.push(`${i.prize||i.title||'ITEM'} SEM DATA/HORÁRIO.`);
+    if(normalizeChannel(i.channel)==='RÁDIO'&&!i.program) issues.push(`${i.prize||i.title||'ITEM'} SEM PROGRAMA VINCULADO.`);
+    if(i.distributionId){
+      const d=(m.distributions||[]).find(x=>x.id===i.distributionId);
+      if(!d) issues.push(`${i.prize||i.title||'ITEM'} VINCULADO A DISTRIBUIÇÃO INEXISTENTE.`);
+    }
+    const key=`${i.station||'JP1017'}|${i.date}|${normalizeSlot(i.slot)}`;
+    if(slotSeen.has(key)) issues.push(`CONFLITO EM ${formatBR(i.date)} ${normalizeSlot(i.slot)} — ${i.prize||i.title} / ${slotSeen.get(key)}.`); else slotSeen.set(key,i.prize||i.title||'ITEM');
+  });
+  (m.distributions||[]).forEach(d=>{
+    if(leftTotal(d)<0) issues.push(`${distributionLabel(d)} COM SALDO NEGATIVO (${leftTotal(d)}).`);
+    CHANNELS.forEach(([key,label])=>{ const used=programmedForMonth(d.id,label,monthKey); if(used>num(d[key])) issues.push(`${distributionLabel(d)} — ${label}: ${used} UTILIZADO(S) PARA ${num(d[key])} DISPONÍVEL(IS).`); });
+  });
+  return {ok:issues.length===0,issues:[...new Set(issues)]};
+}
+function publishProgramMonth(){
+  const validation=validateProgramDraft();
+  if(!validation.ok){ alert(`PROGRAMAÇÃO NÃO PUBLICADA.\n\n${validation.issues.slice(0,12).join('\n')}`); setView('sistema'); return; }
+  normalizePanelState(state);
+  const key=state.currentMonth;
+  const previous=state.publishedPrograms[key];
+  if(previous){ state.programVersions[key] ||= []; state.programVersions[key].push(clone(previous)); state.programVersions[key]=state.programVersions[key].slice(-5); }
+  const now=new Date();
+  const items=clone(monthData().items||[]);
+  state.publishedPrograms[key]={monthKey:key,items,publishedAt:now.toISOString(),publishedAtLabel:now.toLocaleString('pt-BR'),signature:JSON.stringify(items.map(i=>[i.id,i.date,i.slot,i.qty,i.status,i.updatedAt]))};
+  auditEvent('PUBLICAÇÃO DA PROGRAMAÇÃO',labelMonth(key),{after:{items:items.length},note:'VERSÃO VALIDADA E PUBLICADA PARA O ESTÚDIO.'});
+  saveState(true); render(); toast('PROGRAMAÇÃO VALIDADA · SINCRONIZANDO COM FIREBASE...');
+}
+function restorePreviousProgram(){
+  const key=state.currentMonth; const versions=state.programVersions?.[key]||[];
+  if(!versions.length){ alert('NÃO EXISTE VERSÃO ANTERIOR PARA RESTAURAR.'); return; }
+  if(!confirm('RESTAURAR A VERSÃO PUBLICADA ANTERIOR?')) return;
+  const current=state.publishedPrograms[key]; const previous=versions.pop();
+  if(current) versions.push(clone(current));
+  state.publishedPrograms[key]=clone(previous);
+  auditEvent('RESTAURAÇÃO DA PROGRAMAÇÃO',labelMonth(key),{after:{publishedAt:previous.publishedAt}});
+  saveState(true); render(); toast('VERSÃO ANTERIOR PREPARADA · SINCRONIZANDO COM FIREBASE...');
+}
+function restoreTrashRecord(trashId){
+  const row=(state.trash||[]).find(x=>x.id===trashId); if(!row) return;
+  if(!confirm(`RESTAURAR ${row.label||row.type}?`)) return;
+  const payload=clone(row.payload);
+  if(row.type==='ITEM'){
+    const m=monthDataForKey(row.monthKey); if(!(m.items||[]).some(x=>x.id===payload.id)) m.items.push(payload);
+  }else if(row.type==='DISTRIBUIÇÃO'){
+    const copies=Array.isArray(payload?.copies)?payload.copies:[{monthKey:row.monthKey,data:payload}];
+    copies.forEach(copy=>{ const m=monthDataForKey(copy.monthKey); if(!(m.distributions||[]).some(x=>x.id===copy.data.id)) m.distributions.push(clone(copy.data)); });
+  }else if(row.type==='PROMOÇÃO'){
+    const copies=Array.isArray(payload?.copies)?payload.copies:[{monthKey:row.monthKey,data:payload}];
+    copies.forEach(copy=>{ const m=monthDataForKey(copy.monthKey); if(!(m.promos||[]).some(x=>x.id===copy.data.id)) m.promos.push(clone(copy.data)); });
+    const p=consolidatedPromoById(row.sourceId); if(p) syncPromoResultToProgram(p);
+  }else if(row.type==='GANHADOR'){
+    if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL PARA RESTAURAÇÃO.'); return; }
+    winnerBankRef.child(`records/${payload.id}`).set(payload).catch(()=>alert('NÃO FOI POSSÍVEL RESTAURAR O GANHADOR NO FIREBASE.'));
+  }
+  state.trash=state.trash.filter(x=>x.id!==trashId);
+  auditEvent('RESTAURAÇÃO',row.label,{targetId:row.sourceId,after:payload});
+  saveState(true); render(); toast('RESTAURAÇÃO PREPARADA · SINCRONIZANDO COM FIREBASE...');
+}
+function globalSearchRows(query){
+  const q=norm(query); if(!q) return [];
+  const rows=[]; const add=(type,title,detail,view)=>{ const hay=norm(`${title} ${detail}`); if(hay.includes(q)) rows.push({type,title,detail,view}); };
+  Object.entries(state.months||{}).forEach(([key,m])=>{
+    (m.distributions||[]).forEach(d=>add('PRÊMIO',distributionLabel(d),`${labelMonth(key)} · TOTAL ${d.total} · SALDO ${leftTotal(d)}`,'distribuicao'));
+    (m.promos||[]).forEach(p=>add('PROMOÇÃO',p.name||p.title||'PROMOÇÃO',`${labelMonth(key)} · ${p.local||''} · ${p.description||''}`,'digital'));
+    (m.items||[]).forEach(i=>add('PROGRAMAÇÃO',i.prize||i.title||'ITEM',`${formatBR(i.date)} ${i.slot||''} · ${i.program||''} · ${i.winnerName||''}`,'programacao'));
+  });
+  (state.schedules||[]).forEach(r=>add('AGENDAMENTO',r.name||r.title||r.type||'AGENDAMENTO',`${r.notes||''} ${r.destination||''}`,'agendamento'));
+  (winnerBankRecords||[]).forEach(r=>add('GANHADOR',r.name,`${formatBR(r.date)} · ${r.program} · ${r.prize}`,'ganhadores'));
+  return rows.slice(0,80);
+}
+function renderGlobalSearch(){
+  const host=$('globalSearchResults'),count=$('globalSearchCount'),input=$('globalSearchInput'); if(!host||!count||!input) return;
+  const q=input.value.trim(); const rows=globalSearchRows(q);
+  count.textContent=q?`${rows.length} RESULTADO(S)`:'DIGITE NO CAMPO DO TOPO';
+  host.innerHTML=!q?'<div class="systemRow info"><div><strong>BUSCA GLOBAL</strong><span>PESQUISE PRÊMIOS, GANHADORES, PROMOÇÕES, PROGRAMAÇÃO E AGENDAMENTOS.</span></div></div>':rows.length?rows.map((r,index)=>`<div class="systemRow"><div><strong>${esc(r.type)} · ${esc(r.title)}</strong><span>${esc(r.detail)}</span></div><button class="btn small" type="button" data-global-result="${index}" data-view-target="${esc(r.view)}">ABRIR</button></div>`).join(''):'<div class="systemRow attention"><div><strong>NENHUM RESULTADO</strong><span>REVISE O TERMO PESQUISADO.</span></div></div>';
+}
+function monthNextKey(key=state.currentMonth){const [y,m]=String(key).split('-').map(Number);const d=new Date(y,(m||1),1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
+function closeCurrentMonthControlled(){
+  const key=state.currentMonth;normalizePanelState(state);const critical=systemPendingRecords().filter(p=>p.level==='CRÍTICO');
+  if(critical.length){alert(`FECHAMENTO BLOQUEADO. EXISTEM ${critical.length} INCONSISTÊNCIA(S) CRÍTICA(S).\n\n${critical.slice(0,8).map(x=>x.title).join('\n')}\n\nCORRIJA ANTES DE FECHAR O MÊS.`);setView('sistema');return;}
+  const activePromos=uniqueConsolidatedPromos().filter(p=>(p.endDate||p.drawDate||'')>`${key}-31`&&(p.startDate||'')<=`${key}-31`).length;
+  if(!confirm(`FECHAR ${labelMonth(key)}?\n\nPROMOÇÕES/CAMPANHAS QUE CONTINUAM ATIVAS: ${activePromos}\nELAS PERMANECERÃO NOS MESES SEGUINTES.\n\nOS DADOS DESTE MÊS SERÃO PRESERVADOS NO HISTÓRICO.`))return;
+  state.systemMeta.closedMonths||={};state.systemMeta.closedMonths[key]={closedAt:new Date().toISOString(),closedAtLabel:new Date().toLocaleString('pt-BR')};
+  const next=monthNextKey(key);monthDataForKey(next);state.currentMonth=next;manualMonthOverride=true;calendarMonthOpened=next;if($('monthInput')) $('monthInput').value=next;auditEvent('FECHAMENTO MENSAL',labelMonth(key),{note:`PRÓXIMA COMPETÊNCIA: ${labelMonth(next)}`});saveState(true);render();toast(`${labelMonth(key)} FECHADO · ${labelMonth(next)} ABERTO · SINCRONIZANDO...`);
+}
+function reopenMonth(key=state.currentMonth){normalizePanelState(state);if(!state.systemMeta.closedMonths?.[key]){alert('ESTE MÊS NÃO ESTÁ MARCADO COMO FECHADO.');return;}if(!confirm(`REABRIR ${labelMonth(key)} PARA CORREÇÕES?`))return;delete state.systemMeta.closedMonths[key];auditEvent('REABERTURA MENSAL',labelMonth(key));saveState(true);render();toast('MÊS REABERTO.');}
+function reportDateDefaults(){const [y,m]=state.currentMonth.split('-').map(Number),last=new Date(y,m,0).getDate();return {from:`${state.currentMonth}-01`,to:`${state.currentMonth}-${String(last).padStart(2,'0')}`};}
+function reportPromoWinnerRows(){const rows=[];uniqueConsolidatedPromos().forEach(p=>promoAllWinnerObjects(p).forEach(w=>{const date=w.registeredAt?String(w.registeredAt).slice(0,10):(String(w.occurrenceKey||'').match(/^(\d{4}-\d{2}-\d{2})/)?.[1]||p.resultDate||p.drawDate||'');rows.push({date,name:w.name,prize:p.name||p.title||'PROMOÇÃO',program:p.local||'PROMOÇÃO',deliveredAt:w.deliveredAt||'',pickupDays:p.pickupBusinessDays||5});}));return rows;}
+function renderAdminReports(){
+  const host=$('adminReportContent');if(!host)return;const def=reportDateDefaults();if(!$('adminReportFrom').value)$('adminReportFrom').value=def.from;if(!$('adminReportTo').value)$('adminReportTo').value=def.to;const from=$('adminReportFrom').value,to=$('adminReportTo').value,type=$('adminReportType').value||'all';
+  const inRange=d=>d&&d>=from&&d<=to;const months=Object.entries(state.months||{}).filter(([key])=>key>=from.slice(0,7)&&key<=to.slice(0,7));
+  const dists=months.flatMap(([key,m])=>(m.distributions||[]).map(d=>({key,d}))).filter(({d})=>!d.startDate||d.startDate<=to);const items=months.flatMap(([key,m])=>(m.items||[]).map(i=>({key,i}))).filter(({i})=>inRange(i.date));const promos=uniqueConsolidatedPromos().filter(p=>(p.startDate||'')<=to&&(p.endDate||p.drawDate||p.startDate||'')>=from);const winners=reportPromoWinnerRows().filter(w=>inRange(w.date));
+  const received=dists.reduce((sum,{d})=>sum+num(d.total),0),distributed=dists.reduce((sum,{d})=>sum+allocated(d),0),balance=received-distributed,itemWinners=items.reduce((sum,{i})=>sum+(i.winnerName?String(i.winnerName).split(',').filter(Boolean).length:0),0),withdrawn=winners.filter(w=>w.deliveredAt).length;
+  const cards=`<div class="systemKpis"><div class="systemKpi"><span>RECEBIDO</span><strong>${received}</strong></div><div class="systemKpi"><span>DISTRIBUÍDO</span><strong>${distributed}</strong></div><div class="systemKpi"><span>SALDO</span><strong>${balance}</strong></div><div class="systemKpi"><span>GANHADORES</span><strong>${winners.length+itemWinners}</strong></div></div>`;
+  let rows=[];
+  if(type==='all'||type==='prizes') dists.forEach(({key,d})=>rows.push(['PRÊMIO',key,distributionLabel(d),`ENTRADA ${num(d.total)} · DISTRIBUÍDO ${allocated(d)} · SALDO ${leftTotal(d)}`]));
+  if(type==='all'||type==='program') items.forEach(({i})=>rows.push(['PROGRAMAÇÃO',i.date,`${i.slot||''} · ${i.program||''}`,`${i.prize||i.title||''} · ${i.status||''}`]));
+  if(type==='all'||type==='promos') promos.forEach(p=>rows.push(['PROMOÇÃO',p.startDate||'',p.name||p.title||'',`${p.endDate||p.drawDate||''} · ${promoForecastQty(p)} PREVISTO(S) · ${promoUsedQty(p)} REALIZADO(S)`]));
+  if(type==='all'||type==='winners'||type==='withdrawals') winners.forEach(w=>{if(type==='withdrawals'&&!w.deliveredAt)return;rows.push([w.deliveredAt?'RETIRADA':'GANHADOR',w.date,w.name,`${w.prize} · ${w.deliveredAt?'RETIRADO':'PENDENTE'}`]);});
+  host.innerHTML=cards+`<div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>DATA/MÊS</th><th>REGISTRO</th><th>DETALHE</th></tr></thead><tbody>${rows.length?rows.sort((a,b)=>String(a[1]).localeCompare(String(b[1]))).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1]?.length===7?labelMonth(r[1]):formatBR(r[1]))}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td></tr>`).join(''):'<tr><td colspan="4">SEM REGISTROS NO PERÍODO.</td></tr>'}</tbody></table></div>`;
+}
+function renderSystemView(){
+  if(!$('systemPendingList')) return;
+  const pending=systemPendingRecords(); const critical=pending.filter(x=>x.level==='CRÍTICO').length; const attention=pending.filter(x=>x.level==='ATENÇÃO').length;
+  const pub=state.publishedPrograms?.[state.currentMonth]; const versions=state.programVersions?.[state.currentMonth]||[];
+  $('systemKpis').innerHTML=`<div class="systemKpi"><span>PENDÊNCIAS</span><strong>${pending.length}</strong></div><div class="systemKpi"><span>CRÍTICAS</span><strong>${critical}</strong></div><div class="systemKpi"><span>ATENÇÃO</span><strong>${attention}</strong></div><div class="systemKpi"><span>ITENS RECUPERÁVEIS</span><strong>${(state.trash||[]).length}</strong></div>`;
+  $('systemLastCheck').textContent=`ÚLTIMA VERIFICAÇÃO: ${new Date().toLocaleString('pt-BR')}`;
+  if($('monthCloseBtn')) $('monthCloseBtn').textContent=state.systemMeta?.closedMonths?.[state.currentMonth]?'REABRIR MÊS':'FECHAR MÊS';
+  $('systemPendingList').innerHTML=pending.length?pending.map(p=>`<div class="systemRow ${p.level==='CRÍTICO'?'critical':p.level==='ATENÇÃO'?'attention':'info'}"><div><strong>${esc(p.level)} · ${esc(p.title)}</strong><span>${esc(p.detail)}</span></div>${p.action?`<button class="btn small" type="button" data-pending-view="${esc(p.action)}">ABRIR</button>`:''}</div>`).join(''):'<div class="systemRow info"><div><strong>SEM PENDÊNCIAS</strong><span>NENHUMA INCONSISTÊNCIA DETECTADA NESTA VERIFICAÇÃO.</span></div></div>';
+  const validation=validateProgramDraft();
+  $('systemProgramPublish').innerHTML=`<div class="systemRow ${validation.ok?'info':'attention'}"><div><strong>RASCUNHO: ${validation.ok?'VALIDADO':'COM AJUSTES'}</strong><span>${validation.ok?'NENHUM CONFLITO ENCONTRADO.':`${validation.issues.length} AJUSTE(S) NECESSÁRIO(S).`}</span><div class="programPublishActions"><button class="btn red" type="button" id="publishProgramBtn" ${validation.ok?'':'disabled'}>PUBLICAR PROGRAMAÇÃO</button><button class="btn" type="button" id="restoreProgramBtn" ${versions.length?'':'disabled'}>RESTAURAR ANTERIOR</button></div></div><span class="systemTag">${pub?`PUBLICADA ${pub.publishedAtLabel||''}`:'NÃO PUBLICADA'}</span></div>${!validation.ok?validation.issues.slice(0,8).map(x=>`<div class="systemRow attention"><div><strong>AJUSTE</strong><span>${esc(x)}</span></div></div>`).join(''):''}`;
+  $('systemTrashList').innerHTML=(state.trash||[]).slice().reverse().slice(0,80).map(row=>`<div class="systemRow"><div><strong>${esc(row.type)} · ${esc(row.label)}</strong><span>${esc(row.createdAtLabel||row.createdAt||'')}</span></div><button class="btn small" type="button" data-restore-trash="${esc(row.id)}">RESTAURAR</button></div>`).join('')||'<div class="systemRow info"><div><strong>LIXEIRA VAZIA</strong><span>NENHUM REGISTRO AGUARDANDO RESTAURAÇÃO.</span></div></div>';
+  $('systemAuditList').innerHTML=(state.auditLog||[]).slice().reverse().slice(0,100).map(row=>`<div class="systemRow"><div><strong>${esc(row.action)} · ${esc(row.target||'REGISTRO')}</strong><span>${esc(row.createdAtLabel||row.createdAt||'')} · ${esc(row.origin||'PAINEL PRINCIPAL')}${row.note?` · ${esc(row.note)}`:''}</span></div></div>`).join('')||'<div class="systemRow info"><div><strong>SEM REGISTROS</strong><span>AS PRÓXIMAS ALTERAÇÕES ADMINISTRATIVAS SERÃO REGISTRADAS AQUI.</span></div></div>';
+  renderGlobalSearch();
+  $('publishProgramBtn')?.addEventListener('click',publishProgramMonth);
+  $('restoreProgramBtn')?.addEventListener('click',restorePreviousProgram);
+}
+
 function distributionById(distId){ return monthData().distributions.find(d => d.id === distId); }
 function distributionLabel(d){
   if(!d) return '';
@@ -7466,11 +7823,14 @@ function renderBackup(){
   const total=backupTotal(c);
   const lastLoad=localStorage.getItem('jp_painel_last_firebase_load') || 'NÃO CARREGADO';
   const lastSave=localStorage.getItem('jp_painel_last_firebase_save') || 'NÃO ENVIADO';
+  const lastBackup=localStorage.getItem('jp_painel_last_backup_export') || 'NÃO GERADO';
   box.innerHTML = `
     <div class="backupCard"><span>STATUS DO FIREBASE</span><strong style="font-size:16px;line-height:1.25">${esc(firebaseDiagnosticLabel())}</strong></div>
     <div class="backupCard"><span>ÚLTIMO CARREGAMENTO</span><strong style="font-size:15px;line-height:1.25">${esc(lastLoad)}</strong></div>
     <div class="backupCard"><span>ÚLTIMO ENVIO</span><strong style="font-size:15px;line-height:1.25">${esc(lastSave)}</strong></div>
-    <div class="backupCard"><span>TOTAL DE REGISTROS</span><strong>${total}</strong></div>
+    <div class="backupCard"><span>ÚLTIMO BACKUP</span><strong style="font-size:15px;line-height:1.25">${esc(lastBackup)}</strong></div>
+    <div class="backupCard"><span>TOTAL OPERACIONAL</span><strong>${total}</strong></div>
+    <div class="backupCard"><span>BANCO DE GANHADORES</span><strong>${winnerBankBackupCount()}</strong></div>
     <div class="backupCard"><span>MÊS ABERTO</span><strong>${esc(state.currentMonth || '-')}</strong></div>
     <div class="backupCard"><span>RISCO DA BASE</span><strong style="font-size:15px;line-height:1.25">${esc(risk.cls==='danger'?'BLOQUEADO':risk.cls==='warn'?'ATENÇÃO':'OK')}</strong></div>
   `;
@@ -7493,25 +7853,50 @@ function renderBackup(){
     uploadBtn.title = total===0 ? 'ENVIO BLOQUEADO: BASE LOCAL VAZIA' : 'FORÇAR ENVIO PARA O FIREBASE';
   }
 }
-function buildBackupPayload(){
+function winnerBankBackupCount(value=winnerBankSnapshot){
+  return winnerRecordList(value||{}).length;
+}
+function buildBackupPayload(bankData=winnerBankSnapshot){
   normalizePanelState(state);
+  const bank=clone(bankData||{});
   return {
-    schema:'JP_PAINEL_BRINDES_FIREBASE_BACKUP_V1',
+    schema:'JP_WORKSPACE_FIREBASE_BACKUP_V2',
     exportedAt:new Date().toISOString(),
     exportedAtLabel:new Date().toLocaleString('pt-BR'),
     source:'PAINEL_PRINCIPAL',
     firebasePath:FIREBASE_ROOT_PATH,
-    counts:backupCounts(state),
-    state:clone(state)
+    winnerBankPath:WINNER_BANK_PATH,
+    counts:{...backupCounts(state),winnerBank:winnerBankBackupCount(bank),auditLog:(state.auditLog||[]).length},
+    state:clone(state),
+    winnerBank:bank
   };
 }
-function exportManualBackup(){
-  const payload=buildBackupPayload();
+function backupFileStamp(date=new Date()){
+  const pad2=value=>String(value).padStart(2,'0');
+  return `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}_${pad2(date.getHours())}-${pad2(date.getMinutes())}`;
+}
+async function exportManualBackup(){
+  initWinnerBank();
+  let bank=clone(winnerBankSnapshot||{});
+  if(winnerBankRef){
+    try{
+      const snapshot=await winnerBankRef.get();
+      bank=clone(snapshot.val()||{});
+      applyWinnerBankSnapshot(bank);
+    }catch(error){
+      console.warn('WINNER BANK BACKUP LOAD ERROR',error);
+      if(!winnerBankReady){
+        alert('O BANCO DE GANHADORES NÃO FOI CARREGADO. O BACKUP COMPLETO FOI BLOQUEADO PARA EVITAR UM ARQUIVO INCOMPLETO.');
+        return;
+      }
+    }
+  }
+  const payload=buildBackupPayload(bank);
   const content=JSON.stringify(payload,null,2);
-  downloadFile('JP_PAINEL_BRINDES_BACKUP_OFICIAL.json', content, 'application/json;charset=utf-8');
+  downloadFile(`JP_WORKSPACE_BACKUP_${backupFileStamp()}.json`, content, 'application/json;charset=utf-8');
   localStorage.setItem('jp_painel_last_backup_export', payload.exportedAtLabel);
   renderBackup();
-  toast('BACKUP EXPORTADO. SALVE POR CIMA DO ARQUIVO OFICIAL NO COMPUTADOR.');
+  toast(`BACKUP COMPLETO GERADO · ${payload.counts.winnerBank} REGISTRO(S) NO BANCO DE GANHADORES.`);
 }
 function resolveBackupState(payload){
   if(payload && payload.schema && payload.state && payload.state.months) return payload.state;
@@ -7519,38 +7904,74 @@ function resolveBackupState(payload){
   if(payload && payload.months) return payload;
   return null;
 }
+function resolveBackupWinnerBank(payload){
+  if(payload && payload.winnerBank && typeof payload.winnerBank==='object') return payload.winnerBank;
+  return null;
+}
+async function restoreCompleteBackupToFirebase(incoming,winnerBankData=null){
+  normalizePanelState(incoming);
+  const restoredState=clone(incoming);
+  restoredState.updatedAt=Date.now();
+  restoredState.savedAt=new Date().toISOString();
+  restoredState.source='BACKUP_RESTORE';
+  restoredState.version='FIREBASE_RTDB_V3_BACKUP_RESTORE';
+  if(firebaseRef){
+    const rootRef=firebaseRef.parent;
+    if(winnerBankData!==null && rootRef?.transaction){
+      const result=await rootRef.transaction(current=>{
+        const root=current&&typeof current==='object'?clone(current):{};
+        root.state=clone(restoredState);
+        root.winnerBank=clone(winnerBankData||{});
+        return root;
+      },undefined,false);
+      if(!result?.committed) throw new Error('RESTAURAÇÃO ATÔMICA NÃO CONFIRMADA PELO FIREBASE.');
+    }else{
+      await firebaseRef.set(restoredState);
+    }
+  }
+  state=clone(restoredState);
+  normalizePanelState(state);
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  firebaseBaselineState=clone(state);
+  firebaseUsesWrappedState=false;
+  firebaseBaseEmpty=false;
+  if(winnerBankData!==null){
+    applyWinnerBankSnapshot(winnerBankData||{});
+  }
+  return true;
+}
 function importManualBackupFile(file){
   if(!file) return;
   $('backupSelectedFile').textContent = file.name;
   const reader=new FileReader();
-  reader.onload=()=>{
+  reader.onload=async()=>{
     try{
       const payload=JSON.parse(reader.result);
       const incoming=resolveBackupState(payload);
+      const incomingWinnerBank=resolveBackupWinnerBank(payload);
       if(!incoming || !incoming.months) throw new Error('ARQUIVO INVÁLIDO.');
       normalizePanelState(incoming);
       const c=backupCounts(incoming);
       const total=backupTotal(c);
+      const winnerCount=incomingWinnerBank===null?null:winnerBankBackupCount(incomingWinnerBank);
       const label=payload.exportedAtLabel || payload.exportedAt || 'DATA NÃO INFORMADA';
       const preview=$('backupPreviewBox');
       if(preview){
         preview.classList.add('show');
-        preview.innerHTML=`<strong>PREVIEW DO BACKUP SELECIONADO:</strong><br>ARQUIVO: ${esc(file.name)}<br>GERADO EM: ${esc(label)}<br>MESES: ${c.months} · ITENS: ${c.items} · DISTRIBUIÇÕES: ${c.distributions} · PROMOÇÕES/PAUTAS: ${c.promos} · AGENDAMENTOS: ${c.schedules}`;
+        preview.innerHTML=`<strong>PREVIEW DO BACKUP SELECIONADO:</strong><br>ARQUIVO: ${esc(file.name)}<br>GERADO EM: ${esc(label)}<br>MESES: ${c.months} · ITENS: ${c.items} · DISTRIBUIÇÕES: ${c.distributions} · PROMOÇÕES/PAUTAS: ${c.promos} · AGENDAMENTOS: ${c.schedules}${winnerCount===null?' · BANCO DE GANHADORES: BACKUP LEGADO':` · BANCO DE GANHADORES: ${winnerCount}`}`;
       }
-      if(total===0){
+      if(total===0 && (winnerCount===null || winnerCount===0)){
         alert('BACKUP VAZIO. RESTAURAÇÃO BLOQUEADA PARA NÃO APAGAR O FIREBASE.');
         return;
       }
-      const ok=confirm(`RESTAURAR BACKUP?\n\nARQUIVO: ${file.name}\nGERADO EM: ${label}\nTOTAL: ${total}\nMESES: ${c.months}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\nAGENDAMENTOS: ${c.schedules}\n\nISSO VAI SUBSTITUIR A BASE ATUAL DO FIREBASE.`);
+      const bankLine=winnerCount===null?'BANCO DE GANHADORES: NÃO INCLUÍDO NESTE BACKUP LEGADO (SERÁ PRESERVADO)':'BANCO DE GANHADORES: '+winnerCount;
+      const ok=confirm(`RESTAURAR BACKUP?\n\nARQUIVO: ${file.name}\nGERADO EM: ${label}\nTOTAL OPERACIONAL: ${total}\nMESES: ${c.months}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\nAGENDAMENTOS: ${c.schedules}\n${bankLine}\n\nISSO VAI SUBSTITUIR A BASE OPERACIONAL${winnerCount===null?' E PRESERVAR O BANCO DE GANHADORES ATUAL.':' E O BANCO DE GANHADORES PELOS DADOS DESTE BACKUP.'}`);
       if(!ok) return;
       const typed=prompt('PARA CONFIRMAR A RESTAURAÇÃO, DIGITE: RESTAURAR');
       if(norm(typed)!=='RESTAURAR') return;
-      state=incoming;
-      setOfficialCalendarMonth(true);
-      saveState(true);
-      queueApiSave(80);
+      await restoreCompleteBackupToFirebase(incoming,incomingWinnerBank);
       render();
-      toast('BACKUP RESTAURADO E ENVIADO AO FIREBASE.');
+      toast(incomingWinnerBank===null?'BACKUP LEGADO RESTAURADO. BANCO DE GANHADORES ATUAL PRESERVADO.':'BACKUP COMPLETO RESTAURADO DE FORMA ATÔMICA.');
     }catch(err){
       console.warn('BACKUP IMPORT ERROR',err);
       alert('NÃO FOI POSSÍVEL IMPORTAR O BACKUP. CONFIRA SE O ARQUIVO É O JSON OFICIAL DO PAINEL.');
@@ -7740,7 +8161,7 @@ function saveSchedule(e){
   const idx=scheduleItems().findIndex(x=>x.id===idVal);
   if(idx>=0) state.schedules[idx]=s; else scheduleItems().push(s);
   clearScheduleForm();
-  saveState(true); render(); toast('AGENDAMENTO SALVO.');
+  saveState(true); render(); toast('AGENDAMENTO ALTERADO · SINCRONIZANDO COM FIREBASE...');
 }
 function markScheduleConverted(s,target){
   s.status='CONVERTIDO';
@@ -8120,7 +8541,7 @@ function saveProgramSchedule(e){
   const savedRec={...rec};
   clearProgramScheduleForm();
   closeDrawer('programScheduleDrawer');
-  saveState(true); render(); toast('HORÁRIO SALVO.');
+  saveState(true); render(); toast('HORÁRIO ALTERADO · SINCRONIZANDO COM FIREBASE...');
   if(programScheduleOpenedFromItem){
     programScheduleOpenedFromItem=false;
     if($('itemProgramStation')) $('itemProgramStation').value=savedRec.station||'JP1017';
@@ -8305,13 +8726,17 @@ function clearProgramScope(scope){
     const total=m.items.filter(i=>dates.has(i.date)).length;
     if(!total){ toast('NÃO HÁ ITENS NESSA SEMANA.'); return; }
     if(!confirm(`EXCLUIR TODA A PROGRAMAÇÃO DA SEMANA ${week}?\n\n${total} ITEM(NS) SERÃO REMOVIDOS.`)) return;
+    const removed=m.items.filter(i=>dates.has(i.date));
+    removed.forEach(item=>trashRecord('ITEM',item.prize||item.title||'ITEM DA PROGRAMAÇÃO',item,{monthKey:state.currentMonth,sourceId:item.id}));
     m.items=m.items.filter(i=>!dates.has(i.date));
   }else if(scope==='month'){
     const total=m.items.length;
     if(!total){ toast('NÃO HÁ ITENS NESTE MÊS.'); return; }
     if(!confirm(`EXCLUIR TODA A PROGRAMAÇÃO DO MÊS ${labelMonth(state.currentMonth)}?\n\n${total} ITEM(NS) SERÃO REMOVIDOS.`)) return;
+    m.items.forEach(item=>trashRecord('ITEM',item.prize||item.title||'ITEM DA PROGRAMAÇÃO',item,{monthKey:state.currentMonth,sourceId:item.id}));
     m.items=[];
   }
+  auditEvent('LIMPEZA DA PROGRAMAÇÃO',labelMonth(state.currentMonth),{note:scope==='week'?'SEMANA REMOVIDA':'MÊS REMOVIDO'});
   saveState(true);
   closeDrawer('clearProgramDrawer');
   render();
@@ -8319,28 +8744,20 @@ function clearProgramScope(scope){
 }
 
 function render(){
-  if(typeof autoConvertDueSchedulesForCurrentMonth==='function'){
-    const convertedCount=autoConvertDueSchedulesForCurrentMonth();
-    if(convertedCount>0) saveState(true);
-  }
-  if($('programDaysBox') && !document.querySelector('#programDaysBox input:checked')) setProgramDaysControls([1,2,3,4,5]);
-  $('monthInput').value = state.currentMonth;
-  renderFilters();
-  renderStats();
-  renderProgramacao();
-  renderDistribuicao();
-  renderPromos();
-  renderSchedule();
-  renderProgramSchedules();
-  renderStudioPauta();
-  renderBackup();
-  renderWinnerBank();
-  renderReturnAlerts();
-  renderMiniAlerts();
-  populateDatalists();
-  populateProgramSelects();
-  populateDistributionSelect();
-  setEmptyDateFieldsToToday();
+  if(typeof autoConvertDueSchedulesForCurrentMonth==='function'){const convertedCount=autoConvertDueSchedulesForCurrentMonth();if(convertedCount>0)saveState(true);}
+  if($('programDaysBox')&&!document.querySelector('#programDaysBox input:checked'))setProgramDaysControls([1,2,3,4,5]);
+  $('monthInput').value=state.currentMonth;renderFilters();renderStats();
+  if(activeView==='programacao')renderProgramacao();
+  else if(activeView==='distribuicao')renderDistribuicao();
+  else if(activeView==='digital')renderPromos();
+  else if(activeView==='pauta')renderStudioPauta();
+  else if(activeView==='horarios')renderProgramSchedules();
+  else if(activeView==='agendamento')renderSchedule();
+  else if(activeView==='ganhadores')renderWinnerBank();
+  else if(activeView==='backup')renderBackup();
+  else if(activeView==='sistema')renderSystemView();
+  else if(activeView==='relatorios')renderAdminReports();
+  renderReturnAlerts();renderMiniAlerts();populateDatalists();populateProgramSelects();populateDistributionSelect();populatePromoDistributionSelect();updatePromoSegmentBalance();setEmptyDateFieldsToToday();
 }
 function renderFilters(){
   const weekSet = monthWeekRanges(state.currentMonth).map(w=>w.label);
@@ -8563,61 +8980,32 @@ function returnItemPrize(item,month){
   return norm(item?.prize||item?.title||distribution.prize||distribution.title||'PRÊMIO');
 }
 function returnRecords(includeHandled=false){
-  const now=new Date();
-  const records=[];
-  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
-    if(!m) return;
-    (m.promos||[]).filter(Boolean).forEach(p=>{
-      normalizeWinnerListForReturn(p).forEach(w=>{
-        if(w.deliveredAt) return;
-        const registered=winnerRegisteredDate(p,w);
-        const deadline=registered ? addBusinessDaysFrom(registered,5) : null;
-        if(!deadline || deadline > now) return;
-        const handled=!!w.reuseStatus;
-        if(handled && !includeHandled) return;
-        const dist=(m.distributions||[]).find(d=>d.id===p.distributionId) || {};
-        records.push({
-          kind:'promo',
-          monthKey,
-          promoId:p.id,
-          winnerIndex:w._idx,
-          id:returnRecordId('promo',p.id,w._idx),
-          distributionId:p.distributionId||'',
-          prize:norm(p.name||p.title||dist.prize||'PROMOÇÃO'),
-          winner:w.name,
-          deadline,
-          deadlineLabel:deadline.toLocaleDateString('pt-BR'),
-          registeredLabel:registered ? registered.toLocaleString('pt-BR') : '',
-          status:w.reuseStatus||'pendente',
-          source:p.local||'PROMOÇÃO',
-          promo:p
-        });
-      });
-    });
-    (m.items||[]).filter(Boolean).forEach(i=>{
-      if(!i.winnerName || i.deliveredAt) return;
-      const registered=new Date(i.resultAt || i.winnerAt || `${i.date || monthKey+'-01'}T${timeToHHMM(i.slot||'23:59')}:00`);
-      const deadline=Number.isNaN(registered.getTime()) ? null : addBusinessDaysFrom(registered,5);
-      if(!deadline || deadline > now) return;
-      if(i.reuseStatus && !includeHandled) return;
-      records.push({
-        kind:'item',
-        monthKey,
-        itemId:i.id,
-        id:returnRecordId('item',i.id,0),
-        distributionId:i.distributionId||'',
-        prize:returnItemPrize(i,m),
-        winner:norm(i.winnerName),
-        deadline,
-        deadlineLabel:deadline.toLocaleDateString('pt-BR'),
-        registeredLabel:registered.toLocaleString('pt-BR'),
-        status:i.reuseStatus||'pendente',
-        source:i.program||i.channel||'RÁDIO',
-        item:i
-      });
+  const now=new Date(),records=[];
+  uniqueConsolidatedPromos().forEach(p=>{
+    const days=Math.max(1,Math.min(5,num(p.pickupBusinessDays)||5));
+    promoAllWinnerObjects(p).forEach(w=>{
+      if(w.deliveredAt) return;
+      const keyDate=String(w.occurrenceKey||'').match(/^(\d{4}-\d{2}-\d{2})/)?.[1]||'';
+      const registered=winnerRegisteredDate({...p,resultDate:keyDate||p.resultDate||'',drawDate:keyDate||p.drawDate||''},w);
+      const deadline=registered?addBusinessDaysFrom(registered,days):null;
+      if(!deadline||deadline>now) return;
+      if(w.reuseStatus&&!includeHandled) return;
+      const dist=distributionCampaignCopies(p.distributionId||'')[0]?.d||{};
+      const monthKey=(registered?`${registered.getFullYear()}-${String(registered.getMonth()+1).padStart(2,'0')}`:(keyDate||p.drawDate||state.currentMonth).slice(0,7));
+      records.push({kind:'promo',monthKey,promoId:p.id,winnerIndex:w._idx,occurrenceKey:w.occurrenceKey||'',id:`promo:${p.id}:${w.occurrenceKey||'top'}:${w._idx}:${winnerPersonKey(w.name)}`,distributionId:p.distributionId||'',prize:norm(p.name||p.title||dist.prize||'PROMOÇÃO'),winner:w.name,deadline,deadlineDays:days,deadlineLabel:deadline.toLocaleDateString('pt-BR'),registeredLabel:registered?registered.toLocaleString('pt-BR'):'',status:w.reuseStatus||'pendente',source:p.local||'PROMOÇÃO',promo:p});
     });
   });
-  return records.sort((a,b)=>a.deadline-b.deadline || String(a.prize||'').localeCompare(String(b.prize||'')));
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    (m.items||[]).filter(Boolean).forEach(i=>{
+      if(i.sourceType==='promo-result'||!i.winnerName||i.deliveredAt) return;
+      const registered=new Date(i.resultAt||i.winnerAt||`${i.date||monthKey+'-01'}T${timeToHHMM(i.slot||'23:59')}:00`);
+      const deadline=Number.isNaN(registered.getTime())?null:addBusinessDaysFrom(registered,5);
+      if(!deadline||deadline>now) return;
+      if(i.reuseStatus&&!includeHandled) return;
+      records.push({kind:'item',monthKey,itemId:i.id,id:returnRecordId('item',i.id,0),distributionId:i.distributionId||'',prize:returnItemPrize(i,m),winner:norm(i.winnerName),deadline,deadlineDays:5,deadlineLabel:deadline.toLocaleDateString('pt-BR'),registeredLabel:registered.toLocaleString('pt-BR'),status:i.reuseStatus||'pendente',source:i.program||i.channel||'RÁDIO',item:i});
+    });
+  });
+  return records.sort((a,b)=>a.deadline-b.deadline||String(a.prize||'').localeCompare(String(b.prize||'')));
 }
 function pendingReturnRecords(){ return returnRecords(false); }
 function returnCountsByDistribution(){
@@ -8658,7 +9046,7 @@ function renderReturnAlerts(){
   if(!rows.length){ box.innerHTML='<div class="returnDrawerEmpty">NENHUM PRÊMIO VENCIDO AGUARDANDO REAPROVEITAMENTO.</div>'; return; }
   box.innerHTML=rows.map(r=>`<div class="returnAlertCard">
     <div class="returnAlertTop"><strong>${esc(r.prize)}</strong><span>GANHADOR: ${esc(r.winner)}<br>ORIGEM: ${esc(r.source)}<br>REGISTRADO: ${esc(r.registeredLabel)} · PRAZO VENCEU: ${esc(r.deadlineLabel)}</span></div>
-    <div class="returnAlertMeta"><em>SEM RETIRADA APÓS 5 DIAS ÚTEIS</em><em>DISPONÍVEL PARA REAPROVEITAMENTO</em></div>
+    <div class="returnAlertMeta"><em>SEM RETIRADA APÓS ${r.deadlineDays} DIA(S) ÚTEIS</em><em>DISPONÍVEL PARA REAPROVEITAMENTO</em></div>
     <div class="returnAlertActions"><button class="btn red small" onclick="reuseReturnedPrize('${esc(r.id)}')">CONFIRMAR REAPROVEITAMENTO</button><button class="btn ghost small" onclick="markReturnedAsSobra('${esc(r.id)}')">DEIXAR COMO SOBRA</button></div>
   </div>`).join('');
 }
@@ -8670,16 +9058,21 @@ function updateWinnerReuseStatus(record,status,extra={}){
   const month=state.months?.[record.monthKey];
   if(!month) return false;
   if(record.kind==='promo'){
-    const p=(month.promos||[]).find(x=>x.id===record.promoId);
-    if(!p) return false;
-    let winners=normalizeWinnerListForReturn(p);
-    const w=winners[record.winnerIndex];
-    if(!w) return false;
-    winners=mergeWinnerDelivery(winners,winners);
-    winners[record.winnerIndex]={...winners[record.winnerIndex],reuseStatus:status,reuseAt:new Date().toISOString(),reuseAtLabel:new Date().toLocaleString('pt-BR'),...extra};
-    p.resultWinners=winners;
-    p.resultName=winners.map(x=>x.name).join(', ');
-    return true;
+    let changed=false;
+    promoCopiesById(record.promoId).forEach(({p})=>{
+      if(record.occurrenceKey){
+        const list=Array.isArray(p.resultWinnersByHour?.[record.occurrenceKey])?clone(p.resultWinnersByHour[record.occurrenceKey]):[];
+        if(!list[record.winnerIndex]) return;
+        list[record.winnerIndex]={...list[record.winnerIndex],reuseStatus:status,reuseAt:new Date().toISOString(),reuseAtLabel:new Date().toLocaleString('pt-BR'),...extra};
+        p.resultWinnersByHour ||= {}; p.resultWinnersByHour[record.occurrenceKey]=list; p.resultByHour ||= {}; p.resultByHour[record.occurrenceKey]=list.map(x=>norm(typeof x==='string'?x:x?.name)).filter(Boolean).join(', '); changed=true;
+      }else{
+        let winners=normalizeWinnerListForReturn(p); if(!winners[record.winnerIndex]) return;
+        winners=mergeWinnerDelivery(winners,winners); winners[record.winnerIndex]={...winners[record.winnerIndex],reuseStatus:status,reuseAt:new Date().toISOString(),reuseAtLabel:new Date().toLocaleString('pt-BR'),...extra};
+        p.resultWinners=winners; p.resultName=winners.map(x=>x.name).join(', '); changed=true;
+      }
+      p.updatedAt=new Date().toISOString();
+    });
+    return changed;
   }
   if(record.kind==='item'){
     const i=(month.items||[]).find(x=>x.id===record.itemId);
@@ -9122,7 +9515,7 @@ function programActionClick(event,action,itemId){
 }
 
 function clearItemForm(){
-  $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; $('itemStatus').value='PENDENTE'; if($('itemWinner')) $('itemWinner').value=''; if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; if($('itemProgram')) $('itemProgram').dataset.auto='1'; $('itemDate').value=todayISO(); if($('distBalanceHint')) $('distBalanceHint').textContent=''; if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
+  $('itemForm').reset(); $('itemId').value=''; $('itemQty').value=1; $('itemChannel').value='RÁDIO'; const statusControl=$('itemStatus'); if(statusControl){ statusControl.disabled=false; [...statusControl.options].filter(option=>option.dataset.studioOnly==='1').forEach(option=>option.remove()); statusControl.value='PENDENTE'; } if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; if($('itemProgram')) $('itemProgram').dataset.auto='1'; $('itemDate').value=todayISO(); if($('distBalanceHint')) $('distBalanceHint').textContent=''; if($('itemLinkLoadHint')) $('itemLinkLoadHint').textContent=''; $('itemDrawerTitle').textContent='NOVO ITEM DA PROGRAMAÇÃO'; populateDistributionSelect();
   renderItemSlotOptions(false);
   updateItemProgramFromSchedule(true);
   updateItemRotationVisibility();
@@ -9132,7 +9525,7 @@ function clearItemForm(){
 function editItem(itemId){
   const i=monthData().items.find(x=>x.id===itemId); if(!i) return;
   clearItemForm(); $('itemDrawerTitle').textContent='EDITAR ITEM DA PROGRAMAÇÃO';
-  $('itemId').value=i.id; $('itemDate').value=i.date||todayISO(); if($('itemProgramStation')) $('itemProgramStation').value=i.station||'JP1017'; renderItemSlotOptions(false); if(isHalfHourSlot(i.slot) && ![...$('itemSlot').options].some(opt=>normalizeSlot(opt.value)===normalizeSlot(i.slot))){ const addOption=$('itemSlot').querySelector('option[value="__ADD_PROGRAM_SCHEDULE__"]'); const option=document.createElement('option'); option.value=normalizeSlot(i.slot); option.textContent=`${normalizeSlot(i.slot)} — PRÊMIO ADICIONAL / SEGUNDA METADE DA HORA`; option.dataset.program=i.program||''; option.dataset.additionalSlot='1'; $('itemSlot').insertBefore(option,addOption); } $('itemSlot').value=normalizeSlot(i.slot||''); $('itemProgram').value=i.program||''; $('itemProgram').dataset.auto='0'; $('itemDistribution').value=i.distributionId||''; $('itemPrize').value=i.prize||''; $('itemTitle').value=i.title||''; $('itemQty').value=num(i.qty); $('itemChannel').value=normalizeChannel(i.channel)||'RÁDIO'; $('itemStatus').value=itemEffectiveStatus(i); if($('itemWinner')) $('itemWinner').value=i.winnerName||i.resultName||''; $('itemNotes').value=i.notes||''; setPromoStyleControls('itemTitle',i.titleStyle,'title'); setPromoStyleControls('itemDesc',i.descriptionStyle,'desc'); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); openDrawer('itemDrawer');
+  $('itemId').value=i.id; $('itemDate').value=i.date||todayISO(); if($('itemProgramStation')) $('itemProgramStation').value=i.station||'JP1017'; renderItemSlotOptions(false); if(isHalfHourSlot(i.slot) && ![...$('itemSlot').options].some(opt=>normalizeSlot(opt.value)===normalizeSlot(i.slot))){ const addOption=$('itemSlot').querySelector('option[value="__ADD_PROGRAM_SCHEDULE__"]'); const option=document.createElement('option'); option.value=normalizeSlot(i.slot); option.textContent=`${normalizeSlot(i.slot)} — PRÊMIO ADICIONAL / SEGUNDA METADE DA HORA`; option.dataset.program=i.program||''; option.dataset.additionalSlot='1'; $('itemSlot').insertBefore(option,addOption); } $('itemSlot').value=normalizeSlot(i.slot||''); $('itemProgram').value=i.program||''; $('itemProgram').dataset.auto='0'; $('itemDistribution').value=i.distributionId||''; $('itemPrize').value=i.prize||''; $('itemTitle').value=i.title||''; $('itemQty').value=num(i.qty); $('itemChannel').value=normalizeChannel(i.channel)||'RÁDIO'; const effectiveStatus=itemEffectiveStatus(i); const statusControl=$('itemStatus'); if(statusControl){ if(effectiveStatus==='REALIZADO'){ const option=document.createElement('option'); option.value='REALIZADO'; option.textContent='REALIZADO — CONFIRMADO PELO ESTÚDIO'; option.dataset.studioOnly='1'; statusControl.appendChild(option); statusControl.value='REALIZADO'; statusControl.disabled=true; }else{ statusControl.disabled=false; statusControl.value=['PENDENTE','NO AR','CANCELADO'].includes(effectiveStatus)?effectiveStatus:'PENDENTE'; } } $('itemNotes').value=i.notes||''; setPromoStyleControls('itemTitle',i.titleStyle,'title'); setPromoStyleControls('itemDesc',i.descriptionStyle,'desc'); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); openDrawer('itemDrawer');
 }
 function duplicateItem(itemId){
   const item=monthData().items.find(x=>x.id===itemId); if(!item) return;
@@ -9152,7 +9545,13 @@ function duplicateItem(itemId){
   monthData().items.push(copy);
   saveState(true); render(); toast('ITEM COPIADO E REMANEJADO.');
 }
-function deleteItem(itemId){ if(!confirm('EXCLUIR ESTE ITEM DA PROGRAMAÇÃO?')) return; monthData().items=monthData().items.filter(i=>i.id!==itemId); saveState(true); render(); toast('ITEM EXCLUÍDO.'); }
+function deleteItem(itemId){
+  const item=monthData().items.find(i=>i.id===itemId); if(!item) return;
+  if(!confirm('REMOVER ESTE ITEM DA PROGRAMAÇÃO? ELE FICARÁ DISPONÍVEL PARA RESTAURAÇÃO NA LIXEIRA.')) return;
+  trashRecord('ITEM',item.prize||item.title||'ITEM DA PROGRAMAÇÃO',item,{monthKey:state.currentMonth,sourceId:item.id});
+  monthData().items=monthData().items.filter(i=>i.id!==itemId);
+  saveState(true); render(); toast('ITEM REMOVIDO DA OPERAÇÃO · SINCRONIZANDO COM FIREBASE...');
+}
 function programFromDist(distId){
   const d=distributionById(distId); if(!d) return;
   clearItemForm(); $('itemDistribution').value=distId; handleItemDistributionChange(true); $('itemDate').value=todayISO(); if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; $('itemChannel').value='RÁDIO'; $('itemStatus').value='PENDENTE'; renderItemSlotOptions(false); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); setView('programacao'); openDrawer('itemDrawer');
@@ -9378,7 +9777,7 @@ function quickAddProgramScheduleFromItem(){
   updateItemProgramFromSchedule(true);
   saveState(true);
   renderProgramSchedules();
-  toast(`HORÁRIO ${slot} SALVO.`);
+  toast(`HORÁRIO ${slot} ALTERADO · SINCRONIZANDO COM FIREBASE...`);
   const hint=$('itemProgramHint');
   if(hint) hint.textContent=`HORÁRIO ${slot} CADASTRADO COMO PROGRAMAÇÃO NORMAL E SELECIONADO.`;
 }
@@ -9443,7 +9842,8 @@ $('itemForm').addEventListener('submit',e=>{
   const idVal=$('itemId').value || id('BR');
   const date=$('itemDate').value;
   const existingItem=monthData().items.find(i=>i.id===idVal)||{};
-  const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),station:$('itemProgramStation')?.value||'JP1017',program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:normalizeStatus($('itemStatus').value),winnerName:norm($('itemWinner')?.value||''),notes:textNorm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc'),sourceType:existingItem.sourceType||'',promoId:existingItem.promoId||'',promoKind:existingItem.promoKind||''};
+  const existingStatus=itemEffectiveStatus(existingItem); const requestedStatus=normalizeStatus($('itemStatus')?.value||'PENDENTE'); const adminStatus=existingStatus==='REALIZADO'?'REALIZADO':(['PENDENTE','NO AR','CANCELADO'].includes(requestedStatus)?requestedStatus:'PENDENTE');
+  const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),station:$('itemProgramStation')?.value||'JP1017',program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:adminStatus,winnerName:norm(existingItem.winnerName||existingItem.resultName||''),notes:textNorm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc'),sourceType:existingItem.sourceType||'',promoId:existingItem.promoId||'',promoKind:existingItem.promoKind||''};
   if(item.channel === 'RÁDIO' && !item.program){ alert('CADASTRE A GRADE EM HORÁRIOS OU ESCOLHA UMA RÁDIO/HORÁRIO COM PROGRAMA IDENTIFICADO.'); return; }
   if(item.channel === 'RÁDIO'){
     const occupied=radioSlotConflicts(item.date,item.slot,item.id,item.station);
@@ -9482,7 +9882,7 @@ $('itemForm').addEventListener('submit',e=>{
     const d=distributionById(item.distributionId); const key=(CHANNELS.find(c=>c[1]===item.channel)||['ar'])[0];
     const old=monthData().items.find(i=>i.id===idVal); const oldQty=old && old.distributionId===item.distributionId && normalizeChannel(old.channel)===item.channel ? num(old.qty) : 0;
     const saldo = num(d?.[key]) - programmed(item.distributionId,item.channel) + oldQty;
-    if(item.qty > saldo && !confirm(`ATENÇÃO: O CANAL ${item.channel} TEM SALDO ${saldo}. SALVAR MESMO ASSIM?`)) return;
+    if(item.qty > saldo){ alert(`QUANTIDADE INDISPONÍVEL.\n\nCANAL: ${item.channel}\nDISPONÍVEL AGORA: ${Math.max(0,saldo)}\nSOLICITADO: ${item.qty}\n\nAJUSTE A DISTRIBUIÇÃO ANTES DE PROGRAMAR.`); return; }
   }
   if(item.distributionId){
     const linked=distributionById(item.distributionId);
@@ -9494,7 +9894,7 @@ $('itemForm').addEventListener('submit',e=>{
   }
   const idx=monthData().items.findIndex(i=>i.id===idVal);
   if(idx>=0) monthData().items[idx]=item; else monthData().items.push(item);
-  saveState(true); closeDrawer('itemDrawer'); render(); toast('PROGRAMAÇÃO SALVA.');
+  saveState(true); closeDrawer('itemDrawer'); render(); toast('PROGRAMAÇÃO ALTERADA · SINCRONIZANDO COM FIREBASE...');
 });
 
 
@@ -10717,18 +11117,72 @@ function saveReserveNote(){
   saveState(true);
   closeDrawer('reserveDrawer');
   updateDistributionRow(d.id);
-  toast('RESERVA SALVA.');
+  toast('RESERVA ALTERADA · SINCRONIZANDO COM FIREBASE...');
+}
+function distributionPeriodMonthKeys(d){
+  const start=(distStartDate(d)||`${state.currentMonth}-01`).slice(0,7), end=(distEndDate(d)||distStartDate(d)||`${state.currentMonth}-01`).slice(0,7);
+  const keys=[]; let [y,m]=start.split('-').map(Number); const [ey,em]=end.split('-').map(Number);
+  if(!y||!m||!ey||!em) return [state.currentMonth];
+  while(y<ey||(y===ey&&m<=em)){ keys.push(`${y}-${String(m).padStart(2,'0')}`); m++; if(m>12){m=1;y++;} }
+  return keys;
+}
+function distributionCampaignCopies(distId){
+  const rows=[]; Object.entries(state.months||{}).forEach(([monthKey,m])=>(m.distributions||[]).filter(d=>d.id===distId).forEach(d=>rows.push({monthKey,d})));
+  return rows.sort((a,b)=>a.monthKey.localeCompare(b.monthKey));
+}
+function emptyDistributionMonthCopy(source,monthKey){
+  const copy=clone(source); copy.monthKey=monthKey; copy.carryForward=true; copy.total=0;
+  ['app','camarote','camarim','rua','ar','rs','reservado','reservadoReal','clientes','outros'].forEach(k=>copy[k]=0);
+  copy.reservas=[]; copy.reservadoNote=''; copy.createdAt=new Date().toISOString(); copy.updatedAt=copy.createdAt; return copy;
+}
+function storeDistributionAcrossMonths(d,editingMonth=state.currentMonth,isNew=false){
+  const keys=distributionPeriodMonthKeys(d); const allowed=new Set(keys); const existingCopies=distributionCampaignCopies(d.id);
+  keys.forEach(key=>{
+    const m=monthDataForKey(key); m.distributions ||= [];
+    const idx=m.distributions.findIndex(x=>x.id===d.id);
+    if(key===editingMonth){ if(idx>=0)m.distributions[idx]=clone(d); else m.distributions.push(clone(d)); return; }
+    if(idx<0) m.distributions.push(emptyDistributionMonthCopy(d,key));
+    else{
+      const current=m.distributions[idx];
+      ['prize','show','title','description','notes','startDate','endDate','prizeType','ticketDefaultUnit','titleStyle','descriptionStyle','rotationSlots','radioDailyLimit'].forEach(field=>{ current[field]=clone(d[field]); });
+      current.updatedAt=new Date().toISOString();
+    }
+  });
+  existingCopies.forEach(({monthKey,d:copy})=>{
+    if(allowed.has(monthKey)) return;
+    const hasMovement=num(copy.total)>0||allocated(copy)>0||programmedForMonth(copy.id,'RÁDIO',monthKey)>0;
+    if(!hasMovement){ const m=monthDataForKey(monthKey); m.distributions=(m.distributions||[]).filter(x=>x.id!==d.id); }
+  });
+}
+function distributionCampaignSegmentTotal(distId,key){
+  return distributionCampaignCopies(distId).reduce((sum,{d})=>sum+num(d?.[key]),0);
 }
 function editDist(distId){
   const d=distributionById(distId); if(!d) return;
   clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; renderDistDestinations(destinationsFromDistribution(d)); if($('distDailyLimit')) $('distDailyLimit').value=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1)); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
 }
+function distributionDependencies(distId){
+  const items=[],promos=[],pendingWithdrawals=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    (m.items||[]).filter(i=>i.distributionId===distId&&normalizeStatus(i.status)!=='CANCELADO').forEach(i=>items.push({monthKey,i}));
+    (m.promos||[]).filter(p=>p.distributionId===distId).forEach(p=>promos.push({monthKey,p}));
+  });
+  return {items,promos,pendingWithdrawals};
+}
 function deleteDist(distId){
-  if(programmed(distId)>0 && !confirm('ESTE BRINDE TEM ITENS NA PROGRAMAÇÃO. EXCLUIR MESMO ASSIM? OS ITENS FICARÃO SEM LINK.')) return;
-  if(!confirm('EXCLUIR ESTA DISTRIBUIÇÃO?')) return;
-  monthData().distributions=monthData().distributions.filter(d=>d.id!==distId);
-  monthData().items.forEach(i=>{ if(i.distributionId===distId) i.distributionId=''; });
-  saveState(true); render(); toast('DISTRIBUIÇÃO EXCLUÍDA.');
+  const copies=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>(m.distributions||[]).filter(d=>d.id===distId).forEach(d=>copies.push({monthKey,data:clone(d)})));
+  if(!copies.length) return;
+  const dep=distributionDependencies(distId);
+  const activePromos=[...new Map(dep.promos.map(x=>[x.p.id,x])).values()].filter(({p})=>!p.endDate||p.endDate>=todayISO());
+  if(dep.items.length||activePromos.length){
+    alert(`ESTE PRÊMIO POSSUI VÍNCULOS ATIVOS E NÃO PODE SER EXCLUÍDO.\n\nPROGRAMAÇÃO: ${dep.items.length}\nPROMOÇÕES ATIVAS: ${activePromos.length}\n\nCANCELE OU REORGANIZE OS VÍNCULOS ANTES DA EXCLUSÃO.`); return;
+  }
+  const label=distributionLabel(copies[0].data);
+  if(!confirm(`REMOVER ${label}?\n\nO REGISTRO SERÁ MOVIDO PARA A LIXEIRA E PODERÁ SER RESTAURADO.`)) return;
+  trashRecord('DISTRIBUIÇÃO',label,{id:distId,copies},{sourceId:distId,monthKey:state.currentMonth});
+  Object.values(state.months||{}).forEach(m=>{ m.distributions=(m.distributions||[]).filter(d=>d.id!==distId); });
+  saveState(true); render(); toast('DISTRIBUIÇÃO REMOVIDA DA OPERAÇÃO · SINCRONIZANDO COM FIREBASE...');
 }
 function saveDistributionFromForm(generate=false){
   const idVal=$('distId').value || id('DST');
@@ -10746,23 +11200,31 @@ function saveDistributionFromForm(generate=false){
   const distributedPackages=allocatedPackages(d);
   const availablePackages=totalDeliverable(d);
   const consumedReal=allocated(d);
-  if(num(d.total)>0 && consumedReal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.
+  if(num(d.total)>=0 && consumedReal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.
 
 TOTAL UNITÁRIO: ${num(d.total)}
 MODO: ${distributionDeliveryLabel(d)}
 DISPONÍVEL PARA DISTRIBUIR: ${availablePackages}
 DISTRIBUÍDO: ${distributedPackages}
 CONSUMIDO REAL: ${consumedReal}`); return null; }
-  const idx=monthData().distributions.findIndex(x=>x.id===idVal);
-  if(idx>=0) monthData().distributions[idx]=d; else monthData().distributions.push(d);
+  const commitmentIssues=validateDistributionCampaignCommitments(d,state.currentMonth);
+  if(commitmentIssues.length){ alert(`ALTERAÇÃO BLOQUEADA. EXISTEM PROMOÇÕES VINCULADAS A ESTA DISTRIBUIÇÃO.
+
+${commitmentIssues.join('\n')}
+
+REDUZA/CANCELE OS SORTEIOS VINCULADOS ANTES DE DIMINUIR A QUANTIDADE.`); return null; }
+  const wasNew=!existing.id;
+  const before=existing.id?clone(existing):'';
+  storeDistributionAcrossMonths(d,state.currentMonth,wasNew);
   syncDistributionToLinkedRadioItems(d);
+  auditEvent(wasNew?'CADASTRO DE PRÊMIO':'ALTERAÇÃO DE DISTRIBUIÇÃO',distributionLabel(d),{targetId:d.id,before,after:d,note:`COMPETÊNCIA ${state.currentMonth}`});
   saveState(true);
   closeDrawer('distDrawer');
   render();
   if(generate){
     generateRadioFromDist(d.id);
   }else{
-    toast('DISTRIBUIÇÃO SALVA.');
+    toast('DISTRIBUIÇÃO ALTERADA · SINCRONIZANDO COM FIREBASE...');
   }
   return d;
 }
@@ -10787,13 +11249,19 @@ $('distForm').addEventListener('submit',e=>{
 $('distTable').addEventListener('input',e=>{
   const input=e.target.closest('.distInlineNum');
   if(!input) return;
-  const d=distributionById(input.dataset.distId);
-  if(!d) return;
-  d[input.dataset.key]=num(input.value);
-  d.clientes=0;
-  d.outros=0;
-  saveState(true);
-  updateDistributionRow(d.id);
+  const d=distributionById(input.dataset.distId); if(!d) return;
+  const key=input.dataset.key, previous=num(d[key]), next=num(input.value);
+  d[key]=next; d.clientes=0; d.outros=0;
+  const consumed=allocated(d);
+  if(num(d.total)>=0 && consumed>num(d.total)){
+    d[key]=previous; input.value=previous;
+    alert(`QUANTIDADE INDISPONÍVEL.\n\nTOTAL UNITÁRIO: ${num(d.total)}\nJÁ COMPROMETIDO: ${allocated(d)}\nA ALTERAÇÃO SOLICITADA ULTRAPASSARIA O SALDO.`);
+    return;
+  }
+  const commitmentIssues=validateDistributionCampaignCommitments(d,state.currentMonth);
+  if(commitmentIssues.length){ d[key]=previous; input.value=previous; alert(`ALTERAÇÃO BLOQUEADA POR VÍNCULO COM PROMOÇÃO.\n\n${commitmentIssues.join('\n')}`); return; }
+  d.updatedAt=new Date().toISOString();
+  saveState(true); updateDistributionRow(d.id);
 });
 $('distTable').addEventListener('change',e=>{
   const unit=e.target.closest('.distUnitSelect');
@@ -10801,7 +11269,10 @@ $('distTable').addEventListener('change',e=>{
     const d=distributionById(unit.dataset.distId);
     if(!d) return;
     d.ticketUnits ||= {};
-    d.ticketUnits[unit.dataset.unitKey]=unit.value;
+    const key=unit.dataset.unitKey, previous=d.ticketUnits[key]||distributionDeliveryUnit(d);
+    d.ticketUnits[key]=unit.value;
+    if(allocated(d)>num(d.total)){ d.ticketUnits[key]=previous; unit.value=previous; alert('ALTERAÇÃO DO MODO DE ENTREGA BLOQUEADA: A CONVERSÃO EM PARES ULTRAPASSARIA O TOTAL DISPONÍVEL.'); return; }
+    d.updatedAt=new Date().toISOString();
     saveState(true);
     renderDistribuicao();
     return;
@@ -10965,7 +11436,14 @@ function clearPromoForm(){
   if($('promoStation')) $('promoStation').value='JP1017';
   if($('promoStartDate')) $('promoStartDate').value=todayISO();
   if($('promoDrawDate')) $('promoDrawDate').value=todayISO();
+  if($('promoEndDate')) $('promoEndDate').value=todayISO();
+  if($('promoPickupDays')) $('promoPickupDays').value='5';
+  if($('promoRecurrence')) $('promoRecurrence').value='single';
+  if($('promoQtyPerDraw')) $('promoQtyPerDraw').value='1';
+  if($('promoDistributionId')) $('promoDistributionId').value='';
+  if($('promoSegmentKey')) $('promoSegmentKey').value='';
   populatePromoLocalSelect();
+  populatePromoDistributionSelect();
   populateProgramSelects();
   updatePromoKindMode();
   setPromoReadControls({readMode:'all',readHours:[]});
@@ -10973,6 +11451,7 @@ function clearPromoForm(){
   setPromoStyleControls('promoDesc',defaultPromoTextStyle('desc'),'desc');
   $('promoDrawerTitle').textContent='NOVA PROMOÇÃO';
   updatePromoPreview();
+  renderPromoOccurrencesEditor(false);
 }
 function promoCopiesById(idValue){
   const rows=[];
@@ -11051,6 +11530,13 @@ function editPromo(pid){
   $('promoStartDate').value=p.startDate||'';
   $('promoDrawDate').value=p.drawDate||'';
   $('promoDrawTime').value=p.drawTime||'';
+  if($('promoEndDate')) $('promoEndDate').value=p.endDate||p.drawDate||'';
+  if($('promoPickupDays')) $('promoPickupDays').value=String(Math.max(1,Math.min(5,num(p.pickupBusinessDays)||5)));
+  if($('promoRecurrence')) $('promoRecurrence').value=p.recurrenceMode||'single';
+  if($('promoQtyPerDraw')) $('promoQtyPerDraw').value=Math.max(1,num(p.qtyPerDraw)||1);
+  populatePromoDistributionSelect();
+  if($('promoDistributionId')) $('promoDistributionId').value=p.distributionId||'';
+  if($('promoSegmentKey')) $('promoSegmentKey').value=p.segmentKey||'';
   if($('promoKind')) $('promoKind').value=p.kind||p.promoKind||p.type||'promo';
   if($('promoStation')) $('promoStation').value=p.station||'JP1017';
   $('promoLocal').value=p.local||'';
@@ -11063,9 +11549,20 @@ function editPromo(pid){
   setPromoStyleControls('promoDesc',p.descriptionStyle,'desc');
   $('promoImageData').value=p.imageData||'';
   updatePromoPreview();
+  renderPromoOccurrencesEditor(false);
   openDrawer('promoDrawer');
 }
-function deletePromo(pid){ if(!confirm('EXCLUIR ESTA PROMOÇÃO EM TODOS OS MESES DO PERÍODO?')) return; Object.values(state.months||{}).forEach(m=>{ m.promos=(m.promos||[]).filter(p=>p.id!==pid); }); removePromoResultFromProgram(pid); saveState(true); render(); toast('PROMOÇÃO EXCLUÍDA EM TODOS OS MESES.'); }
+function deletePromo(pid){
+  const copies=promoCopiesById(pid).map(({monthKey,p})=>({monthKey,data:clone(p)})); if(!copies.length) return;
+  const p=consolidatedPromoById(pid)||copies[0].data;
+  const future=(p.occurrences||[]).some(o=>o.date>=todayISO()&&!['REALIZADO','CANCELADO'].includes(normalizeStatus(o.status)));
+  const winners=promoAllWinnerObjects(p).filter(w=>w.name&&!w.deliveredAt);
+  if(future||winners.length){ alert(`ESTA PROMOÇÃO POSSUI VÍNCULOS ATIVOS E NÃO PODE SER EXCLUÍDA.\n\nSORTEIOS FUTUROS: ${future?'SIM':'NÃO'}\nRETIRADAS PENDENTES: ${winners.length}\n\nENCERRE/CANCELE AS OCORRÊNCIAS E RESOLVA AS RETIRADAS ANTES.`); return; }
+  if(!confirm('REMOVER ESTA PROMOÇÃO EM TODOS OS MESES? ELA FICARÁ DISPONÍVEL PARA RESTAURAÇÃO.')) return;
+  trashRecord('PROMOÇÃO',p.name||p.title||'PROMOÇÃO',{id:pid,copies},{sourceId:pid,monthKey:state.currentMonth});
+  Object.values(state.months||{}).forEach(m=>{ m.promos=(m.promos||[]).filter(row=>row.id!==pid); });
+  removePromoResultFromProgram(pid); saveState(true); render(); toast('PROMOÇÃO REMOVIDA DA OPERAÇÃO · SINCRONIZANDO COM FIREBASE...');
+}
 $('promoImage').addEventListener('change',e=>{
   const file=e.target.files?.[0];
   if(!file) return;
@@ -11082,20 +11579,157 @@ $('promoImage').addEventListener('change',e=>{
   };
   reader.readAsDataURL(file);
 });
-['promoName','promoDescription','promoTitleFont','promoTitleSize','promoTitleColor','promoDescFont','promoDescSize','promoDescColor','promoLocal','promoDrawDate','promoDrawTime'].forEach(id=>bind(id,'input',updatePromoPreview));
+['promoName','promoDescription','promoTitleFont','promoTitleSize','promoTitleColor','promoDescFont','promoDescSize','promoDescColor','promoLocal','promoPickupDays','promoDistributionId','promoSegmentKey'].forEach(id=>bind(id,'input',()=>{updatePromoPreview();updatePromoSegmentBalance();}));
+['promoStartDate','promoDrawDate','promoDrawTime','promoEndDate','promoRecurrence','promoQtyPerDraw'].forEach(id=>{ bind(id,'input',()=>{updatePromoPreview();renderPromoOccurrencesEditor(false);updatePromoSegmentBalance();}); bind(id,'change',()=>{renderPromoOccurrencesEditor(false);updatePromoSegmentBalance();}); });
 bind('promoProgram','change',()=>{applyProgramHoursToPromo(); updatePromoPreview();});
 bind('promoProgram','input',updatePromoPreview);
+bind('promoKind','change',()=>{ updatePromoKindMode(); renderPromoOccurrencesEditor(false); updatePromoSegmentBalance(); });
 bind('promoReadAll','change',updatePromoReadScheduleState);
 document.addEventListener('change',e=>{ if(e.target.closest('#promoReadHours')) updatePromoReadScheduleState(); });
 ['itemTitleFont','itemTitleSize','itemTitleColor','itemDescFont','itemDescSize','itemDescColor','distTitleFont','distTitleSize','distTitleColor','distDescFont','distDescSize','distDescColor'].forEach(id=>bind(id,'input',()=>{}));
 
+function populatePromoDistributionSelect(){
+  const sel=$('promoDistributionId'); if(!sel) return;
+  const current=sel.value; const seen=new Map();
+  Object.values(state.months||{}).forEach(m=>(m.distributions||[]).forEach(d=>{ if(!seen.has(d.id)) seen.set(d.id,d); }));
+  sel.innerHTML='<option value="">SEM VÍNCULO</option>'+[...seen.values()].sort((a,b)=>norm(distributionLabel(a)).localeCompare(norm(distributionLabel(b)))).map(d=>`<option value="${esc(d.id)}">${esc(distributionLabel(d))}</option>`).join('');
+  if([...seen.keys()].includes(current)) sel.value=current;
+}
+function promoOccurrenceKey(p,date,time){ return `${p?.id||'PROMO'}|${date}|${timeToHHMM(time||p?.drawTime||'00:00')}`; }
+function generatePromoOccurrences(p,existing={}){
+  if((p.kind||'promo')!=='promo') return [];
+  const start=p.startDate, end=p.endDate||p.drawDate, first=p.drawDate, time=fullHourTimeValue(p.drawTime)||timeToHHMM(p.drawTime)||'00:00';
+  if(!first||!end||first<start||first>end) return [];
+  const oldMap=new Map((existing.occurrences||[]).map(o=>[`${o.date}|${timeToHHMM(o.time||existing.drawTime||'')}`,o]));
+  const dates=[];
+  if(p.recurrenceMode==='weekly'){
+    let dt=new Date(`${first}T12:00:00`), last=new Date(`${end}T12:00:00`);
+    while(dt<=last){ dates.push(`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`); dt.setDate(dt.getDate()+7); }
+  }else dates.push(first);
+  return dates.map(date=>{
+    const old=oldMap.get(`${date}|${timeToHHMM(time)}`)||{};
+    return {...old,id:old.id||promoOccurrenceKey(p,date,time),date,time,qtyPlanned:Math.max(1,num(p.qtyPerDraw)||1),actualQty:num(old.actualQty)||0,status:old.status||'AGENDADO',updatedAt:new Date().toISOString()};
+  });
+}
+function promoDraftFromForm(){
+  return {
+    id:$('promoId')?.value||'__NOVO__',
+    distributionId:$('promoDistributionId')?.value||'',
+    segmentKey:$('promoSegmentKey')?.value||'',
+    kind:$('promoKind')?.value||'promo',
+    startDate:$('promoStartDate')?.value||todayISO(),
+    drawDate:$('promoDrawDate')?.value||todayISO(),
+    endDate:$('promoEndDate')?.value||$('promoDrawDate')?.value||todayISO(),
+    drawTime:$('promoDrawTime')?.value||'00:00',
+    recurrenceMode:$('promoRecurrence')?.value||'single',
+    qtyPerDraw:Math.max(1,num($('promoQtyPerDraw')?.value)||1)
+  };
+}
+function promoOccurrenceEditsFromForm(){
+  const edits=new Map();
+  document.querySelectorAll('#promoOccurrencesEditor .promoOccurrenceRow[data-occurrence-key]').forEach(row=>{
+    const key=row.dataset.occurrenceKey||'';
+    if(!key) return;
+    const qty=Math.max(1,num(row.querySelector('[data-occ-qty]')?.value)||1);
+    const status=normalizeStatus(row.querySelector('[data-occ-status]')?.value||row.dataset.status||'AGENDADO');
+    edits.set(key,{qtyPlanned:qty,status});
+  });
+  return edits;
+}
+function promoOccurrencesFromForm(draft=promoDraftFromForm(),existing=consolidatedPromoById(draft.id)||{}){
+  const edits=promoOccurrenceEditsFromForm();
+  return generatePromoOccurrences(draft,existing).map(o=>{
+    const edit=edits.get(`${o.date}|${timeToHHMM(o.time)}`);
+    if(!edit||normalizeStatus(o.status)==='REALIZADO') return o;
+    return {...o,qtyPlanned:edit.qtyPlanned,status:['AGENDADO','CANCELADO'].includes(edit.status)?edit.status:'AGENDADO',updatedAt:new Date().toISOString()};
+  });
+}
+function renderPromoOccurrencesEditor(preserveEdits=true){
+  const host=$('promoOccurrencesEditor'), field=$('promoOccurrencesField');
+  if(!host) return;
+  const draft=promoDraftFromForm();
+  if(field) field.classList.toggle('hidden',draft.kind!=='promo');
+  if(draft.kind!=='promo'){ host.innerHTML='<div class="promoOccurrenceEmpty">NÃO SE APLICA A ESTE TIPO DE CONTEÚDO.</div>'; return; }
+  const existing=consolidatedPromoById(draft.id)||{};
+  const generated=generatePromoOccurrences(draft,existing);
+  if(!generated.length){ host.innerHTML='<div class="promoOccurrenceEmpty">CONFIRA INÍCIO, PRIMEIRO SORTEIO E ENCERRAMENTO.</div>'; return; }
+  const currentEdits=preserveEdits?promoOccurrenceEditsFromForm():new Map();
+  host.innerHTML=generated.map(o=>{
+    const key=`${o.date}|${timeToHHMM(o.time)}`;
+    const cached=currentEdits.get(key);
+    const realized=normalizeStatus(o.status)==='REALIZADO';
+    const status=realized?'REALIZADO':(cached?.status||normalizeStatus(o.status)||'AGENDADO');
+    const qty=realized?(num(o.actualQty)||num(o.qtyPlanned)||1):(cached?.qtyPlanned||num(o.qtyPlanned)||1);
+    return `<div class="promoOccurrenceRow ${realized?'realized':''}" data-occurrence-key="${esc(key)}" data-status="${esc(status)}"><strong>${formatBR(o.date)}</strong><span>${esc(timeToHHMM(o.time))}</span><input type="number" min="1" step="1" value="${qty}" data-occ-qty ${realized?'disabled':''} aria-label="QUANTIDADE DE ${formatBR(o.date)}"><select data-occ-status ${realized?'disabled':''} aria-label="STATUS DE ${formatBR(o.date)}"><option value="AGENDADO" ${status==='AGENDADO'?'selected':''}>AGENDADO</option><option value="CANCELADO" ${status==='CANCELADO'?'selected':''}>CANCELADO</option>${realized?'<option value="REALIZADO" selected>REALIZADO</option>':''}</select></div>`;
+  }).join('');
+}
+document.addEventListener('input',event=>{
+  if(event.target.closest('#promoOccurrencesEditor')) updatePromoSegmentBalance();
+});
+document.addEventListener('change',event=>{
+  if(event.target.closest('#promoOccurrencesEditor')) updatePromoSegmentBalance();
+});
+function promoForecastQty(p){ return (p?.occurrences||[]).filter(o=>normalizeStatus(o.status)!=='CANCELADO').reduce((sum,o)=>sum+(normalizeStatus(o.status)==='REALIZADO'?(num(o.actualQty)||num(o.qtyPlanned)):num(o.qtyPlanned)),0); }
+function promoUsedQty(p){ return (p?.occurrences||[]).filter(o=>normalizeStatus(o.status)==='REALIZADO').reduce((sum,o)=>sum+(num(o.actualQty)||num(o.qtyPlanned)),0); }
+function promoCommitmentQty(p,referenceDate=todayISO()){
+  const ended=!!(p?.endDate||p?.drawDate) && String(p.endDate||p.drawDate)<String(referenceDate);
+  return (p?.occurrences||[]).reduce((sum,o)=>{
+    const status=normalizeStatus(o.status);
+    if(status==='CANCELADO') return sum;
+    if(status==='REALIZADO') return sum+(num(o.actualQty)||num(o.qtyPlanned));
+    return ended?sum:sum+num(o.qtyPlanned);
+  },0);
+}
+function uniqueConsolidatedPromos(){
+  const ids=new Set(); Object.values(state.months||{}).forEach(m=>(m.promos||[]).forEach(p=>p?.id&&ids.add(p.id)));
+  return [...ids].map(idValue=>consolidatedPromoById(idValue)).filter(Boolean);
+}
+function promoSegmentStatus(p){
+  if(!p?.distributionId||!p?.segmentKey) return null;
+  const allocatedTotal=distributionCampaignSegmentTotal(p.distributionId,p.segmentKey);
+  const others=uniqueConsolidatedPromos().filter(other=>other.id!==p.id&&other.distributionId===p.distributionId&&other.segmentKey===p.segmentKey);
+  const committedOther=others.reduce((sum,other)=>sum+promoCommitmentQty(other),0);
+  const forecast=promoForecastQty(p), commitment=promoCommitmentQty(p), used=promoUsedQty(p), available=Math.max(0,allocatedTotal-committedOther);
+  return {allocatedTotal,committedOther,forecast,commitment,used,available,remaining:available-commitment,label:DESTINATION_LABELS[p.segmentKey]||p.segmentKey};
+}
+function segmentPromoCommitment(distId,key,excludePromoId=''){
+  return uniqueConsolidatedPromos().filter(p=>p.id!==excludePromoId&&p.distributionId===distId&&p.segmentKey===key).reduce((sum,p)=>sum+promoCommitmentQty(p),0);
+}
+function validateDistributionCampaignCommitments(d,editingMonth=state.currentMonth){
+  const issues=[];
+  CHANNELS.forEach(([key,label])=>{
+    const other=distributionCampaignCopies(d.id).filter(row=>row.monthKey!==editingMonth).reduce((sum,row)=>sum+num(row.d?.[key]),0);
+    const proposed=other+num(d[key]); const committed=segmentPromoCommitment(d.id,key);
+    if(committed>proposed) issues.push(`${label}: ${committed} COMPROMETIDO(S) EM PROMOÇÕES / ${proposed} DISPONÍVEL(IS) APÓS A ALTERAÇÃO`);
+  });
+  return issues;
+}
+function updatePromoSegmentBalance(){
+  const out=$('promoSegmentBalance'); if(!out) return;
+  const distId=$('promoDistributionId')?.value||'', segmentKey=$('promoSegmentKey')?.value||'';
+  if(!distId||!segmentKey){ out.value='SEM VÍNCULO'; return; }
+  const draft=promoDraftFromForm();
+  draft.distributionId=distId; draft.segmentKey=segmentKey;
+  draft.occurrences=promoOccurrencesFromForm(draft,consolidatedPromoById(draft.id)||{});
+  const st=promoSegmentStatus(draft); out.value=st?`${st.available} DISP. · ${st.commitment} COMP. · ${Math.max(0,st.remaining)} LIVRE`:'SEM VÍNCULO';
+}
+function promoAllWinnerObjects(p){
+  const rows=[];
+  const normalize=(list,key='')=>(Array.isArray(list)?list:[]).map((w,idx)=>typeof w==='string'?{name:norm(w),_idx:idx,occurrenceKey:key}:{...w,name:norm(w?.name||''),_idx:idx,occurrenceKey:key}).filter(w=>w.name);
+  const byHour=Object.entries(p?.resultWinnersByHour||{}).filter(([,list])=>Array.isArray(list)&&list.length);
+  if(byHour.length) byHour.forEach(([key,list])=>rows.push(...normalize(list,key)));
+  else if(Array.isArray(p?.resultWinners)&&p.resultWinners.length) rows.push(...normalize(p.resultWinners,''));
+  else if(p?.resultName) String(p.resultName).split(',').map((name,idx)=>({name:norm(name),_idx:idx,occurrenceKey:''})).filter(w=>w.name).forEach(w=>rows.push(w));
+  return rows;
+}
 function promoResultStations(p){
   const st=p?.station || 'JP1017';
   return st==='ALL' ? ['JP1017','JPNEWS983'] : [st];
 }
-function promoResultProgramTitle(p,station,slot){
-  return programForSlot(p.drawDate || p.startDate || todayISO(), slot, station) || norm(p.program || '') || 'RESULTADO NO AR';
+function promoResultProgramTitle(p,station,slot,date=p.drawDate){
+  return programForSlot(date || p.startDate || todayISO(), slot, station) || norm(p.program || '') || 'RESULTADO NO AR';
 }
+
 function existingPromoResultItems(promoId){
   const rows=[];
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
@@ -11106,45 +11740,24 @@ function existingPromoResultItems(promoId){
   return rows;
 }
 function syncPromoResultToProgram(p){
-  if(!p || !p.id || !p.drawDate || !p.drawTime) return;
+  if(!p || !p.id) return;
+  const occurrences=(p.occurrences&&p.occurrences.length)?p.occurrences:generatePromoOccurrences(p,p);
   const old=existingPromoResultItems(p.id);
-  const oldByStation={};
-  old.forEach(r=>{ oldByStation[r.item.station||'JP1017']=r.item; });
+  const oldMap=new Map(old.map(r=>[`${r.item.station||'JP1017'}|${r.item.occurrenceId||promoOccurrenceKey(p,r.item.date,r.item.slot)}`,r.item]));
   Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===p.id)); });
-  const key=String(p.drawDate).slice(0,7) || state.currentMonth;
-  const targetMonth=monthDataForKey(key);
-  const slot=normalizeSlot(p.drawTime);
-  promoResultStations(p).forEach(station=>{
-    const previous=oldByStation[station] || {};
-    const winner=norm(p.resultName || previous.winnerName || '');
-    const status = previous.status==='CANCELADO' ? 'CANCELADO' : (winner ? 'REALIZADO' : normalizeStatus(previous.status || 'PENDENTE'));
-    const program=promoResultProgramTitle(p,station,slot);
-    targetMonth.items.push({
-      id:previous.id || id('BR'),
-      date:p.drawDate,
-      day:dayName(p.drawDate),
-      week:weekLabel(p.drawDate),
-      slot,
-      station,
-      program,
-      distributionId:p.distributionId || '',
-      prize:norm(p.name || p.title || 'PROMOÇÃO'),
-      title:`RESULTADO: ${norm(p.name || p.title || 'PROMOÇÃO')}`,
-      qty:1,
-      channel:'RÁDIO',
-      status,
-      winnerName:winner,
-      notes:`RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR. ORIGEM: ${promoTypeDisplay(p)} · ${norm(p.local || 'PROMOÇÃO')}.`,
-      titleStyle:p.titleStyle || defaultPromoTextStyle('title'),
-      descriptionStyle:p.descriptionStyle || defaultPromoTextStyle('desc'),
-      sourceType:'promo-result',
-      promoId:p.id,
-      promoKind:p.kind || 'promo',
-      createdAt:previous.createdAt || new Date().toISOString(),
-      updatedAt:new Date().toISOString()
+  occurrences.filter(o=>normalizeStatus(o.status)!=='CANCELADO').forEach(o=>{
+    const key=String(o.date).slice(0,7)||state.currentMonth, targetMonth=monthDataForKey(key), slot=normalizeSlot(o.time||p.drawTime), occurrenceId=o.id||promoOccurrenceKey(p,o.date,slot);
+    promoResultStations(p).forEach(station=>{
+      const previous=oldMap.get(`${station}|${occurrenceId}`)||{};
+      const mapKey=readHourKeyForAdmin(o.date,slot);
+      const winners=Array.isArray(p.resultWinnersByHour?.[mapKey])?p.resultWinnersByHour[mapKey]:[];
+      const winner=norm(winners.map(w=>typeof w==='string'?w:w?.name).filter(Boolean).join(', ')||p.resultByHour?.[mapKey]||previous.winnerName||'');
+      const status=previous.status==='CANCELADO'?'CANCELADO':(winner?'REALIZADO':normalizeStatus(previous.status||o.status||'PENDENTE'));
+      targetMonth.items.push({id:previous.id||id('BR'),date:o.date,day:dayName(o.date),week:weekLabel(o.date),slot,station,program:promoResultProgramTitle(p,station,slot,o.date),distributionId:p.distributionId||'',prize:norm(p.name||p.title||'PROMOÇÃO'),title:`RESULTADO: ${norm(p.name||p.title||'PROMOÇÃO')}`,qty:Math.max(1,num(o.qtyPlanned)||1),channel:'RÁDIO',status,winnerName:winner,notes:`RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR. ORIGEM: ${promoTypeDisplay(p)} · ${norm(p.local||'PROMOÇÃO')}.`,titleStyle:p.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:p.descriptionStyle||defaultPromoTextStyle('desc'),sourceType:'promo-result',promoId:p.id,occurrenceId,promoKind:p.kind||'promo',createdAt:previous.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()});
     });
   });
 }
+function readHourKeyForAdmin(date,slot){ const t=timeToHHMM(slot); return `${date}-${t.slice(0,2)}${t.slice(3,5)}`; }
 function removePromoResultFromProgram(promoId){
   Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===promoId)); });
 }
@@ -11155,14 +11768,21 @@ $('promoForm').addEventListener('submit',e=>{
   const existing=consolidatedPromoById(idVal) || {};
   const startDate=$('promoStartDate').value;
   const drawDate=$('promoDrawDate').value;
-  if(drawDate<startDate){ alert('A DATA FINAL / SORTEIO NÃO PODE SER ANTERIOR AO INÍCIO.'); return; }
+  const endDate=$('promoEndDate')?.value||drawDate;
+  if(endDate<startDate){ alert('A DATA DE ENCERRAMENTO NÃO PODE SER ANTERIOR AO INÍCIO.'); return; }
+  if(drawDate<startDate||drawDate>endDate){ alert('A DATA DO PRIMEIRO SORTEIO PRECISA ESTAR DENTRO DO PERÍODO DA PROMOÇÃO.'); return; }
   const p={
     ...clone(existing),
     id:idVal,
     startDate,
     drawDate,
-    endDate:drawDate,
+    endDate,
     drawTime:fullHourTimeValue($('promoDrawTime').value),
+    pickupBusinessDays:Math.max(1,Math.min(5,num($('promoPickupDays')?.value)||5)),
+    recurrenceMode:$('promoRecurrence')?.value||'single',
+    qtyPerDraw:Math.max(1,num($('promoQtyPerDraw')?.value)||1),
+    distributionId:$('promoDistributionId')?.value||'',
+    segmentKey:$('promoSegmentKey')?.value||'',
     kind:$('promoKind')?.value || 'promo',
     local:$('promoKind')?.value==='merchan' ? 'MERCHAN' : norm($('promoLocal').value),
     program:$('promoProgram') ? norm($('promoProgram').value) : '',
@@ -11178,10 +11798,20 @@ $('promoForm').addEventListener('submit',e=>{
     createdAt:existing.createdAt||new Date().toISOString(),
     updatedAt:new Date().toISOString()
   };
+  p.occurrences=promoOccurrencesFromForm(p,existing);
+  if(p.kind==='promo'&&!p.occurrences.length){ alert('NÃO FOI POSSÍVEL GERAR A AGENDA DE SORTEIOS. CONFIRA AS DATAS.'); return; }
+  if(p.occurrences.some(o=>o.date<p.startDate||o.date>p.endDate)){ alert('EXISTE SORTEIO FORA DO PERÍODO DA PROMOÇÃO.'); return; }
+  if((p.distributionId&&!p.segmentKey)||(!p.distributionId&&p.segmentKey)){ alert('PARA VINCULAR A PROMOÇÃO, SELECIONE A DISTRIBUIÇÃO E O SEGMENTO.'); return; }
+  if(p.distributionId){
+    if(!distributionCampaignCopies(p.distributionId).length){ alert('A DISTRIBUIÇÃO VINCULADA NÃO FOI ENCONTRADA.'); return; }
+    const seg=promoSegmentStatus(p);
+    if(seg&&seg.commitment>seg.available){ alert(`SALDO INSUFICIENTE NO SEGMENTO ${seg.label}.\n\nDISPONÍVEL PARA ESTA PROMOÇÃO: ${seg.available}\nCOMPROMETIDO PELOS SORTEIOS: ${seg.commitment}\n\nAUMENTE A QUANTIDADE NA ABA DISTRIBUIÇÃO.`); return; }
+  }
   delete p.__months;
   syncPromoResultToProgram(p);
   storePromoAcrossMonths(p);
-  saveState(true); closeDrawer('promoDrawer'); render(); toast('PROMOÇÃO SALVA E SINCRONIZADA EM TODO O PERÍODO.');
+  auditEvent(existing.id?'ALTERAÇÃO DE PROMOÇÃO':'CADASTRO DE PROMOÇÃO',p.name||p.title||'PROMOÇÃO',{targetId:p.id,before:existing.id?existing:'',after:p});
+  saveState(true); closeDrawer('promoDrawer'); render(); toast('PROMOÇÃO ALTERADA · SINCRONIZANDO TODO O PERÍODO COM FIREBASE...');
 });
 
 function bind(id,event,handler){ const el=$(id); if(el) el.addEventListener(event,handler); }
@@ -11286,6 +11916,15 @@ bind('winnerRecordSimilarity','click',event=>{
 bind('refreshWinnerBankBtn','click',()=>initWinnerBank(true));
 ['winnerBankSearch','winnerBankStatusFilter'].forEach(id=>bind(id,'input',renderWinnerBank));
 
+bind('globalSearchInput','input',()=>{ renderGlobalSearch(); if(($('globalSearchInput')?.value||'').trim()) setView('sistema'); });
+bind('systemCheckBtn','click',()=>{ renderSystemView(); toast('VERIFICAÇÃO DE INTEGRIDADE CONCLUÍDA.'); });
+bind('monthCloseBtn','click',()=>{ if(state.systemMeta?.closedMonths?.[state.currentMonth]) reopenMonth(state.currentMonth); else closeCurrentMonthControlled(); });
+bind('adminReportFrom','change',renderAdminReports); bind('adminReportTo','change',renderAdminReports); bind('adminReportType','change',renderAdminReports); bind('adminReportPdfBtn','click',()=>window.print()); bind('adminReportPrintBtn','click',()=>window.print());
+document.addEventListener('click',event=>{
+  const restore=event.target.closest('[data-restore-trash]'); if(restore){ restoreTrashRecord(restore.dataset.restoreTrash); return; }
+  const pending=event.target.closest('[data-pending-view]'); if(pending){ setView(pending.dataset.pendingView); return; }
+  const result=event.target.closest('[data-global-result]'); if(result){ setView(result.dataset.viewTarget||'sistema'); return; }
+});
 bind('monthInput','input',commitMonthInputSelection);
 bind('monthInput','change',commitMonthInputSelection);
 function downloadFile(name, content, type){ const blob=new Blob([content],{type}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }

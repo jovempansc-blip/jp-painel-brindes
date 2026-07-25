@@ -1890,6 +1890,7 @@ const FIREBASE_CONFIG = {
 const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
 const WINNER_BANK_PATH = "jp-painel-brindes/winnerBank";
 const WINNER_BLOCK_MONTHS = 8;
+const WINNER_SHORT_BLOCK_DAYS = 28;
 const LEGACY_API_URL = "https://script.google.com/macros/s/AKfycbzaeiSMNoo4miaB7ABVku3hxUsg5dr6egLE9-fltQaIUPzHr0RKFMR5nXr7ATbD4evJ/exec";
 
 let firebaseStarted=false;
@@ -1940,7 +1941,7 @@ async function persistStudioRecord(collection,record,fields){
   if(!firebaseReady||!firebaseRef) throw new Error('FIREBASE INDISPONÍVEL');
   const patch=pickStudioFields(record,fields);
   const keys=studioRecordMonths(collection,record.id);
-  await Promise.all(keys.map(monthKey=>firebaseRef.child(`state/months/${monthKey}/${collection}`).transaction(current=>{
+  await Promise.all(keys.map(monthKey=>firebaseRef.child(`months/${monthKey}/${collection}`).transaction(current=>{
     const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
     const index=rows.findIndex(row=>row?.id===record.id);
     if(index<0) rows.push({...record,...patch});
@@ -1958,7 +1959,7 @@ async function persistStudioRecord(collection,record,fields){
 function persistStudioPromo(record){
   return persistStudioRecord('promos',record,[
     'readByHour','readLog','readAt','readAtLabel','readSlot','readStation','readProgram',
-    'resultByHour','resultWinnersByHour','resultWinners','resultName','resultAt','resultAtLabel','resultSlot','resultDate'
+    'resultByHour','resultWinnersByHour','resultWinners','resultName','resultAt','resultAtLabel','resultSlot','resultDate','occurrences','pickupBusinessDays'
   ]);
 }
 function persistStudioItem(record){
@@ -2027,12 +2028,13 @@ function initFirebaseSync(){
     firebaseReady=true;
     firebaseRef.on('value', async snapshot=>{
       const payload=snapshot.val();
-      if(!payload || !payload.state){
+      const remoteState=payload?.months?payload:(payload?.state?.months?payload.state:null);
+      if(!remoteState){
         await handleEmptyFirebase();
         return;
       }
       if(firebasePendingSave && Date.now()-firebaseLastLocalWrite<1200) return;
-      applyRemoteFirebaseState(payload.state);
+      applyRemoteFirebaseState(remoteState);
       firebasePendingSave=false;
     },err=>console.warn('FIREBASE LOAD ERROR',err));
   }catch(err){
@@ -2044,7 +2046,8 @@ function syncStateFromApi(force=false){
   if(force && firebaseReady && firebaseRef){
     firebaseRef.get().then(snapshot=>{
       const payload=snapshot.val();
-      if(payload && payload.state) applyRemoteFirebaseState(payload.state);
+      const remoteState=payload?.months?payload:(payload?.state?.months?payload.state:null);
+      if(remoteState) applyRemoteFirebaseState(remoteState);
     }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
   }
 }
@@ -2063,13 +2066,10 @@ async function saveStateToApi(){
       console.warn('ENVIO BLOQUEADO: BASE DO ESTÚDIO VAZIA.');
       return;
     }
-    await firebaseRef.set({
-      state,
-      updatedAt: window.firebase.database.ServerValue.TIMESTAMP,
-      savedAt: new Date().toISOString(),
-      source: 'PAINEL_ESTUDIO',
-      user: 'JOVEM_PAN_FLORIPA',
-      version: 'FIREBASE_RTDB_V1'
+    await firebaseRef.transaction(current=>{
+      const existing=current?.months?current:(current?.state?.months?current.state:null);
+      if(existing && countStateRecords(existing)>0) return existing;
+      return {...state,savedAt:new Date().toISOString(),source:'PAINEL_ESTUDIO',user:'JOVEM_PAN_FLORIPA',version:'FIREBASE_RTDB_V3_FLAT'};
     });
     firebaseServerLoaded=true;
     firebasePendingSave=false;
@@ -2210,18 +2210,41 @@ function winnerAddMonthsISO(iso,months=WINNER_BLOCK_MONTHS){
   const result=new Date(first.getFullYear(),first.getMonth(),Math.min(day,lastDay),12);
   return `${result.getFullYear()}-${String(result.getMonth()+1).padStart(2,'0')}-${String(result.getDate()).padStart(2,'0')}`;
 }
+function winnerAddDaysISO(iso,days=WINNER_SHORT_BLOCK_DAYS){
+  const [year,month,day]=String(iso||'').split('-').map(Number);
+  if(!year||!month||!day) return '';
+  const result=new Date(year,month-1,day+Number(days||0),12);
+  return `${result.getFullYear()}-${String(result.getMonth()+1).padStart(2,'0')}-${String(result.getDate()).padStart(2,'0')}`;
+}
 function winnerCycleInfo(records,asOf=todayISO()){
-  const sorted=[...records].filter(record=>record?.date&&record.date<=asOf).sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  const sorted=[...records]
+    .filter(record=>record?.date && record.date<=asOf)
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
   let cycleCount=0;
   let blockedUntil='';
+  let blockKind='';
+  let thirdDate='';
   sorted.forEach(record=>{
-    if(blockedUntil&&record.date>=blockedUntil){ cycleCount=0; blockedUntil=''; }
-    if(blockedUntil&&record.date<blockedUntil) return;
+    if(cycleCount===3){
+      const release=winnerAddMonthsISO(thirdDate||record.date);
+      if(record.date>=release){ cycleCount=0; blockedUntil=''; blockKind=''; thirdDate=''; }
+      else return;
+    }
     cycleCount+=1;
-    if(cycleCount===3) blockedUntil=winnerAddMonthsISO(record.date);
+    if(cycleCount===1 || cycleCount===2){
+      blockedUntil=winnerAddDaysISO(record.date);
+      blockKind='SHORT';
+    }else if(cycleCount===3){
+      thirdDate=record.date;
+      blockedUntil=winnerAddMonthsISO(record.date);
+      blockKind='LONG';
+    }
   });
-  if(blockedUntil&&asOf>=blockedUntil){ cycleCount=0; blockedUntil=''; }
-  return {cycleCount,blocked:!!blockedUntil,blockedUntil};
+  if(cycleCount===3 && blockedUntil && asOf>=blockedUntil){
+    cycleCount=0; blockedUntil=''; blockKind=''; thirdDate='';
+  }
+  const blocked=!!blockedUntil && asOf<blockedUntil;
+  return {cycleCount,blocked,blockedUntil:blockKind&&blocked?blockedUntil:'',nextAllowedAt:blocked?blockedUntil:'',blockKind:blocked?blockKind:'',thirdDate};
 }
 function winnerEvaluateAgainst(records,name,prize,asOf=todayISO()){
   const personKey=winnerPersonKey(name);
@@ -2242,7 +2265,7 @@ function winnerEvaluateAgainst(records,name,prize,asOf=todayISO()){
     reason=previous?`MESMO PRÊMIO REGISTRADO EM ${formatBR(previous.date)} · ${upper(previous.program||'PROGRAMA')}.`:'ESTE PRÊMIO JÁ CONSTA NO HISTÓRICO.';
   }else if(cycle.blocked){
     status='BLOQUEADO';
-    title='BLOQUEADO';
+    title=cycle.blockKind==='LONG'?'BLOQUEADO — 3ª PREMIAÇÃO':'BLOQUEADO — 28 DIAS';
     reason=`LIBERAÇÃO AUTOMÁTICA EM ${formatBR(cycle.blockedUntil)}.`;
   }else if(cycle.cycleCount===2){
     status='ATENCAO';
@@ -2417,6 +2440,17 @@ async function commitWinnerHistory(names,context){
 }
 
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
+function studioPublishedPrizeItems(){
+  const live=monthData().items||[], published=state.publishedPrograms?.[currentMonth];
+  if(!published?.items?.length) return live;
+  const liveMap=new Map(live.map(i=>[i.id,i]));
+  const mutable=['winnerName','winnerNames','winnerCapacity','status','resultAt','resultAtLabel','deliveredAt','deliveredAtLabel','deliveredBy'];
+  return published.items.map(base=>{
+    const current=liveMap.get(base.id)||{}; const row={...base};
+    mutable.forEach(k=>{ if(Object.prototype.hasOwnProperty.call(current,k)) row[k]=current[k]; });
+    return row;
+  });
+}
 function pad(n){return String(n).padStart(2,'0');}
 function formatBR(iso){if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
 function slotParts(slot){
@@ -2645,53 +2679,37 @@ function promoResultStations(p){
 function promoResultSlot(p){
   return formatStudioTime(p?.resultSlot || p?.drawTime || '');
 }
+function promoOccurrences(p){
+  if(Array.isArray(p?.occurrences)&&p.occurrences.length) return p.occurrences;
+  if(p?.drawDate&&p?.drawTime) return [{id:`${p.id}|${p.drawDate}|${timeToHHMM(p.drawTime)}`,date:p.drawDate,time:p.drawTime,qtyPlanned:Math.max(1,Number(p.qtyPerDraw||1)||1),actualQty:0,status:'AGENDADO'}];
+  return [];
+}
+function promoOccurrenceForItem(p,item){
+  if(!p||!item) return null;
+  return promoOccurrences(p).find(o=>o.date===(item.date||'')&&slotHour(o.time||p.drawTime)===slotHour(item.slot));
+}
 function isPromoResultForItem(p,item){
   if(!p || !item || isMerchan(p)) return false;
   if(!stationAllowed(p)) return false;
-  const ref=p.drawDate || p.resultDate || '';
-  if(ref !== (item.date||'')) return false;
-  const drawSlot=promoResultSlot(p);
-  if(!drawSlot || drawSlot==='--H') return false;
-  return slotHour(drawSlot) === slotHour(item.slot);
+  return !!promoOccurrenceForItem(p,item);
 }
 function promoResultVirtualRows(){
-  const physical=new Set((monthData().items||[])
+  const physical=new Set((studioPublishedPrizeItems()||[])
     .filter(i=>i.sourceType==='promo-result' && i.promoId)
-    .map(i=>`${i.promoId}|${i.station||STUDIO_STATION}|${i.date}|${formatStudioTime(i.slot)}`));
-  return [...(monthData().promos||[])]
-    .filter(p=>!isMerchan(p))
-    .filter(p=>p && p.id && p.drawDate && p.drawTime)
-    .filter(p=>promoResultStations(p).includes(STUDIO_STATION))
-    .map(p=>{
-      const slot=promoResultSlot(p);
-      const key=`${p.id}|${STUDIO_STATION}|${p.drawDate}|${slot}`;
-      if(physical.has(key)) return null;
-      const program=programFromSchedule(p.drawDate,slot,STUDIO_STATION) || upper(p.program||'RESULTADO PROMOÇÃO');
-      const name=upper(p.name||p.title||'PROMOÇÃO');
-      const winners=promoWinnerList(p,{date:p.drawDate,slot});
-      return {
-        id:`PROMO_RESULT_${p.id}_${STUDIO_STATION}`,
-        date:p.drawDate,
-        slot,
-        station:STUDIO_STATION,
-        program,
-        distributionId:p.distributionId||'',
-        prize:name,
-        title:`RESULTADO: ${name}`,
-        qty:1,
-        channel:'RÁDIO',
-        status:winners.length || p.resultName ? 'REALIZADO' : 'PENDENTE',
-        winnerName:winners.map(w=>w.name).join(', '),
-        notes:`RESULTADO DO SORTEIO PROGRAMADO PARA ESTE HORÁRIO. ${upper(p.local||'PROMOÇÃO')}.`,
-        titleStyle:p.titleStyle||defaultTextStyle('title'),
-        descriptionStyle:p.descriptionStyle||defaultTextStyle('desc'),
-        sourceType:'promo-result',
-        promoId:p.id,
-        promoKind:p.kind||'promo',
-        __promoResultVirtual:true
-      };
-    })
-    .filter(Boolean);
+    .map(i=>`${i.promoId}|${i.station||STUDIO_STATION}|${i.occurrenceId||''}|${i.date}|${formatStudioTime(i.slot)}`));
+  const rows=[];
+  [...(monthData().promos||[])].filter(p=>!isMerchan(p)&&p&&p.id).filter(p=>promoResultStations(p).includes(STUDIO_STATION)).forEach(p=>{
+    promoOccurrences(p).filter(o=>upper(o.status||'')!=='CANCELADO').forEach(o=>{
+      const slot=formatStudioTime(o.time||p.drawTime); const occurrenceId=o.id||`${p.id}|${o.date}|${timeToHHMM(o.time||p.drawTime)}`;
+      const exactKey=`${p.id}|${STUDIO_STATION}|${occurrenceId}|${o.date}|${slot}`;
+      const legacyKey=`${p.id}|${STUDIO_STATION}||${o.date}|${slot}`;
+      if(physical.has(exactKey)||physical.has(legacyKey)) return;
+      const itemRef={date:o.date,slot}; const program=programFromSchedule(o.date,slot,STUDIO_STATION)||upper(p.program||'RESULTADO PROMOÇÃO');
+      const name=upper(p.name||p.title||'PROMOÇÃO'); const winners=promoWinnerList(p,itemRef);
+      rows.push({id:`PROMO_RESULT_${p.id}_${occurrenceId}_${STUDIO_STATION}`,date:o.date,slot,station:STUDIO_STATION,program,distributionId:p.distributionId||'',prize:name,title:`RESULTADO: ${name}`,qty:Math.max(1,Number(o.qtyPlanned||p.qtyPerDraw||1)||1),channel:'RÁDIO',status:winners.length?'REALIZADO':'PENDENTE',winnerName:winners.map(w=>w.name).join(', '),notes:`RESULTADO DO SORTEIO PROGRAMADO PARA ESTE HORÁRIO. ${upper(p.local||'PROMOÇÃO')}.`,titleStyle:p.titleStyle||defaultTextStyle('title'),descriptionStyle:p.descriptionStyle||defaultTextStyle('desc'),sourceType:'promo-result',promoId:p.id,occurrenceId,__virtualPromoResult:true});
+    });
+  });
+  return rows;
 }
 
 function promoEligibleForItemHour(p,item){
@@ -2891,47 +2909,70 @@ function addPromoWinnerField(value=''){
   if(last) last.focus();
   validateAllPromoWinnerInputs();
 }
-async function savePromoResultInline(){
-  const p=currentPromoForRead();
-  const item=currentDisplayItem || virtualCurrentItem();
-  if(!p || !item) return;
-  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
-  const winners=collectPromoWinnerInputs();
-  if(!winners.length||fields.some(field=>!upper(field.value))){ fields.find(field=>!upper(field.value))?.focus(); return; }
-  validateAllPromoWinnerInputs();
-  if(!winnerBankReady||promoWinnerChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
-  const button=$('savePromoResultInline');
-  button.disabled=true;
-  button.textContent='VALIDANDO E SALVANDO...';
-  try{
-    const context=winnerContextForPromo(p,item);
-    await commitWinnerHistory(winners.map(w=>w.name),context);
-    const now=new Date();
-    const key=readHourKey(item,p);
-    const previous=promoWinnerList(p,item);
-    const prepared=winners.map(w=>({...w,registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')}));
-    const merged=mergeWinnerDelivery(previous,prepared);
-    const joined=merged.map(w=>w.name).join(', ');
-    p.resultByHour ||= {};
-    p.resultByHour[key]=joined;
-    p.resultWinnersByHour ||= {};
-    p.resultWinnersByHour[key]=merged;
-    p.resultWinners=merged;
-    p.resultName=joined;
-    p.resultAt=now.toISOString();
-    p.resultAtLabel=now.toLocaleString('pt-BR');
-    p.resultSlot=formatStudioTime(item.slot);
-    p.resultDate=item.date || todayISO();
-    saveState();
-    await persistStudioPromo(p);
-    render();
-  }catch(error){
-    console.error('ERRO AO SALVAR RESULTADO DA PROMOÇÃO:',error);
-    alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR O RESULTADO.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`);
-    initWinnerBank(true);
-  }finally{
-    if(button){ button.textContent='SALVAR RESULTADO'; updatePromoWinnerSaveState(); }
+async function commitStudioOutcomeAtomic({collection,recordId,patch,names,context,occurrenceKey=''}){
+  if(!firebaseReady||!firebaseRef) initFirebaseSync();
+  if(!firebaseReady||!firebaseRef||!winnerBankRef) throw new Error('FIREBASE INDISPONÍVEL.');
+  const rootRef=firebaseRef.parent; const now=new Date(); const newIds=names.map(()=>winnerBankRef.child('records').push().key); let rejection=null,duplicateConfirmation=false;
+  const result=await rootRef.transaction(root=>{
+    root=root&&typeof root==='object'?root:{};
+    let panel=root.state?.months?root.state:(root.state?.state?.months?root.state.state:null);
+    if(!panel?.months) return;
+    const bank=root.winnerBank&&typeof root.winnerBank==='object'?root.winnerBank:{}; const recordMap=winnerRecordMap(bank.records||{});
+    const existingSource=Object.values(recordMap).filter(r=>r.source==='ESTUDIO_JP1017'&&r.sourceRef===context.sourceRef);
+    // Uma ocorrência já confirmada não pode ser processada novamente por duplo clique/reload.
+    let targetFound=false;
+    Object.values(panel.months||{}).forEach(m=>{
+      (m?.[collection]||[]).forEach(row=>{
+        if(row?.id!==recordId) return; targetFound=true;
+        if(collection==='items' && upper(row.status)==='REALIZADO' && upper(row.winnerName||'')) duplicateConfirmation=true;
+        if(collection==='promos' && occurrenceKey && Array.isArray(row.resultWinnersByHour?.[occurrenceKey]) && row.resultWinnersByHour[occurrenceKey].length) duplicateConfirmation=true;
+      });
+    });
+    if(!targetFound) return;
+    if(duplicateConfirmation||existingSource.length){ return; }
+    const working=winnerRecordList(recordMap);
+    for(let index=0;index<names.length;index++){
+      const name=upper(names[index]); const eligibility=winnerEvaluateAgainst(working,name,context.prize,context.date);
+      if(!eligibility.allowed){ rejection=eligibility; return; }
+      const rid=newIds[index]; const rec={id:rid,name,date:context.date,program:context.program,prize:context.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(context.prize),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:'ESTUDIO_JP1017'};
+      recordMap[rid]=rec; working.push(rec);
+    }
+    bank.records=recordMap; bank.schemaVersion=1; bank.updatedAtISO=now.toISOString(); bank.source='ESTUDIO_JP1017'; root.winnerBank=bank;
+    Object.values(panel.months||{}).forEach(m=>{
+      const rows=m?.[collection]||[]; const idx=rows.findIndex(row=>row?.id===recordId); if(idx>=0) rows[idx]={...rows[idx],...JSON.parse(JSON.stringify(patch)),updatedAt:now.toISOString()};
+    });
+    panel.auditLog=Array.isArray(panel.auditLog)?panel.auditLog:[];
+    panel.auditLog.push({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',note:`${names.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});
+    panel.auditLog=panel.auditLog.slice(-2500); panel.updatedAt=Date.now(); panel.savedAt=now.toISOString(); panel.source='ESTUDIO_JP1017'; panel.version='FIREBASE_RTDB_V3_ATOMIC_RESULT'; root.state=panel;
+    return root;
+  },undefined,false);
+  if(!result.committed){
+    if(duplicateConfirmation){ const e=new Error('RESULTADO JÁ CONFIRMADO. ESTA OCORRÊNCIA NÃO SERÁ PROCESSADA NOVAMENTE.'); e.alreadyConfirmed=true; throw e; }
+    const e=new Error(rejection?.reason||'A OPERAÇÃO NÃO FOI CONCLUÍDA. OS DADOS PODEM TER SIDO ALTERADOS EM OUTRO COMPUTADOR.'); e.eligibility=rejection; throw e;
   }
+  const root=result.snapshot.val()||{}; const remote=root.state?.months?root.state:(root.state?.state?.months?root.state.state:null);
+  if(remote){ state=remote; selectStudioMonth(); localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
+  if(root.winnerBank) applyWinnerBankSnapshot(root.winnerBank);
+  return true;
+}
+async function savePromoResultInline(){
+  const p=currentPromoForRead(); const item=currentDisplayItem||virtualCurrentItem(); if(!p||!item) return;
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput')); const winners=collectPromoWinnerInputs();
+  if(!winners.length||fields.some(field=>!upper(field.value))){ fields.find(field=>!upper(field.value))?.focus(); return; }
+  const occurrence=promoOccurrenceForItem(p,item); const capacity=Math.max(1,Number(occurrence?.qtyPlanned||p.qtyPerDraw||item.qty||1)||1);
+  if(winners.length>capacity){ alert(`ESTE SORTEIO PREVÊ NO MÁXIMO ${capacity} GANHADOR(ES).`); return; }
+  validateAllPromoWinnerInputs(); if(!winnerBankReady||promoWinnerChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
+  const button=$('savePromoResultInline'); button.disabled=true; button.textContent='VALIDANDO E SALVANDO...';
+  try{
+    const context=winnerContextForPromo(p,item), now=new Date(), key=readHourKey(item,p), previous=promoWinnerList(p,item);
+    const prepared=winners.map(w=>({...w,registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')})); const merged=mergeWinnerDelivery(previous,prepared); const joined=merged.map(w=>w.name).join(', ');
+    const resultByHour={...(p.resultByHour||{}),[key]:joined}; const resultWinnersByHour={...(p.resultWinnersByHour||{}),[key]:merged};
+    const occurrences=promoOccurrences(p).map(o=>promoOccurrenceForItem({...p,occurrences:[o]},item)?{...o,status:'REALIZADO',actualQty:merged.length,resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')}:{...o});
+    const patch={resultByHour,resultWinnersByHour,resultWinners:merged,resultName:joined,resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR'),resultSlot:formatStudioTime(item.slot),resultDate:item.date||todayISO(),occurrences};
+    await commitStudioOutcomeAtomic({collection:'promos',recordId:p.id,patch,names:merged.map(w=>w.name),context,occurrenceKey:key});
+    render();
+  }catch(error){ console.error('ERRO AO SALVAR RESULTADO DA PROMOÇÃO:',error); alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR O RESULTADO.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`); initWinnerBank(true); }
+  finally{ if(button){ button.textContent='SALVAR RESULTADO'; updatePromoWinnerSaveState(); } }
 }
 
 function shouldShowPromoResultBox(p,item){
@@ -3142,7 +3183,7 @@ function isScheduledStudioPrize(item){
   return !!(item.prize || item.title || item.distributionId);
 }
 function allPrizeRows(){
-  const items=[...(monthData().items||[])]
+  const items=[...studioPublishedPrizeItems()]
     .filter(isScheduledStudioPrize);
   const virtualResults=promoResultVirtualRows();
   return [...items,...virtualResults]
@@ -3251,43 +3292,19 @@ function closeWinnerModal(){
   winnerInputChecks=[];
 }
 async function saveWinner(){
-  const item=currentItemRecord();
-  if(!item) return;
-  const fields=Array.from(document.querySelectorAll('.winnerNameField'));
-  const names=fields.map(input=>upper(input.value));
+  const item=currentItemRecord(); if(!item) return;
+  const fields=Array.from(document.querySelectorAll('.winnerNameField')), names=fields.map(input=>upper(input.value));
   if(!names.length||names.some(name=>!name)){ fields.find(input=>!upper(input.value))?.focus(); return; }
-  const max=winnerCapacity(item);
-  if(names.length>max){ alert(`ESTE HORÁRIO PERMITE NO MÁXIMO ${max} GANHADOR(ES).`); return; }
-  validateAllWinnerInputs();
-  if(!winnerBankReady||winnerInputChecks.some(check=>!check.allowed)){
-    alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.');
-    return;
-  }
-  const button=$('saveWinnerBtn');
-  button.disabled=true;
-  button.textContent='VALIDANDO E SALVANDO...';
+  const max=winnerCapacity(item); if(names.length>max){ alert(`ESTE HORÁRIO PERMITE NO MÁXIMO ${max} GANHADOR(ES).`); return; }
+  validateAllWinnerInputs(); if(!winnerBankReady||winnerInputChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
+  const button=$('saveWinnerBtn'); button.disabled=true; button.textContent='VALIDANDO E SALVANDO...';
   try{
-    const context=winnerContextForItem(item);
-    await commitWinnerHistory(names,context);
-    item.winnerNames=names;
-    item.winnerName=names.join(', ');
-    item.winnerCapacity=max;
-    item.status='REALIZADO';
-    item.resultAt=new Date().toISOString();
-    item.resultAtLabel=new Date().toLocaleString('pt-BR');
-    saveState();
-    await persistStudioItem(item);
-    closeWinnerModal();
-    render();
-  }catch(error){
-    console.error('ERRO AO SALVAR GANHADORES:',error);
-    alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR OS GANHADORES.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`);
-    initWinnerBank(true);
-    validateAllWinnerInputs();
-  }finally{
-    button.textContent='SALVAR GANHADOR(ES)';
-    updateWinnerSaveState();
-  }
+    const context=winnerContextForItem(item), now=new Date();
+    const patch={winnerNames:names,winnerName:names.join(', '),winnerCapacity:max,status:'REALIZADO',resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')};
+    await commitStudioOutcomeAtomic({collection:'items',recordId:item.id,patch,names,context});
+    closeWinnerModal(); render();
+  }catch(error){ console.error('ERRO AO SALVAR GANHADORES:',error); alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR OS GANHADORES.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`); initWinnerBank(true); validateAllWinnerInputs(); }
+  finally{ button.textContent='SALVAR GANHADOR(ES)'; updateWinnerSaveState(); }
 }
 function step(delta){
   const base = manualHourDateMs !== null
