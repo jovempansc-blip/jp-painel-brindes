@@ -3236,12 +3236,72 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 .appHeader .field{gap:4px!important}.appHeader .field label{font-size:7.2px!important;text-align:left!important;letter-spacing:.09em!important}
 .appHeader .control{height:34px!important;min-height:34px!important;border-radius:11px!important;padding:0 10px!important;font-size:9.5px!important}
 .appHeader .toolbar{
-  grid-area:tools!important;width:100%!important;min-height:31px!important;
-  display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;
-  padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;flex-wrap:wrap!important;
+  grid-area:tools!important;width:100%!important;min-height:34px!important;
+  display:grid!important;grid-template-columns:auto 1fr auto!important;align-items:center!important;gap:10px!important;
+  padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;
 }
-.appHeader .syncStatusBtn{min-height:27px!important;padding:0 10px!important;border-radius:999px!important;font-size:7.6px!important}
-.appHeader .mainHeaderUpdated{color:#657084!important;font-size:7.8px!important;font-weight:900!important;line-height:1.25!important;white-space:nowrap!important}
+.appHeader .syncStatusBtn{
+  width:16px!important;min-width:16px!important;height:16px!important;min-height:16px!important;padding:0!important;
+  border-radius:999px!important;border:2px solid #c7d2df!important;background:#97a5b6!important;box-shadow:none!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+}
+.appHeader .syncStatusBtn .syncDot{width:6px!important;height:6px!important;border-radius:50%!important;background:rgba(255,255,255,.92)!important;display:block!important}
+.appHeader .syncStatusBtn.online{background:#0f9f56!important;border-color:#0f9f56!important}
+.appHeader .syncStatusBtn.saving{background:#d08616!important;border-color:#d08616!important}
+.appHeader .syncStatusBtn.error{background:#c92b48!important;border-color:#c92b48!important}
+.appHeader .syncStatusBtn.local{background:#8e99a8!important;border-color:#8e99a8!important}
+.appHeader .syncStatusBtn{position:relative!important}
+.appHeader .syncStatusBtn::after{
+  content:attr(data-sync-tip);
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 10px);
+  transform:translateX(-50%) translateY(4px);
+  min-width:max-content;
+  max-width:min(520px,calc(100vw - 28px));
+  padding:8px 10px;
+  border-radius:10px;
+  background:#171c26;
+  color:#fff;
+  font-size:8px;
+  font-weight:900;
+  line-height:1.35;
+  letter-spacing:.03em;
+  text-align:left;
+  white-space:nowrap;
+  box-shadow:0 10px 28px rgba(17,24,39,.18);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:.15s ease;
+  z-index:9999;
+}
+.appHeader .syncStatusBtn::before{
+  content:'';
+  position:absolute;
+  left:50%;
+  bottom:calc(100% + 4px);
+  width:8px;
+  height:8px;
+  background:#171c26;
+  transform:translateX(-50%) rotate(45deg);
+  opacity:0;
+  visibility:hidden;
+  transition:.15s ease;
+  z-index:9998;
+}
+.appHeader .syncStatusBtn:hover::after,.appHeader .syncStatusBtn:focus-visible::after,
+.appHeader .syncStatusBtn:hover::before,.appHeader .syncStatusBtn:focus-visible::before{
+  opacity:1;visibility:visible;transform:translateX(-50%) translateY(0);
+}
+.appHeader .syncStatusBtn:hover::before,.appHeader .syncStatusBtn:focus-visible::before{transform:translateX(-50%) rotate(45deg)}
+@media(max-width:620px){
+  .appHeader .syncStatusBtn::after{left:0;transform:translateX(0) translateY(4px);white-space:normal;min-width:240px}
+  .appHeader .syncStatusBtn:hover::after,.appHeader .syncStatusBtn:focus-visible::after{transform:translateX(0) translateY(0)}
+  .appHeader .syncStatusBtn::before{left:8px}
+}
+.appHeader .mainHeaderUpdated{color:#657084!important;font-size:7.8px!important;font-weight:900!important;line-height:1.25!important;white-space:nowrap!important;text-align:center!important;justify-self:center!important}
+.appHeader .headerQuickActions{display:inline-flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;justify-self:end!important}
 .appHeader .toolbar .iconBtn{width:31px!important;min-width:31px!important;min-height:31px!important;border-radius:10px!important;padding:0!important}
 .appHeader .toolbar .iconBtn .iconGlyph{font-size:10px!important}
 .appHeader #returnBellBtn .iconGlyph{font-size:14px!important}
@@ -3254,8 +3314,8 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 @media(max-width:620px){
   .appHeader{position:relative!important;top:auto!important}
   .appHeader .topTools{grid-template-columns:1fr!important;grid-template-areas:"month" "search" "tools"!important}
-  .appHeader .toolbar{justify-content:flex-start!important}
-  .appHeader .mainHeaderUpdated{white-space:normal!important;flex-basis:100%!important}
+  .appHeader .toolbar{grid-template-columns:auto 1fr auto!important}
+  .appHeader .mainHeaderUpdated{white-space:normal!important;padding:0 6px!important}
 }
 </style>
 </head>
@@ -3270,10 +3330,15 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
       <div class="field monthHeaderField"><label>MÊS</label><input class="control" type="month" id="monthInput" value=""></div>
       <div class="field globalSearchField"><label>BUSCA GLOBAL</label><input class="control" id="globalSearchInput" type="search" autocomplete="off" placeholder="PRÊMIO, GANHADOR, PROMOÇÃO..."></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
-        <button class="btn syncStatusBtn saving" id="syncStatusBtn" type="button" title="STATUS DO BANCO">CONECTANDO</button>
+        <button class="btn syncStatusBtn saving" id="syncStatusBtn" type="button" title="STATUS DO BANCO" aria-label="STATUS DO BANCO">
+          <span class="syncDot" aria-hidden="true"></span>
+          <span class="visuallyHidden" id="syncStatusText">CONECTANDO</span>
+        </button>
         <span class="mainHeaderUpdated" id="mainHeaderUpdated">ATUALIZADO: --/--/----, --:--:--</span>
-        <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
-        <button class="btn iconBtn returnBellBtn" id="returnBellBtn" title="RETORNOS / REAPROVEITAMENTO" aria-label="RETORNOS / REAPROVEITAMENTO" data-tip="ALERTAS"><span class="iconGlyph">🔔</span><span class="returnBellCount" id="returnBellCount">0</span><span class="visuallyHidden">RETORNOS</span></button>
+        <div class="headerQuickActions">
+          <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
+          <button class="btn iconBtn returnBellBtn" id="returnBellBtn" title="RETORNOS / REAPROVEITAMENTO" aria-label="RETORNOS / REAPROVEITAMENTO" data-tip="ALERTAS"><span class="iconGlyph">🔔</span><span class="returnBellCount" id="returnBellCount">0</span><span class="visuallyHidden">RETORNOS</span></button>
+        </div>
       </div>
     </div>
   </header>
@@ -6397,13 +6462,19 @@ function hasLocalPersistedState(){
 function updateSyncStatus(mode='local',text='LOCAL'){
   const btn=$('syncStatusBtn');
   const updated=$('mainHeaderUpdated');
+  const statusText=$('syncStatusText');
   if(!btn) return;
   btn.classList.remove('online','saving','error','local');
   btn.classList.add(mode);
-  btn.textContent=text;
-  btn.title = mode==='online' ? (firebaseBaseEmpty?'FIREBASE CONECTADO — BASE OFICIAL VAZIA':'FIREBASE ONLINE') : mode==='saving' ? 'CONECTANDO OU SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'SEM CONEXÃO COM O FIREBASE — RECONECTANDO';
+  const statusTitle = mode==='online' ? (firebaseBaseEmpty?'FIREBASE CONECTADO — BASE OFICIAL VAZIA':'FIREBASE ONLINE') : mode==='saving' ? 'CONECTANDO OU SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'SEM CONEXÃO COM O FIREBASE — RECONECTANDO';
+  btn.title = statusTitle;
+  btn.setAttribute('aria-label',statusTitle);
+  const dbHost = String(FIREBASE_CONFIG.databaseURL||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
+  const connLabel = mode==='online' ? 'CONECTADO' : mode==='saving' ? 'SINCRONIZANDO' : mode==='error' ? 'ERRO DE CONEXÃO' : 'RECONECTANDO';
+  btn.setAttribute('data-sync-tip', `${connLabel} • ${FIREBASE_CONFIG.projectId||'FIREBASE'} • ${dbHost} • /${FIREBASE_ROOT_PATH}`);
+  if(statusText) statusText.textContent = text;
   if(updated){
-    const prefix=mode==='online'?'ATUALIZADO':mode==='saving'?'SINCRONIZANDO':mode==='error'?'ERRO':mode==='local'?'BASE LOCAL':'ATUALIZADO';
+    const prefix=mode==='online'?'ATUALIZADO':mode==='saving'?'SINCRONIZANDO':mode==='error'?'ERRO DE SINCRONIZAÇÃO':mode==='local'?'BASE LOCAL':'ATUALIZADO';
     updated.textContent=`${prefix}: ${new Date().toLocaleString('pt-BR')}`;
   }
 }
