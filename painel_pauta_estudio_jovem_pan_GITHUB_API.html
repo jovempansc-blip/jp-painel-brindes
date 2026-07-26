@@ -1845,11 +1845,27 @@ tbody tr:focus-within td{background:#fff8fa}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
 </style>
+
+<style>
+/* === V56: AJUSTE FINAL DOS LINKS DE ESTÚDIO === */
+.heroLogo{background:transparent!important;box-shadow:none!important;object-fit:contain!important}
+.pautaBody{min-height:230px!important;padding:18px 28px 20px!important;gap:10px!important}
+.pautaBody.emptyState{min-height:170px!important}
+.winnerBtn{position:relative!important;z-index:3!important;pointer-events:auto!important}
+.winnerBtn .trophy{pointer-events:none!important}
+.titleBox,.descBox{width:min(940px,100%)!important}
+.promoFooter{height:44px!important;min-height:44px!important;max-height:44px!important;overflow:visible!important}
+.promoFooterList{min-width:0!important}
+.promoList{z-index:120!important}
+.headNav{position:relative!important;z-index:30!important}
+.modalBackdrop{z-index:10000!important}
+@media(max-width:760px){.pautaBody{min-height:205px!important;padding:15px 16px 17px!important}.pautaBody.emptyState{min-height:150px!important}}
+</style>
 </head>
 <body>
 <div class="wrap">
   <header class="hero">
-    <img class="heroLogo" src="assets/logo-workspace-jp.png" alt="Workspace Jovem Pan Floripa">
+    <img class="heroLogo" src="assets/logo-workspace-jp-transparent.png" alt="Workspace Jovem Pan Floripa">
     </header>
 
   <section class="panel" id="pautaPanel"></section>
@@ -3457,7 +3473,7 @@ function render(){
     ${buildPromoFooter(item)}`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
-  const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.addEventListener('click',openWinnerModal);
+  const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
   const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',closePromoReadModal);
   const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.onclick=confirmPromoRead;
   const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);

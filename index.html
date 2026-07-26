@@ -3168,6 +3168,44 @@ tbody tr:focus-within td{background:#fff8fa}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
 </style>
+
+<style>
+/* === V56: CORREÇÃO FINAL — ROLAGEM DA PROGRAMAÇÃO + CABEÇALHO EXECUTIVO === */
+.appHeader{z-index:500!important;isolation:isolate!important}
+main{position:relative!important;z-index:1!important;padding-bottom:0!important}
+#view-programacao .weeklyBoard,
+#view-programacao .weekDayRow,
+#view-programacao .periodCell,
+#view-programacao .periodItems,
+#view-programacao .programCard{position:relative!important;z-index:1!important}
+#view-programacao .programFilterActions,
+#view-programacao .programSide,
+#view-programacao .programActions,
+#view-programacao .programActions button,
+#view-programacao #addProgramBtn,
+#view-programacao #clearProgramBtn{z-index:4!important}
+#view-programacao .panelBody{padding-bottom:24px!important}
+#view-programacao .weeklyBoard{padding-bottom:6px!important}
+
+/* Faixa de ações do cabeçalho com o mesmo respiro estrutural da Direção. */
+.topTools{
+  grid-template-columns:minmax(210px,.78fr) minmax(320px,1.22fr)!important;
+  grid-template-areas:"month search" "tools tools"!important;
+  column-gap:10px!important;row-gap:8px!important;align-items:end!important
+}
+.monthHeaderField{grid-area:month!important}
+.globalSearchField{grid-area:search!important;min-width:0!important}
+.toolbar{grid-area:tools!important;width:100%!important;justify-content:center!important;align-items:center!important;gap:9px!important;padding-top:1px!important}
+.toolbar .btn{flex:0 0 auto!important}
+@media(max-width:900px){
+  .topTools{grid-template-columns:minmax(190px,.8fr) minmax(260px,1.2fr)!important;grid-template-areas:"month search" "tools tools"!important}
+  .toolbar{justify-content:flex-start!important}
+}
+@media(max-width:680px){
+  .topTools{grid-template-columns:1fr!important;grid-template-areas:"month" "search" "tools"!important}
+  .toolbar{justify-content:flex-start!important;flex-wrap:wrap!important}
+}
+</style>
 </head>
 <body>
 <div class="wrap">
