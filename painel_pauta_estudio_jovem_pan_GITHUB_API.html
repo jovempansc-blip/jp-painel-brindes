@@ -1970,6 +1970,13 @@ tbody tr:focus-within td{background:#fff8fa}
 }
 </style>
 
+<style>
+/* R17 — OPERAÇÃO AO VIVO, PENDÊNCIAS E RODÍZIO */
+.studioContextBar{flex-wrap:wrap!important}.manualConsult{background:#fff6e8!important;color:#965500!important;border-color:#f2cf99!important}.returnNowBtn{min-height:25px;border:1px solid #d8dee7;border-radius:9px;background:#fff;padding:0 9px;font:900 8px/1 "Segoe UI",Arial,sans-serif;color:#4e5968;cursor:pointer}
+.studioOpsStrip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid #e5e9ef;background:#fff8eb}.studioOpsStrip strong{font-size:8px;color:#815000;letter-spacing:.05em}.studioOpsStrip>div{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.studioOpsStrip.done{background:#f5faf7}.studioOpsStrip.done strong{color:#26704a}.opTag{display:inline-flex;align-items:center;min-height:23px;padding:0 8px;border-radius:999px;border:1px solid #e1d2a9;background:#fff;color:#7c5b15;font-size:7.5px;font-weight:1000}.opTag.urgent{border-color:#f2b7c1;background:#fff4f6;color:#a41e37}
+.previousPending{display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));gap:5px;align-items:center;padding:7px 10px;border-bottom:1px solid #efd4a5;background:#fffaf1}.previousPending>strong{font-size:7.5px;color:#9b5b00;white-space:nowrap}.previousPending button{min-width:0;min-height:28px;border:1px solid #ead7b5;border-radius:9px;background:#fff;padding:5px 7px;text-align:left;color:#65470f;font:850 7.5px/1.2 "Segoe UI",Arial,sans-serif;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.previousPending button span{font-weight:1000;margin-right:5px;color:#b26000}.rotationInfo{display:block;margin-top:6px;color:#7b5b17;font-size:8px;font-weight:950;letter-spacing:.04em}
+@media(max-width:760px){.studioOpsStrip{align-items:flex-start;flex-direction:column}.studioOpsStrip>div{justify-content:flex-start}.previousPending{grid-template-columns:1fr}.previousPending button{white-space:normal}.returnNowBtn{width:100%}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -2028,6 +2035,9 @@ let currentDisplayItem=null;
 let manualHourDateMs=null;
 let lastHourKey=currentHourKey();
 let historyDate='';
+let manualReturnTimer=null;
+let manualLastInteractionAt=0;
+const MANUAL_RETURN_MS=60000;
 const STUDIO_STATION='JP1017';
 const ALLOW_PROMO_SHORTCUT=true;
 
@@ -2922,12 +2932,30 @@ function promoResultVirtualRows(){
   return rows;
 }
 
+function studioMerchanScheduleMode(p){return String(p?.merchanScheduleMode||p?.rotationMode||'fixed').toLowerCase()==='rotation'?'rotation':'fixed';}
+function studioRotationHours(p){return (p?.readHours||[]).map(value=>formatStudioTime(value)).filter(Boolean).sort((a,b)=>minutesOf(a)-minutesOf(b));}
+function studioRotationSignature(p){return `${normalizeStationValue(p?.station||STUDIO_STATION)}|${upper(p?.program||'')}|${studioRotationHours(p).join('|')}`;}
+function studioRotationMembers(p,item){
+  if(studioMerchanScheduleMode(p)!=='rotation') return [p];
+  const sig=studioRotationSignature(p),date=item?.date||todayISO();
+  return [...(monthData().promos||[])].filter(row=>isMerchan(row)&&studioMerchanScheduleMode(row)==='rotation'&&studioRotationSignature(row)===sig&&stationAllowed(row)&&promoDateAllowed(row,date)&&programMatchesMerchan(row,item)&&promoHourAllowed(row,item)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
+}
+function studioRotationAssignedPromo(p,item){
+  if(studioMerchanScheduleMode(p)!=='rotation') return p;
+  const members=studioRotationMembers(p,item); if(!members.length) return null;
+  const frozen=members.find(row=>!!readTimestampForHour(row,item)); if(frozen) return frozen;
+  const hours=studioRotationHours(p); const slot=formatStudioTime(item?.slot||''); const slotIndex=Math.max(0,hours.indexOf(slot));
+  const date=new Date(`${item?.date||todayISO()}T12:00:00`); const serial=Math.floor(date.getTime()/86400000);
+  return members[(serial+slotIndex)%members.length]||members[0];
+}
+function studioRotationAllows(p,item){const assigned=studioRotationAssignedPromo(p,item);return !assigned||assigned.id===p.id;}
 function promoEligibleForItemHour(p,item){
   if(!p || !item) return false;
   if(!stationAllowed(p)) return false;
   if(!promoDateAllowed(p,item.date||'')) return false;
   if(isMerchan(p) && (!programMatchesMerchan(p,item) || !merchanHourAllowed(p,item))) return false;
   if(!promoHourAllowed(p,item)) return false;
+  if(isMerchan(p) && studioMerchanScheduleMode(p)==='rotation' && !studioRotationAllows(p,item)) return false;
   return true;
 }
 function isPromoReadForHour(p,item){
@@ -2951,10 +2979,43 @@ function studioFullStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS 98,3' : 'JOVEMPAN 101,7';
 }
 function buildStudioContext(item,promo){
-  const date = item?.date || todayISO();
-  const program = promo ? (isMerchan(promo)?'MERCHAN':'PROMO / PAUTA') : (item?.program || (item?.__virtual?'SEM PROGRAMA':'PROGRAMA'));
-  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span><span>${esc(upper(program))}</span><span class="online">FIREBASE</span></div>`;
+  const date=item?.date||todayISO();
+  const program=promo?(isMerchan(promo)?'MERCHAN':'PROMO / PAUTA'):(item?.program||(item?.__virtual?'SEM PROGRAMA':'PROGRAMA'));
+  const now=currentSlotDate();
+  const manualInfo=manual?`<span class="manualConsult">CONSULTANDO ${esc(formatStudioTime(item?.slot||''))} · AGORA ${esc(formatStudioTime(`${pad(now.getHours())}:${pad(now.getMinutes())}`))}</span><button class="returnNowBtn" type="button" onclick="returnStudioToNow()">VOLTAR PARA AGORA</button>`:'';
+  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span><span>${esc(upper(program))}</span><span class="online">FIREBASE</span>${manualInfo}</div>`;
 }
+function studioPrizePending(item){return !!(item&&!item.__virtual&&item.sourceType!=='promo-result'&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
+function buildStudioPendingStrip(item){
+  const pending=allPautasForItemHour(item,false),all=allPautasForItemHour(item,true);
+  const mer=pending.filter(isMerchan),pro=pending.filter(p=>!isMerchan(p)); const prize=studioPrizePending(item);
+  const tags=[]; if(prize)tags.push('<span class="opTag urgent">SORTEIO / RESULTADO PENDENTE</span>'); if(mer.length)tags.push(`<span class="opTag urgent">${mer.length} MERCHAN${mer.length>1?'S':''} PENDENTE${mer.length>1?'S':''}</span>`); if(pro.length)tags.push(`<span class="opTag">${pro.length} PROMO / PAUTA PENDENTE${pro.length>1?'S':''}</span>`);
+  if(tags.length)return `<div class="studioOpsStrip"><strong>AGORA · O QUE PRECISA SER FEITO</strong><div>${tags.join('')}</div></div>`;
+  const hadAny=(!item?.__virtual)||all.length;
+  return `<div class="studioOpsStrip done"><strong>${hadAny?'OPERAÇÃO CONCLUÍDA ✓':'NENHUMA AÇÃO PROGRAMADA'}</strong></div>`;
+}
+function previousStudioPendencies(){
+  const now=currentSlotDate(),today=todayISO(); if(dateISO(now)!==today)return[];
+  const rows=allPrizeRows(),out=[],seen=new Set();
+  const cursor=new Date(now); cursor.setHours(0,0,0,0);
+  while(cursor<now){
+    const date=dateISO(cursor),slot=formatStudioTime(`${pad(cursor.getHours())}:${pad(cursor.getMinutes())}`);
+    const exact=itemIndexForDate(rows,cursor); const item=exact>=0?rows[exact]:virtualItemFromDate(cursor);
+    if(exact>=0&&studioPrizePending(item)){const key=`P|${date}|${slot}`;if(!seen.has(key)){seen.add(key);out.push({date,slot,label:`SORTEIO / RESULTADO · ${itemTitle(item)}`,promoId:''});}}
+    allPautasForItemHour(item,false).forEach(p=>{const key=`${p.id}|${date}|${slot}`;if(seen.has(key))return;seen.add(key);out.push({date,slot,label:`${isMerchan(p)?'MERCHAN':'PROMO'} · ${upper(p.name||p.title||'PAUTA')}`,promoId:p.id});});
+    cursor.setMinutes(cursor.getMinutes()+30);
+  }
+  return out.slice(-4).reverse();
+}
+function buildPreviousPendingStrip(){
+  if(manual)return''; const rows=previousStudioPendencies(); if(!rows.length)return'';
+  return `<div class="previousPending"><strong>PENDÊNCIA ANTERIOR</strong>${rows.map(r=>`<button type="button" onclick="jumpToStudioPending('${esc(r.date)}','${esc(r.slot)}','${esc(r.promoId)}')"><span>${esc(r.slot)}</span>${esc(r.label)}</button>`).join('')}</div>`;
+}
+function studioOperationActive(){return !!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
+function scheduleManualReturn(){clearTimeout(manualReturnTimer);if(!manual)return;manualLastInteractionAt=Date.now();manualReturnTimer=setTimeout(()=>{if(!manual)return;if(studioOperationActive()){scheduleManualReturn();return;}returnStudioToNow();},MANUAL_RETURN_MS);}
+function returnStudioToNow(){clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;selectedPromoId=null;render();}
+function jumpToStudioPending(date,slot,promoId=''){const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=promoId||null;scheduleManualReturn();render();}
+window.returnStudioToNow=returnStudioToNow;window.jumpToStudioPending=jumpToStudioPending;
 function pautaTypeLabel(p){
   if(isMerchan(p)) return 'MERCHAN';
   const k=upper(p.kind||p.promoKind||p.type||'PROMO');
@@ -3322,66 +3383,34 @@ function closePromoReadModal(){
   render();
 }
 async function confirmPromoRead(event){
-  if(event){
-    event.preventDefault();
-    event.stopPropagation();
-  }
-  const button=event?.currentTarget || $('confirmPromoReadInline');
-  const p=currentPromoForRead();
-  const item=currentDisplayItem || virtualCurrentItem();
-  if(!p || !item){
-    if(button){
-      button.disabled=false;
-      button.textContent='CONFIRMAR LEITURA';
-    }
-    return;
-  }
-
-  if(button){
-    button.disabled=true;
-    button.textContent='SALVANDO...';
-  }
-
+  if(event){event.preventDefault();event.stopPropagation();}
+  const button=event?.currentTarget||$('confirmPromoReadInline'); const p=currentPromoForRead(); const item=currentDisplayItem||virtualCurrentItem();
+  if(!p||!item)return;
+  if(button?.disabled)return;
+  if(button){button.disabled=true;button.textContent='SALVANDO...';}
   try{
-    const now=new Date();
-    const key=readHourKey(item,p);
-    const iso=now.toISOString();
-
-    p.readByHour ||= {};
-    p.readByHour[key]=iso;
-
-    p.readLog ||= [];
-    p.readLog.push({
-      id:`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
-      key,
-      date:item.date||todayISO(),
-      scheduledHour:timeToHHMM(item.slot),
-      slot:formatStudioTime(item.slot),
-      station:STUDIO_STATION,
-      program:upper(item.program||'PROGRAMA'),
-      type:pautaTypeLabel(p),
-      name:upper(p.name||p.title||'PAUTA'),
-      confirmedAt:iso,
-      confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`
-    });
-
-    p.readAt=iso;
-    p.readAtLabel=now.toLocaleString('pt-BR');
-    p.readSlot=formatStudioTime(item.slot);
-    p.readStation=STUDIO_STATION;
-    p.readProgram=upper(item.program||'PROGRAMA');
-
-    saveState();
-    await persistStudioPromo(p);
-    selectedPromoId=null;
-    render();
-  }catch(error){
-    console.error('ERRO AO CONFIRMAR LEITURA:',error);
-    if(button){
-      button.disabled=false;
-      button.textContent='TENTAR NOVAMENTE';
-    }
-  }
+    if(!firebaseReady||!firebaseRef){initFirebaseSync();} if(!firebaseReady||!firebaseRef)throw new Error('FIREBASE INDISPONÍVEL.');
+    const now=new Date(),iso=now.toISOString(),key=readHourKey(item,p),logId=`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`; let duplicate=false;
+    const result=await firebaseRef.transaction(current=>{
+      if(!current||!current.months)return;
+      const next=JSON.parse(JSON.stringify(current)); let touched=0,already=false;
+      Object.values(next.months||{}).forEach(month=>{
+        const rows=Array.isArray(month?.promos)?month.promos:[]; const idx=rows.findIndex(row=>row?.id===p.id); if(idx<0)return;
+        const row=rows[idx],keys=readHourKeys(item,row); const existing=keys.some(k=>validReadTimestamp(row?.readByHour?.[k]));
+        if(existing){already=true;return;}
+        row.readByHour={...(row.readByHour||{}),[key]:iso}; row.readLog=Array.isArray(row.readLog)?row.readLog:[];
+        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`});
+        row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(item.program||'PROGRAMA');row.updatedAt=iso;touched++;
+      });
+      if(already){duplicate=true;return;}
+      if(!touched)return;
+      next.updatedAt=Date.now();next.savedAt=iso;next.source=STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP';next.version='FIREBASE_RTDB_V4_ATOMIC_READ';return next;
+    },undefined,false);
+    if(duplicate){syncStateFromApi(true);selectedPromoId=null;render();return;}
+    if(!result?.committed)throw new Error('GRAVAÇÃO NÃO CONFIRMADA PELO FIREBASE.');
+    const remote=result.snapshot?.val?.();if(remote?.months)applyRemoteFirebaseState(remote);else syncStateFromApi(true);
+    selectedPromoId=null;render();
+  }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);if(button){button.disabled=false;button.textContent='TENTAR NOVAMENTE';}return;}
 }
 window.confirmPromoRead=confirmPromoRead;
 function isAutoGeneratedStudioPrize(item){
@@ -3531,6 +3560,7 @@ function step(delta){
   manualHourDateMs=base.getTime();
   manual=true;
   selectedPromoId=null;
+  scheduleManualReturn();
   render();
 }
 
@@ -3608,7 +3638,7 @@ function render(){
   const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
-      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1></div>
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${isMerchan(promo)&&studioMerchanScheduleMode(promo)==='rotation'?`<small class="rotationInfo">RODÍZIO · ${(promo.readHours||[]).map(formatStudioTime).join(' / ')}</small>`:''}</div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
       <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA</button></div>
@@ -3640,6 +3670,8 @@ function render(){
       </div>
     </div>
     ${buildStudioContext(item,promo)}
+    ${buildStudioPendingStrip(item)}
+    ${buildPreviousPendingStrip()}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
     ${buildPromoFooter(item)}`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
@@ -3714,6 +3746,8 @@ $('closeHistoryBtn').addEventListener('click',closeHistoryModal);
 $('historyTodayBtn').addEventListener('click',()=>{ $('historyDateInput').value=todayISO(); renderHistoryList(); });
 $('historyDateInput').addEventListener('change',renderHistoryList);
 $('historyModal').addEventListener('click',e=>{ if(e.target.id==='historyModal') closeHistoryModal(); });
+document.addEventListener('pointerdown',()=>{if(manual)scheduleManualReturn();},{passive:true});
+document.addEventListener('keydown',()=>{if(manual)scheduleManualReturn();});
 window.addEventListener('storage',()=>{state=loadState();selectStudioMonth();if(!manual)selectedIndex=-1;render();});
 window.addEventListener('focus',()=>syncStateFromApi(true));
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStateFromApi(true); });

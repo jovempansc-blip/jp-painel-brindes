@@ -675,6 +675,11 @@ function promoReadHours(promo){
   const list=Array.isArray(promo.readHours)?promo.readHours:[];
   return [...new Set(list.map(formatTime).filter(Boolean))].sort((a,b)=>slotMinutes(a)-slotMinutes(b));
 }
+function executiveMerchanRotationMode(p){return String(p?.merchanScheduleMode||p?.rotationMode||'fixed').toLowerCase()==='rotation'?'rotation':'fixed';}
+function executiveRotationSignature(p){return `${stationCode(p?.station||'ALL')}|${upper(p?.program||'')}|${promoReadHours(p).join('|')}`;}
+function executiveRotationMembers(p,date){if(executiveMerchanRotationMode(p)!=='rotation')return[p];const sig=executiveRotationSignature(p);return (monthData().promos||[]).filter(row=>promoKind(row)==='MERCHAN'&&executiveMerchanRotationMode(row)==='rotation'&&executiveRotationSignature(row)===sig&&promoActiveOn(row,date)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||promoTitle(a).localeCompare(promoTitle(b)));}
+function executiveRotationAssignedPromo(p,date,slot){if(executiveMerchanRotationMode(p)!=='rotation')return p;const members=executiveRotationMembers(p,date);if(!members.length)return null;const frozen=members.find(row=>!!readValue(row,date,slot));if(frozen)return frozen;const hours=promoReadHours(p),slotIndex=Math.max(0,hours.indexOf(formatTime(slot)));const serial=Math.floor(new Date(`${date}T12:00:00`).getTime()/86400000);return members[(serial+slotIndex)%members.length]||members[0];}
+function promoReadHoursForDate(p,date){const hours=promoReadHours(p);if(promoKind(p)!=='MERCHAN'||executiveMerchanRotationMode(p)!=='rotation')return hours;return hours.filter(slot=>executiveRotationAssignedPromo(p,date,slot)?.id===p.id);}
 function readKeys(date,slot){
   const hhmm=timeToHHMM(slot);
   const compact=hhmm.replace(":","");
@@ -695,7 +700,7 @@ function pendingReadRows(date){
   (monthData().promos||[])
     .filter(promo=>promoStationMatches(promo)&&promoActiveOn(promo,date))
     .forEach(promo=>{
-      const hours=promoReadHours(promo);
+      const hours=promoReadHoursForDate(promo,date);
       if(hours.length){
         hours.forEach(slot=>{
           if(!readValue(promo,date,slot))rows.push({promo,slot});
@@ -708,7 +713,7 @@ function confirmedReadRows(date){
   const rows=[];
   (monthData().promos||[])
     .filter(promo=>promoStationMatches(promo)&&promoActiveOn(promo,date))
-    .forEach(promo=>promoReadHours(promo).forEach(slot=>{
+    .forEach(promo=>promoReadHoursForDate(promo,date).forEach(slot=>{
       const value=readValue(promo,date,slot);
       if(value)rows.push({promo,slot,value});
     }));
@@ -960,7 +965,7 @@ function renderPromocoes(){
   const rows=[...(monthData().promos||[])].filter(promo=>promoStationMatches(promo)).sort((a,b)=>(promoEnd(a)||"").localeCompare(promoEnd(b)||"")||promoTitle(a).localeCompare(promoTitle(b)));
   const body=rows.length?rows.map(promo=>{
     const winners=promoWinners(promo);
-    const hours=promoReadHours(promo);
+    const hours=promoReadHoursForDate(promo,date);
     const pending=hours.filter(slot=>promoActiveOn(promo,date)&&!readValue(promo,date,slot));
     return `<tr>
       <td>${promoKindBadge(promo)}</td>
