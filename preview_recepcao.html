@@ -229,6 +229,10 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   white-space:nowrap;
 }
 .statChip strong{font-size:11px;color:#171c26;margin-left:5px}
+.statChipBtn{cursor:pointer;font:inherit;text-transform:uppercase;transition:.15s ease}
+.statChipBtn:hover,.statChipBtn:focus-visible{border-color:#d8a5b2;background:#fff5f7;color:#9f2340;outline:none}
+.dateTimeBlock{display:grid;gap:4px;flex:0 0 84px;align-content:center}
+.resultDate{display:block;font-size:8px;font-weight:1000;letter-spacing:.04em;color:#657084;white-space:nowrap}
 .resultCard{
   grid-template-columns:80px minmax(0,1fr) auto!important;
   align-items:center!important;
@@ -336,7 +340,7 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   min-width:0;
 }
 .resultLeft .time{
-  flex:0 0 76px;
+  flex:0 0 auto;
   text-align:left;
   font-size:34px!important;
   line-height:1!important;
@@ -898,6 +902,7 @@ function resultRowsForDate(date){
           source:'item',
           id:i.id,
           winnerIndex:idx,
+          date,
           time:formatTime(i.slot),
           sort:`${date}T${timeToHHMM(i.slot)}`,
           title:itemTitle(i),
@@ -916,22 +921,40 @@ function resultRowsForDate(date){
     const days=Math.max(1,Math.min(5,Number(p.pickupBusinessDays)||5));
     promoWinnerOccurrences(p).filter(w=>w.occurrenceDate===date).forEach(w=>{
       const reg=registeredDateForPromo({...p,resultDate:w.occurrenceDate,drawDate:w.occurrenceDate,drawTime:w.occurrenceTime},w),deadline=deadlineInfo(reg,w.deliveredAt||'',days);
-      promos.push({source:'promo',id:p.id,winnerIndex:w.winnerIndex,occurrenceKey:w.occurrenceKey||'',time:w.occurrenceTime||p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${w.occurrenceTime||(p.drawTime||'23:59').slice(0,5)}`,title:promoTitle(p),sub:upper(p.local||p.type||'PROMOÇÃO'),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',deadlineLabel:deadline.label,deadlineClass:deadline.className,expired:!w.deliveredAt&&deadline.expired,deadlineDays:days});
+      promos.push({source:'promo',id:p.id,winnerIndex:w.winnerIndex,occurrenceKey:w.occurrenceKey||'',date,time:w.occurrenceTime||p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${w.occurrenceTime||(p.drawTime||'23:59').slice(0,5)}`,title:promoTitle(p),sub:upper(p.local||p.type||'PROMOÇÃO'),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',deadlineLabel:deadline.label,deadlineClass:deadline.className,expired:!w.deliveredAt&&deadline.expired,deadlineDays:days});
     });
   });
   return [...items,...promos].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title)||a.result.localeCompare(b.result));
+}
+function allResultRows(){
+  const dates=new Set();
+  Object.values(state.months||{}).forEach(m=>{
+    (m.items||[]).forEach(i=>{if(i?.date) dates.add(i.date);});
+    (m.promos||[]).forEach(p=>{
+      promoWinnerOccurrences(p).forEach(w=>{if(w?.occurrenceDate) dates.add(w.occurrenceDate);});
+    });
+  });
+  const rows=[];
+  [...dates].sort().forEach(date=>rows.push(...resultRowsForDate(date)));
+  return rows.sort((a,b)=>String(b.sort||'').localeCompare(String(a.sort||''))||String(a.result||'').localeCompare(String(b.result||'')));
+}
+function isPickupPending(row){
+  return !row.deliveredAt && !row.expired;
+}
+function pickupPendingCount(rows){
+  return rows.reduce((n,row)=>n+(isPickupPending(row)?1:0),0);
 }
 function pickupButton(row){
   if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">NÃO RETIRADO NO PRAZO<br>PRÊMIO VOLTOU À CIRCULAÇÃO</div></div>`;
   const done=!!row.deliveredAt;
   if(done){
-    return `<div class="pickupWrap"><span class="pickupStatus done">RETIRADO ${esc(row.deliveredAtLabel||'')}</span><button class="undoPickupBtn" type="button" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}">CANCELAR RETIRADA</button></div>`;
+    return `<div class="pickupWrap"><span class="pickupStatus done">RETIRADO ${esc(row.deliveredAtLabel||'')}</span><button class="undoPickupBtn" type="button" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CANCELAR RETIRADA</button></div>`;
   }
   const statusClass=row.deadlineClass==='today'?' expiringToday':(row.deadlineClass==='tomorrow'?' expiringTomorrow':'');
-  return `<div class="pickupWrap"><button class="pickupBtn${statusClass}" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}">CONFIRMAR RETIRADA</button></div>`;
+  return `<div class="pickupWrap"><button class="pickupBtn${statusClass}" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
 }
 function setPickup(row,undo=false){
-  selectMonthForDate($('dateFilter').value||todayISO());
+  selectMonthForDate(row.date||$('dateFilter').value||todayISO());
   const now=new Date();
   let changedRecord=null;
   if(row.source==='item'){
@@ -990,9 +1013,13 @@ function applyReceptionFilters(rows){
   const query=upper($('searchFilter')?.value||'');
   const status=upper($('statusFilter')?.value||'TODOS');
   return rows.filter(r=>{
-    if(status && status!=='TODOS' && rowStatus(r)!==status) return false;
+    if(status && status!=='TODOS'){
+      if(status==='PENDENTE'){
+        if(!isPickupPending(r)) return false;
+      }else if(rowStatus(r)!==status) return false;
+    }
     if(query){
-      const hay=upper(`${r.title||''} ${r.sub||''} ${r.result||''} ${r.time||''} ${r.deadlineLabel||''}`);
+      const hay=upper(`${r.date||''} ${formatBR(r.date||'')} ${r.title||''} ${r.sub||''} ${r.result||''} ${r.time||''} ${r.deadlineLabel||''}`);
       if(!hay.includes(query)) return false;
     }
     return true;
@@ -1000,25 +1027,30 @@ function applyReceptionFilters(rows){
 }
 function renderReceptionStats(rows){
   const counts=rows.reduce((acc,r)=>{acc[rowStatus(r)]=(acc[rowStatus(r)]||0)+1;return acc;},{});
+  const pending=pickupPendingCount(rows);
   const total=rows.length;
-  const html=`<span class="statChip">TOTAL <strong>${total}</strong></span><span class="statChip">PENDENTES <strong>${counts.PENDENTE||0}</strong></span><span class="statChip">RETIRADOS <strong>${counts.RETIRADO||0}</strong></span><span class="statChip">VENCIDOS <strong>${counts.VENCIDO||0}</strong></span>`;
+  const html=`<span class="statChip">TOTAL <strong>${total}</strong></span><button class="statChip statChipBtn" type="button" data-reception-stat="PENDENTE" title="LISTAR TODOS OS GANHADORES AINDA DENTRO DO PRAZO DE RETIRADA">PENDENTES <strong>${pending}</strong></button><span class="statChip">RETIRADOS <strong>${counts.RETIRADO||0}</strong></span><span class="statChip">VENCIDOS <strong>${counts.VENCIDO||0}</strong></span>`;
   const box=$('receptionStats');
   if(box) box.innerHTML=html;
 }
 
 function rowFromButton(btn){
-  return {source:btn.dataset.source,id:btn.dataset.id,winnerIndex:btn.dataset.winnerIndex,occurrenceKey:btn.dataset.occurrenceKey||''};
+  return {source:btn.dataset.source,id:btn.dataset.id,winnerIndex:btn.dataset.winnerIndex,occurrenceKey:btn.dataset.occurrenceKey||'',date:btn.dataset.date||''};
 }
 function render(){
   const date=$('dateFilter').value||todayISO();
-  const rows=resultRowsForDate(date);
-  const filtered=applyReceptionFilters(rows);
-  renderReceptionStats(rows);
+  const query=upper($('searchFilter')?.value||'');
+  const status=upper($('statusFilter')?.value||'TODOS');
+  const allRows=allResultRows();
+  const useGlobal=query || (status && status!=='TODOS');
+  const sourceRows=useGlobal?allRows:resultRowsForDate(date);
+  const filtered=applyReceptionFilters(sourceRows);
+  renderReceptionStats(allRows);
   $('resultList').innerHTML=filtered.length?filtered.map(r=>{
     const deadline = r.deadlineLabel ? `<span class="deadlineNote ${esc(r.deadlineClass||'')}">${esc(r.deadlineLabel)}</span>` : '';
     return `<article class="resultCard status-${esc(rowStatusClass(r))}">
       <div class="resultLeft">
-        <div class="time">${esc(r.time)}</div>
+        <div class="dateTimeBlock"><span class="resultDate">${esc(formatBR(r.date||''))}</span><div class="time">${esc(r.time)}</div></div>
         <div class="prizeText"><strong>${esc(r.title)}</strong><span>${esc(r.sub)}</span></div>
       </div>
       <div class="winnerCenter"><span class="resultNameTag">${esc(r.result)}</span></div>
@@ -1027,6 +1059,14 @@ function render(){
   }).join(''):'<div class="empty">NENHUM RESULTADO ENCONTRADO PARA ESTE FILTRO.</div>';
 }
 document.addEventListener('click',e=>{
+  const stat=e.target.closest('[data-reception-stat]');
+  if(stat){
+    const status=stat.dataset.receptionStat||'PENDENTE';
+    $('statusFilter').value=status;
+    $('searchFilter').value='';
+    render();
+    return;
+  }
   const undo=e.target.closest('.undoPickupBtn');
   if(undo){
     const row=rowFromButton(undo);
@@ -1051,6 +1091,7 @@ $('dateFilter').value=todayISO();
 $('dateFilter').addEventListener('change',render);
 $('searchFilter').addEventListener('input',render);
 $('statusFilter').addEventListener('change',render);
+setInterval(render,60000);
 firebaseRef.on('value',snap=>{const payload=snap.val();const remote=payload?.months?payload:(payload?.state?.months?payload.state:null);if(remote){state=remote;selectMonthForDate($('dateFilter').value);render();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}});
 </script>
 </body>
