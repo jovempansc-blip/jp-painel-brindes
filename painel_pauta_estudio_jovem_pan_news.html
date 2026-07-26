@@ -2159,7 +2159,7 @@ function syncStateFromApi(force=false){
     }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
   }
 }
-function queueApiSave(delay=250){
+function queueApiSave(delay=80){
   clearTimeout(firebaseSaveTimer);
   firebaseSaveTimer=setTimeout(saveStateToApi,delay);
 }

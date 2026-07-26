@@ -767,17 +767,21 @@ function distributionStatusBadge(distribution){
   if(status==="SALDO CRÍTICO")return `<span class="badge promo">${status}</span>`;
   return `<span class="badge noar">${status}</span>`;
 }
+function liveNow(){ return window.__JP_NOW__ ? new Date(window.__JP_NOW__) : new Date(); }
 function activeItemForStation(date,station){
   const rows=(monthData().items||[])
     .filter(item=>item.date===date&&itemStation(item)===station&&isRadioItem(item)&&normalizeStatus(item.status)!=="CANCELADO")
     .sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot));
   if(!rows.length)return null;
   if(date!==todayISO())return rows[0];
-  const now=new Date();
+  const now=liveNow();
   const minute=now.getHours()*60+now.getMinutes();
-  let current=null;
-  rows.forEach(item=>{if(slotMinutes(item.slot)<=minute)current=item;});
-  return current||rows[0];
+  const currentHour=now.getHours();
+  const sameHour=rows.filter(item=>{
+    const itemMinute=slotMinutes(item.slot);
+    return Math.floor(itemMinute/60)===currentHour && itemMinute<=minute;
+  });
+  return sameHour.at(-1)||null;
 }
 function nextItemForStation(date,station){
   const rows=(monthData().items||[])
@@ -785,7 +789,7 @@ function nextItemForStation(date,station){
     .sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot));
   if(!rows.length)return null;
   if(date!==todayISO())return rows[1]||null;
-  const now=new Date();
+  const now=liveNow();
   const minute=now.getHours()*60+now.getMinutes();
   return rows.find(item=>slotMinutes(item.slot)>minute)||null;
 }
@@ -850,15 +854,18 @@ function statusCounts(items){
 function renderCurrentCards(date){
   const selected=$("stationFilter").value;
   const stations=selected==="ALL"?["JP1017","JPNEWS983"]:[selected];
+  const isToday=date===todayISO();
   return stations.map(station=>{
     const active=activeItemForStation(date,station);
-    const next=nextItemForStation(date,station);
-    if(!active)return `<div class="nowCard"><span class="station">${stationName(station)}</span><div class="empty">SEM PROGRAMAÇÃO PARA ESTA DATA.</div></div>`;
+    if(!active){
+      const message=isToday?`SEM SORTEIO PROGRAMADO PARA ${String(liveNow().getHours()).padStart(2,"0")}H.`:"SEM PROGRAMAÇÃO PARA ESTA DATA.";
+      return `<div class="nowCard"><span class="station">${stationName(station)}</span><div class="empty">${message}</div></div>`;
+    }
     return `<div class="nowCard">
       <span class="station">${stationName(station)}</span>
       <div class="time">${esc(formatTime(active.slot))}</div>
       <strong>${esc(itemTitle(active))}</strong>
-      <p>${esc(upper(active.program||"PROGRAMAÇÃO NORMAL"))}<br>${next?`PRÓXIMO: ${formatTime(next.slot)} · ${itemTitle(next)}`:"SEM PRÓXIMO ITEM PROGRAMADO"}</p>
+      <p>${esc(upper(active.program||"PROGRAMAÇÃO NORMAL"))}</p>
       <div>${statusBadge(active.status,itemWinner(active))}</div>
     </div>`;
   }).join("");
@@ -1129,6 +1136,20 @@ try{
 setTimeout(()=>{
   if(!firebaseReady&&!state.months?.[currentMonth])loadLocalFallback();
 },2500);
+let lastLiveClockKey="";
+function refreshLiveNowCard(force=false){
+  const date=$("dateFilter")?.value||todayISO();
+  if(date!==todayISO()||activeTab!=="resumo")return;
+  const now=liveNow();
+  const key=`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`;
+  if(!force&&key===lastLiveClockKey)return;
+  lastLiveClockKey=key;
+  renderResumo();
+}
+setInterval(()=>refreshLiveNowCard(false),1000);
+window.addEventListener("focus",()=>refreshLiveNowCard(true));
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshLiveNowCard(true);});
+
 </script>
 </body>
 </html>

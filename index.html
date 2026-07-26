@@ -3206,12 +3206,64 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
   .toolbar{justify-content:flex-start!important;flex-wrap:wrap!important}
 }
 </style>
+
+<style>
+/* === R7: CABEÇALHO PRINCIPAL NO PADRÃO VISUAL DO PREVIEW === */
+.appHeader{
+  position:sticky!important;top:8px!important;z-index:500!important;
+  display:grid!important;grid-template-columns:1fr!important;
+  justify-items:center!important;gap:10px!important;
+  padding:15px 18px 13px!important;
+  border:1px solid rgba(223,229,236,.96)!important;
+  border-radius:24px!important;background:rgba(255,255,255,.94)!important;
+  box-shadow:0 12px 34px rgba(18,25,38,.07)!important;backdrop-filter:blur(10px)!important;
+}
+.appHeader .brand{
+  width:100%!important;justify-content:center!important;align-items:center!important;
+  gap:18px!important;text-align:center!important;min-width:0!important;
+}
+.appHeader .logo{width:255px!important;max-height:58px!important;object-fit:contain!important}
+.appHeader .brandTitle{border-left:1px solid #dfe5ec!important;padding-left:18px!important;min-width:0!important}
+.appHeader .brandTitle strong{font-size:23px!important;line-height:1.05!important;letter-spacing:-.035em!important;white-space:nowrap!important;text-align:center!important}
+.appHeader .brandTitle span{display:none!important}
+.appHeader .topTools{
+  width:min(760px,100%)!important;margin:0 auto!important;
+  display:grid!important;grid-template-columns:minmax(180px,.72fr) minmax(300px,1.28fr)!important;
+  grid-template-areas:"month search" "tools tools"!important;
+  gap:8px 10px!important;align-items:end!important;justify-self:center!important;
+}
+.appHeader .monthHeaderField{grid-area:month!important}.appHeader .globalSearchField{grid-area:search!important;min-width:0!important}
+.appHeader .field{gap:4px!important}.appHeader .field label{font-size:7.2px!important;text-align:left!important;letter-spacing:.09em!important}
+.appHeader .control{height:34px!important;min-height:34px!important;border-radius:11px!important;padding:0 10px!important;font-size:9.5px!important}
+.appHeader .toolbar{
+  grid-area:tools!important;width:100%!important;min-height:31px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;
+  padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;flex-wrap:wrap!important;
+}
+.appHeader .syncStatusBtn{min-height:27px!important;padding:0 10px!important;border-radius:999px!important;font-size:7.6px!important}
+.appHeader .mainHeaderUpdated{color:#657084!important;font-size:7.8px!important;font-weight:900!important;line-height:1.25!important;white-space:nowrap!important}
+.appHeader .toolbar .iconBtn{width:31px!important;min-width:31px!important;min-height:31px!important;border-radius:10px!important;padding:0!important}
+.appHeader .toolbar .iconBtn .iconGlyph{font-size:10px!important}
+.appHeader #returnBellBtn .iconGlyph{font-size:14px!important}
+@media(max-width:860px){
+  .appHeader .brand{flex-direction:column!important;gap:10px!important}
+  .appHeader .brandTitle{border-left:0!important;padding-left:0!important}
+  .appHeader .brandTitle strong{white-space:normal!important}
+  .appHeader .topTools{width:100%!important}
+}
+@media(max-width:620px){
+  .appHeader{position:relative!important;top:auto!important}
+  .appHeader .topTools{grid-template-columns:1fr!important;grid-template-areas:"month" "search" "tools"!important}
+  .appHeader .toolbar{justify-content:flex-start!important}
+  .appHeader .mainHeaderUpdated{white-space:normal!important;flex-basis:100%!important}
+}
+</style>
 </head>
 <body>
 <div class="wrap">
   <header class="appHeader">
     <div class="brand">
-      <img class="logo" alt="JOVEM PAN FLORIPA" src="assets/logo-workspace-jp.png" />
+      <img class="logo" alt="JOVEM PAN FLORIPA" src="assets/logo-workspace-jp-transparent.png" />
       <div class="brandTitle"><strong>PAINEL DE BRINDES</strong><span>PROGRAMAÇÃO + DISTRIBUIÇÃO GERAL</span></div>
     </div>
     <div class="topTools">
@@ -3219,6 +3271,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
       <div class="field globalSearchField"><label>BUSCA GLOBAL</label><input class="control" id="globalSearchInput" type="search" autocomplete="off" placeholder="PRÊMIO, GANHADOR, PROMOÇÃO..."></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
         <button class="btn syncStatusBtn saving" id="syncStatusBtn" type="button" title="STATUS DO BANCO">CONECTANDO</button>
+        <span class="mainHeaderUpdated" id="mainHeaderUpdated">ATUALIZADO: --/--/----, --:--:--</span>
         <button class="btn iconBtn" id="exportPdfBtn" title="EXPORTAR EM PDF" aria-label="EXPORTAR EM PDF" data-tip="PDF"><span class="iconGlyph">PDF</span><span class="visuallyHidden">EXPORTAR EM PDF</span></button>
         <button class="btn iconBtn returnBellBtn" id="returnBellBtn" title="RETORNOS / REAPROVEITAMENTO" aria-label="RETORNOS / REAPROVEITAMENTO" data-tip="ALERTAS"><span class="iconGlyph">🔔</span><span class="returnBellCount" id="returnBellCount">0</span><span class="visuallyHidden">RETORNOS</span></button>
       </div>
@@ -6133,7 +6186,7 @@ function saveState(silent=false){
   if(!firebaseApplyingRemote){
     firebaseLastLocalWrite = Date.now();
     firebasePendingSave = true;
-    queueApiSave(silent ? 350 : 120);
+    queueApiSave(silent ? 90 : 40);
   }
   if(!silent) toast('ALTERAÇÃO REGISTRADA · SINCRONIZANDO COM FIREBASE...');
 }
@@ -6342,11 +6395,16 @@ function hasLocalPersistedState(){
 }
 function updateSyncStatus(mode='local',text='LOCAL'){
   const btn=$('syncStatusBtn');
+  const updated=$('mainHeaderUpdated');
   if(!btn) return;
   btn.classList.remove('online','saving','error','local');
   btn.classList.add(mode);
   btn.textContent=text;
   btn.title = mode==='online' ? (firebaseBaseEmpty?'FIREBASE CONECTADO — BASE OFICIAL VAZIA':'FIREBASE ONLINE') : mode==='saving' ? 'CONECTANDO OU SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'SEM CONEXÃO COM O FIREBASE — RECONECTANDO';
+  if(updated){
+    const prefix=mode==='online'?'ATUALIZADO':mode==='saving'?'SINCRONIZANDO':mode==='error'?'ERRO':mode==='local'?'BASE LOCAL':'ATUALIZADO';
+    updated.textContent=`${prefix}: ${new Date().toLocaleString('pt-BR')}`;
+  }
 }
 function apiJsonp(params={}){
   return new Promise((resolve,reject)=>{
@@ -6479,7 +6537,7 @@ function syncStateFromApi(force=false){
     }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
   }
 }
-function queueApiSave(delay=250){
+function queueApiSave(delay=80){
   clearTimeout(firebaseSaveTimer);
   updateSyncStatus('saving','SALVANDO');
   firebaseSaveTimer = setTimeout(saveStateToApi, delay);
