@@ -2347,6 +2347,30 @@ function winnerPersonKey(name){
 function winnerPrizeKey(prize){
   return winnerPlain(prize).replace(/\s+/g,'_').slice(0,220);
 }
+function winnerLinkedItemInfo(record){
+  const sourceRef=String(record?.sourceRef||'');
+  if(!sourceRef.startsWith('ITEM:')) return null;
+  const itemId=sourceRef.slice(5);
+  if(!itemId) return null;
+  for(const [monthKey,m] of Object.entries(state?.months||{})){
+    const item=(m?.items||[]).find(row=>String(row?.id||'')===itemId);
+    if(!item) continue;
+    const distribution=(m?.distributions||[]).find(row=>String(row?.id||'')===String(item.distributionId||''))||null;
+    return {monthKey,item,distribution};
+  }
+  return null;
+}
+function winnerResolvedPrize(record){
+  const linked=winnerLinkedItemInfo(record);
+  if(linked){
+    const exact=linked.item?.title||linked.distribution?.title||linked.distribution?.show||linked.distribution?.prize||linked.item?.prize;
+    if(exact) return upper(exact);
+  }
+  return upper(record?.prize||'');
+}
+function winnerResolvedPrizeKey(record){
+  return winnerPrizeKey(winnerResolvedPrize(record));
+}
 function winnerRecordList(value){
   if(Array.isArray(value)) return value.filter(Boolean).map((row,index)=>({...row,id:row.id||`LEGACY_${index}`}));
   if(value&&typeof value==='object') return Object.entries(value).map(([key,row])=>({...row,id:row?.id||key})).filter(row=>row.name&&row.date);
@@ -2409,12 +2433,12 @@ function winnerEvaluateAgainst(records,name,prize,asOf=todayISO()){
     .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
   const cycle=winnerCycleInfo(history,asOf);
   const prizeKey=winnerPrizeKey(prize);
-  const samePrize=!!prizeKey&&history.some(record=>(record.prizeKey||winnerPrizeKey(record.prize))===prizeKey);
+  const samePrize=!!prizeKey&&history.some(record=>winnerResolvedPrizeKey(record)===prizeKey);
   let status='APTO';
   let title=history.length?'APTO':'PRIMEIRA PREMIAÇÃO / APTO';
   let reason=history.length?'OUVINTE LIBERADO PARA NOVA PREMIAÇÃO.':'NENHUM HISTÓRICO LOCALIZADO PARA ESTE NOME.';
   if(samePrize){
-    const previous=history.find(record=>(record.prizeKey||winnerPrizeKey(record.prize))===prizeKey);
+    const previous=history.find(record=>winnerResolvedPrizeKey(record)===prizeKey);
     status='BLOQUEADO';
     title='JÁ GANHOU ESTE PRÊMIO';
     reason=previous?`MESMO PRÊMIO REGISTRADO EM ${formatBR(previous.date)} · ${upper(previous.program||'PROGRAMA')}.`:'ESTE PRÊMIO JÁ CONSTA NO HISTÓRICO.';
@@ -2430,7 +2454,7 @@ function winnerEvaluateAgainst(records,name,prize,asOf=todayISO()){
   return {name:upper(name),personKey,history,total:history.length,cycleCount:cycle.cycleCount,blockedUntil:cycle.blockedUntil,samePrize,status,title,reason,allowed:status!=='BLOQUEADO'};
 }
 function winnerContextForItem(item){
-  return {sourceRef:`ITEM:${item?.id||''}`,date:item?.date||todayISO(),program:upper(item?.program||programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||'PROGRAMA'),prize:upper(item?.prize||item?.title||'PRÊMIO')};
+  return {sourceRef:`ITEM:${item?.id||''}`,date:item?.date||todayISO(),program:upper(item?.program||programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||'PROGRAMA'),prize:upper(item?.title||distributionById(item?.distributionId)?.title||distributionById(item?.distributionId)?.show||distributionById(item?.distributionId)?.prize||item?.prize||'PRÊMIO')};
 }
 function winnerContextForPromo(promo,item){
   const date=item?.date||promo?.drawDate||todayISO();
@@ -2519,7 +2543,7 @@ function initWinnerBank(force=false){
 }
 function winnerEligibilityHtml(result,suggestions=[]){
   if(!result) return '<div class="winnerEligibilityHead"><strong>DIGITE O NOME COMPLETO PARA CONSULTAR</strong><span>AGUARDANDO</span></div><p>A PESQUISA SERÁ FEITA AUTOMATICAMENTE NO HISTÓRICO DO FIREBASE.</p>';
-  const history=result.history.map(record=>`<div><strong>${formatBR(record.date)}</strong><span>${esc(upper(record.program||'PROGRAMA'))}</span><span>${esc(upper(record.prize||'PRÊMIO'))}</span></div>`).join('');
+  const history=result.history.map(record=>`<div><strong>${formatBR(record.date)}</strong><span>${esc(upper(record.program||'PROGRAMA'))}</span><span>${esc(winnerResolvedPrize(record)||'PRÊMIO')}</span></div>`).join('');
   const candidate=suggestions[0];
   const suggestionHtml=candidate?`<div class="winnerSuggestions"><div class="winnerSimilarityPrompt">POSSÍVEL CADASTRO EXISTENTE — CONFIRME ANTES DE CONTINUAR</div><div class="winnerSimilarityCompare"><div class="winnerSimilarityName"><span>NOME DIGITADO</span><b>${esc(result.name)}</b></div><span class="winnerSimilarityScore">${Math.round(candidate.score*100)}% PARECIDO</span><div class="winnerSimilarityName"><span>NOME NO FIREBASE</span><b>${esc(candidate.name)}</b></div></div><div class="winnerSimilarityActions"><button class="winnerSuggestion same" type="button" data-winner-similarity="same" data-candidate-key="${esc(candidate.key)}" data-candidate-name="${esc(candidate.name)}">É A MESMA PESSOA</button><button class="winnerSuggestion" type="button" data-winner-similarity="different" data-candidate-key="${esc(candidate.key)}">SÃO PESSOAS DIFERENTES</button></div></div>`:result.similarityDifferent?'<div class="winnerSimilarityDone">REVISÃO CONCLUÍDA: PESSOAS DIFERENTES.</div>':'';
   const statusLabel=result.status==='ATENCAO'?'ATENÇÃO':result.status;

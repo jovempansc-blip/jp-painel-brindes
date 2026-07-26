@@ -6723,6 +6723,30 @@ function winnerPersonKey(name){
 function winnerPrizeKey(prize){
   return winnerPlain(prize).replace(/\s+/g,'_').slice(0,220);
 }
+function winnerLinkedItemInfo(record){
+  const sourceRef=String(record?.sourceRef||'');
+  if(!sourceRef.startsWith('ITEM:')) return null;
+  const itemId=sourceRef.slice(5);
+  if(!itemId) return null;
+  for(const [monthKey,m] of Object.entries(state?.months||{})){
+    const item=(m?.items||[]).find(row=>String(row?.id||'')===itemId);
+    if(!item) continue;
+    const distribution=(m?.distributions||[]).find(row=>String(row?.id||'')===String(item.distributionId||''))||null;
+    return {monthKey,item,distribution};
+  }
+  return null;
+}
+function winnerResolvedPrize(record){
+  const linked=winnerLinkedItemInfo(record);
+  if(linked){
+    const exact=linked.item?.title||linked.distribution?.title||linked.distribution?.show||linked.distribution?.prize||linked.item?.prize;
+    if(exact) return winnerUpper(exact);
+  }
+  return winnerUpper(record?.prize||'');
+}
+function winnerResolvedPrizeKey(record){
+  return winnerPrizeKey(winnerResolvedPrize(record));
+}
 function winnerFingerprint(record){
   return [winnerPersonKey(record?.name),record?.date||'',winnerPrizeKey(record?.prize)].join('|');
 }
@@ -6789,14 +6813,14 @@ function evaluateWinnerEligibility(name,prize,asOf=todayISO(),excludeSourceRef='
   const history=winnerHistoryFor(name,{excludeSourceRef,asOf});
   const cycle=winnerCycleInfo(history,asOf);
   const prizeKey=winnerPrizeKey(prize);
-  const samePrize=!!prizeKey && history.some(record=>(record.prizeKey||winnerPrizeKey(record.prize))===prizeKey);
+  const samePrize=!!prizeKey && history.some(record=>winnerResolvedPrizeKey(record)===prizeKey);
   let status='APTO';
   let title=history.length?'APTO':'PRIMEIRA PREMIAÇÃO / APTO';
   let reason=history.length?'OUVINTE LIBERADO PARA NOVA PREMIAÇÃO.':'NENHUM HISTÓRICO LOCALIZADO PARA ESTE NOME.';
   if(samePrize){
     status='BLOQUEADO';
     title='JÁ GANHOU ESTE PRÊMIO';
-    const previous=history.find(record=>(record.prizeKey||winnerPrizeKey(record.prize))===prizeKey);
+    const previous=history.find(record=>winnerResolvedPrizeKey(record)===prizeKey);
     reason=previous?`MESMO PRÊMIO REGISTRADO EM ${formatBR(previous.date)} · ${winnerUpper(previous.program||'PROGRAMA')}.`:'ESTE PRÊMIO JÁ CONSTA NO HISTÓRICO.';
   }else if(cycle.blocked){
     status='BLOQUEADO';
@@ -6898,7 +6922,7 @@ function renderWinnerBank(){
   const rows=people
     .filter(person=>{
       if(!query) return true;
-      return winnerPlain(person.name).includes(query)||person.records.some(record=>winnerPlain(record.program).includes(query)||winnerPlain(record.prize).includes(query));
+      return winnerPlain(person.name).includes(query)||person.records.some(record=>winnerPlain(record.program).includes(query)||winnerPlain(winnerResolvedPrize(record)).includes(query));
     })
     .filter(person=>!status||person.eligibility.status===status)
     .sort((a,b)=>{
@@ -6924,7 +6948,7 @@ function openWinnerDetails(personKey){
   const records=[...person.records].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   $('winnerDetailBody').innerHTML=`
     <div class="winnerDetailHero"><div><h4>${esc(person.name)}</h4><p>${person.records.length} PREMIAÇÃO(ÕES) NO HISTÓRICO · CICLO ATUAL: ${e.cycleCount} DE 3</p></div><span class="winnerStateBadge ${winnerStatusClass(e.status)}">${esc(winnerStatusLabel(e.status))}${e.blockedUntil?` · ATÉ ${formatBR(e.blockedUntil)}`:''}</span></div>
-    <div class="winnerHistoryList">${records.map(record=>`<div class="winnerHistoryRow"><strong>${formatBR(record.date)}</strong><span>${esc(record.program||'PROGRAMA NÃO INFORMADO')}</span><span class="winnerHistoryPrize">${esc(record.prize||'PRÊMIO NÃO INFORMADO')}</span><div class="winnerHistoryActions"><button class="actionIcon" type="button" title="EDITAR" onclick="openWinnerRecord('${esc(record.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" type="button" title="EXCLUIR" onclick="deleteWinnerRecord('${esc(record.id)}')"><span class="iconGlyph">🗑</span></button></div></div>`).join('')}</div>`;
+    <div class="winnerHistoryList">${records.map(record=>`<div class="winnerHistoryRow"><strong>${formatBR(record.date)}</strong><span>${esc(record.program||'PROGRAMA NÃO INFORMADO')}</span><span class="winnerHistoryPrize">${esc(winnerResolvedPrize(record)||'PRÊMIO NÃO INFORMADO')}</span><div class="winnerHistoryActions"><button class="actionIcon" type="button" title="EDITAR" onclick="openWinnerRecord('${esc(record.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" type="button" title="EXCLUIR" onclick="deleteWinnerRecord('${esc(record.id)}')"><span class="iconGlyph">🗑</span></button></div></div>`).join('')}</div>`;
   openDrawer('winnerDetailDrawer');
 }
 function openWinnerRecord(recordId='',personKey=''){
@@ -6938,7 +6962,7 @@ function openWinnerRecord(recordId='',personKey=''){
   $('winnerRecordName').dataset.similarityConfirmed='';
   $('winnerRecordDate').value=record?.date||todayISO();
   $('winnerRecordProgram').value=record?.program||'';
-  $('winnerRecordPrize').value=record?.prize||'';
+  $('winnerRecordPrize').value=record?winnerResolvedPrize(record):'';
   $('winnerRecordDrawerTitle').textContent=record?'EDITAR REGISTRO DE PREMIAÇÃO':'NOVO REGISTRO DE PREMIAÇÃO';
   renderWinnerRecordSimilarity();
   openDrawer('winnerRecordDrawer');
@@ -7731,7 +7755,7 @@ function globalSearchRows(query){
     (m.items||[]).forEach(i=>add('PROGRAMAÇÃO',i.prize||i.title||'ITEM',`${formatBR(i.date)} ${i.slot||''} · ${i.program||''} · ${i.winnerName||''}`,'programacao'));
   });
   (state.schedules||[]).forEach(r=>add('AGENDAMENTO',r.name||r.title||r.type||'AGENDAMENTO',`${r.notes||''} ${r.destination||''}`,'agendamento'));
-  (winnerBankRecords||[]).forEach(r=>add('GANHADOR',r.name,`${formatBR(r.date)} · ${r.program} · ${r.prize}`,'ganhadores'));
+  (winnerBankRecords||[]).forEach(r=>add('GANHADOR',r.name,`${formatBR(r.date)} · ${r.program} · ${winnerResolvedPrize(r)}`,'ganhadores'));
   return rows.slice(0,80);
 }
 function renderGlobalSearch(){
@@ -7762,7 +7786,7 @@ function renderAdminReports(){
   if(type==='all'||type==='prizes') dists.forEach(({key,d})=>rows.push(['PRÊMIO',key,distributionLabel(d),`ENTRADA ${num(d.total)} · DISTRIBUÍDO ${allocated(d)} · SALDO ${leftTotal(d)}`]));
   if(type==='all'||type==='program') items.forEach(({i})=>rows.push(['PROGRAMAÇÃO',i.date,`${i.slot||''} · ${i.program||''}`,`${i.prize||i.title||''} · ${i.status||''}`]));
   if(type==='all'||type==='promos') promos.forEach(p=>rows.push(['PROMOÇÃO',p.startDate||'',p.name||p.title||'',`${p.endDate||p.drawDate||''} · ${promoForecastQty(p)} PREVISTO(S) · ${promoUsedQty(p)} REALIZADO(S)`]));
-  if(type==='all'||type==='winners'||type==='withdrawals') winners.forEach(w=>{if(type==='withdrawals'&&!w.deliveredAt)return;rows.push([w.deliveredAt?'RETIRADA':'GANHADOR',w.date,w.name,`${w.prize} · ${w.deliveredAt?'RETIRADO':'PENDENTE'}`]);});
+  if(type==='all'||type==='winners'||type==='withdrawals') winners.forEach(w=>{if(type==='withdrawals'&&!w.deliveredAt)return;rows.push([w.deliveredAt?'RETIRADA':'GANHADOR',w.date,w.name,`${winnerResolvedPrize(w)} · ${w.deliveredAt?'RETIRADO':'PENDENTE'}`]);});
   host.innerHTML=cards+`<div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>DATA/MÊS</th><th>REGISTRO</th><th>DETALHE</th></tr></thead><tbody>${rows.length?rows.sort((a,b)=>String(a[1]).localeCompare(String(b[1]))).map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1]?.length===7?labelMonth(r[1]):formatBR(r[1]))}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td></tr>`).join(''):'<tr><td colspan="4">SEM REGISTROS NO PERÍODO.</td></tr>'}</tbody></table></div>`;
 }
 function renderSystemView(){
