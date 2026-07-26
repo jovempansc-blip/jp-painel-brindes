@@ -7,7 +7,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="light" />
-<title>Programação de Brindes | Jovem Pan Floripa</title>
+<title>POA | Painel de Operações Artísticas | Jovem Pan Floripa</title>
 <style>
 :root{
   --red:#c9002b;
@@ -3081,7 +3081,7 @@ main{
 .winnerBankKpi{border:1px solid var(--line);border-radius:17px;background:#fff;padding:12px 14px;box-shadow:var(--soft-shadow)}
 .winnerBankKpi span{display:block;color:var(--muted);font-size:8.5px;font-weight:950;letter-spacing:.06em}
 .winnerBankKpi strong{display:block;margin-top:5px;color:#171c26;font-size:23px;font-weight:1000}
-.winnerBankToolbar{display:grid;grid-template-columns:minmax(220px,1fr) 190px auto;gap:8px;align-items:end;margin-bottom:10px}
+.winnerBankToolbar{display:grid;grid-template-columns:minmax(220px,1fr) 180px 180px auto;gap:8px;align-items:end;margin-bottom:10px}
 .winnerBankActions{display:flex;gap:7px;justify-content:flex-end;align-items:center;flex-wrap:wrap}
 .winnerBankState{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:9px 11px;border:1px solid #dbe2ea;border-radius:13px;background:#f8fafc;color:#536071;font-size:9px;font-weight:900}
 .winnerBankState.online{border-color:#b9e6cd;background:#effaf4;color:#0b6f40}
@@ -3264,7 +3264,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
   <header class="appHeader">
     <div class="brand">
       <img class="logo" alt="JOVEM PAN FLORIPA" src="assets/logo-workspace-jp-transparent.png" />
-      <div class="brandTitle"><strong>PAINEL DE BRINDES</strong><span>PROGRAMAÇÃO + DISTRIBUIÇÃO GERAL</span></div>
+      <div class="brandTitle"><strong>POA - PAINEL DE OPERAÇÕES ARTÍSTICAS</strong><span>PROGRAMAÇÃO + DISTRIBUIÇÃO GERAL</span></div>
     </div>
     <div class="topTools">
       <div class="field monthHeaderField"><label>MÊS</label><input class="control" type="month" id="monthInput" value=""></div>
@@ -3490,6 +3490,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
           <div class="winnerBankToolbar">
             <div class="field"><label>PESQUISAR NOME, PROGRAMA OU PRÊMIO</label><input class="control" id="winnerBankSearch" autocomplete="off" placeholder="DIGITE PARA PESQUISAR"></div>
             <div class="field"><label>SITUAÇÃO ATUAL</label><select class="control" id="winnerBankStatusFilter"><option value="">TODAS</option><option value="APTO">APTO</option><option value="ATENCAO">ATENÇÃO</option><option value="BLOQUEADO">BLOQUEADO</option></select></div>
+            <div class="field"><label>ORDENAR</label><select class="control" id="winnerBankOrder"><option value="recent" selected>MAIS RECENTES</option><option value="name">NOME A-Z</option><option value="oldest">MAIS ANTIGOS</option></select></div>
             <button class="btn" id="refreshWinnerBankBtn" type="button">ATUALIZAR BANCO</button>
           </div>
           <div class="tableWrap"><table class="promoMainTable winnerBankTable"><thead><tr><th>OUVINTE</th><th>PREMIAÇÕES</th><th>ÚLTIMA DATA</th><th>SITUAÇÃO</th><th>LIBERAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="winnerBankTable"></tbody></table></div>
@@ -6893,13 +6894,24 @@ function renderWinnerBank(){
     <div class="winnerBankKpi"><span>PRÓXIMOS DA 3ª PREMIAÇÃO</span><strong>${attention}</strong></div>`;
   const query=winnerPlain($('winnerBankSearch')?.value||'');
   const status=$('winnerBankStatusFilter')?.value||'';
+  const order=$('winnerBankOrder')?.value||'recent';
   const rows=people
     .filter(person=>{
       if(!query) return true;
       return winnerPlain(person.name).includes(query)||person.records.some(record=>winnerPlain(record.program).includes(query)||winnerPlain(record.prize).includes(query));
     })
     .filter(person=>!status||person.eligibility.status===status)
-    .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+    .sort((a,b)=>{
+      if(order==='name') return a.name.localeCompare(b.name,'pt-BR');
+      const ad=String(a.lastDate||'');
+      const bd=String(b.lastDate||'');
+      if(ad!==bd){
+        if(!ad) return 1;
+        if(!bd) return -1;
+        return order==='oldest'?ad.localeCompare(bd):bd.localeCompare(ad);
+      }
+      return a.name.localeCompare(b.name,'pt-BR');
+    });
   table.innerHTML=rows.length?rows.map(person=>{
     const e=person.eligibility;
     return `<tr><td class="winnerBankName"><strong>${esc(person.name)}</strong><small>${esc(person.key.replace(/_/g,' '))}</small></td><td class="num">${person.records.length}</td><td>${formatBR(person.lastDate)||'-'}</td><td><span class="winnerStateBadge ${winnerStatusClass(e.status)}">${esc(winnerStatusLabel(e.status))}</span></td><td class="winnerRelease">${e.blockedUntil?formatBR(e.blockedUntil):'-'}</td><td><div class="distActions"><button class="btn small" type="button" onclick="openWinnerDetails('${esc(person.key)}')">VER HISTÓRICO</button><button class="actionIcon" type="button" title="ADICIONAR PREMIAÇÃO" onclick="openWinnerRecord('', '${esc(person.key)}')"><span class="iconGlyph">＋</span></button></div></td></tr>`;
@@ -12158,7 +12170,7 @@ bind('winnerRecordSimilarity','click',event=>{
   resolveWinnerRecordSimilarity(button.dataset.winnerRecordSimilarity,button.dataset.candidateId,button.dataset.candidateName||'');
 });
 bind('refreshWinnerBankBtn','click',()=>initWinnerBank(true));
-['winnerBankSearch','winnerBankStatusFilter'].forEach(id=>bind(id,'input',renderWinnerBank));
+bind('winnerBankSearch','input',renderWinnerBank); bind('winnerBankStatusFilter','change',renderWinnerBank); bind('winnerBankOrder','change',renderWinnerBank);
 
 bind('globalSearchInput','input',()=>{ renderGlobalSearch(); if(($('globalSearchInput')?.value||'').trim()) setView('sistema'); });
 bind('systemCheckBtn','click',()=>{ renderSystemView(); toast('VERIFICAÇÃO DE INTEGRIDADE CONCLUÍDA.'); });
