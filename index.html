@@ -7594,6 +7594,7 @@ function validateProgramDraft(monthKey=state.currentMonth){
   (m.items||[]).filter(i=>normalizeStatus(i.status)!=='CANCELADO').forEach(i=>{
     if(!i.date||!i.slot) issues.push(`${i.prize||i.title||'ITEM'} SEM DATA/HORÁRIO.`);
     if(normalizeChannel(i.channel)==='RÁDIO'&&!i.program) issues.push(`${i.prize||i.title||'ITEM'} SEM PROGRAMA VINCULADO.`);
+    if(normalizeChannel(i.channel)==='RÁDIO'&&i.date&&i.slot&&!programFromSchedule(i.date,i.slot,i.station||'JP1017')) issues.push(`${i.prize||i.title||'ITEM'} FORA DA GRADE CADASTRADA EM ${formatBR(i.date)} ${normalizeSlot(i.slot)}.`);
     if(i.distributionId){
       const d=(m.distributions||[]).find(x=>x.id===i.distributionId);
       if(!d) issues.push(`${i.prize||i.title||'ITEM'} VINCULADO A DISTRIBUIÇÃO INEXISTENTE.`);
@@ -8751,7 +8752,7 @@ function setRotationControls(prefix,slots=[]){
   const box=$(`${prefix}RotationHours`);
   if(!box) return;
   const available=registeredRotationSlots('JP1017');
-  const source=available.length?available:RADIO_PLANNER_SLOTS;
+  const source=available;
   const signature=source.join('|');
   if(box.dataset.signature!==signature){
     const groups=[
@@ -8769,7 +8770,7 @@ function setRotationControls(prefix,slots=[]){
 }
 function rotationAllowedSlots(d){
   const registered=registeredRotationSlots('JP1017');
-  const base=registered.length?registered:RADIO_PLANNER_SLOTS;
+  const base=registered;
   const selected=(d&&Array.isArray(d.rotationSlots)&&d.rotationSlots.length)?d.rotationSlots.map(normalizeSlot):base;
   const allowed=new Set(base);
   return [...new Set(selected)].filter(slot=>allowed.has(slot)).sort((a,b)=>slotOrder(a)-slotOrder(b));
@@ -8856,6 +8857,8 @@ function clearProgramScope(scope){
 }
 
 function render(){
+  const repairedInvalidAuto=repairInvalidAutoRadioItems(false);
+  if(repairedInvalidAuto.length) saveState(true);
   if(typeof autoConvertDueSchedulesForCurrentMonth==='function'){const convertedCount=autoConvertDueSchedulesForCurrentMonth();if(convertedCount>0)saveState(true);}
   if($('programDaysBox')&&!document.querySelector('#programDaysBox input:checked'))setProgramDaysControls([1,2,3,4,5]);
   $('monthInput').value=state.currentMonth;renderFilters();renderStats();
@@ -9793,10 +9796,9 @@ function renderItemSlotOptions(keepCurrent=true){
   const current=normalizeSlot(sel.value||'');
   const date=$('itemDate')?.value || todayISO();
   const station=$('itemProgramStation')?.value || 'JP1017';
-  const options=itemScheduleOptionsForStationDate(date,station);
+  const options=itemScheduleOptionsForStationDate(date,station).filter(o=>o.matchesDate);
   const list=options.map(o=>{
-    const suffix=o.matchesDate ? '' : ` · ${o.daysLabel}`;
-    const label=`${o.slot} — ${o.program}${suffix}`;
+    const label=`${o.slot} — ${o.program}`;
     return `<option value="${esc(o.slot)}" data-program="${esc(o.program)}" data-schedule-id="${esc(o.id)}" data-matches-date="${o.matchesDate?'1':'0'}">${esc(label)}</option>`;
   }).join('');
   const currentParts=slotParts(current);
@@ -9956,7 +9958,14 @@ $('itemForm').addEventListener('submit',e=>{
   const existingItem=monthData().items.find(i=>i.id===idVal)||{};
   const existingStatus=itemEffectiveStatus(existingItem); const requestedStatus=normalizeStatus($('itemStatus')?.value||'PENDENTE'); const adminStatus=existingStatus==='REALIZADO'?'REALIZADO':(['PENDENTE','NO AR','CANCELADO'].includes(requestedStatus)?requestedStatus:'PENDENTE');
   const item={id:idVal,date,day:dayName(date),week:weekLabel(date),slot:normalizeSlot($('itemSlot').value),station:$('itemProgramStation')?.value||'JP1017',program:norm($('itemProgram').value),distributionId:$('itemDistribution').value,prize:norm($('itemPrize').value),title:norm($('itemTitle').value),qty:num($('itemQty').value),channel:normalizeChannel($('itemChannel').value || 'RÁDIO'),status:adminStatus,winnerName:norm(existingItem.winnerName||existingItem.resultName||''),notes:textNorm($('itemNotes').value),titleStyle:promoStyleFromForm('itemTitle','title'),descriptionStyle:promoStyleFromForm('itemDesc','desc'),sourceType:existingItem.sourceType||'',promoId:existingItem.promoId||'',promoKind:existingItem.promoKind||''};
-  if(item.channel === 'RÁDIO' && !item.program){ alert('CADASTRE A GRADE EM HORÁRIOS OU ESCOLHA UMA RÁDIO/HORÁRIO COM PROGRAMA IDENTIFICADO.'); return; }
+  if(item.channel === 'RÁDIO'){
+    const registeredProgram=programFromSchedule(item.date,item.slot,item.station);
+    if(!registeredProgram){
+      alert(`HORÁRIO FORA DA GRADE.\n\n${formatBR(item.date)} ${item.slot||'--'} NÃO POSSUI PROGRAMA CADASTRADO NA ABA HORÁRIOS PARA ${stationLabel(item.station)}.\n\nCADASTRE O PROGRAMA OU ESCOLHA OUTRO HORÁRIO.`);
+      return;
+    }
+    item.program=registeredProgram;
+  }
   if(item.channel === 'RÁDIO'){
     const occupied=radioSlotConflicts(item.date,item.slot,item.id,item.station);
     if(occupied.length){
@@ -9966,7 +9975,7 @@ $('itemForm').addEventListener('submit',e=>{
       const msg=`O HORÁRIO ${formatBR(item.date)} ${originalSlot} JÁ TEM O PRÊMIO: ${conflictLabel(occupied)}.`;
       if(halfSlot && !halfOccupied.length && confirm(`${msg}\n\nDESEJA DIVIDIR ESTA HORA?\n\nO PRÊMIO JÁ CADASTRADO PERMANECE EM ${originalSlot}.\nESTE NOVO PRÊMIO ENTRARÁ EM ${halfSlot}.`)){
         item.slot=halfSlot;
-        item.program=programForSlot(item.date,halfSlot,item.station) || item.program;
+        item.program=programFromSchedule(item.date,halfSlot,item.station) || item.program;
         item.additionalPrize=true;
         item.sharedHour=originalSlot;
       }else{
@@ -10066,25 +10075,43 @@ function halfHourSlotFor(slot){
 }
 function radioSlotKey(date,slot,station='JP1017'){ return `${station}|${date}|${normalizeSlot(slot)}`; }
 function programFallbackForSlot(date,slot,station='JP1017'){
-  const scheduled=programFromSchedule(date,slot,station);
-  if(scheduled) return scheduled;
-  if(station!=='JP1017') return '';
-  const h=Math.floor(slotToMinutes(slot)/60);
-  const day=new Date(`${date}T12:00:00`).getDay();
-  if(h===7) return day===6 ? 'ROCK AND POP' : 'JORNAL DA MANHÃ LOCAL';
-  if(h===8) return 'ROCK AND POP';
-  if(h===9) return 'MANHÃ DA PAN';
-  if(h===10) return 'AS MAIS PEDIDAS';
-  if(h===11) return 'MANHÃ DA PAN';
-  if(h===14) return 'PLANETA DJ';
-  if(h>=15 && h<=17) return 'P12 RADIOSHOW';
-  if(h===20) return day===1 || day===6 ? 'UMA ATRÁS DA OUTRA' : 'JURASSIC PAN';
-  return '';
+  // R5: A grade cadastrada na aba HORÁRIOS é a única fonte válida.
+  // Não inventar programa por dia/hora quando não existir cadastro oficial.
+  return programFromSchedule(date,slot,station);
 }
 function programForSlot(date,slot,station='JP1017'){
   const ns=normalizeSlot(slot);
   const found=monthData().items.find(i=>i.date===date && (i.station||'JP1017')===station && normalizeSlot(i.slot)===ns && norm(i.program));
   return found ? found.program : programFallbackForSlot(date,ns,station);
+}
+function isAutoGeneratedRadioItem(item){
+  if(!item) return false;
+  const source=norm(item.generatedBy||item.sourceType||'');
+  return item.autoRadioPlanner===true || source.includes('SMART_RADIO') || source==='RADIO_PLANNER';
+}
+function radioItemMatchesRegisteredGrade(item){
+  if(!item || normalizeChannel(item.channel)!=='RÁDIO' || !item.date || !normalizeSlot(item.slot)) return false;
+  return !!programFromSchedule(item.date,item.slot,itemStation(item));
+}
+function repairInvalidAutoRadioItems(persist=false){
+  const removed=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    const items=Array.isArray(m?.items)?m.items:[];
+    const keep=[];
+    items.forEach(item=>{
+      const status=normalizeStatus(item.status);
+      const invalid=isAutoGeneratedRadioItem(item) && !['REALIZADO','CANCELADO'].includes(status) && !radioItemMatchesRegisteredGrade(item);
+      if(!invalid){ keep.push(item); return; }
+      removed.push({monthKey,item:clone(item)});
+    });
+    if(removed.some(row=>row.monthKey===monthKey)) m.items=keep;
+  });
+  if(removed.length){
+    removed.forEach(({monthKey,item})=>trashRecord('ITEM AUTO FORA DA GRADE',item.prize||item.title||'ITEM AUTOMÁTICO',item,{monthKey,sourceId:item.id,origin:'VALIDAÇÃO AUTOMÁTICA DE GRADE'}));
+    auditEvent('CORREÇÃO AUTOMÁTICA DE GRADE',`${removed.length} ITEM(NS)`,{note:'ITENS AUTOMÁTICOS PENDENTES SEM PROGRAMA CADASTRADO NO DIA/HORÁRIO FORAM REMOVIDOS DA OPERAÇÃO E ENVIADOS À LIXEIRA.'});
+    if(persist) saveState(true);
+  }
+  return removed;
 }
 function radioItemsInPeriod(start,end){
   return monthData().items.filter(i=>normalizeChannel(i.channel)==='RÁDIO' && i.date>=start && i.date<=end && normalizeSlot(i.slot));
@@ -10137,9 +10164,11 @@ function radioPlannerCandidates(d,excludeId='',station='JP1017'){
     const dayRegistered=eligibleRotationSlotsForDate(date,station);
     const usable=dayRegistered.length?allowedSlots.filter(slot=>dayRegistered.includes(slot)):[];
     usable.forEach(slot=>{
+      const program=programFromSchedule(date,slot,station);
+      if(!program) return; // R5: sem programa cadastrado, não existe candidato.
       const key=radioSlotKey(date,slot,station);
       const occ=occupied.get(key)||[];
-      candidates.push({date,slot,station,period:periodKey(slot),dayIndex,program:programForSlot(date,slot,station),occupied:occ.length>0,occupiedItems:occ,key});
+      candidates.push({date,slot,station,period:periodKey(slot),dayIndex,program,occupied:occ.length>0,occupiedItems:occ,key});
     });
   });
   return candidates;
@@ -10210,26 +10239,52 @@ function radioRowStatus(date,slot,distId,avoidSet=new Set()){
   const motivo=localDuplicate ? 'REPETIDO NA SELEÇÃO' : repeatConflicts.length ? `BLOQUEADO: ${samePrizeRepeatLabel(repeatConflicts)}` : `OCUPADO POR ${conflictLabel(occupied)}`;
   return {cls:'busy',text:`${motivo} — SUGESTÃO: ${alt ? formatBR(alt.date)+' '+alt.slot : 'SEM HORÁRIO LIVRE'}`};
 }
+function radioPlannerValidSlotsForDate(d,date,station='JP1017'){
+  if(!d || !date) return [];
+  const allowed=new Set(rotationAllowedSlots(d).map(normalizeSlot));
+  return eligibleRotationSlotsForDate(date,station)
+    .map(normalizeSlot)
+    .filter(slot=>allowed.has(slot))
+    .filter(slot=>!!programFromSchedule(date,slot,station))
+    .sort((a,b)=>slotOrder(a)-slotOrder(b));
+}
+function radioPlannerSlotOptions(d,date,selected='',station='JP1017'){
+  const valid=radioPlannerValidSlotsForDate(d,date,station);
+  const chosen=valid.includes(normalizeSlot(selected))?normalizeSlot(selected):(valid[0]||'');
+  if(!valid.length) return {html:'<option value="">SEM HORÁRIO CADASTRADO NESTE DIA</option>',chosen:''};
+  return {html:valid.map(slot=>`<option value="${esc(slot)}" ${slot===chosen?'selected':''}>${esc(slot)}</option>`).join(''),chosen};
+}
 function radioPlanRowHtml(candidate={}, checked=true){
-  const date=candidate.date || distStartDate(distributionById(radioPlannerDistId)) || monthStartDate();
-  const slot=normalizeSlot(candidate.slot || '09H');
-  const program=candidate.program || programForSlot(date,slot);
-  const st=radioRowStatus(date,slot,radioPlannerDistId);
+  const d=distributionById(radioPlannerDistId);
+  const date=candidate.date || distStartDate(d) || monthStartDate();
+  const options=radioPlannerSlotOptions(d,date,candidate.slot||'','JP1017');
+  const slot=options.chosen;
+  const program=slot?programFromSchedule(date,slot,'JP1017'):'';
+  const st=slot?radioRowStatus(date,slot,radioPlannerDistId):{cls:'busy',text:'SEM PROGRAMA CADASTRADO PARA ESTA DATA'};
   return `<div class="radioPlanRow ${st.cls==='busy'?'hasConflict':''}" data-plan-row>
     <label class="radioPlanCheckWrap"><input class="radioPlanCheck" type="checkbox" ${checked?'checked':''}></label>
     <input class="control radioPlanDate" type="date" value="${esc(date)}">
-    <select class="control radioPlanSlot">${RADIO_PLANNER_SLOTS.map(s=>`<option value="${s}" ${s===slot?'selected':''}>${s}</option>`).join('')}</select>
-    <input class="control radioPlanProgram" list="programDatalist" value="${esc(program)}" data-auto="1">
+    <select class="control radioPlanSlot">${options.html}</select>
+    <input class="control radioPlanProgram" list="programDatalist" value="${esc(program)}" data-auto="1" readonly>
     <div class="radioPlanStatus ${st.cls}">${esc(st.text)}</div>
     <button class="radioPlanRemove" type="button" title="REMOVER">×</button>
   </div>`;
 }
 function updateRadioPlannerRow(row,avoidSet=new Set()){
+  const d=distributionById(radioPlannerDistId);
   const date=row.querySelector('.radioPlanDate')?.value || '';
-  const slot=normalizeSlot(row.querySelector('.radioPlanSlot')?.value || '');
+  const slotSelect=row.querySelector('.radioPlanSlot');
+  const previous=normalizeSlot(slotSelect?.value || '');
+  const options=radioPlannerSlotOptions(d,date,previous,'JP1017');
+  if(slotSelect){
+    slotSelect.innerHTML=options.html;
+    slotSelect.value=options.chosen;
+  }
+  const slot=options.chosen;
   const program=row.querySelector('.radioPlanProgram');
-  if(program && (program.dataset.auto==='1' || !norm(program.value))) program.value=programForSlot(date,slot);
-  const st=radioRowStatus(date,slot,radioPlannerDistId,avoidSet);
+  const registered=slot?programFromSchedule(date,slot,'JP1017'):'';
+  if(program){ program.value=registered; program.dataset.auto='1'; program.readOnly=true; }
+  const st=registered?radioRowStatus(date,slot,radioPlannerDistId,avoidSet):{cls:'busy',text:'SEM PROGRAMA CADASTRADO PARA ESTA DATA/HORÁRIO'};
   const status=row.querySelector('.radioPlanStatus');
   if(status){ status.className=`radioPlanStatus ${st.cls}`; status.textContent=st.text; }
   row.classList.toggle('hasConflict', st.cls==='busy');
@@ -10258,13 +10313,15 @@ let radioPlannerWarningText='';
 let pendingSmartRadioReport=null;
 function radioPlannerNeeded(d){ return Math.max(0, num(d?.ar) - programmed(d?.id,'RÁDIO')); }
 function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
+  const registeredProgram=programFromSchedule(plan?.date,plan?.slot,'JP1017');
+  if(!registeredProgram) throw new Error(`HORÁRIO FORA DA GRADE: ${plan?.date||''} ${normalizeSlot(plan?.slot||'')}`);
   return {
     id:id('BR'),
     date:plan.date,
     day:dayName(plan.date),
     week:weekLabel(plan.date),
     slot:normalizeSlot(plan.slot),
-    program:plan.program||programForSlot(plan.date,plan.slot),
+    program:registeredProgram,
     distributionId:d.id,
     prize:distributionLabel(d),
     title:d.title||distributionLabel(d),
@@ -10922,17 +10979,21 @@ function saveRadioPlanner(){
   const plans=[];
   const used=new Set();
   const conflicts=[];
+  const invalidGrade=[];
   rows.forEach(row=>{
     const date=row.querySelector('.radioPlanDate')?.value || '';
     const slot=normalizeSlot(row.querySelector('.radioPlanSlot')?.value || '');
-    const program=norm(row.querySelector('.radioPlanProgram')?.value || programForSlot(date,slot));
-    if(!date || !slot || !program) return;
-    const key=radioSlotKey(date,slot);
-    const occupied=radioSlotConflicts(date,slot);
+    const program=programFromSchedule(date,slot,'JP1017');
+    if(!date || !slot || !program){
+      invalidGrade.push({date,slot});
+      return;
+    }
+    const key=radioSlotKey(date,slot,'JP1017');
+    const occupied=radioSlotConflicts(date,slot,'','JP1017');
     const localDuplicate=used.has(key);
-    const repeatConflicts=samePrizeRepeatConflicts(d,date,slot,plans);
+    const repeatConflicts=samePrizeRepeatConflicts(d,date,slot,plans,'','JP1017');
     if(occupied.length || localDuplicate || repeatConflicts.length){
-      const alt=findNextFreeRadioSlot(d,used,'',plans);
+      const alt=findNextFreeRadioSlot(d,used,'',plans,'JP1017');
       if(alt) used.add(alt.key);
       conflicts.push({row,date,slot,program,occupied,localDuplicate,repeatConflicts,alt});
       return;
@@ -10940,6 +11001,15 @@ function saveRadioPlanner(){
     used.add(key);
     plans.push({date,slot,program,period:periodKey(slot)});
   });
+  if(invalidGrade.length){
+    alert(`PROGRAMAÇÃO BLOQUEADA.
+
+${invalidGrade.map(r=>`${formatBR(r.date)} ${r.slot||'--'} — SEM PROGRAMA CADASTRADO NA ABA HORÁRIOS`).join('\n')}
+
+CADASTRE O PROGRAMA/DIA/HORÁRIO OU ESCOLHA OUTRO HORÁRIO VÁLIDO.`);
+    refreshRadioPlannerRows();
+    return;
+  }
   if(conflicts.length){
     refreshRadioPlannerRows();
     const lines=conflicts.map(c=>`${formatBR(c.date)} ${c.slot} — ${c.localDuplicate ? 'REPETIDO NA SELEÇÃO' : c.repeatConflicts?.length ? 'BLOQUEADO POR REGRA DE 2 DIAS: '+samePrizeRepeatLabel(c.repeatConflicts) : 'OCUPADO POR '+conflictLabel(c.occupied)}${c.alt ? ` | SUGESTÃO: ${formatBR(c.alt.date)} ${c.alt.slot}` : ' | SEM HORÁRIO LIVRE'}`);
@@ -11407,7 +11477,11 @@ bind('confirmSmartRadioBtn','click',confirmSmartRadioReport);
 bind('redoSmartRadioBtn','click',redoSmartRadioReport);
 if($('addRadioPlannerRowBtn')) $('addRadioPlannerRowBtn').addEventListener('click',()=>{
   const d=distributionById(radioPlannerDistId);
-  const first=pickBestRadioSuggestions(d,1)[0] || {date:distStartDate(d),slot:'09H',program:programFallbackForSlot(distStartDate(d),'09H')};
+  const first=pickBestRadioSuggestions(d,1)[0] || radioPlannerCandidates(d).find(c=>!c.occupied);
+  if(!first){
+    alert('NÃO EXISTE HORÁRIO VÁLIDO CADASTRADO NA ABA HORÁRIOS DENTRO DO PERÍODO DESTE PRÊMIO.');
+    return;
+  }
   addRadioPlanRow(first,true);
 });
 if($('radioPlannerSuggestions')) $('radioPlannerSuggestions').addEventListener('change',e=>{
