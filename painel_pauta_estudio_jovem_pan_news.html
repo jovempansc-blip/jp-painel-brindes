@@ -874,7 +874,7 @@ body{
   flex-wrap:nowrap!important;
   overflow:hidden!important;
 }
-.promoFooterList.empty::before{
+.promoFooterList.isEmpty::before{
   content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
   color:#b46a00;
   font-size:10px;
@@ -1210,7 +1210,7 @@ body{
   flex-wrap:nowrap!important;
   overflow:hidden!important;
 }
-.promoFooterList.empty::before{
+.promoFooterList.isEmpty::before{
   content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
   display:inline-flex;
   align-items:center;
@@ -1363,7 +1363,7 @@ body{
 .promoFooterList{
   gap:8px!important;
 }
-.promoFooterList.empty::before{
+.promoFooterList.isEmpty::before{
   color:#a76500!important;
   opacity:.72!important;
   font-size:8px!important;
@@ -1554,7 +1554,7 @@ body{
   flex-wrap:nowrap!important;
   overflow:hidden!important;
 }
-.promoFooterList.empty::before{
+.promoFooterList.isEmpty::before{
   min-height:26px!important;
   color:#a76500!important;
   opacity:.72!important;
@@ -1824,6 +1824,115 @@ tbody tr:focus-within td{background:#fff8fa}
 .modalBackdrop{z-index:10000!important}
 @media(max-width:760px){.pautaBody{min-height:205px!important;padding:15px 16px 17px!important}.pautaBody.emptyState{min-height:150px!important}}
 </style>
+
+<style>
+/* === V57: CORREÇÃO ESTRUTURAL DOS LINKS DE ESTÚDIO ===
+   Isola o estado vazio do rodapé, mantém conteúdo visível e melhora o clique do resultado. */
+.pautaBody{
+  min-height:230px!important;
+  padding:18px 28px 20px!important;
+  gap:10px!important;
+  overflow:visible!important;
+}
+.pautaBody>.titleBox,
+.pautaBody>.descBox,
+.pautaBody>.winnerBox,
+.pautaBody>.pautaActions,
+.pautaBody>.emptyStudioBox,
+.pautaBody>.promoReadBanner,
+.pautaBody>.resultBox{
+  flex:0 0 auto!important;
+}
+.pautaActions{
+  min-height:38px!important;
+  align-items:center!important;
+}
+.winnerBtn{
+  width:36px!important;
+  min-width:36px!important;
+  height:36px!important;
+  min-height:36px!important;
+  border:1px solid #dfe5ec!important;
+  border-radius:12px!important;
+  background:#f8fafc!important;
+  color:#707b8b!important;
+  box-shadow:0 4px 12px rgba(17,23,34,.045)!important;
+}
+.winnerBtn:hover,
+.winnerBtn:focus-visible{
+  background:#fff!important;
+  color:#a90d25!important;
+  border-color:#efc3cc!important;
+}
+.winnerBtn .trophy{font-size:18px!important;opacity:.82!important}
+.promoFooter{
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  flex:0 0 44px!important;
+  overflow:hidden!important;
+  padding:6px 12px!important;
+}
+.promoFooterList{
+  width:100%!important;
+  height:32px!important;
+  min-height:32px!important;
+  max-height:32px!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:inherit!important;
+  font-size:inherit!important;
+  justify-content:flex-start!important;
+  overflow:hidden!important;
+}
+.promoFooterList.isEmpty::before{
+  content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:26px!important;
+  max-height:26px!important;
+  padding:0 2px!important;
+  color:#a76500!important;
+  font-size:8px!important;
+  font-weight:1000!important;
+  letter-spacing:.07em!important;
+  white-space:nowrap!important;
+}
+.heroLogo{
+  display:block!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+/* BANNER PROMOCIONAL: só ocupa espaço quando existe imagem cadastrada. */
+.promoReadBanner{
+  width:min(760px,100%)!important;
+  aspect-ratio:4/1!important;
+  max-height:none!important;
+  margin:0 auto 2px!important;
+  border-radius:16px!important;
+}
+.promoReadBanner img{width:100%!important;height:100%!important;object-fit:cover!important}
+/* Estado vazio do histórico não herda a antiga altura de painel vazio. */
+.historyList>.empty{
+  min-height:96px!important;
+  padding:18px!important;
+  font-size:12px!important;
+}
+@media(max-width:760px){
+  .pautaBody{min-height:205px!important;padding:15px 16px 17px!important;gap:8px!important}
+  .pautaActions{min-height:34px!important}
+  .winnerBtn{width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important}
+  .promoFooter{height:42px!important;min-height:42px!important;max-height:42px!important;flex-basis:42px!important;padding:5px 8px!important}
+  .promoFooterList{height:30px!important;min-height:30px!important;max-height:30px!important}
+  .promoList{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:min(280px,calc(100vw - 28px))!important}
+  .promoReadBanner{width:100%!important}
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -1863,7 +1972,7 @@ tbody tr:focus-within td{background:#fff8fa}
       <button class="modalBtn primary" type="button" id="closeHistoryBtn">FECHAR</button>
     </div>
   </div>
-
+</div>
 
 <script>
 const STORAGE_KEY='jp_programacao_brindes_distribuicao_v2';
@@ -2412,7 +2521,7 @@ function renderReadHistoryTicker(){
 function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
 function buildPromoFooter(item){
   const pautas=allPautasForItemHour(item,true).filter(p=>ALLOW_PROMO_SHORTCUT || isMerchan(p));
-  const emptyClass=pautas.length ? '' : ' empty';
+  const emptyClass=pautas.length ? '' : ' isEmpty';
   return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{
     const readAt=readTimestampForHour(p,item);
     const done=!!readAt;
@@ -2912,7 +3021,7 @@ function render(){
   const isVirtual=!!item.__virtual;
   const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
-      <div class="promoReadBanner">${promo.imageData?`<img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO">`:'IMAGEM DA PROMOÇÃO'}</div>
+      ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
