@@ -3128,6 +3128,30 @@ main{
 @media(max-width:600px){.winnerBankKpis,.winnerBankToolbar,.winnerImportSummary{grid-template-columns:1fr}.winnerBankActions{grid-column:auto}.winnerDetailHero{grid-template-columns:1fr}.winnerHistoryRow{grid-template-columns:1fr}}
 @media(max-width:600px){.winnerSimilarityCompare{grid-template-columns:1fr}.winnerSimilarityScore{justify-self:start}}
 
+
+/* R20 — BUSCA GLOBAL OPERACIONAL */
+.appHeader .globalSearchField{position:relative!important;z-index:120!important}
+.globalSearchDropdown{
+  position:absolute;left:0;right:0;top:calc(100% + 6px);display:none;
+  max-height:390px;overflow:auto;background:#fff;border:1px solid #dfe5ec;border-radius:13px;
+  box-shadow:0 16px 42px rgba(21,29,43,.16);padding:6px;z-index:10050;text-align:left;
+}
+.globalSearchDropdown.show{display:block}
+.globalSearchItem{
+  width:100%;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;
+  border:0;border-bottom:1px solid #eef1f4;background:#fff;padding:9px 8px;text-align:left;cursor:pointer;
+  font:inherit;color:#17202d;border-radius:8px;
+}
+.globalSearchItem:last-child{border-bottom:0}
+.globalSearchItem:hover,.globalSearchItem:focus-visible{background:#f6f8fa;outline:none}
+.globalSearchType{display:inline-flex;align-items:center;min-height:20px;padding:0 6px;border-radius:999px;background:#eef2f6;color:#5a6575;font-size:6.8px;font-weight:1000;white-space:nowrap}
+.globalSearchText{min-width:0}.globalSearchText strong{display:block;font-size:8.8px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.globalSearchText span{display:block;margin-top:3px;color:#778193;font-size:7.3px;font-weight:800;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.globalSearchEmpty{padding:12px 10px;color:#6f7989;font-size:8px;font-weight:900;text-align:center}
+.globalSearchFooter{padding:6px 4px 2px;display:flex;justify-content:flex-end}
+.globalSearchFooter button{border:0;background:transparent;color:#8b1830;font-size:7.5px;font-weight:1000;cursor:pointer;padding:5px 6px}
+@media(max-width:680px){.globalSearchDropdown{max-height:52vh}}
+
 </style>
 
 
@@ -3311,7 +3335,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
     </div>
     <div class="topTools">
       <div class="field monthHeaderField"><label>MÊS</label><input class="control" type="month" id="monthInput" value=""></div>
-      <div class="field globalSearchField"><label>BUSCA GLOBAL</label><input class="control" id="globalSearchInput" type="search" autocomplete="off" placeholder="PRÊMIO, GANHADOR, PROMOÇÃO..."></div>
+      <div class="field globalSearchField"><label>BUSCA GLOBAL</label><input class="control" id="globalSearchInput" type="search" autocomplete="off" spellcheck="false" aria-autocomplete="list" aria-controls="globalSearchDropdown" aria-expanded="false" placeholder="PRÊMIO, GANHADOR, PROMOÇÃO..."><div id="globalSearchDropdown" class="globalSearchDropdown" role="listbox" aria-label="RESULTADOS DA BUSCA GLOBAL"></div></div>
       <div class="toolbar" aria-label="AÇÕES RÁPIDAS DO PAINEL">
         <button class="btn syncStatusBtn saving" id="syncStatusBtn" type="button" title="STATUS DO BANCO" aria-label="STATUS DO BANCO">
           <span class="syncDot" aria-hidden="true"></span>
@@ -7802,23 +7826,67 @@ function restoreTrashRecord(trashId){
   auditEvent('RESTAURAÇÃO',row.label,{targetId:row.sourceId,after:payload});
   saveState(true); render(); toast('RESTAURAÇÃO PREPARADA · SINCRONIZANDO COM FIREBASE...');
 }
+function globalSearchNorm(value){
+  return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase();
+}
 function globalSearchRows(query){
-  const q=norm(query); if(!q) return [];
-  const rows=[]; const add=(type,title,detail,view)=>{ const hay=norm(`${title} ${detail}`); if(hay.includes(q)) rows.push({type,title,detail,view}); };
+  const q=globalSearchNorm(query); if(!q) return [];
+  const rows=[];
+  const add=(type,title,detail,view,meta={})=>{
+    const safeTitle=String(title||'').trim(),safeDetail=String(detail||'').trim();
+    const titleKey=globalSearchNorm(safeTitle),detailKey=globalSearchNorm(safeDetail);
+    if(!titleKey.includes(q)&&!detailKey.includes(q)) return;
+    const score=titleKey===q?0:titleKey.startsWith(q)?1:titleKey.includes(q)?2:detailKey.startsWith(q)?3:4;
+    rows.push({type,safeTitle,detail:safeDetail,view,score,...meta,title:safeTitle});
+  };
   Object.entries(state.months||{}).forEach(([key,m])=>{
-    (m.distributions||[]).forEach(d=>add('PRÊMIO',distributionLabel(d),`${labelMonth(key)} · TOTAL ${d.total} · SALDO ${leftTotal(d)}`,'distribuicao'));
-    (m.promos||[]).forEach(p=>add('PROMOÇÃO',p.name||p.title||'PROMOÇÃO',`${labelMonth(key)} · ${p.local||''} · ${p.description||''}`,'digital'));
-    (m.items||[]).forEach(i=>add('PROGRAMAÇÃO',i.prize||i.title||'ITEM',`${formatBR(i.date)} ${i.slot||''} · ${i.program||''} · ${i.winnerName||''}`,'programacao'));
+    (m.distributions||[]).forEach(d=>add('PRÊMIO',distributionLabel(d),`${labelMonth(key)} · TOTAL ${d.total} · SALDO ${leftTotal(d)} · ${d.description||d.notes||''}`,'distribuicao',{monthKey:key,id:d.id||''}));
+    (m.promos||[]).forEach(p=>add('PROMO / MERCHAN',p.name||p.title||'PROMOÇÃO',`${labelMonth(key)} · ${p.local||''} · ${p.description||''} · ${p.client||p.cliente||''}`,'digital',{monthKey:key,id:p.id||'',date:p.resultDate||p.drawDate||p.startDate||''}));
+    (m.items||[]).forEach(i=>add('PROGRAMAÇÃO',i.prize||i.title||'ITEM',`${formatBR(i.date)} ${i.slot||''} · ${i.program||''} · ${i.winnerName||''} · ${i.notes||''}`,'programacao',{monthKey:key,id:i.id||'',date:i.date||''}));
   });
-  (state.schedules||[]).forEach(r=>add('AGENDAMENTO',r.name||r.title||r.type||'AGENDAMENTO',`${r.notes||''} ${r.destination||''}`,'agendamento'));
-  (winnerBankRecords||[]).forEach(r=>add('GANHADOR',r.name,`${formatBR(r.date)} · ${r.program} · ${winnerResolvedPrize(r)}`,'ganhadores'));
-  return rows.slice(0,80);
+  (state.schedules||[]).forEach(r=>add('AGENDAMENTO',r.name||r.title||r.type||'AGENDAMENTO',`${r.notes||''} · ${r.destination||''} · ${r.station||''}`,'agendamento',{id:r.id||'',date:r.startDate||''}));
+  (state.programSchedules||[]).forEach(r=>add('HORÁRIO',r.name||r.program||'PROGRAMA',`${r.station||''} · ${r.startTime||''}–${r.endTime||''} · ${(r.days||[]).join(' ')}`,'horarios',{id:r.id||''}));
+  (winnerBankRecords||[]).forEach(r=>add('GANHADOR',r.name||'GANHADOR',`${formatBR(r.date)} · ${r.program||''} · ${winnerResolvedPrize(r)}`,'ganhadores',{id:r.id||'',date:r.date||''}));
+  return rows.sort((a,b)=>a.score-b.score||globalSearchNorm(a.title).localeCompare(globalSearchNorm(b.title))||globalSearchNorm(a.detail).localeCompare(globalSearchNorm(b.detail))).slice(0,100);
+}
+function globalSearchResultHtml(r,index,compact=false){
+  if(compact) return `<button class="globalSearchItem" type="button" role="option" data-global-result="${index}"><span class="globalSearchType">${esc(r.type)}</span><span class="globalSearchText"><strong>${esc(r.title)}</strong><span>${esc(r.detail)}</span></span></button>`;
+  return `<div class="systemRow"><div><strong>${esc(r.type)} · ${esc(r.title)}</strong><span>${esc(r.detail)}</span></div><button class="btn small" type="button" data-global-result="${index}">ABRIR</button></div>`;
+}
+function closeGlobalSearchDropdown(){
+  const dropdown=$('globalSearchDropdown'),input=$('globalSearchInput');
+  if(dropdown) dropdown.classList.remove('show');
+  if(input) input.setAttribute('aria-expanded','false');
 }
 function renderGlobalSearch(){
-  const host=$('globalSearchResults'),count=$('globalSearchCount'),input=$('globalSearchInput'); if(!host||!count||!input) return;
-  const q=input.value.trim(); const rows=globalSearchRows(q);
-  count.textContent=q?`${rows.length} RESULTADO(S)`:'DIGITE NO CAMPO DO TOPO';
-  host.innerHTML=!q?'<div class="systemRow info"><div><strong>BUSCA GLOBAL</strong><span>PESQUISE PRÊMIOS, GANHADORES, PROMOÇÕES, PROGRAMAÇÃO E AGENDAMENTOS.</span></div></div>':rows.length?rows.map((r,index)=>`<div class="systemRow"><div><strong>${esc(r.type)} · ${esc(r.title)}</strong><span>${esc(r.detail)}</span></div><button class="btn small" type="button" data-global-result="${index}" data-view-target="${esc(r.view)}">ABRIR</button></div>`).join(''):'<div class="systemRow attention"><div><strong>NENHUM RESULTADO</strong><span>REVISE O TERMO PESQUISADO.</span></div></div>';
+  const host=$('globalSearchResults'),count=$('globalSearchCount'),input=$('globalSearchInput'),dropdown=$('globalSearchDropdown');
+  if(!input) return;
+  const q=input.value.trim(),rows=globalSearchRows(q);
+  if(count) count.textContent=q?`${rows.length} RESULTADO(S)`:'DIGITE NO CAMPO DO TOPO';
+  if(host) host.innerHTML=!q?'<div class="systemRow info"><div><strong>BUSCA GLOBAL</strong><span>PESQUISE PRÊMIOS, GANHADORES, PROMOÇÕES, MERCHANS, PROGRAMAÇÃO, HORÁRIOS E AGENDAMENTOS.</span></div></div>':rows.length?rows.map((r,index)=>globalSearchResultHtml(r,index,false)).join(''):'<div class="systemRow attention"><div><strong>NENHUM RESULTADO</strong><span>REVISE O TERMO PESQUISADO.</span></div></div>';
+  if(!dropdown) return;
+  if(!q){ dropdown.innerHTML=''; closeGlobalSearchDropdown(); return; }
+  const visible=rows.slice(0,10);
+  dropdown.innerHTML=visible.length?visible.map((r,index)=>globalSearchResultHtml(r,index,true)).join('')+(rows.length>10?`<div class="globalSearchFooter"><button type="button" data-global-show-all>VER TODOS OS ${rows.length} RESULTADOS</button></div>`:''):'<div class="globalSearchEmpty">NENHUM RESULTADO ENCONTRADO.</div>';
+  dropdown.classList.add('show'); input.setAttribute('aria-expanded','true');
+}
+function openGlobalSearchResult(index){
+  const input=$('globalSearchInput'); if(!input) return;
+  const row=globalSearchRows(input.value.trim())[Number(index)]; if(!row) return;
+  if(row.monthKey&&state.months?.[row.monthKey]){
+    state.currentMonth=row.monthKey; manualMonthOverride=true; calendarMonthOpened=row.monthKey;
+    if($('monthInput')) $('monthInput').value=row.monthKey;
+  }
+  closeGlobalSearchDropdown();
+  setView(row.view||'sistema');
+  if(row.view==='programacao'&&row.date){
+    const targetWeek=weekLabel(row.date); if(targetWeek&&$('weekFilter')) $('weekFilter').value=targetWeek; renderProgramacao();
+  }else if(row.view==='distribuicao'){
+    if($('distSearchInput')) $('distSearchInput').value=row.title||''; renderDistribuicao();
+  }else if(row.view==='ganhadores'){
+    if($('winnerBankSearch')) $('winnerBankSearch').value=row.title||''; renderWinnerBank();
+  }
+  requestAnimationFrame(()=>document.getElementById(`view-${row.view||'sistema'}`)?.scrollIntoView({block:'start',behavior:'smooth'}));
 }
 function monthNextKey(key=state.currentMonth){const [y,m]=String(key).split('-').map(Number);const d=new Date(y,(m||1),1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;}
 function closeCurrentMonthControlled(){
@@ -12252,14 +12320,24 @@ bind('winnerRecordSimilarity','click',event=>{
 bind('refreshWinnerBankBtn','click',()=>initWinnerBank(true));
 bind('winnerBankSearch','input',renderWinnerBank); bind('winnerBankStatusFilter','change',renderWinnerBank); bind('winnerBankOrder','change',renderWinnerBank);
 
-bind('globalSearchInput','input',()=>{ renderGlobalSearch(); if(($('globalSearchInput')?.value||'').trim()) setView('sistema'); });
+bind('globalSearchInput','input',renderGlobalSearch);
+bind('globalSearchInput','focus',renderGlobalSearch);
+bind('globalSearchInput','keydown',event=>{
+  if(event.key==='Escape'){ closeGlobalSearchDropdown(); return; }
+  if(event.key==='Enter'){
+    const rows=globalSearchRows($('globalSearchInput')?.value||'');
+    if(rows.length){ event.preventDefault(); openGlobalSearchResult(0); }
+  }
+});
 bind('systemCheckBtn','click',()=>{ renderSystemView(); toast('VERIFICAÇÃO DE INTEGRIDADE CONCLUÍDA.'); });
 bind('monthCloseBtn','click',()=>{ if(state.systemMeta?.closedMonths?.[state.currentMonth]) reopenMonth(state.currentMonth); else closeCurrentMonthControlled(); });
 bind('adminReportFrom','change',renderAdminReports); bind('adminReportTo','change',renderAdminReports); bind('adminReportType','change',renderAdminReports); bind('adminReportPdfBtn','click',()=>window.print()); bind('adminReportPrintBtn','click',()=>window.print());
 document.addEventListener('click',event=>{
   const restore=event.target.closest('[data-restore-trash]'); if(restore){ restoreTrashRecord(restore.dataset.restoreTrash); return; }
   const pending=event.target.closest('[data-pending-view]'); if(pending){ setView(pending.dataset.pendingView); return; }
-  const result=event.target.closest('[data-global-result]'); if(result){ setView(result.dataset.viewTarget||'sistema'); return; }
+  const result=event.target.closest('[data-global-result]'); if(result){ openGlobalSearchResult(result.dataset.globalResult); return; }
+  const showAll=event.target.closest('[data-global-show-all]'); if(showAll){ closeGlobalSearchDropdown(); setView('sistema'); requestAnimationFrame(()=>$('globalSearchResults')?.scrollIntoView({block:'start',behavior:'smooth'})); return; }
+  if(!event.target.closest('.globalSearchField')) closeGlobalSearchDropdown();
 });
 bind('monthInput','input',commitMonthInputSelection);
 bind('monthInput','change',commitMonthInputSelection);
