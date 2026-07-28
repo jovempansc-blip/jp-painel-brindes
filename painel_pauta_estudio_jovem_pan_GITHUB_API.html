@@ -3182,49 +3182,312 @@ function addPromoWinnerField(value=''){
 }
 async function commitStudioOutcomeAtomic({collection,recordId,patch,names,context,occurrenceKey=''}){
   if(!firebaseReady||!firebaseRef) initFirebaseSync();
-  if(!firebaseReady||!firebaseRef||!winnerBankRef) throw new Error('FIREBASE INDISPONÍVEL.');
-  const rootRef=firebaseRef.parent; const now=new Date(); const newIds=names.map(()=>winnerBankRef.child('records').push().key); let rejection=null,duplicateConfirmation=false;
-  const result=await rootRef.transaction(root=>{
-    root=root&&typeof root==='object'?root:{};
-    let panel=root.state?.months?root.state:(root.state?.state?.months?root.state.state:null);
-    if(!panel?.months) return;
-    const bank=root.winnerBank&&typeof root.winnerBank==='object'?root.winnerBank:{}; const recordMap=winnerRecordMap(bank.records||{});
-    const existingSource=Object.values(recordMap).filter(r=>r.source==='ESTUDIO_JP1017'&&r.sourceRef===context.sourceRef);
-    // Uma ocorrência já confirmada não pode ser processada novamente por duplo clique/reload.
-    let targetFound=false;
-    Object.values(panel.months||{}).forEach(m=>{
-      (m?.[collection]||[]).forEach(row=>{
-        if(row?.id!==recordId) return; targetFound=true;
-        if(collection==='items' && upper(row.status)==='REALIZADO' && upper(row.winnerName||'')) duplicateConfirmation=true;
-        if(collection==='promos' && occurrenceKey && Array.isArray(row.resultWinnersByHour?.[occurrenceKey]) && row.resultWinnersByHour[occurrenceKey].length) duplicateConfirmation=true;
-      });
-    });
-    if(!targetFound) return;
-    if(duplicateConfirmation||existingSource.length){ return; }
-    const working=winnerRecordList(recordMap);
-    for(let index=0;index<names.length;index++){
-      const name=upper(names[index]); const eligibility=winnerEvaluateAgainst(working,name,context.prize,context.date);
-      if(!eligibility.allowed){ rejection=eligibility; return; }
-      const rid=newIds[index]; const rec={id:rid,name,date:context.date,program:context.program,prize:context.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(context.prize),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:'ESTUDIO_JP1017'};
-      recordMap[rid]=rec; working.push(rec);
-    }
-    bank.records=recordMap; bank.schemaVersion=1; bank.updatedAtISO=now.toISOString(); bank.source='ESTUDIO_JP1017'; root.winnerBank=bank;
-    Object.values(panel.months||{}).forEach(m=>{
-      const rows=m?.[collection]||[]; const idx=rows.findIndex(row=>row?.id===recordId); if(idx>=0) rows[idx]={...rows[idx],...JSON.parse(JSON.stringify(patch)),updatedAt:now.toISOString()};
-    });
-    panel.auditLog=Array.isArray(panel.auditLog)?panel.auditLog:[];
-    panel.auditLog.push({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',note:`${names.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});
-    panel.auditLog=panel.auditLog.slice(-2500); panel.updatedAt=Date.now(); panel.savedAt=now.toISOString(); panel.source='ESTUDIO_JP1017'; panel.version='FIREBASE_RTDB_V3_ATOMIC_RESULT'; root.state=panel;
-    return root;
-  },undefined,false);
-  if(!result.committed){
-    if(duplicateConfirmation){ const e=new Error('RESULTADO JÁ CONFIRMADO. ESTA OCORRÊNCIA NÃO SERÁ PROCESSADA NOVAMENTE.'); e.alreadyConfirmed=true; throw e; }
-    const e=new Error(rejection?.reason||'A OPERAÇÃO NÃO FOI CONCLUÍDA. OS DADOS PODEM TER SIDO ALTERADOS EM OUTRO COMPUTADOR.'); e.eligibility=rejection; throw e;
+  initWinnerBank();
+
+  if(!firebaseReady||!firebaseRef||!winnerBankRef){
+    throw new Error('FIREBASE INDISPONÍVEL.');
   }
-  const root=result.snapshot.val()||{}; const remote=root.state?.months?root.state:(root.state?.state?.months?root.state.state:null);
-  if(remote){ state=remote; selectStudioMonth(); localStorage.setItem(STORAGE_KEY,JSON.stringify(state)); }
-  if(root.winnerBank) applyWinnerBankSnapshot(root.winnerBank);
-  return true;
+
+  const cleanNames=(names||[]).map(upper).filter(Boolean);
+  if(!cleanNames.length) throw new Error('NENHUM GANHADOR INFORMADO.');
+
+  const now=new Date();
+  const operationLogId=`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+
+  let originalRow=null;
+  let stateChanged=false;
+  let alreadyConfirmed=false;
+  let conflictMessage='';
+  let targetFound=false;
+
+  try{
+    /*
+     * ETAPA 1
+     * Reserva/confirma o resultado exclusivamente dentro de /state.
+     * A transação impede dois computadores de confirmarem ganhadores
+     * diferentes para a mesma ocorrência.
+     */
+    const stateResult=await firebaseRef.transaction(current=>{
+      const panel=current?.months
+        ? JSON.parse(JSON.stringify(current))
+        : current?.state?.months
+          ? JSON.parse(JSON.stringify(current.state))
+          : null;
+
+      if(!panel?.months) return;
+
+      targetFound=false;
+      alreadyConfirmed=false;
+      conflictMessage='';
+      originalRow=null;
+
+      Object.values(panel.months||{}).forEach(month=>{
+        const source=month?.[collection];
+        const rows=Array.isArray(source)
+          ? source.filter(Boolean)
+          : Object.values(source||{}).filter(Boolean);
+
+        const index=rows.findIndex(row=>row?.id===recordId);
+        if(index<0) return;
+
+        targetFound=true;
+        const row=rows[index];
+
+        let previousNames=[];
+
+        if(collection==='items'){
+          previousNames=String(row.winnerName||'')
+            .split(',')
+            .map(upper)
+            .filter(Boolean);
+        }
+
+        if(collection==='promos' && occurrenceKey){
+          previousNames=normalizeWinnerList(
+            row.resultWinnersByHour?.[occurrenceKey]||[]
+          ).map(w=>w.name);
+        }
+
+        if(previousNames.length){
+          if(previousNames.join('|')===cleanNames.join('|')){
+            alreadyConfirmed=true;
+          }else{
+            conflictMessage='ESTE RESULTADO JÁ FOI CONFIRMADO EM OUTRO COMPUTADOR.';
+          }
+          return;
+        }
+
+        originalRow=JSON.parse(JSON.stringify(row));
+
+        rows[index]={
+          ...row,
+          ...JSON.parse(JSON.stringify(patch)),
+          updatedAt:now.toISOString()
+        };
+
+        month[collection]=rows;
+      });
+
+      if(!targetFound || conflictMessage) return;
+
+      if(!alreadyConfirmed){
+        panel.auditLog=Array.isArray(panel.auditLog)?panel.auditLog:[];
+
+        panel.auditLog.push({
+          id:operationLogId,
+          action:collection==='promos'
+            ? 'RESULTADO DE PROMOÇÃO CONFIRMADO'
+            : 'RESULTADO DE SORTEIO CONFIRMADO',
+          target:context.prize,
+          targetId:recordId,
+          origin:'ESTÚDIO JP 101,7',
+          note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,
+          createdAt:now.toISOString(),
+          createdAtLabel:now.toLocaleString('pt-BR')
+        });
+
+        panel.auditLog=panel.auditLog.slice(-2500);
+        panel.updatedAt=Date.now();
+        panel.savedAt=now.toISOString();
+        panel.source='ESTUDIO_JP1017';
+        panel.version='FIREBASE_RTDB_R21_RESULT';
+      }
+
+      return panel;
+    },undefined,false);
+
+    if(conflictMessage) throw new Error(conflictMessage);
+
+    if(!stateResult?.committed || !targetFound){
+      throw new Error(
+        'O SORTEIO NÃO FOI LOCALIZADO OU O FIREBASE NÃO CONFIRMOU O RESULTADO.'
+      );
+    }
+
+    stateChanged=!alreadyConfirmed;
+
+    /*
+     * ETAPA 2
+     * Banco de Ganhadores exclusivamente dentro de /winnerBank.
+     */
+    const ids=cleanNames.map(
+      ()=>winnerBankRef.child('records').push().key
+    );
+
+    let rejection=null;
+
+    const bankResult=await winnerBankRef.child('records').transaction(current=>{
+      rejection=null;
+
+      const map=winnerRecordMap(current||{});
+
+      /* Remove apenas uma confirmação anterior da MESMA ocorrência. */
+      Object.keys(map).forEach(key=>{
+        const record=map[key];
+
+        if(
+          record.source==='ESTUDIO_JP1017' &&
+          record.sourceRef===context.sourceRef
+        ){
+          delete map[key];
+        }
+      });
+
+      const working=winnerRecordList(map);
+
+      for(let index=0;index<cleanNames.length;index+=1){
+        const name=cleanNames[index];
+
+        const eligibility=winnerEvaluateAgainst(
+          working,
+          name,
+          context.prize,
+          context.date
+        );
+
+        if(!eligibility.allowed){
+          rejection=eligibility;
+          return;
+        }
+
+        const recordIdBank=ids[index];
+
+        const record={
+          id:recordIdBank,
+          name,
+          date:context.date,
+          program:context.program,
+          prize:context.prize,
+          personKey:winnerPersonKey(name),
+          prizeKey:winnerPrizeKey(context.prize),
+          source:'ESTUDIO_JP1017',
+          sourceRef:context.sourceRef,
+          createdAt:now.toISOString(),
+          createdAtLabel:now.toLocaleString('pt-BR'),
+          updatedAt:now.toISOString(),
+          updatedBy:'ESTUDIO_JP1017'
+        };
+
+        map[recordIdBank]=record;
+        working.push(record);
+      }
+
+      return map;
+    },undefined,false);
+
+    if(!bankResult?.committed){
+      const error=new Error(
+        rejection?.reason ||
+        'O BANCO DE GANHADORES NÃO CONFIRMOU A PREMIAÇÃO.'
+      );
+
+      error.eligibility=rejection;
+      throw error;
+    }
+
+    /*
+     * Metadados não podem invalidar uma premiação já confirmada.
+     */
+    try{
+      await winnerBankRef.update({
+        initialized:true,
+        schemaVersion:1,
+        updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
+        updatedAtISO:now.toISOString(),
+        source:'ESTUDIO_JP1017'
+      });
+    }catch(metaError){
+      console.warn('METADADOS DO BANCO NÃO ATUALIZADOS:',metaError);
+    }
+
+    applyWinnerBankSnapshot({
+      initialized:true,
+      schemaVersion:1,
+      records:bankResult.snapshot.val()||{},
+      updatedAtISO:now.toISOString(),
+      source:'ESTUDIO_JP1017'
+    });
+
+    const remote=stateResult.snapshot.val();
+
+    if(remote?.months){
+      state=remote;
+      selectStudioMonth();
+      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    }else{
+      syncStateFromApi(true);
+    }
+
+    return true;
+
+  }catch(error){
+
+    /*
+     * ROLLBACK
+     * Se o state foi alterado por ESTA tentativa, mas o Banco de
+     * Ganhadores recusou a operação, desfaz somente esta confirmação.
+     */
+    if(stateChanged && originalRow){
+      try{
+        await firebaseRef.transaction(current=>{
+          const panel=current?.months
+            ? JSON.parse(JSON.stringify(current))
+            : null;
+
+          if(!panel?.months) return current;
+
+          Object.values(panel.months||{}).forEach(month=>{
+            const source=month?.[collection];
+            const rows=Array.isArray(source)
+              ? source.filter(Boolean)
+              : Object.values(source||{}).filter(Boolean);
+
+            const index=rows.findIndex(row=>row?.id===recordId);
+            if(index<0) return;
+
+            const row=rows[index];
+
+            let belongsToThisAttempt=false;
+
+            if(collection==='items'){
+              belongsToThisAttempt=
+                upper(row.winnerName||'')===cleanNames.join(', ');
+            }
+
+            if(collection==='promos' && occurrenceKey){
+              const currentNames=normalizeWinnerList(
+                row.resultWinnersByHour?.[occurrenceKey]||[]
+              ).map(w=>w.name);
+
+              belongsToThisAttempt=
+                currentNames.join('|')===cleanNames.join('|');
+            }
+
+            if(belongsToThisAttempt){
+              rows[index]=originalRow;
+              month[collection]=rows;
+            }
+          });
+
+          panel.auditLog=(panel.auditLog||[])
+            .filter(log=>log?.id!==operationLogId);
+
+          panel.updatedAt=Date.now();
+          panel.savedAt=new Date().toISOString();
+
+          return panel;
+        },undefined,false);
+
+      }catch(rollbackError){
+        console.error(
+          'ERRO AO REVERTER RESULTADO NÃO CONCLUÍDO:',
+          rollbackError
+        );
+      }
+    }
+
+    throw error;
+  }
 }
 async function savePromoResultInline(){
   const p=currentPromoForRead(); const item=currentDisplayItem||virtualCurrentItem(); if(!p||!item) return;
