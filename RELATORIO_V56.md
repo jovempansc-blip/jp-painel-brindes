@@ -1,4 +1,12 @@
-# JP Workspace V56.2 — relatório de implantação
+# JP Workspace V56.3 — relatório de implantação
+
+## Correção V56.3 — baixas da Recepção na Diretoria
+
+- A aba RETIRADAS da Diretoria passou a espelhar as baixas individuais registradas pela Recepção.
+- Cada ganhador possui sua própria linha, inclusive em sorteios com 2, 3 ou 4 vencedores.
+- O filtro RETIRADOS apresenta DATA/HORA DA BAIXA e PRAZO ORIGINAL.
+- Ganhadores ainda pendentes permanecem fora do filtro RETIRADOS.
+- Validação automatizada concluída com 109 testes e nenhuma falha.
 
 ## Correção V56.2 — conexão e limpeza operacional
 
