@@ -1,4 +1,13 @@
-# JP Workspace V56.3 — relatório de implantação
+# JP Workspace V56.4 — relatório de implantação
+
+## Correção V56.4 — horários e exceção de rodízio
+
+- O relatório de distribuição oferece todos os horários válidos cadastrados para a data e a emissora.
+- Os horários escolhidos no cadastro do prêmio continuam orientando a montagem automática.
+- Violações de espaçamento/rodízio exibem confirmação com duas decisões: prosseguir ou voltar para ajustar.
+- Horários inexistentes, sem programa ou ocupados continuam protegidos como erros estruturais.
+- A confirmação excepcional registra data, motivo e evento de auditoria.
+- Validação automatizada concluída com 114 testes e nenhuma falha.
 
 ## Correção V56.3 — baixas da Recepção na Diretoria
 

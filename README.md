@@ -1,4 +1,4 @@
-# JP Workspace V56.3
+# JP Workspace V56.4
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
@@ -24,3 +24,11 @@ Esta versão foi consolidada sobre o conteúdo atual do repositório principal. 
 - Filtro RETIRADOS mostra a data e a hora da baixa e o prazo original de retirada.
 - Sorteios com vários ganhadores são exibidos e contabilizados individualmente.
 - Quem ainda não retirou não aparece no filtro RETIRADOS, mesmo que outro ganhador do mesmo horário já tenha retirado.
+
+## Ajuste V56.4
+
+- Todos os horários válidos cadastrados na aba HORÁRIOS aparecem para ajuste manual no relatório de distribuição.
+- A seleção de rodízio do prêmio continua sendo a referência da sugestão automática.
+- Conflitos de rodízio passaram de bloqueio absoluto para alerta com escolha do operador.
+- O operador pode voltar e ajustar ou prosseguir mesmo assim.
+- Exceções confirmadas ficam registradas na auditoria e nos itens gerados.

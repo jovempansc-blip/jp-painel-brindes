@@ -11064,9 +11064,7 @@ function smartValidDates(report){
 function smartValidSlots(report,date){
   const d=distributionById(report?.distId);
   if(!d||!date) return [];
-  const allowed=new Set(rotationAllowedSlots(d));
   return eligibleRotationSlotsForDate(date,'JP1017')
-    .filter(slot=>allowed.has(slot))
     .filter(slot=>!!programFromSchedule(date,slot,'JP1017'))
     .sort((a,b)=>slotOrder(a)-slotOrder(b));
 }
@@ -11267,7 +11265,8 @@ function renderSmartRadioReport(report){
           ${quality.reasons.map(r=>`<span class="smartReason good">${esc(r)}</span>`).join('')}
           ${quality.warnings.map(r=>`<span class="smartReason warn">${esc(r)}</span>`).join('')}
         </div>
-        <span>HORÁRIOS DISPONÍVEIS NA GRADE: ${esc(registered.join(', ')||'NENHUM CADASTRADO')}.</span>
+        <span>HORÁRIOS CADASTRADOS NA GRADE: ${esc(registered.join(', ')||'NENHUM CADASTRADO')}.</span>
+        <span>REFERÊNCIA AUTOMÁTICA DESTE PRÊMIO: ${esc(rotationAllowedSlots(d).join(', ')||'TODOS OS HORÁRIOS CADASTRADOS')}.</span>
       </div>
     </div>
     ${report.missing>0?`<strong>AINDA FALTAM ${report.missing} ${distributionDeliveryUnit(d)==='pair'?'PAR(ES)':'PRÊMIO(S)'} PARA DISTRIBUIR.</strong> `:''}
@@ -11341,15 +11340,24 @@ function confirmSmartRadioReport(){
     return;
   }
   const validPlans=[];
+  const rotationViolations=[];
   (report.plans||[]).forEach(p=>{
     const program=programFromSchedule(p.date,p.slot,'JP1017');
     if(!program) return;
-    if(!p.existingItemId && samePrizeRepeatConflicts(d,p.date,p.slot,validPlans,'','JP1017').length) return;
+    if(!p.existingItemId){
+      const conflicts=samePrizeRepeatConflicts(d,p.date,p.slot,validPlans,'','JP1017');
+      if(conflicts.length) rotationViolations.push({plan:p,conflicts});
+    }
     validPlans.push({...p,program,qty:Math.max(1,num(p.qty)||1)});
   });
   if(validPlans.length!==(report.plans||[]).length){
-    alert('UM OU MAIS HORÁRIOS VIOLAM A REGRA DE RODÍZIO. AJUSTE DATA OU HORÁRIO.');
+    alert('UM OU MAIS HORÁRIOS NÃO POSSUEM PROGRAMA VÁLIDO NA GRADE. AJUSTE DATA OU HORÁRIO.');
     return;
+  }
+  if(rotationViolations.length){
+    const details=rotationViolations.slice(0,8).map(row=>`${formatBR(row.plan.date)} ${normalizeSlot(row.plan.slot)} — ${samePrizeRepeatLabel(row.conflicts)}`).join('\n');
+    const proceed=confirm(`ATENÇÃO: ${rotationViolations.length} HORÁRIO(S) VIOLAM A RECOMENDAÇÃO DE RODÍZIO.\n\n${details}\n\nO OPERADOR PODE PROSSEGUIR MESMO ASSIM.\n\nOK = PROSSEGUIR E REGISTRAR A EXCEÇÃO\nCANCELAR = VOLTAR E AJUSTAR`);
+    if(!proceed) return;
   }
   const newPlans=validPlans.filter(plan=>!plan.existingItemId);
   const linkedPlans=validPlans.filter(plan=>plan.existingItemId);
@@ -11361,6 +11369,19 @@ function confirmSmartRadioReport(){
     item.updatedAt=new Date().toISOString();
   });
   const newItems=newPlans.map(plan=>makeRadioScheduleItem(d,plan,'SMART_RADIO_CONFIRMADO'));
+  if(rotationViolations.length){
+    const now=new Date();
+    const overrideNote=rotationViolations.map(row=>`${formatBR(row.plan.date)} ${normalizeSlot(row.plan.slot)} · ${samePrizeRepeatLabel(row.conflicts)}`).join(' | ');
+    newItems.forEach(item=>{
+      const violation=rotationViolations.find(row=>row.plan.date===item.date&&normalizeSlot(row.plan.slot)===normalizeSlot(item.slot));
+      if(!violation) return;
+      item.rotationOverride=true;
+      item.rotationOverrideAt=now.toISOString();
+      item.rotationOverrideAtLabel=now.toLocaleString('pt-BR');
+      item.rotationOverrideReason=samePrizeRepeatLabel(violation.conflicts);
+    });
+    auditEvent('EXCEÇÃO DE RODÍZIO CONFIRMADA',distributionLabel(d),{targetId:d.id,note:overrideNote});
+  }
   monthData().items.push(...newItems);
   pendingSmartRadioReport=null;
   saveState(true);
