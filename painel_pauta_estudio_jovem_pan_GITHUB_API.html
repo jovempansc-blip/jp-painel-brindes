@@ -2387,7 +2387,25 @@ function winnerRecordList(value){
 }
 function winnerRecordMap(value){
   const map={};
-  winnerRecordList(value).forEach((record,index)=>{ const key=record.id||`LEGACY_${index}`; map[key]={...record,id:key}; });
+  const active=record=>{
+    if(record?.operationStatus!=='PENDING') return true;
+    const created=Date.parse(record.createdAt||'');
+    return !Number.isFinite(created)||(Date.now()-created)<(10*60*1000);
+  };
+  if(Array.isArray(value)){
+    value.forEach((row,index)=>{
+      if(!row||!active(row)) return;
+      const key=String(index);
+      map[key]={...row,id:row.id||`LEGACY_${index}`};
+    });
+    return map;
+  }
+  if(value&&typeof value==='object'){
+    Object.entries(value).forEach(([key,row])=>{
+      if(!row||!row.name||!row.date||!active(row)) return;
+      map[key]={...row,id:row.id||key};
+    });
+  }
   return map;
 }
 function winnerAddMonthsISO(iso,months=WINNER_BLOCK_MONTHS){
@@ -3232,7 +3250,10 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
         }
         operationCreated=previous.some(record=>record.operationStatus==='PENDING');
         if(operationCreated&&previous[0]?.operationId) operationId=previous[0].operationId;
-        previous.forEach(record=>{map[record.id]={...record,updatedAt:now.toISOString()};});
+        Object.keys(map).forEach(key=>{
+          const record=map[key];
+          if(record?.source==='ESTUDIO_JP1017'&&record?.sourceRef===context.sourceRef) map[key]={...record,updatedAt:now.toISOString()};
+        });
         bank.records=map;
         bank.initialized=true;
         bank.schemaVersion=2;

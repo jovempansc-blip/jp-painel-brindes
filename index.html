@@ -7003,9 +7003,17 @@ function winnerRecordList(value){
     const created=Date.parse(row.createdAt||'');
     return !Number.isFinite(created)||(Date.now()-created)<(10*60*1000);
   };
-  if(Array.isArray(source)) return source.filter(Boolean).map((row,index)=>({...row,id:row.id||`LEGACY_${index}`})).filter(active);
-  if(source && typeof source==='object') return Object.entries(source).map(([key,row])=>({...row,id:row?.id||key})).filter(row=>row.name&&row.date).filter(active);
+  if(Array.isArray(source)) return source.filter(Boolean).map((row,index)=>({...row,id:row.id||`LEGACY_${index}`,firebaseKey:String(index)})).filter(active);
+  if(source && typeof source==='object') return Object.entries(source).map(([key,row])=>({...row,id:row?.id||key,firebaseKey:key})).filter(row=>row.name&&row.date).filter(active);
   return [];
+}
+function winnerValidFirebaseKey(value){
+  const key=String(value||'');
+  return !!key&&!/[\[\].#$\/\u0000-\u001F\u007F]/.test(key);
+}
+function winnerRecordFirebaseKey(record){
+  const key=String(record?.firebaseKey||record?.id||'');
+  return winnerValidFirebaseKey(key)?key:'';
 }
 function winnerAddMonthsISO(iso,months=WINNER_BLOCK_MONTHS){
   const [year,month,day]=String(iso||'').split('-').map(Number);
@@ -7217,7 +7225,7 @@ function openWinnerDetails(personKey){
     <div class="winnerDetailHero"><div><h4>${esc(person.name)}</h4><p>${person.records.length} PREMIAÇÃO(ÕES) NO HISTÓRICO · CICLO ATUAL: ${e.cycleCount} DE 3</p></div><span class="winnerStateBadge ${winnerStatusClass(e)}">${esc(winnerStatusLabel(e.status))}${e.blockedUntil?` · ATÉ ${formatBR(e.blockedUntil)}`:''}</span></div>
     ${manual?`<div class="winnerManualNotice">NÃO SORTEAR · ${esc(manual.reason||'BLOQUEIO MANUAL')} · INCLUÍDO EM ${esc(manual.createdAtLabel||manual.createdAt||'DATA NÃO INFORMADA')} · ${esc(manual.createdBy||'OPERADOR NÃO INFORMADO')}</div>`:''}
     <div class="winnerManualActions"><button class="btn ${manual?'':'red'}" type="button" onclick="setWinnerManualBlock('${esc(person.key)}',${manual?'false':'true'})">${manual?'DESBLOQUEAR OUVINTE':'NÃO SORTEAR'}</button><button class="btn" type="button" onclick="openWinnerRecord('', '${esc(person.key)}')">ADICIONAR PREMIAÇÃO</button></div>
-    <div class="winnerHistoryList">${records.length?records.map(record=>`<div class="winnerHistoryRow"><strong>${formatBR(record.date)}</strong><span>${esc(record.program||'PROGRAMA NÃO INFORMADO')}</span><span class="winnerHistoryPrize">${esc(winnerResolvedPrize(record)||'PRÊMIO NÃO INFORMADO')}</span><div class="winnerHistoryActions"><button class="actionIcon" type="button" title="EDITAR" onclick="openWinnerRecord('${esc(record.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" type="button" title="EXCLUIR" onclick="deleteWinnerRecord('${esc(record.id)}')"><span class="iconGlyph">🗑</span></button></div></div>`).join(''):'<div class="winnerEmpty">NENHUMA PREMIAÇÃO REGISTRADA.</div>'}</div>`;
+    <div class="winnerHistoryList">${records.length?records.map(record=>`<div class="winnerHistoryRow"><strong>${formatBR(record.date)}</strong><span>${esc(record.program||'PROGRAMA NÃO INFORMADO')}</span><span class="winnerHistoryPrize">${esc(winnerResolvedPrize(record)||'PRÊMIO NÃO INFORMADO')}</span><div class="winnerHistoryActions"><button class="actionIcon" type="button" title="EDITAR" onclick="openWinnerRecord('${esc(winnerRecordFirebaseKey(record))}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" type="button" title="EXCLUIR" onclick="deleteWinnerRecord('${esc(winnerRecordFirebaseKey(record))}')"><span class="iconGlyph">🗑</span></button></div></div>`).join(''):'<div class="winnerEmpty">NENHUMA PREMIAÇÃO REGISTRADA.</div>'}</div>`;
   openDrawer('winnerDetailDrawer');
 }
 async function setWinnerManualBlock(personKeyOrName,active=true){
@@ -7315,10 +7323,10 @@ async function removeWinnerEquivalence(groupId){
   }
 }
 function openWinnerRecord(recordId='',personKey=''){
-  const record=recordId?winnerBankRecords.find(row=>row.id===recordId):null;
+  const record=recordId?winnerBankRecords.find(row=>winnerRecordFirebaseKey(row)===recordId):null;
   const person=personKey?winnerPeople().find(row=>row.key===personKey):null;
   $('winnerRecordForm').reset();
-  $('winnerRecordId').value=record?.id||'';
+  $('winnerRecordId').value=winnerRecordFirebaseKey(record);
   $('winnerRecordName').value=record?.name||person?.name||'';
   $('winnerRecordName').dataset.similarityInputKey='';
   $('winnerRecordName').dataset.similarityRejected='';
@@ -7391,7 +7399,7 @@ async function saveWinnerRecord(event){
   if(!operator){ alert('INFORME O NOME DO OPERADOR PARA CONTINUAR.'); return; }
   initWinnerBank();
   if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL.'); return; }
-  const recordId=$('winnerRecordId').value||winnerBankRef.child('records').push().key;
+  const recordKey=$('winnerRecordId').value||winnerBankRef.child('records').push().key;
   const name=winnerUpper($('winnerRecordName').value);
   const date=$('winnerRecordDate').value;
   const program=winnerUpper($('winnerRecordProgram').value);
@@ -7404,18 +7412,18 @@ async function saveWinnerRecord(event){
     $('winnerRecordName').focus();
     return;
   }
-  const previous=winnerBankRecords.find(row=>row.id===recordId);
+  const previous=winnerBankRecords.find(row=>winnerRecordFirebaseKey(row)===recordKey);
   const now=new Date();
-  const record={id:recordId,name,date,program,prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(prize),source:previous?.source||'PAINEL_PRINCIPAL',sourceRef:previous?.sourceRef||'',createdAt:previous?.createdAt||now.toISOString(),createdAtLabel:previous?.createdAtLabel||now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector};
-  const duplicate=winnerBankRecords.some(row=>row.id!==recordId&&winnerFingerprint(row)===winnerFingerprint(record));
+  const record={id:previous?.id||recordKey,name,date,program,prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(prize),source:previous?.source||'PAINEL_PRINCIPAL',sourceRef:previous?.sourceRef||'',createdAt:previous?.createdAt||now.toISOString(),createdAtLabel:previous?.createdAtLabel||now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector};
+  const duplicate=winnerBankRecords.some(row=>winnerRecordFirebaseKey(row)!==recordKey&&winnerFingerprint(row)===winnerFingerprint(record));
   if(duplicate){ alert('ESTE REGISTRO JÁ EXISTE NO BANCO DE GANHADORES.'); return; }
   const submitButton=form?.querySelector('[type="submit"]');
   if(form) form.dataset.busy='1';
   if(submitButton){submitButton.disabled=true;submitButton.textContent='SALVANDO...';}
   try{
-    await winnerBankRef.child(`records/${recordId}`).set(record);
+    await winnerBankRef.child(`records/${recordKey}`).set(record);
     await winnerBankRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'PAINEL_PRINCIPAL',schemaVersion:2});
-    auditEvent(previous?'ALTERAÇÃO DE GANHADOR':'CADASTRO MANUAL DE GANHADOR',name,{targetId:recordId,before:previous||'',after:record});
+    auditEvent(previous?'ALTERAÇÃO DE GANHADOR':'CADASTRO MANUAL DE GANHADOR',name,{targetId:recordKey,before:previous||'',after:record});
     saveState(true);
     closeDrawer('winnerRecordDrawer');
     closeDrawer('winnerDetailDrawer');
@@ -7428,12 +7436,12 @@ async function saveWinnerRecord(event){
     if(submitButton){submitButton.disabled=false;submitButton.textContent='SALVAR REGISTRO';}
   }
 }
-async function deleteWinnerRecord(recordId){
-  const record=winnerBankRecords.find(row=>row.id===recordId);
+async function deleteWinnerRecord(recordKey){
+  const record=winnerBankRecords.find(row=>winnerRecordFirebaseKey(row)===recordKey);
   if(!record||!confirm(`REMOVER ESTE REGISTRO DO HISTÓRICO?\n\n${record.name}\n${formatBR(record.date)} · ${record.prize}\n\nELE PODERÁ SER RESTAURADO PELA LIXEIRA ADMINISTRATIVA.`)) return;
   try{
     trashRecord('GANHADOR',record.name,record,{sourceId:record.id,monthKey:String(record.date||state.currentMonth).slice(0,7)});
-    await winnerBankRef.child(`records/${recordId}`).remove();
+    await winnerBankRef.child(`records/${recordKey}`).remove();
     saveState(true);
     closeDrawer('winnerDetailDrawer');
     toast('REGISTRO REMOVIDO COM POSSIBILIDADE DE RESTAURAÇÃO.');
@@ -8179,7 +8187,9 @@ function restoreTrashRecord(trashId){
     const p=consolidatedPromoById(row.sourceId); if(p) syncPromoResultToProgram(p);
   }else if(row.type==='GANHADOR'){
     if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL PARA RESTAURAÇÃO.'); return; }
-    winnerBankRef.child(`records/${payload.id}`).set(payload).catch(()=>alert('NÃO FOI POSSÍVEL RESTAURAR O GANHADOR NO FIREBASE.'));
+    const restoreKey=winnerValidFirebaseKey(payload.firebaseKey)?payload.firebaseKey:winnerBankRef.child('records').push().key;
+    delete payload.firebaseKey;
+    winnerBankRef.child(`records/${restoreKey}`).set(payload).catch(()=>alert('NÃO FOI POSSÍVEL RESTAURAR O GANHADOR NO FIREBASE.'));
   }
   state.trash=state.trash.filter(x=>x.id!==trashId);
   auditEvent('RESTAURAÇÃO',row.label,{targetId:row.sourceId,after:payload});

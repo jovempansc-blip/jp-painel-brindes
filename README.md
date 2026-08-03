@@ -1,8 +1,17 @@
-# JP Workspace V56.9
+# JP Workspace V56.10
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Correção V56.10
+
+- Corrigido o erro `Invalid token in path` ao confirmar ganhadores no Estúdio Jovem Pan 101,7.
+- IDs históricos antigos continuam armazenados como dados, mas nunca mais são reutilizados como chave de gravação no Firebase.
+- As chaves reais já existentes no Firebase são preservadas, evitando renomeação, duplicação ou perda do histórico importado.
+- Edição, exclusão e restauração pelo Painel Principal também usam a chave física válida, sem transformar o ID histórico em caminho.
+- A confirmação continua registrando imediatamente o novo ganhador no Banco de Ganhadores e no resultado do horário.
+- Incluídos testes de regressão com IDs legados contendo ponto, cerquilha, colchetes e barra.
 
 ## Ajuste V56.9
 

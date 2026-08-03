@@ -1,4 +1,15 @@
-# JP Workspace V56.9 — relatório de implantação
+# JP Workspace V56.10 — relatório de implantação
+
+## Correção do salvamento de ganhadores V56.10
+
+- Corrigido o erro `Invalid token in path` apresentado ao confirmar o nome do ganhador no Estúdio JP 101,7.
+- A causa era a reconstrução do mapa do Banco de Ganhadores usando o campo histórico `id` como se ele fosse a chave física do Firebase.
+- IDs legados podem conter pontuação aceita no conteúdo de um registro, mas proibida em chaves do Realtime Database.
+- O sistema agora preserva a chave física original de cada registro e mantém o `id` histórico apenas como dado.
+- Registros novos continuam recebendo chaves automáticas válidas geradas pelo Firebase.
+- Edição, exclusão e restauração no Painel Principal foram alinhadas para usar a chave física válida do registro.
+- Nenhum nome, data, programa, prêmio, bloqueio ou registro do histórico é renomeado ou removido.
+- Validação automatizada concluída com 161 testes e nenhuma falha, incluindo reprodução de ID legado com `.`, `#`, `[`, `]` e `/`.
 
 ## Banco de clientes e alternância de textos V56.9
 
