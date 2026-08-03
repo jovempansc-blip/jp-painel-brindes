@@ -1,0 +1,3897 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pauta de Estúdio — Jovem Pan Floripa</title>
+<style>
+:root{
+  --red:#d54b67;
+  --red-past:#D46873;
+  --green-now:#66C991;
+  --orange-next:#E0A14A;
+  --ink:#171c26;
+  --muted:#667283;
+  --line:#dce2eb;
+  --panel:rgba(255,255,255,.92);
+  --panel-strong:rgba(255,255,255,.97);
+  --shadow:0 14px 34px rgba(17,23,34,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;
+  font:800 14px/1.35 Inter,Arial,sans-serif;
+  color:var(--ink);
+  background-image:linear-gradient(rgba(248,249,252,.76),rgba(248,249,252,.76)),url("assets/bg-estudio.jpg");
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+}
+.wrap{max-width:1420px;margin:0 auto;padding:12px}
+.hero{
+  position:relative;
+  min-height:76px;
+  padding:14px 62px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,.34);
+  border:1px solid rgba(255,255,255,.56);
+  border-radius:24px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(4px);
+}
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.08));
+  pointer-events:none;
+}
+.heroLogo{
+  position:relative;
+  z-index:1;
+  width:min(540px,52%);
+  height:auto;
+  display:block;
+  filter:drop-shadow(0 4px 10px rgba(255,255,255,.35)) drop-shadow(0 2px 8px rgba(0,0,0,.08));
+}
+.backIcon{
+  position:absolute;
+  right:18px;
+  top:50%;
+  transform:translateY(-50%);
+  z-index:2;
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  border:1px solid rgba(115,124,138,.25);
+  background:rgba(255,255,255,.72);
+  color:#687281;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-decoration:none;
+  font-size:16px;
+  font-weight:900;
+}
+.panel{
+  margin-top:12px;
+  min-height:420px;
+  background:var(--panel);
+  border:1px solid rgba(220,226,235,.82);
+  border-radius:26px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  backdrop-filter:blur(4px);
+  display:flex;
+  flex-direction:column;
+}
+.pautaHead{
+  position:relative;
+  min-height:72px;
+  display:flex;
+  align-items:center;
+  padding:10px 22px;
+  background:#E9EDF2;
+  border-bottom:1px solid #D6DCE4;
+}
+.pautaTime{
+  width:128px;
+  flex:0 0 128px;
+  font-family:"Bahnschrift","Segoe UI Semibold","Segoe UI Variable Display","Segoe UI",Inter,Arial,sans-serif;
+  font-size:52px;
+  font-weight:900;
+  letter-spacing:-.025em;
+  line-height:1;
+  color:#5CCB91;
+  text-shadow:none;
+  -webkit-text-stroke:0;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.time-past{color:var(--red-past)}
+.time-now{color:var(--green-now)}
+.time-next{color:var(--orange-next)}
+.pautaProgram{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:calc(100% - 320px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  font-size:30px;
+  line-height:1.1;
+  font-weight:950;
+  letter-spacing:-.03em;
+  color:#5B6675;
+  -webkit-text-stroke:0;
+  text-shadow:
+    0 1px 1px rgba(49,58,72,.18),
+    0 2px 6px rgba(49,58,72,.12),
+    0 0 10px rgba(255,255,255,.18);
+  padding:0 8px;
+}
+.headNav{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.iconNav{
+  appearance:none;
+  border:0;
+  background:transparent;
+  padding:0;
+  color:#7f8898;
+  font:900 32px/1 Inter,Arial,sans-serif;
+  cursor:pointer;
+}
+.iconNav:hover{color:var(--red-past)}
+.pautaBody{
+  min-height:348px;
+  padding:28px 38px 30px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  gap:14px;
+}
+.titleBox{
+  width:min(1040px,100%);
+  background:#FFFFFF;
+  border:1px solid #E3E8EF;
+  border-left:5px solid #D94A64;
+  border-radius:18px;
+  padding:20px 24px;
+  box-shadow:0 8px 20px rgba(17,23,34,.035);
+}
+.descBox{
+  width:min(1040px,100%);
+  background:#F3F6FA;
+  border:1px solid #E1E7EE;
+  border-radius:18px;
+  padding:18px 24px;
+}
+.title{
+  font-size:38px;
+  line-height:1.06;
+  letter-spacing:-.06em;
+  margin:0;
+  max-width:980px;
+  margin-inline:auto;
+}
+.desc{
+  font-size:20px;
+  line-height:1.52;
+  font-weight:650;
+  color:#4D5868;
+  max-width:1020px;
+  margin:0 auto;
+  white-space:pre-wrap;
+  text-transform:none;
+}
+.winnerBox{
+  width:min(840px,100%);
+  margin-top:2px;
+  padding:16px 18px;
+  border-radius:16px;
+  border:1px solid #d8e6db;
+  background:#f4fbf7;
+  text-align:center;
+}
+.winnerLabel{
+  display:block;
+  font-size:12px;
+  letter-spacing:.08em;
+  color:#4a6b57;
+  font-weight:900;
+  margin-bottom:6px;
+}
+.winnerName{
+  display:block;
+  font-size:26px;
+  line-height:1.15;
+  color:#17492d;
+  letter-spacing:-.03em;
+}
+.pautaActions{
+  width:min(1040px,100%);
+  display:flex;
+  justify-content:flex-end;
+  margin-top:2px;
+}
+.winnerBtn{
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:auto;
+  min-width:0;
+  height:auto;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#7a8494;
+  font-weight:900;
+  cursor:pointer;
+}
+.winnerBtn:hover{color:#8e1831}
+.winnerBtn .trophy{font-size:22px;line-height:1;filter:grayscale(1);opacity:.78}
+.promoFooter{
+  margin-top:auto;
+  min-height:44px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 12px;
+  border-top:1px solid #f4d3a3;
+  background:#fff1df;
+}
+.promoFooterList{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  min-width:0;
+  overflow:hidden;
+}
+.promoPill{
+  appearance:none;
+  border:1px solid #b7cee8;
+  background:#eaf4ff;
+  color:#2d5f93;
+  min-height:17px;
+  max-width:230px;
+  border-radius:999px;
+  padding:0 9px;
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.04em;
+  cursor:pointer;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.promoPill.pending{border-color:#ffb45c;background:#fff3df;color:#a65300;animation:promoOrangeBlink 1.05s ease-in-out infinite}
+@keyframes promoOrangeBlink{0%,100%{background:#fff3df;color:#a65300;box-shadow:0 0 0 rgba(255,138,0,0)}50%{background:#ff8a00;color:#fff;box-shadow:0 0 0 5px rgba(255,138,0,.18)}}
+.promoPill.read{
+  border-color:#badfc9;
+  background:#effaf4;
+  color:#1f7a49;
+  cursor:pointer;
+}
+.promoPill.read .marquee{
+  display:inline-grid;
+  grid-template-columns:1fr;
+  align-items:center;
+  min-width:130px;
+}
+.promoPill.read .marquee span{
+  grid-area:1/1;
+  opacity:0;
+  animation:promoMarquee 4s ease-in-out infinite;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.promoPill.read .marquee span:nth-child(2){animation-delay:2s}
+@keyframes promoMarquee{0%,44%{opacity:1;transform:translateY(0)}50%,94%{opacity:0;transform:translateY(-3px)}100%{opacity:0;transform:translateY(3px)}}
+.promoPill:hover{filter:brightness(.98)}
+.promoListWrap{position:relative;display:flex;align-items:center;order:0}
+.promoListBtn{
+  appearance:none;
+  border:0;
+  background:transparent;
+  padding:0 2px;
+  color:#9aa4b3;
+  font:900 20px/1 Inter,Arial,sans-serif;
+  cursor:pointer;
+}
+.promoListBtn:hover{color:#6f7988}
+.promoList{
+  display:none;
+  position:absolute;
+  right:0;
+  top:calc(100% + 10px);
+  z-index:20;
+  width:300px;
+  max-height:300px;
+  overflow:auto;
+  padding:8px;
+  border:1px solid #dfe5ec;
+  border-radius:16px;
+  background:#fff;
+  box-shadow:0 16px 36px rgba(17,20,27,.14);
+}
+.promoList.show{display:grid;gap:6px}
+.promoListItem{
+  appearance:none;
+  border:1px solid #e5e9ef;
+  background:#f8f9fc;
+  color:#252c38;
+  border-radius:12px;
+  padding:9px 10px;
+  text-align:left;
+  font-size:11px;
+  line-height:1.25;
+  font-weight:900;
+  cursor:pointer;
+}
+.promoListItem small{display:block;margin-top:3px;color:#7a8494;font-size:9px}
+.promoListItem.read{opacity:.62;border-color:#badfc9;background:#f2fbf6}
+.hourReadList{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;width:100%}
+.hourReadList .promoListItem{min-height:44px}
+.promoReadCard{width:min(740px,100%)}
+.promoReadBanner{
+  aspect-ratio:4/1;
+  border:1px solid #e2e7ef;
+  border-radius:16px;
+  background:#eef1f5;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#7a8493;
+  font-size:11px;
+  margin-bottom:14px;
+}
+.promoReadBanner img{width:100%;height:100%;object-fit:cover;display:block}
+.promoReadMeta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:10px 0 14px;
+}
+.promoReadMeta span{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:0 10px;
+  border-radius:999px;
+  background:#f7f8fb;
+  border:1px solid #e2e7ef;
+  color:#566171;
+  font-size:10px;
+  font-weight:900;
+}
+.promoReadDesc{
+  background:#f7f8fb;
+  border:1px solid #e2e7ef;
+  border-radius:14px;
+  padding:13px 14px;
+  color:#465161;
+  line-height:1.5;
+  font-size:13px;
+  white-space:pre-wrap;
+}
+.modalBackdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(17,20,27,.28);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:50;
+}
+.modalBackdrop.show{display:flex}
+.modalCard{
+  width:min(460px,100%);
+  background:#fff;
+  border:1px solid #dfe5ec;
+  border-radius:22px;
+  box-shadow:0 20px 50px rgba(17,20,27,.18);
+  padding:20px;
+}
+.modalCard h3{
+  margin:0 0 8px;
+  font-size:24px;
+  letter-spacing:-.03em;
+  color:#171c26;
+}
+.modalCard p{
+  margin:0 0 14px;
+  color:#5a6473;
+  font-size:13px;
+  line-height:1.45;
+}
+.modalField label{
+  display:block;
+  margin-bottom:8px;
+  font-size:11px;
+  letter-spacing:.08em;
+  color:#6b7482;
+  font-weight:900;
+}
+.modalField input{
+  width:100%;
+  min-height:48px;
+  border:1px solid #d8dee7;
+  border-radius:14px;
+  padding:0 14px;
+  font-size:16px;
+  font-weight:700;
+  color:#171c26;
+  outline:none;
+}
+.modalField input:focus{border-color:#c9002b;box-shadow:0 0 0 4px rgba(201,0,43,.08)}
+.modalActions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:16px;
+}
+.modalBtn{
+  min-height:42px;
+  padding:0 16px;
+  border-radius:12px;
+  border:1px solid #d8dee7;
+  background:#f5f7fa;
+  color:#171c26;
+  font-weight:900;
+  cursor:pointer;
+}
+.modalBtn.primary{
+  background:#c9002b;
+  border-color:#c9002b;
+  color:#fff;
+}
+.empty{
+  min-height:420px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:30px;
+  color:var(--muted);
+  font-size:18px;
+}
+@media (max-width:900px){
+  .wrap{padding:10px}
+  .hero{min-height:68px;padding:12px 56px}
+  .heroLogo{width:70%}
+  .panel{min-height:360px;border-radius:22px}
+  .pautaHead{min-height:62px;padding:10px 14px}
+  .pautaTime{width:92px;flex-basis:92px;font-size:34px}
+  .pautaProgram{width:calc(100% - 168px);font-size:23px;color:#5B6675;font-weight:950;text-shadow:0 1px 1px rgba(255,255,255,.20),0 2px 8px rgba(39,48,62,.08)}
+  .headNav{gap:10px}
+  .iconNav{font-size:26px}
+  .pautaBody{min-height:298px;padding:22px 20px;gap:12px}
+  .titleBox,.descBox,.winnerBox{padding:16px 18px;border-radius:16px}
+  .title{font-size:28px}
+  .desc{font-size:17px}
+  .winnerName{font-size:22px}
+  .pautaActions{justify-content:center}
+  .winnerBtn{justify-content:center}
+  .promoFooter{min-height:42px;padding:5px 8px}
+  .promoFooterList{width:100%}
+  .promoPill{max-width:100%}
+  .promoList{right:-40px;width:260px}
+}
+@media print{
+  body{background:#fff}
+  .hero,.backIcon,.headNav{display:none}
+  .panel{box-shadow:none;border:0;border-radius:0}
+}
+
+/* FONTE DE CABEÇALHOS — LEMON MILK */
+.pautaProgram,
+.modalCard h3,
+.promoListBtn,
+.winnerLabel,
+.promoFooter,
+.promoListItem{
+  font-family:"LEMON MILK Bold","LEMON MILK","LEMONMILK-Bold","Bahnschrift","Segoe UI",Arial,sans-serif;
+  font-weight:900;
+}
+
+
+/* AJUSTE FINAL VISÍVEL — CABEÇALHO ESTÚDIO */
+.pautaTime{
+  font-family:"LEMON MILK Bold","LEMON MILK","LEMONMILK-Bold","Bahnschrift","Segoe UI Semibold","Segoe UI",Arial,sans-serif !important;
+  font-weight:900 !important;
+  font-size:52px !important;
+  letter-spacing:-.025em !important;
+  color:#6ED7A0 !important;
+  text-shadow:none !important;
+  -webkit-text-stroke:0 !important;
+  -webkit-font-smoothing:antialiased !important;
+  -moz-osx-font-smoothing:grayscale !important;
+  text-rendering:geometricPrecision !important;
+  font-variant-numeric:lining-nums tabular-nums !important;
+}
+.pautaProgram{
+  font-family:"LEMON MILK Bold","LEMON MILK","LEMONMILK-Bold","Bahnschrift","Segoe UI",Arial,sans-serif !important;
+  font-weight:900 !important;
+  font-size:30px !important;
+  letter-spacing:-.02em !important;
+  color:#5B6675 !important;
+  -webkit-text-stroke:0 !important;
+  text-shadow:0 1px 1px rgba(255,255,255,.20), 0 2px 8px rgba(39,48,62,.08) !important;
+}
+@media (max-width:760px){
+  .pautaTime{font-size:36px !important}
+  .pautaProgram{font-size:23px !important}
+}
+
+
+/* AJUSTE FINAL — CORES DO CABEÇALHO */
+.pautaProgram{
+  color:#6A7481 !important;
+  text-shadow:0 1px 1px rgba(255,255,255,.22), 0 2px 8px rgba(39,48,62,.08) !important;
+}
+.pautaTime{
+  color:inherit !important;
+}
+.pautaTime.time-now{
+  color:#74D2A0 !important;
+}
+.pautaTime.time-past{
+  color:#D77983 !important;
+}
+.pautaTime.time-next{
+  color:#E2A455 !important;
+}
+
+
+/* AJUSTE — TELA DO ESTÚDIO +15% */
+.pautaHead{min-height:84px !important}
+.pautaTime{
+  width:148px !important;
+  flex-basis:148px !important;
+  font-size:60px !important;
+}
+.pautaProgram{
+  width:calc(100% - 360px) !important;
+  font-size:35px !important;
+}
+.pautaBody{
+  min-height:390px !important;
+  gap:18px !important;
+  padding:32px 42px 36px !important;
+}
+.titleBox,.descBox{
+  padding:23px 28px !important;
+}
+.title{
+  font-size:44px !important;
+  line-height:1.06 !important;
+}
+.desc{
+  font-size:23px !important;
+  line-height:1.52 !important;
+}
+.winnerLabel{font-size:14px !important}
+.winnerName{font-size:30px !important}
+.promoFooter{min-height:52px !important}
+.promoPill{
+  font-size:10.5px !important;
+  min-height:20px !important;
+}
+.navSmall{
+  font-size:13px !important;
+}
+@media (max-width:760px){
+  .pautaHead{min-height:78px !important}
+  .pautaTime{width:116px !important;flex-basis:116px !important;font-size:42px !important}
+  .pautaProgram{font-size:26px !important;width:calc(100% - 220px) !important}
+  .title{font-size:34px !important}
+  .desc{font-size:20px !important}
+}
+
+
+/* AJUSTE — HISTÓRICO, RESULTADO E LEITURA +15% */
+.pautaHead{min-height:92px !important}
+.pautaTime{width:156px !important;flex-basis:156px !important;font-size:64px !important}
+.pautaProgram{width:calc(100% - 410px) !important;font-size:39px !important}
+.title{font-size:48px !important;line-height:1.06 !important}
+.desc{font-size:25px !important;line-height:1.5 !important}
+.promoReadDesc{font-size:15px !important}
+.promoListBtn.history{color:#6c7481}
+.resultBox{
+  width:min(740px,100%);
+  display:grid;
+  gap:8px;
+  padding:14px;
+  border:1px solid #dfe5ec;
+  border-radius:16px;
+  background:#f7f8fb;
+}
+.resultBox label{
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  color:#5b6675;
+}
+.resultLine{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+}
+.resultLine input{
+  min-height:44px;
+  border:1px solid #d8dee7;
+  border-radius:13px;
+  padding:0 13px;
+  font-size:15px;
+  font-weight:900;
+  color:#171c26;
+  text-transform:uppercase;
+}
+.resultSaved{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  width:max-content;
+  max-width:100%;
+  border-radius:999px;
+  border:1px solid #ccefdc;
+  background:#effaf4;
+  color:#137947;
+  padding:0 10px;
+  font-size:11px;
+  font-weight:1000;
+}
+.historyCard{width:min(860px,100%)}
+.historyTop{
+  display:flex;
+  gap:10px;
+  align-items:end;
+  margin:12px 0 14px;
+}
+.historyTop .modalField{flex:0 0 180px}
+.historyList{
+  max-height:58vh;
+  overflow:auto;
+  display:grid;
+  gap:8px;
+}
+.historyItem{
+  border:1px solid #e2e7ef;
+  border-radius:15px;
+  background:#f8f9fc;
+  padding:11px 12px;
+  display:grid;
+  grid-template-columns:88px minmax(0,1fr);
+  gap:10px;
+}
+.historyTime{
+  font-size:24px;
+  font-weight:1000;
+  color:#697386;
+  display:flex;
+  align-items:center;
+}
+.historyInfo strong{
+  display:block;
+  color:#171c26;
+  font-size:14px;
+  font-weight:1000;
+  line-height:1.2;
+}
+.historyInfo span{
+  display:block;
+  margin-top:4px;
+  color:#5a6473;
+  font-size:11px;
+  font-weight:900;
+  line-height:1.35;
+}
+.historyInfo em{
+  display:inline-flex;
+  margin-top:7px;
+  border-radius:999px;
+  border:1px solid #ccefdc;
+  background:#effaf4;
+  color:#137947;
+  padding:4px 8px;
+  font-size:10px;
+  font-style:normal;
+  font-weight:1000;
+}
+@media (max-width:760px){
+  .pautaTime{width:124px !important;flex-basis:124px !important;font-size:45px !important}
+  .pautaProgram{width:calc(100% - 265px) !important;font-size:29px !important}
+  .title{font-size:37px !important}
+  .desc{font-size:22px !important}
+  .resultLine{grid-template-columns:1fr}
+}
+
+
+/* AJUSTE — MÚLTIPLOS GANHADORES DO SORTEIO */
+.resultWinnersList{
+  display:grid;
+  gap:8px;
+}
+.resultWinnerLine{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 44px;
+  gap:8px;
+}
+.resultWinnerLine input{
+  min-height:44px;
+  border:1px solid #d8dee7;
+  border-radius:13px;
+  padding:0 13px;
+  font-size:15px;
+  font-weight:900;
+  color:#171c26;
+  text-transform:uppercase;
+}
+.resultAddBtn,.resultRemoveBtn{
+  min-height:44px;
+  border:1px solid #d8dee7;
+  border-radius:13px;
+  background:#fff;
+  color:#171c26;
+  font-size:20px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.resultRemoveBtn{
+  color:#c9002b;
+  background:#fff5f7;
+  border-color:#f3b5c0;
+}
+.resultSavedList{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.resultSaved{
+  width:auto !important;
+}
+
+
+/* AJUSTE — V14 ESTÚDIO COMPACTO, DATA E MERCHAN SEM GANHADOR */
+.studioDateStamp{
+  position:absolute;
+  right:62px;
+  bottom:10px;
+  z-index:2;
+  color:#6f7988;
+  font-size:11px;
+  font-weight:1000;
+  letter-spacing:.04em;
+}
+.promoReadCard,.resultBox{width:min(620px,100%)}
+.promoReadBanner{max-height:150px}
+#pautaPanel .title{font-size:clamp(24px,3.1vw,34px)!important;line-height:1.08}
+#pautaPanel .desc{font-size:clamp(15px,1.7vw,18px)!important;line-height:1.45}
+.titleBox,.descBox{width:min(880px,100%);padding:15px 18px}
+.pautaBody{padding:20px 28px 22px;gap:10px}
+.resultBox{padding:10px;border-radius:14px}
+
+
+/* AJUSTE — LETREIRO DE HISTÓRICO DE LEITURA */
+.readHistoryTicker{
+  margin:10px auto 0;
+  width:min(1180px,100%);
+  height:52px;
+  border:1px solid #dfe5ec;
+  border-radius:18px;
+  background:rgba(255,255,255,.88);
+  overflow:hidden;
+  position:relative;
+  display:block;
+}
+.readHistoryTicker::before{
+  content:'LEITURAS CONFIRMADAS';
+  position:absolute;
+  left:14px;
+  top:6px;
+  color:#7a8798;
+  font-size:8px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  z-index:2;
+}
+.readHistoryTickerTrack{
+  position:absolute;
+  left:14px;
+  right:14px;
+  top:0;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  animation:readHistoryDrop 18s linear infinite;
+  color:#5d6878;
+  font-size:10.5px;
+  font-weight:1000;
+  letter-spacing:.03em;
+  padding-top:26px;
+}
+.readHistoryTickerTrack span{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  min-height:20px;
+  border-radius:999px;
+  background:rgba(248,250,252,.9);
+  padding:4px 10px;
+  box-shadow:0 1px 0 rgba(17,23,34,.04);
+}
+.readHistoryTickerTrack span::before{
+  content:'●';
+  margin-right:8px;
+  color:#c9002b;
+  font-size:7px;
+}
+@keyframes readHistoryDrop{
+  from{transform:translateY(-50%)}
+  to{transform:translateY(0)}
+}
+
+
+/* AJUSTE — ESTÚDIO OPERACIONAL */
+.panel{min-height:0!important}.pautaBody{min-height:260px!important;padding:22px 30px 24px!important}.pautaBody.emptyState{min-height:178px!important;justify-content:center!important}.studioContextBar{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:7px 12px;border-bottom:1px solid #e3e8ef;background:rgba(255,255,255,.78)}.studioContextBar span{display:inline-flex;align-items:center;min-height:24px;border:1px solid #dfe5ec;border-radius:999px;padding:0 9px;color:#637083;font-size:9px;font-weight:1000;letter-spacing:.05em;background:#f8fafc}.studioContextBar .online{color:#137947;background:#effaf4;border-color:#ccefdc}.emptyStudioBox{width:min(760px,100%);border:1px solid #e1e7ee;border-radius:18px;background:#f8fafc;padding:18px 20px;text-align:center}.emptyStudioBox strong{display:block;font-size:24px;font-weight:1000;letter-spacing:-.04em;color:#171c26}.emptyStudioBox span{display:block;margin-top:8px;color:#677387;font-size:11px;font-weight:900;letter-spacing:.04em}.promoListBtn{min-width:38px!important;height:30px!important;border:1px solid #dfe5ec!important;border-radius:999px!important;background:#f8fafc!important;color:#6f7988!important;font-size:12px!important;padding:0 8px!important}.promoListBtn small{display:none}.promoListBtn.active{background:#eaf4ff!important;color:#2d5f93!important;border-color:#b7cee8!important}.readHistoryTicker{height:46px!important;margin:8px auto 0!important}.readHistoryTicker.single{height:38px!important}.readHistoryTicker.single .readHistoryTickerTrack{animation:none!important;transform:none!important;padding-top:17px!important}.readHistoryTickerTrack{animation:readHistoryDrop 20s linear infinite!important}@keyframes readHistoryDrop{from{transform:translateY(-50%)}to{transform:translateY(0)}}@media(max-width:760px){.pautaTime{font-size:40px!important;width:92px!important;flex-basis:92px!important}.pautaProgram{font-size:22px!important;width:calc(100% - 220px)!important}.headNav{gap:6px!important}}
+
+
+/* AJUSTE FINAL — PAUTA DE ESTÚDIO RESPONSIVA */
+.wrap{max-width:1280px!important;padding:10px!important}.hero{min-height:64px!important;padding:10px 54px!important;border-radius:20px!important}.heroLogo{width:min(460px,52%)!important}.backIcon{width:30px!important;height:30px!important;border-radius:10px!important}.panel{margin-top:10px!important;border-radius:22px!important;min-height:360px!important}.pautaHead{min-height:60px!important;padding:8px 18px!important}.pautaTime{width:110px!important;flex-basis:110px!important;font-size:42px!important}.pautaProgram{font-size:24px!important;width:calc(100% - 270px)!important}.iconNav{font-size:27px!important}.headNav{gap:10px!important}.pautaBody{min-height:290px!important;padding:22px 28px!important;gap:11px!important}.titleBox,.descBox{width:min(940px,100%)!important;border-radius:16px!important;padding:15px 20px!important}.title{font-size:31px!important}.desc{font-size:17px!important;line-height:1.42!important}.winnerBox{padding:12px 15px!important;border-radius:14px!important}.winnerName{font-size:22px!important}.promoFooter{min-height:38px!important;padding:5px 10px!important}.promoPill{font-size:8.5px!important;min-height:16px!important;max-width:200px!important}@media(max-width:760px){.heroLogo{width:min(330px,70%)!important}.pautaHead{display:grid!important;grid-template-columns:1fr auto!important;gap:8px!important}.pautaProgram{position:static!important;transform:none!important;width:100%!important;grid-column:1/-1!important;font-size:18px!important;order:2}.pautaTime{font-size:34px!important;width:auto!important;flex-basis:auto!important}.title{font-size:24px!important}.desc{font-size:15px!important}.pautaBody{padding:16px!important}}
+
+
+/* === V20: PROMO / MERCHAN NA JANELA LARANJA + LETREIRO VERDE === */
+.promoFooter{
+  min-height:48px!important;
+  background:#fff0da!important;
+  border-top:1px solid #f0c584!important;
+}
+.promoFooterList{
+  gap:9px!important;
+  flex-wrap:nowrap!important;
+  overflow:hidden!important;
+}
+.promoFooterList.isEmpty::before{
+  content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
+  color:#b46a00;
+  font-size:10px;
+  font-weight:1000;
+  letter-spacing:.05em;
+}
+.promoPill{
+  min-height:26px!important;
+  max-width:360px!important;
+  padding:0 12px!important;
+  font-size:10px!important;
+}
+.promoPill.pending{
+  border-color:#ffb45c!important;
+  background:#fff3df!important;
+  color:#a65300!important;
+  animation:promoOrangeBlink 1.05s ease-in-out infinite!important;
+}
+.promoPill.read{
+  border-color:#b7e4ca!important;
+  background:#e8faef!important;
+  color:#12723e!important;
+  min-width:220px!important;
+}
+.promoPill.read .marquee{
+  display:block!important;
+  width:100%!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+.promoPill.read .marquee span{
+  display:inline-block!important;
+  opacity:1!important;
+  min-width:100%!important;
+  padding-left:0!important;
+  animation:promoBusMarquee 7s linear infinite!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+.promoPill.read .marquee span:nth-child(2){
+  display:none!important;
+}
+@keyframes promoBusMarquee{
+  0%{transform:translateX(-105%)}
+  100%{transform:translateX(105%)}
+}
+.readHistoryTicker{
+  height:48px!important;
+}
+.readHistoryTickerTrack{
+  left:14px!important;
+  right:auto!important;
+  top:21px!important;
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  gap:16px!important;
+  width:max-content!important;
+  padding-top:0!important;
+  animation:readHistoryBus 28s linear infinite!important;
+  white-space:nowrap!important;
+}
+.readHistoryTickerTrack span{
+  min-height:20px!important;
+  white-space:nowrap!important;
+}
+@keyframes readHistoryBus{
+  0%{transform:translateX(-50%)}
+  100%{transform:translateX(0)}
+}
+
+
+/* === V21: BOTÕES P / M / H COM CAMADA DE CLIQUE E PROCESSO ATIVO === */
+.headNav,
+.promoListWrap,
+.promoListBtn,
+.iconNav{
+  position:relative;
+  z-index:80;
+  pointer-events:auto!important;
+}
+.pautaProgram{
+  pointer-events:none!important;
+}
+.promoList{
+  z-index:999!important;
+}
+.promoListBtn{
+  min-width:42px;
+  min-height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  border-radius:999px;
+  background:rgba(255,255,255,.68);
+  border:1px solid rgba(213,219,228,.82);
+  box-shadow:0 5px 14px rgba(17,23,34,.045);
+}
+.promoListBtn small{
+  display:none;
+}
+.promoListBtn.active,
+.promoListBtn:hover{
+  color:#171c26;
+  background:#fff;
+}
+.promoListBtn.history{
+  color:#657084;
+}
+
+
+/* === V22: ALERTAS PROMO / MERCHAN NO RODAPÉ DO ESTÚDIO === */
+.promoFooter{
+  min-height:56px!important;
+  padding:8px 12px!important;
+  border-top:1px solid #f2c783!important;
+  background:#fff0dc!important;
+}
+.promoFooterList{
+  gap:10px!important;
+}
+.promoPill{
+  min-height:31px!important;
+  max-width:min(520px,48vw)!important;
+  border-radius:999px!important;
+  padding:0 16px!important;
+  font-size:12px!important;
+  letter-spacing:.04em!important;
+  text-align:left!important;
+  box-shadow:0 8px 18px rgba(17,23,34,.06);
+}
+.promoPill.pending{
+  color:#fff!important;
+  animation:studioPautaBlink 1s ease-in-out infinite!important;
+}
+.promoPill.pending.promo{
+  border-color:#ff9f2e!important;
+  background:#e97800!important;
+}
+.promoPill.pending.merchan{
+  border-color:#7cc4ff!important;
+  background:#1767ad!important;
+}
+@keyframes studioPautaBlink{
+  0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 0 0 rgba(255,139,0,0)}
+  50%{filter:brightness(1.22);transform:translateY(-1px);box-shadow:0 0 0 6px rgba(255,139,0,.17)}
+}
+.promoPill.read{
+  border-color:#9ee1b8!important;
+  background:#eafff1!important;
+  color:#08723e!important;
+  min-width:min(420px,48vw)!important;
+  overflow:hidden!important;
+}
+.promoPill.read .busMarquee{
+  display:block;
+  width:100%;
+  overflow:hidden;
+  white-space:nowrap;
+}
+.promoPill.read .busMarquee span{
+  display:inline-block;
+  min-width:100%;
+  padding-left:100%;
+  animation:busMarqueeLeft 13s linear infinite;
+}
+@keyframes busMarqueeLeft{
+  from{transform:translateX(0)}
+  to{transform:translateX(-100%)}
+}
+.promoPill .pillType{
+  display:none!important;
+}
+.readHistoryTicker{
+  height:50px!important;
+}
+.readHistoryTickerTrack{
+  top:0!important;
+  left:0!important;
+  right:0!important;
+  height:100%!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  gap:28px!important;
+  white-space:nowrap!important;
+  padding-top:18px!important;
+  animation:readHistoryBus 24s linear infinite!important;
+}
+.readHistoryTicker.single .readHistoryTickerTrack{
+  animation:none!important;
+  left:14px!important;
+}
+.readHistoryTickerTrack span{
+  flex:0 0 auto!important;
+}
+@keyframes readHistoryBus{
+  from{transform:translateX(100%)}
+  to{transform:translateX(-100%)}
+}
+
+
+/* === V23: BOTÕES P/M/H E ALERTAS COM INTENSIDADE PREMIUM === */
+.promoListBtn{
+  background:rgba(255,255,255,.82)!important;
+  border:1px solid #dfe6ef!important;
+  color:#637083!important;
+  box-shadow:0 6px 16px rgba(17,23,34,.055)!important;
+}
+#promoListBtn{
+  background:#fff7ec!important;
+  border-color:#ffd59c!important;
+  color:#c76700!important;
+}
+#merchanListBtn{
+  background:#edf6ff!important;
+  border-color:#c8e4ff!important;
+  color:#1767ad!important;
+}
+#historyListBtn{
+  background:#f4f6fa!important;
+  border-color:#dfe6ef!important;
+  color:#657084!important;
+}
+#promoListBtn.active,#promoListBtn:hover{
+  background:#f28b20!important;
+  border-color:#f28b20!important;
+  color:#fff!important;
+  box-shadow:0 8px 18px rgba(242,139,32,.18)!important;
+}
+#merchanListBtn.active,#merchanListBtn:hover{
+  background:#2477bd!important;
+  border-color:#2477bd!important;
+  color:#fff!important;
+  box-shadow:0 8px 18px rgba(36,119,189,.18)!important;
+}
+#historyListBtn:hover{
+  background:#fff!important;
+  border-color:#cfd8e4!important;
+  color:#1f2733!important;
+}
+.iconNav{
+  color:#808a99!important;
+  opacity:.86;
+}
+.iconNav:hover{
+  color:#4f5a6a!important;
+  opacity:1;
+}
+.modalBtn.primary,
+#confirmPromoReadBtn,
+#confirmPromoReadInline,
+#saveWinnerBtn,
+#savePromoResultInline{
+  background:linear-gradient(180deg,#cf0a33,#b90d2f)!important;
+  border-color:rgba(185,13,47,.74)!important;
+  color:#fff!important;
+  box-shadow:0 9px 18px rgba(185,13,47,.16)!important;
+}
+.modalBtn:not(.primary),
+#cancelPromoReadBtn,
+#cancelPromoReadInline,
+#cancelWinnerBtn{
+  background:#f4f6fa!important;
+  border-color:#dfe6ef!important;
+  color:#4f5a6a!important;
+}
+.winnerBtn .trophy{
+  opacity:.72!important;
+}
+.winnerBtn:hover .trophy{
+  opacity:1!important;
+  filter:none!important;
+}
+.promoFooter{
+  background:#fff2df!important;
+}
+.promoPill.pending.promo{
+  background:#f28b20!important;
+  border-color:#f6b465!important;
+  color:#fff!important;
+}
+.promoPill.pending.merchan{
+  background:#2477bd!important;
+  border-color:#8bc6ff!important;
+  color:#fff!important;
+}
+.promoPill.pending{
+  box-shadow:0 8px 18px rgba(17,23,34,.09)!important;
+}
+@keyframes studioPautaBlink{
+  0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 0 0 rgba(255,139,0,0)}
+  50%{filter:brightness(1.13);transform:translateY(-1px);box-shadow:0 0 0 5px rgba(255,139,0,.12)}
+}
+.promoPill.read{
+  background:#effaf4!important;
+  border-color:#bde9ce!important;
+  color:#137947!important;
+  box-shadow:0 6px 16px rgba(19,121,71,.08)!important;
+}
+.readHistoryTickerTrack span::before{
+  color:#b90d2f!important;
+}
+
+
+/* === V24: RODAPÉ DO ESTÚDIO EM LINHA ÚNICA + SEM LEITURAS CONFIRMADAS === */
+.readHistoryTicker{
+  display:none!important;
+}
+.panel{
+  overflow:hidden!important;
+}
+.promoFooter{
+  margin-top:0!important;
+  height:46px!important;
+  min-height:46px!important;
+  max-height:46px!important;
+  flex:0 0 46px!important;
+  display:flex!important;
+  align-items:center!important;
+  padding:6px 12px!important;
+  background:#fff1df!important;
+  border-top:1px solid #f0c584!important;
+}
+.promoFooterList{
+  width:100%!important;
+  height:100%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:9px!important;
+  flex-wrap:nowrap!important;
+  overflow:hidden!important;
+}
+.promoFooterList.isEmpty::before{
+  content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
+  display:inline-flex;
+  align-items:center;
+  min-height:26px;
+  max-height:26px;
+  color:#b46a00;
+  font-size:8.5px;
+  font-weight:1000;
+  letter-spacing:.06em;
+  white-space:nowrap;
+}
+.promoPill{
+  height:28px!important;
+  min-height:28px!important;
+  max-height:28px!important;
+  flex:0 0 auto!important;
+  max-width:360px!important;
+  border-radius:999px!important;
+  padding:0 14px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:11px!important;
+  line-height:1!important;
+  letter-spacing:.05em!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  box-shadow:0 7px 16px rgba(17,23,34,.075)!important;
+}
+.promoPill.pending{
+  animation:studioPautaBlink 1.05s ease-in-out infinite!important;
+}
+.promoPill.pending.promo{
+  background:#f28b20!important;
+  border-color:#f6b465!important;
+  color:#fff!important;
+}
+.promoPill.pending.merchan{
+  background:#2477bd!important;
+  border-color:#8bc6ff!important;
+  color:#fff!important;
+}
+.promoPill.read{
+  min-width:300px!important;
+  max-width:520px!important;
+  background:#effaf4!important;
+  border-color:#bde9ce!important;
+  color:#137947!important;
+  box-shadow:0 6px 16px rgba(19,121,71,.08)!important;
+}
+.promoPill.read .busMarquee{
+  display:block!important;
+  width:100%!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+}
+.promoPill.read .busMarquee span{
+  display:inline-block!important;
+  min-width:100%!important;
+  padding-left:100%!important;
+  animation:busMarqueeLeft 13s linear infinite!important;
+}
+@keyframes busMarqueeLeft{
+  from{transform:translateX(0)}
+  to{transform:translateX(-100%)}
+}
+@media(max-width:760px){
+  .promoFooter{
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+    padding:5px 8px!important;
+  }
+  .promoPill{
+    height:26px!important;
+    min-height:26px!important;
+    max-height:26px!important;
+    max-width:250px!important;
+    font-size:9.5px!important;
+    padding:0 10px!important;
+  }
+}
+
+
+/* === V25: HORA EM NEGRITO, RESULTADO NO HORÁRIO CORRETO E AVISOS MAIS DELICADOS === */
+.pautaTime{
+  font-weight:1000!important;
+  letter-spacing:-.035em!important;
+  color:#5fcf96!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.75)!important;
+}
+.time-past{color:#d84b63!important}
+.time-now{color:#5fcf96!important}
+.time-next{color:#e88a26!important}
+.studioContextBar span{
+  font-weight:1000!important;
+}
+.studioContextBar span:nth-child(3){
+  font-weight:1000!important;
+  color:#3f4856!important;
+  border-color:#cfd8e4!important;
+  background:#fff!important;
+}
+.resultBox{
+  width:min(650px,100%)!important;
+  border:1px solid #dfe6ef!important;
+  background:linear-gradient(180deg,#f8fafc,#f2f5f9)!important;
+  border-radius:18px!important;
+  padding:13px 14px!important;
+  box-shadow:0 8px 20px rgba(17,23,34,.045)!important;
+}
+.resultBox label{
+  color:#657084!important;
+  font-size:10px!important;
+  letter-spacing:.08em!important;
+}
+.resultWinnerLine input{
+  border-color:#dfe6ef!important;
+  background:#fff!important;
+  color:#171c26!important;
+}
+.resultAddBtn,.resultRemoveBtn{
+  background:#f4f6fa!important;
+  border:1px solid #dfe6ef!important;
+  color:#4f5a6a!important;
+  box-shadow:0 4px 12px rgba(17,23,34,.04)!important;
+}
+.resultAddBtn:hover,.resultRemoveBtn:hover{
+  background:#fff!important;
+  border-color:#cfd8e4!important;
+}
+#savePromoResultInline{
+  background:#fff2f5!important;
+  border:1px solid #f3b5c0!important;
+  color:#b90d2f!important;
+  box-shadow:0 5px 14px rgba(185,13,47,.075)!important;
+}
+#savePromoResultInline:hover{
+  background:#ffe8ee!important;
+}
+.promoFooter{
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  background:#fff6ea!important;
+  border-top:1px solid #f2d3a3!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.64)!important;
+}
+.promoFooterList{
+  gap:8px!important;
+}
+.promoFooterList.isEmpty::before{
+  color:#a76500!important;
+  opacity:.72!important;
+  font-size:8px!important;
+}
+.promoPill{
+  height:27px!important;
+  min-height:27px!important;
+  max-height:27px!important;
+  padding:0 13px!important;
+  font-size:10.5px!important;
+  box-shadow:0 5px 14px rgba(17,23,34,.055)!important;
+}
+.promoPill.pending{
+  animation:studioSoftAlert 1.35s ease-in-out infinite!important;
+}
+.promoPill.pending.promo{
+  background:#fff4e6!important;
+  border:1px solid #f0bf7a!important;
+  color:#b85f00!important;
+}
+.promoPill.pending.merchan{
+  background:#edf7ff!important;
+  border:1px solid #b9dcff!important;
+  color:#1767ad!important;
+}
+@keyframes studioSoftAlert{
+  0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 5px 14px rgba(17,23,34,.055)}
+  50%{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 0 0 4px rgba(255,151,45,.10),0 8px 16px rgba(17,23,34,.07)}
+}
+.promoPill.read{
+  background:#effaf4!important;
+  border:1px solid #bde9ce!important;
+  color:#137947!important;
+  box-shadow:0 5px 14px rgba(19,121,71,.07)!important;
+}
+.pautaActions .modalBtn.primary,
+#confirmPromoReadInline{
+  background:linear-gradient(180deg,#cf0a33,#b90d2f)!important;
+  border-color:rgba(185,13,47,.72)!important;
+  box-shadow:0 9px 18px rgba(185,13,47,.14)!important;
+}
+.pautaActions .modalBtn:not(.primary),
+#cancelPromoReadInline{
+  background:#f4f6fa!important;
+  border-color:#dfe6ef!important;
+  color:#4f5a6a!important;
+}
+
+
+/* === V26: HISTÓRICO H — SORTEIOS REALIZADOS NO DIA === */
+.historyCard{
+  width:min(920px,100%)!important;
+}
+.historyCard h3{
+  margin-bottom:4px!important;
+  letter-spacing:-.035em!important;
+}
+.historyCard p{
+  color:#657084!important;
+}
+.historyTop{
+  border:1px solid #dfe6ef!important;
+  background:#f8fafc!important;
+  border-radius:16px!important;
+  padding:10px!important;
+}
+.historyList{
+  margin-top:12px!important;
+  gap:9px!important;
+}
+.historyItem{
+  grid-template-columns:82px minmax(0,1fr) auto!important;
+  align-items:center!important;
+  border:1px solid #dfe6ef!important;
+  background:rgba(255,255,255,.92)!important;
+  border-radius:17px!important;
+  box-shadow:0 7px 16px rgba(17,23,34,.04)!important;
+}
+.historyTime{
+  color:#596475!important;
+  font-size:25px!important;
+  font-weight:1000!important;
+  letter-spacing:-.05em!important;
+}
+.historyInfo strong{
+  font-size:14px!important;
+  letter-spacing:-.015em!important;
+}
+.historyInfo span{
+  color:#657084!important;
+}
+.historyInfo em{
+  background:#effaf4!important;
+  border-color:#bde9ce!important;
+  color:#137947!important;
+}
+.historyType{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:25px;
+  border-radius:999px;
+  padding:0 9px;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:.06em;
+  white-space:nowrap;
+}
+.historyType.prize{
+  background:#eef5ff;
+  border:1px solid #cfe0ff;
+  color:#2f69c9;
+}
+.historyType.promo{
+  background:#fff3df;
+  border:1px solid #ffc66e;
+  color:#dc7600;
+}
+.historyType.merchan{
+  background:#edf6ff;
+  border:1px solid #b9dcff;
+  color:#1767ad;
+}
+
+
+/* === V27: AJUSTE FINAL DO ESTÚDIO — HORA FORTE, BOTÕES COMPACTOS E RODAPÉ ESTÁVEL === */
+.pautaTime{
+  font-family:"Bahnschrift","Segoe UI Variable Display","Segoe UI",Inter,Arial,sans-serif!important;
+  font-weight:1000!important;
+  letter-spacing:-.045em!important;
+  -webkit-font-smoothing:antialiased!important;
+  text-rendering:geometricPrecision!important;
+}
+.studioContextBar span:nth-child(3){
+  font-family:"Bahnschrift","Segoe UI Variable Display","Segoe UI",Inter,Arial,sans-serif!important;
+  font-weight:1000!important;
+  font-size:10px!important;
+  color:#171c26!important;
+  border-color:#cfd8e4!important;
+  background:#fff!important;
+  box-shadow:0 3px 10px rgba(17,23,34,.035)!important;
+}
+.pautaActions{
+  gap:8px!important;
+  margin-top:10px!important;
+}
+#cancelPromoReadInline,
+#confirmPromoReadInline{
+  min-height:36px!important;
+  height:36px!important;
+  border-radius:13px!important;
+  padding:0 16px!important;
+  font-size:11px!important;
+  line-height:1!important;
+  letter-spacing:.05em!important;
+  box-shadow:0 5px 13px rgba(17,23,34,.055)!important;
+}
+#confirmPromoReadInline{
+  background:linear-gradient(180deg,#c90931,#ae0928)!important;
+  border-color:rgba(174,9,40,.72)!important;
+  color:#fff!important;
+  box-shadow:0 8px 17px rgba(185,13,47,.13)!important;
+}
+#confirmPromoReadInline:hover{
+  background:linear-gradient(180deg,#bd082d,#99071f)!important;
+  transform:translateY(-1px);
+}
+#cancelPromoReadInline{
+  background:#f4f6fa!important;
+  border:1px solid #dfe6ef!important;
+  color:#566171!important;
+}
+#cancelPromoReadInline:hover{
+  background:#fff!important;
+  border-color:#cfd8e4!important;
+}
+.promoFooter{
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  padding:6px 12px!important;
+  background:#fff4e8!important;
+  border-top:1px solid #f2cf9a!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.78)!important;
+}
+.promoFooterList{
+  gap:8px!important;
+  flex-wrap:nowrap!important;
+  overflow:hidden!important;
+}
+.promoFooterList.isEmpty::before{
+  min-height:26px!important;
+  color:#a76500!important;
+  opacity:.72!important;
+  font-size:8px!important;
+  letter-spacing:.07em!important;
+}
+.promoPill{
+  width:clamp(180px,22vw,320px)!important;
+  height:28px!important;
+  min-height:28px!important;
+  max-height:28px!important;
+  flex:0 0 auto!important;
+  padding:0 13px!important;
+  border-radius:999px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:10.5px!important;
+  line-height:1!important;
+  letter-spacing:.055em!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  box-shadow:0 6px 15px rgba(17,23,34,.07)!important;
+}
+.promoPill.pending{
+  animation:studioSoftAlertV27 1.22s ease-in-out infinite!important;
+}
+.promoPill.pending.promo{
+  background:#f08a1f!important;
+  border:1px solid #f3a94e!important;
+  color:#fff!important;
+}
+.promoPill.pending.merchan{
+  background:#2477bd!important;
+  border:1px solid #75baff!important;
+  color:#fff!important;
+}
+@keyframes studioSoftAlertV27{
+  0%,100%{filter:brightness(1);transform:translateY(0);box-shadow:0 6px 15px rgba(17,23,34,.07)}
+  50%{filter:brightness(1.09);transform:translateY(-1px);box-shadow:0 0 0 4px rgba(240,138,31,.12),0 8px 17px rgba(17,23,34,.08)}
+}
+.promoPill.read{
+  background:#effaf4!important;
+  border:1px solid #bde9ce!important;
+  color:#137947!important;
+  box-shadow:0 5px 14px rgba(19,121,71,.075)!important;
+}
+.promoPill .verticalMarquee{
+  width:100%;
+  height:28px;
+  display:block;
+  overflow:hidden;
+  position:relative;
+}
+.promoPill .verticalStack{
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  height:56px;
+  animation:footerVerticalFlipV27 4.6s ease-in-out infinite;
+}
+.promoPill .verticalStack span{
+  height:28px;
+  min-height:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+@keyframes footerVerticalFlipV27{
+  0%,42%{transform:translateY(0)}
+  50%,90%{transform:translateY(-28px)}
+  100%{transform:translateY(0)}
+}
+@media(max-width:760px){
+  #cancelPromoReadInline,#confirmPromoReadInline{
+    height:34px!important;
+    min-height:34px!important;
+    padding:0 12px!important;
+    font-size:10px!important;
+  }
+  .promoFooter{
+    height:42px!important;
+    min-height:42px!important;
+    max-height:42px!important;
+    padding:5px 8px!important;
+  }
+  .promoPill{
+    width:clamp(150px,44vw,250px)!important;
+    height:26px!important;
+    min-height:26px!important;
+    max-height:26px!important;
+    font-size:9.5px!important;
+    padding:0 10px!important;
+  }
+  .promoPill .verticalMarquee{height:26px}
+  .promoPill .verticalStack{height:52px}
+  .promoPill .verticalStack span{height:26px;min-height:26px}
+  @keyframes footerVerticalFlipV27{
+    0%,42%{transform:translateY(0)}
+    50%,90%{transform:translateY(-26px)}
+    100%{transform:translateY(0)}
+  }
+}
+
+
+/* === V34: CAMADAS DOS MODAIS DO ESTÚDIO === */
+.modalBackdrop{
+  z-index:10000!important;
+  isolation:isolate!important;
+}
+.modalBackdrop.show{
+  display:flex!important;
+}
+.modalBackdrop .modalCard{
+  position:relative!important;
+  z-index:10001!important;
+}
+.modalBackdrop.show ~ .promoList,
+.modalBackdrop.show ~ .headNav{
+  pointer-events:none!important;
+}
+
+
+#winnerInputsList{display:grid;gap:8px;margin-top:12px}
+.winnerInputLine{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px}
+.winnerInputLine input{min-height:44px;border:1px solid #d8dee7;border-radius:13px;padding:0 13px;font-size:15px;font-weight:900;color:#171c26;text-transform:uppercase}
+.winnerRemoveBtn{min-height:44px;border:1px solid #f3b5c0;border-radius:13px;background:#fff5f7;color:#c9002b;font-size:20px;font-weight:1000;cursor:pointer}
+#addWinnerBtn{width:44px;margin-top:8px}
+.winnerCapacityNote{display:inline-flex;margin-top:8px;padding:6px 9px;border-radius:999px;background:#eef5ff;border:1px solid #cfe0ff;color:#2567b7;font-size:9px;font-weight:1000}
+
+
+/* V53 — MODAL DE GANHADORES MAIS DELICADO */
+#winnerModal .modalCard{
+  width:min(500px,92vw)!important;
+  padding:22px 24px 20px!important;
+  border-radius:22px!important;
+  box-shadow:0 22px 55px rgba(18,25,38,.18)!important;
+}
+#winnerModal h3{
+  margin:0 0 8px!important;
+  font-size:21px!important;
+  line-height:1.12!important;
+  letter-spacing:-.025em!important;
+  font-weight:800!important;
+}
+#winnerModal p{
+  margin:0 0 14px!important;
+  color:#697486!important;
+  font-size:10px!important;
+  line-height:1.5!important;
+  letter-spacing:.025em!important;
+  font-weight:700!important;
+}
+#winnerModal .winnerCapacityNote{
+  min-height:22px!important;
+  padding:0 8px!important;
+  font-size:8px!important;
+  border-radius:999px!important;
+}
+#winnerModal #winnerInputsList{
+  gap:7px!important;
+  margin-top:8px!important;
+}
+#winnerModal .winnerInputLine{
+  grid-template-columns:minmax(0,1fr) 36px!important;
+  gap:7px!important;
+}
+#winnerModal .winnerNameField{
+  min-height:40px!important;
+  height:40px!important;
+  border-radius:11px!important;
+  padding:0 12px!important;
+  font-size:12px!important;
+  font-weight:750!important;
+  letter-spacing:.015em!important;
+}
+#winnerModal .winnerRemoveBtn{
+  min-height:36px!important;
+  height:36px!important;
+  width:36px!important;
+  align-self:center!important;
+  border-radius:10px!important;
+  font-size:16px!important;
+  box-shadow:none!important;
+}
+#winnerModal #addWinnerBtn{
+  width:36px!important;
+  min-width:36px!important;
+  min-height:34px!important;
+  height:34px!important;
+  margin-top:7px!important;
+  border-radius:10px!important;
+  font-size:17px!important;
+  box-shadow:none!important;
+}
+#winnerModal .modalActions{
+  margin-top:16px!important;
+  gap:8px!important;
+}
+#winnerModal .modalBtn{
+  min-height:38px!important;
+  height:38px!important;
+  padding:0 15px!important;
+  border-radius:11px!important;
+  font-size:10px!important;
+  font-weight:800!important;
+  letter-spacing:.02em!important;
+  box-shadow:none!important;
+}
+#winnerModal #saveWinnerBtn{
+  box-shadow:0 7px 16px rgba(185,13,47,.13)!important;
+}
+
+/* V56 — CONSULTA CENTRAL DE GANHADORES */
+#winnerModal .modalCard{width:min(780px,94vw)!important;max-height:92vh!important;overflow:auto!important}
+.winnerBankModalState{margin:10px 0 4px;padding:9px 11px;border:1px solid #d8dee7;border-radius:12px;background:#f8fafc;color:#566273;font-size:9px;font-weight:950;letter-spacing:.025em}
+.winnerBankModalState.online{border-color:#b9e6cd;background:#effaf4;color:#08713f}
+.winnerBankModalState.error{border-color:#efabb8;background:#fff1f4;color:#a90d25}
+#winnerModal .winnerCandidate{display:grid;gap:7px;padding:9px;border:1px solid #e2e7ee;border-radius:15px;background:#fbfcfe}
+#winnerModal .winnerInputLine{display:grid;grid-template-columns:minmax(0,1fr) 36px!important;gap:7px!important}
+.winnerEligibility{display:grid;gap:6px;padding:10px 11px;border:1px solid #d8dee7;border-radius:12px;background:#f8fafc;color:#536071}
+.winnerEligibility.neutral{background:#f8fafc;border-color:#d8dee7;color:#667085}
+.winnerEligibility.apto{background:#effaf4;border-color:#b9e6cd;color:#08713f}
+.winnerEligibility.atencao{background:#fff7e9;border-color:#f2c676;color:#965800}
+.winnerEligibility.bloqueado{background:#fff0f3;border-color:#efa9b6;color:#a90d25}
+.winnerEligibility.curto{background:#f1f3f6;border-color:#cbd1da;color:#4f5968}
+.winnerEligibilityHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.winnerEligibilityHead strong{font-size:10.5px;font-weight:1000;line-height:1.2}
+.winnerEligibilityHead span{flex:0 0 auto;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.72);font-size:7.5px;font-weight:1000}
+.winnerEligibility p{margin:0!important;color:inherit!important;font-size:8.5px!important;font-weight:850!important;line-height:1.35!important;letter-spacing:0!important}
+.winnerEligibilityHistory{display:grid;gap:4px}
+.winnerEligibilityHistory div{display:grid;grid-template-columns:74px minmax(100px,.75fr) minmax(140px,1.25fr);gap:7px;padding-top:5px;border-top:1px solid rgba(70,86,108,.14);font-size:8px;font-weight:850}
+.winnerEligibilityHistory strong{font-size:8px}.winnerEligibilityHistory span:last-child{font-weight:1000}
+.winnerSuggestions{display:grid;gap:7px;padding-top:5px;border-top:1px solid rgba(70,86,108,.14)}
+.winnerSimilarityPrompt{font-size:8px;font-weight:1000;color:inherit}
+.winnerSimilarityCompare{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:7px;align-items:center}
+.winnerSimilarityName{display:grid;gap:2px;padding:7px 8px;border:1px solid rgba(70,86,108,.15);border-radius:10px;background:rgba(255,255,255,.74)}
+.winnerSimilarityName span{font-size:6.8px;font-weight:900;opacity:.78}
+.winnerSimilarityName b{font-size:8px;font-weight:1000}
+.winnerSimilarityScore{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:0 7px;border-radius:999px;border:1px solid rgba(70,86,108,.18);background:#fff;font-size:7px;font-weight:1000}
+.winnerSimilarityActions{display:flex;gap:5px;flex-wrap:wrap}
+.winnerSuggestion{border:1px solid #cbd5e1;border-radius:999px;background:#fff;padding:5px 8px;color:#344054;font-size:7.5px;font-weight:950;cursor:pointer}
+.winnerSuggestion.same{border-color:#9b1731;color:#9b1731}
+.winnerSuggestion:hover{transform:translateY(-1px)}
+.winnerSimilarityDone{padding-top:5px;border-top:1px solid rgba(70,86,108,.14);font-size:8px;font-weight:950}
+.winnerManualActions{display:flex;gap:6px;flex-wrap:wrap;padding-top:5px;border-top:1px solid rgba(70,86,108,.14)}
+.winnerManualBtn{border:1px solid currentColor;border-radius:999px;background:rgba(255,255,255,.78);padding:5px 9px;color:inherit;font-size:7.5px;font-weight:1000;cursor:pointer}
+#saveWinnerBtn:disabled{opacity:.45;cursor:not-allowed}
+.promoWinnerCandidate{display:grid;gap:6px;padding:8px;border:1px solid #e2e7ee;border-radius:14px;background:#fbfcfe}
+.promoWinnerEligibility{font-size:9px;text-align:left}
+#savePromoResultInline:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:620px){.winnerEligibilityHistory div,.winnerSimilarityCompare{grid-template-columns:1fr}.winnerEligibilityHead{align-items:flex-start;flex-direction:column}.winnerSimilarityScore{justify-self:start}}
+
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+
+<style>
+
+/* =========================================================
+   UX14 — PADRÃO ESTRUTURAL APROVADO
+   Ajustes visuais transversais: compactos, responsivos e
+   sem alteração das regras funcionais do Workspace.
+   ========================================================= */
+:root{--ux-ok:#0f7a46;--ux-warn:#a46200;--ux-danger:#ad1728;--ux-info:#2f69c9;--ux-neutral:#69707d}
+button,.btn,.modalBtn,.pickupBtn{max-width:100%}
+button:focus-visible,.btn:focus-visible,.modalBtn:focus-visible,.actionIcon:focus-visible,.tabBtn:focus-visible{outline:3px solid rgba(47,105,201,.22)!important;outline-offset:2px!important}
+button:disabled,.btn:disabled,.modalBtn:disabled{cursor:not-allowed!important;opacity:.52!important;transform:none!important}
+.tableWrap{overscroll-behavior:contain;scrollbar-gutter:stable}
+table th{white-space:nowrap}
+tbody tr{transition:background .14s ease,box-shadow .14s ease}
+tbody tr:focus-within td{background:#fff8fa}
+.badge,.status,.result,.deadlineNote{font-variant-numeric:tabular-nums}
+.empty{border:1px dashed #dfe4ec;border-radius:12px;background:#fafbfd;line-height:1.45}
+.drawerHead,.modalCard>h2:first-child,.modalCard>h3:first-child{position:sticky;top:0;z-index:4}
+.formActions,.modalActions{position:sticky;bottom:0;z-index:4;background:linear-gradient(180deg,rgba(255,255,255,.88),#fff 32%);padding-top:9px}
+.control[aria-invalid="true"],input[aria-invalid="true"],select[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--ux-danger)!important;box-shadow:0 0 0 3px rgba(173,23,40,.08)!important}
+.uxFieldError{display:block;margin-top:4px;color:var(--ux-danger);font-size:9px;font-weight:900;letter-spacing:.035em}
+.uxStatusDot{display:inline-block;width:7px;height:7px;border-radius:999px;margin-right:5px;background:currentColor;vertical-align:1px}
+.uxContextBar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 10px;padding:7px 9px;border:1px solid #e5e9ef;border-radius:12px;background:rgba(255,255,255,.86);color:#5f6978;font-size:9px;font-weight:900;letter-spacing:.045em}
+.uxContextBar strong{color:#171c26;font-size:10px}.uxContextSep{color:#c3c9d2}.uxSyncOk{color:var(--ux-ok)}
+.uxReadOnly [data-edit-only="true"]{display:none!important}
+@media(max-width:900px){table{min-width:860px}.tableWrap{border-radius:14px!important}.uxContextBar{margin-bottom:8px}.formActions,.modalActions{padding-bottom:max(4px,env(safe-area-inset-bottom))}}
+@media(max-width:640px){button,.btn,.modalBtn,.pickupBtn{min-height:32px!important}.actionIcon{min-width:27px!important;min-height:27px!important}.badge{white-space:normal!important;text-align:center}.drawer,.modalBackdrop{padding:8px!important}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+
+</style>
+
+<style>
+/* === V56: AJUSTE FINAL DOS LINKS DE ESTÚDIO === */
+.heroLogo{background:transparent!important;box-shadow:none!important;object-fit:contain!important}
+.pautaBody{min-height:230px!important;padding:18px 28px 20px!important;gap:10px!important}
+.pautaBody.emptyState{min-height:170px!important}
+.winnerBtn{position:relative!important;z-index:3!important;pointer-events:auto!important}
+.winnerBtn .trophy{pointer-events:none!important}
+.titleBox,.descBox{width:min(940px,100%)!important}
+.promoFooter{height:44px!important;min-height:44px!important;max-height:44px!important;overflow:visible!important}
+.promoFooterList{min-width:0!important}
+.promoList{z-index:120!important}
+.headNav{position:relative!important;z-index:30!important}
+.modalBackdrop{z-index:10000!important}
+@media(max-width:760px){.pautaBody{min-height:205px!important;padding:15px 16px 17px!important}.pautaBody.emptyState{min-height:150px!important}}
+</style>
+
+<style>
+/* === V57: CORREÇÃO ESTRUTURAL DOS LINKS DE ESTÚDIO ===
+   Isola o estado vazio do rodapé, mantém conteúdo visível e melhora o clique do resultado. */
+.pautaBody{
+  min-height:230px!important;
+  padding:18px 28px 20px!important;
+  gap:10px!important;
+  overflow:visible!important;
+}
+.pautaBody>.titleBox,
+.pautaBody>.descBox,
+.pautaBody>.winnerBox,
+.pautaBody>.pautaActions,
+.pautaBody>.emptyStudioBox,
+.pautaBody>.promoReadBanner,
+.pautaBody>.resultBox{
+  flex:0 0 auto!important;
+}
+.pautaActions{
+  min-height:38px!important;
+  align-items:center!important;
+}
+.winnerBtn{
+  width:36px!important;
+  min-width:36px!important;
+  height:36px!important;
+  min-height:36px!important;
+  border:1px solid #dfe5ec!important;
+  border-radius:12px!important;
+  background:#f8fafc!important;
+  color:#707b8b!important;
+  box-shadow:0 4px 12px rgba(17,23,34,.045)!important;
+}
+.winnerBtn:hover,
+.winnerBtn:focus-visible{
+  background:#fff!important;
+  color:#a90d25!important;
+  border-color:#efc3cc!important;
+}
+.winnerBtn .trophy{font-size:18px!important;opacity:.82!important}
+.promoFooter{
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  flex:0 0 44px!important;
+  overflow:hidden!important;
+  padding:6px 12px!important;
+}
+.promoFooterList{
+  width:100%!important;
+  height:32px!important;
+  min-height:32px!important;
+  max-height:32px!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:inherit!important;
+  font-size:inherit!important;
+  justify-content:flex-start!important;
+  overflow:hidden!important;
+}
+.promoFooterList.isEmpty::before{
+  content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:26px!important;
+  max-height:26px!important;
+  padding:0 2px!important;
+  color:#a76500!important;
+  font-size:8px!important;
+  font-weight:1000!important;
+  letter-spacing:.07em!important;
+  white-space:nowrap!important;
+}
+.heroLogo{
+  display:block!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+/* BANNER PROMOCIONAL: só ocupa espaço quando existe imagem cadastrada. */
+.promoReadBanner{
+  width:min(760px,100%)!important;
+  aspect-ratio:4/1!important;
+  max-height:none!important;
+  margin:0 auto 2px!important;
+  border-radius:16px!important;
+}
+.promoReadBanner img{width:100%!important;height:100%!important;object-fit:cover!important}
+/* Estado vazio do histórico não herda a antiga altura de painel vazio. */
+.historyList>.empty{
+  min-height:96px!important;
+  padding:18px!important;
+  font-size:12px!important;
+}
+@media(max-width:760px){
+  .pautaBody{min-height:205px!important;padding:15px 16px 17px!important;gap:8px!important}
+  .pautaActions{min-height:34px!important}
+  .winnerBtn{width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important}
+  .promoFooter{height:42px!important;min-height:42px!important;max-height:42px!important;flex-basis:42px!important;padding:5px 8px!important}
+  .promoFooterList{height:30px!important;min-height:30px!important;max-height:30px!important}
+  .promoList{left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:min(280px,calc(100vw - 28px))!important}
+  .promoReadBanner{width:100%!important}
+}
+</style>
+
+<style>
+/* R17 — OPERAÇÃO AO VIVO, PENDÊNCIAS E RODÍZIO */
+.studioContextBar{flex-wrap:wrap!important}.manualConsult{background:#fff6e8!important;color:#965500!important;border-color:#f2cf99!important}.returnNowBtn{min-height:25px;border:1px solid #d8dee7;border-radius:9px;background:#fff;padding:0 9px;font:900 8px/1 "Segoe UI",Arial,sans-serif;color:#4e5968;cursor:pointer}
+.studioOpsStrip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid #e5e9ef;background:#fff8eb}.studioOpsStrip strong{font-size:8px;color:#815000;letter-spacing:.05em}.studioOpsStrip>div{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.studioOpsStrip.done{background:#f5faf7}.studioOpsStrip.done strong{color:#26704a}.opTag{display:inline-flex;align-items:center;min-height:23px;padding:0 8px;border-radius:999px;border:1px solid #e1d2a9;background:#fff;color:#7c5b15;font-size:7.5px;font-weight:1000}.opTag.urgent{border-color:#f2b7c1;background:#fff4f6;color:#a41e37}
+.previousPending{display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));gap:5px;align-items:center;padding:7px 10px;border-bottom:1px solid #efd4a5;background:#fffaf1}.previousPending>strong{font-size:7.5px;color:#9b5b00;white-space:nowrap}.previousPending button{min-width:0;min-height:28px;border:1px solid #ead7b5;border-radius:9px;background:#fff;padding:5px 7px;text-align:left;color:#65470f;font:850 7.5px/1.2 "Segoe UI",Arial,sans-serif;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.previousPending button span{font-weight:1000;margin-right:5px;color:#b26000}.rotationInfo{display:block;margin-top:6px;color:#7b5b17;font-size:8px;font-weight:950;letter-spacing:.04em}
+@media(max-width:760px){.studioOpsStrip{align-items:flex-start;flex-direction:column}.studioOpsStrip>div{justify-content:flex-start}.previousPending{grid-template-columns:1fr}.previousPending button{white-space:normal}.returnNowBtn{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <img class="heroLogo" src="assets/logo-workspace-jp-transparent.png" alt="Workspace Jovem Pan Floripa">
+    </header>
+
+  <section class="panel" id="pautaPanel"></section>
+</div>
+
+<div class="modalBackdrop" id="winnerModal">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="winnerModalTitle">
+    <h3 id="winnerModalTitle">INDICAR GANHADOR(ES)</h3>
+    <p id="winnerModalHint">DIGITE O NOME DO OUVINTE SORTEADO. USE O BOTÃO + QUANDO HOUVER MAIS DE UM GANHADOR PARA O MESMO HORÁRIO.</p>
+    <div class="winnerBankModalState" id="winnerBankModalState">CONECTANDO AO BANCO DE GANHADORES...</div>
+    <div class="resultWinnersList" id="winnerInputsList"></div>
+    <button class="resultAddBtn" type="button" id="addWinnerBtn" title="ADICIONAR OUTRO GANHADOR">+</button>
+    <div class="modalActions">
+      <button class="modalBtn" type="button" id="cancelWinnerBtn">CANCELAR</button>
+      <button class="modalBtn primary" type="button" id="saveWinnerBtn">SALVAR GANHADOR(ES)</button>
+    </div>
+  </div>
+</div>
+
+<div class="modalBackdrop" id="historyModal">
+  <div class="modalCard historyCard" role="dialog" aria-modal="true" aria-labelledby="historyModalTitle">
+    <h3 id="historyModalTitle">SORTEIOS REALIZADOS NO DIA</h3>
+    <p>LISTA DOS SORTEIOS JÁ CONFIRMADOS NO ESTÚDIO NA DATA SELECIONADA.</p>
+    <div class="historyTop">
+      <div class="modalField">
+        <label for="historyDateInput">DATA</label>
+        <input id="historyDateInput" type="date">
+      </div>
+      <button class="modalBtn" type="button" id="historyTodayBtn">HOJE</button>
+    </div>
+    <div class="historyList" id="historyList"></div>
+    <div class="modalActions">
+      <button class="modalBtn primary" type="button" id="closeHistoryBtn">FECHAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY='jp_programacao_brindes_distribuicao_v2';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'" :'&#39;','"':'&quot;'}[c]));
+const upper=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
+const norm=upper;
+
+let state=loadState();
+let currentMonth=state.currentMonth||Object.keys(state.months||{})[0]||'';
+let selectedIndex=-1;
+let manual=false;
+let selectedPromoId=null;
+let currentDisplayItem=null;
+let manualHourDateMs=null;
+let lastHourKey=currentHourKey();
+let historyDate='';
+let manualReturnTimer=null;
+let manualLastInteractionAt=0;
+const MANUAL_RETURN_MS=60000;
+const STUDIO_STATION='JP1017';
+const ALLOW_PROMO_SHORTCUT=true;
+
+
+const FIREBASE_CONFIG = {
+  "apiKey": "AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE",
+  "authDomain": "jp-painel-brindes.firebaseapp.com",
+  "databaseURL": "https://jp-painel-brindes-default-rtdb.firebaseio.com",
+  "projectId": "jp-painel-brindes",
+  "storageBucket": "jp-painel-brindes.firebasestorage.app",
+  "messagingSenderId": "843544648278",
+  "appId": "1:843544648278:web:066c8e64e17da046cf79f7",
+  "measurementId": "G-VB6Y2TS796"
+};
+const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
+const WINNER_BANK_PATH = "jp-painel-brindes/winnerBank";
+const WINNER_BLOCK_MONTHS = 8;
+const WINNER_SHORT_BLOCK_DAYS = 28;
+let firebaseStarted=false;
+let firebaseReady=false;
+let firebaseRef=null;
+let firebaseApplyingRemote=false;
+let firebaseServerLoaded=false;
+let winnerBankRef=null;
+let winnerBankStarted=false;
+let winnerBankReady=false;
+let winnerBankRecords=[];
+let winnerBankSnapshot={};
+let winnerInputChecks=[];
+let promoWinnerChecks=[];
+const STUDIO_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_jp1017';
+
+function firebaseConfigReady(){
+  return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && !String(FIREBASE_CONFIG.apiKey).includes("COLE_AQUI") && FIREBASE_CONFIG.databaseURL && !String(FIREBASE_CONFIG.databaseURL).includes("COLE_AQUI"));
+}
+function studioSleep(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
+async function studioRetry(operation,maxAttempts=3){
+  let lastError;
+  for(let attempt=1;attempt<=maxAttempts;attempt+=1){
+    try{return await operation(attempt);}catch(error){lastError=error;if(error?.retryable===false)throw error;if(attempt<maxAttempts)await studioSleep(180*attempt);}
+  }
+  throw lastError;
+}
+function studioOperatorIdentity(required=false,force=false){
+  try{
+    const saved=JSON.parse(sessionStorage.getItem(STUDIO_OPERATOR_SESSION_KEY)||'null');
+    if(saved?.name&&!force) return {name:upper(saved.name),sector:'ESTÚDIO JP 101,7'};
+  }catch(error){}
+  if(!required&&!force) return {name:'NÃO INFORMADO',sector:'ESTÚDIO JP 101,7'};
+  const name=upper(prompt('IDENTIFICAÇÃO DO LOCUTOR / OPERADOR\n\nDIGITE SEU NOME COMPLETO:')||'');
+  if(!name) return null;
+  const identity={name,sector:'ESTÚDIO JP 101,7',identifiedAt:new Date().toISOString()};
+  sessionStorage.setItem(STUDIO_OPERATOR_SESSION_KEY,JSON.stringify(identity));
+  return identity;
+}
+async function ensureStudioFirebaseOnline(){
+  if(!firebaseReady||!firebaseRef) initFirebaseSync();
+  if(!firebaseReady||!firebaseRef) throw new Error('FIREBASE INDISPONÍVEL.');
+  const connectedRef=window.firebase.database().ref('.info/connected');
+  const snapshot=await Promise.race([
+    connectedRef.get(),
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))
+  ]);
+  if(snapshot.val()!==true) throw new Error('SEM CONEXÃO COM O FIREBASE. AGUARDE A RECONEXÃO E TENTE NOVAMENTE.');
+  return true;
+}
+function studioOutcomeMonthKey(context={}){
+  const candidate=String(context.date||'').slice(0,7);
+  if(candidate&&state.months?.[candidate]) return candidate;
+  return currentMonth||candidate||todayISO().slice(0,7);
+}
+async function appendStudioAudit(entry){
+  const row={...entry};
+  await studioRetry(()=>firebaseRef.child('auditLog').transaction(current=>{
+    const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+    if(rows.some(item=>item?.id===row.id)) return rows;
+    rows.push(row);
+    return rows.slice(-2500);
+  },undefined,false));
+}
+function loadState(){
+  try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s&&s.months)return s;}catch(e){}
+  return {currentMonth:'',months:{}};
+}
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+function countStateRecords(data){
+  if(!data || !data.months) return 0;
+  return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
+}
+function studioRecordMonths(collection,idValue){
+  const keys=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    if((m?.[collection]||[]).some(row=>row?.id===idValue)) keys.push(monthKey);
+  });
+  return keys.length?keys:[currentMonth||todayISO().slice(0,7)];
+}
+function pickStudioFields(record,fields){
+  const patch={};
+  fields.forEach(field=>{ if(Object.prototype.hasOwnProperty.call(record,field)) patch[field]=JSON.parse(JSON.stringify(record[field])); });
+  patch.updatedAt=new Date().toISOString();
+  return patch;
+}
+async function persistStudioRecord(collection,record,fields){
+  if(!record?.id) throw new Error('REGISTRO SEM ID');
+  await ensureStudioFirebaseOnline();
+  const patch=pickStudioFields(record,fields);
+  const keys=studioRecordMonths(collection,record.id);
+  await Promise.all(keys.map(monthKey=>studioRetry(()=>firebaseRef.child(`months/${monthKey}/${collection}`).transaction(current=>{
+    const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+    const index=rows.findIndex(row=>row?.id===record.id);
+    if(index<0) rows.push({...record,...patch});
+    else rows[index]={...rows[index],...patch};
+    return rows;
+  },undefined,false))));
+  await firebaseRef.update({
+    updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
+    savedAt:new Date().toISOString(),
+    source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
+    version:'FIREBASE_RTDB_V56_GRANULAR'
+  });
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+}
+function persistStudioPromo(record){
+  return persistStudioRecord('promos',record,[
+    'readByHour','readLog','readAt','readAtLabel','readSlot','readStation','readProgram',
+    'resultByHour','resultWinnersByHour','resultWinners','resultName','resultAt','resultAtLabel','resultSlot','resultDate','occurrences','pickupBusinessDays'
+  ]);
+}
+function persistStudioItem(record){
+  return persistStudioRecord('items',record,[
+    'winnerName','winnerNames','winnerCapacity','status','resultAt','resultAtLabel','deliveredAt','deliveredAtLabel','deliveredBy'
+  ]);
+}
+
+function applyRemoteFirebaseState(remoteState){
+  if(!remoteState || !remoteState.months) return;
+  firebaseApplyingRemote=true;
+  state=remoteState;
+  firebaseServerLoaded=true;
+  selectStudioMonth();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if(!manual) selectedIndex=-1;
+  render();
+  firebaseApplyingRemote=false;
+}
+async function handleEmptyFirebase(){
+  // Firebase é a fonte oficial. O estúdio não envia cache local quando o servidor está vazio.
+  firebaseServerLoaded=true;
+  render();
+}
+function initFirebaseSync(){
+  if(firebaseStarted) return;
+  firebaseStarted=true;
+  if(!firebaseConfigReady()){
+    console.warn('Firebase ainda não configurado. Substitua FIREBASE_CONFIG nos arquivos HTML.');
+    return;
+  }
+  try{
+    const app=window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseRef=window.firebase.database(app).ref(FIREBASE_ROOT_PATH);
+    firebaseReady=true;
+    firebaseRef.on('value', async snapshot=>{
+      const payload=snapshot.val();
+      const remoteState=payload?.months?payload:(payload?.state?.months?payload.state:null);
+      if(!remoteState){
+        await handleEmptyFirebase();
+        return;
+      }
+      applyRemoteFirebaseState(remoteState);
+    },err=>console.warn('FIREBASE LOAD ERROR',err));
+  }catch(err){
+    console.warn('FIREBASE INIT ERROR',err);
+  }
+}
+function syncStateFromApi(force=false){
+  initFirebaseSync();
+  if(force && firebaseReady && firebaseRef){
+    firebaseRef.get().then(snapshot=>{
+      const payload=snapshot.val();
+      const remoteState=payload?.months?payload:(payload?.state?.months?payload.state:null);
+      if(remoteState) applyRemoteFirebaseState(remoteState);
+    }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
+  }
+}
+function winnerPlain(value){
+  return upper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+}
+const WINNER_SIMILARITY_MIN=0.86;
+const WINNER_NAME_PARTICLES=new Set(['DA','DAS','DE','DO','DOS','E']);
+function winnerNameProfile(value){
+  const plain=winnerPlain(value);
+  const tokens=plain.split(' ').filter(Boolean);
+  const filtered=tokens.filter(token=>!WINNER_NAME_PARTICLES.has(token));
+  const core=filtered.length?filtered:tokens;
+  return {plain,tokens,core,compact:core.join(''),sorted:[...core].sort().join(' '),first:core[0]||'',last:core[core.length-1]||''};
+}
+function winnerLevenshtein(a,b){
+  const left=String(a||''),right=String(b||'');
+  if(left===right) return 0;
+  if(!left.length) return right.length;
+  if(!right.length) return left.length;
+  let previous=Array.from({length:right.length+1},(_,index)=>index);
+  for(let i=1;i<=left.length;i+=1){
+    const current=[i];
+    for(let j=1;j<=right.length;j+=1){
+      current[j]=Math.min(current[j-1]+1,previous[j]+1,previous[j-1]+(left[i-1]===right[j-1]?0:1));
+    }
+    previous=current;
+  }
+  return previous[right.length];
+}
+function winnerEditSimilarity(a,b){
+  const max=Math.max(String(a||'').length,String(b||'').length);
+  return max?1-(winnerLevenshtein(a,b)/max):1;
+}
+function winnerJaroWinkler(a,b){
+  const left=String(a||''),right=String(b||'');
+  if(left===right) return 1;
+  if(!left.length||!right.length) return 0;
+  const range=Math.max(0,Math.floor(Math.max(left.length,right.length)/2)-1);
+  const leftMatches=new Array(left.length).fill(false);
+  const rightMatches=new Array(right.length).fill(false);
+  let matches=0;
+  for(let i=0;i<left.length;i+=1){
+    const start=Math.max(0,i-range);
+    const end=Math.min(i+range+1,right.length);
+    for(let j=start;j<end;j+=1){
+      if(rightMatches[j]||left[i]!==right[j]) continue;
+      leftMatches[i]=true;
+      rightMatches[j]=true;
+      matches+=1;
+      break;
+    }
+  }
+  if(!matches) return 0;
+  const leftOrdered=[],rightOrdered=[];
+  leftMatches.forEach((matched,index)=>{ if(matched) leftOrdered.push(left[index]); });
+  rightMatches.forEach((matched,index)=>{ if(matched) rightOrdered.push(right[index]); });
+  let transpositions=0;
+  leftOrdered.forEach((char,index)=>{ if(char!==rightOrdered[index]) transpositions+=1; });
+  const jaro=((matches/left.length)+(matches/right.length)+((matches-transpositions/2)/matches))/3;
+  let prefix=0;
+  while(prefix<4&&prefix<left.length&&prefix<right.length&&left[prefix]===right[prefix]) prefix+=1;
+  return jaro+(prefix*.1*(1-jaro));
+}
+function winnerTokenSimilarity(leftTokens,rightTokens){
+  if(!leftTokens.length||!rightTokens.length) return 0;
+  const shorter=leftTokens.length<=rightTokens.length?leftTokens:rightTokens;
+  const longer=leftTokens.length<=rightTokens.length?rightTokens:leftTokens;
+  const average=shorter.reduce((total,token)=>{
+    const best=longer.reduce((score,candidate)=>Math.max(score,winnerEditSimilarity(token,candidate)),0);
+    return total+best;
+  },0)/shorter.length;
+  const coverage=shorter.length/longer.length;
+  return average*(.88+.12*coverage);
+}
+function winnerNameSimilarity(leftName,rightName){
+  const left=winnerNameProfile(leftName),right=winnerNameProfile(rightName);
+  if(!left.plain||!right.plain) return 0;
+  if(left.plain===right.plain) return 1;
+  if(left.sorted&&left.sorted===right.sorted) return .99;
+  const jaro=winnerJaroWinkler(left.compact,right.compact);
+  const edit=winnerEditSimilarity(left.compact,right.compact);
+  const token=winnerTokenSimilarity(left.core,right.core);
+  let score=(jaro*.43)+(edit*.24)+(token*.33);
+  const shorter=left.core.length<=right.core.length?left.core:right.core;
+  const longer=left.core.length<=right.core.length?right.core:left.core;
+  const contained=shorter.length>=2&&shorter.every(tokenValue=>longer.some(candidate=>winnerEditSimilarity(tokenValue,candidate)>=.92));
+  if(contained) score=Math.max(score,.86+(.1*(shorter.length/longer.length)));
+  const firstScore=winnerEditSimilarity(left.first,right.first);
+  const lastScore=winnerEditSimilarity(left.last,right.last);
+  if(firstScore<.55&&lastScore<.72) score-=.12;
+  else if(firstScore<.48) score-=.05;
+  return Math.max(0,Math.min(1,score));
+}
+function winnerSimilarityCandidates(name,limit=3){
+  const profile=winnerNameProfile(name);
+  if(profile.plain.length<4) return [];
+  const inputKey=winnerPersonKey(name);
+  const people=new Map();
+  winnerBankRecords.forEach(record=>{
+    const candidateName=upper(record.name);
+    const candidateKey=record.personKey||winnerPersonKey(candidateName);
+    if(candidateName&&candidateKey&&!people.has(candidateKey)) people.set(candidateKey,{name:candidateName,key:candidateKey});
+  });
+  const threshold=profile.core.length<=1?.94:WINNER_SIMILARITY_MIN;
+  return [...people.values()].map(candidate=>{
+    if(candidate.key===inputKey) return null;
+    const score=winnerNameSimilarity(name,candidate.name);
+    return score>=threshold?{...candidate,score}:null;
+  }).filter(Boolean).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,'pt-BR')).slice(0,limit);
+}
+function winnerPersonKey(name){
+  return winnerPlain(name).replace(/\s+/g,'_').slice(0,180);
+}
+function winnerPrizeEquivalenceList(){
+  const source=winnerBankSnapshot?.settings?.prizeEquivalences;
+  const rows=(Array.isArray(source)?source:Object.values(source||{})).map((group,index)=>({id:String(group?.id||`GRUPO_${index+1}`),name:upper(group?.name||group?.id||''),aliases:[...new Set((Array.isArray(group?.aliases)?group.aliases:String(group?.aliases||'').split(/[,;\n]/)).map(upper).filter(Boolean))]})).filter(group=>group.aliases.length);
+  return rows.length?rows:[{id:'GRUPO_CINEMA',name:'CINEMA',aliases:['CINEMA','CINESYSTEM','CINÉPOLIS','CINEPOLIS']}];
+}
+function winnerPrizeKey(prize){
+  const plain=winnerPlain(prize);
+  if(!plain) return '';
+  const group=winnerPrizeEquivalenceList().find(item=>item.aliases.some(alias=>{const term=winnerPlain(alias);return term&&(plain===term||plain.includes(term));}));
+  if(group) return `EQUIV_${winnerPlain(group.id||group.name).replace(/\s+/g,'_').slice(0,190)}`;
+  return plain.replace(/\s+/g,'_').slice(0,220);
+}
+function winnerManualBlockFor(name,blocks=winnerBankSnapshot?.blocks){
+  const key=winnerPersonKey(name);
+  const block=blocks&&typeof blocks==='object'?blocks[key]:null;
+  return block?.active===true?{...block,key,name:upper(block.name||name)}:null;
+}
+function winnerLinkedItemInfo(record){
+  const sourceRef=String(record?.sourceRef||'');
+  if(!sourceRef.startsWith('ITEM:')) return null;
+  const itemId=sourceRef.slice(5);
+  if(!itemId) return null;
+  for(const [monthKey,m] of Object.entries(state?.months||{})){
+    const item=(m?.items||[]).find(row=>String(row?.id||'')===itemId);
+    if(!item) continue;
+    const distribution=(m?.distributions||[]).find(row=>String(row?.id||'')===String(item.distributionId||''))||null;
+    return {monthKey,item,distribution};
+  }
+  return null;
+}
+function winnerResolvedPrize(record){
+  const linked=winnerLinkedItemInfo(record);
+  if(linked){
+    const exact=linked.item?.title||linked.distribution?.title||linked.distribution?.show||linked.distribution?.prize||linked.item?.prize;
+    if(exact) return upper(exact);
+  }
+  return upper(record?.prize||'');
+}
+function winnerResolvedPrizeKey(record){
+  return winnerPrizeKey(winnerResolvedPrize(record));
+}
+function winnerRecordList(value){
+  const active=row=>{if(row?.operationStatus!=='PENDING')return true;const created=Date.parse(row.createdAt||'');return !Number.isFinite(created)||(Date.now()-created)<(10*60*1000);};
+  if(Array.isArray(value)) return value.filter(Boolean).map((row,index)=>({...row,id:row.id||`LEGACY_${index}`})).filter(active);
+  if(value&&typeof value==='object') return Object.entries(value).map(([key,row])=>({...row,id:row?.id||key})).filter(row=>row.name&&row.date).filter(active);
+  return [];
+}
+function winnerRecordMap(value){
+  const map={};
+  winnerRecordList(value).forEach((record,index)=>{ const key=record.id||`LEGACY_${index}`; map[key]={...record,id:key}; });
+  return map;
+}
+function winnerAddMonthsISO(iso,months=WINNER_BLOCK_MONTHS){
+  const [year,month,day]=String(iso||'').split('-').map(Number);
+  if(!year||!month||!day) return '';
+  const first=new Date(year,month-1+months,1,12);
+  const lastDay=new Date(first.getFullYear(),first.getMonth()+1,0,12).getDate();
+  const result=new Date(first.getFullYear(),first.getMonth(),Math.min(day,lastDay),12);
+  return `${result.getFullYear()}-${String(result.getMonth()+1).padStart(2,'0')}-${String(result.getDate()).padStart(2,'0')}`;
+}
+function winnerAddDaysISO(iso,days=WINNER_SHORT_BLOCK_DAYS){
+  const [year,month,day]=String(iso||'').split('-').map(Number);
+  if(!year||!month||!day) return '';
+  const result=new Date(year,month-1,day+Number(days||0),12);
+  return `${result.getFullYear()}-${String(result.getMonth()+1).padStart(2,'0')}-${String(result.getDate()).padStart(2,'0')}`;
+}
+function winnerCycleInfo(records,asOf=todayISO()){
+  const sorted=[...records]
+    .filter(record=>record?.date && record.date<=asOf)
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  let cycleCount=0;
+  let blockedUntil='';
+  let blockKind='';
+  let thirdDate='';
+  sorted.forEach(record=>{
+    if(cycleCount===3){
+      const release=winnerAddMonthsISO(thirdDate||record.date);
+      if(record.date>=release){ cycleCount=0; blockedUntil=''; blockKind=''; thirdDate=''; }
+      else return;
+    }
+    cycleCount+=1;
+    if(cycleCount===1 || cycleCount===2){
+      blockedUntil=winnerAddDaysISO(record.date);
+      blockKind='SHORT';
+    }else if(cycleCount===3){
+      thirdDate=record.date;
+      blockedUntil=winnerAddMonthsISO(record.date);
+      blockKind='LONG';
+    }
+  });
+  if(cycleCount===3 && blockedUntil && asOf>=blockedUntil){
+    cycleCount=0; blockedUntil=''; blockKind=''; thirdDate='';
+  }
+  const blocked=!!blockedUntil && asOf<blockedUntil;
+  return {cycleCount,blocked,blockedUntil:blockKind&&blocked?blockedUntil:'',nextAllowedAt:blocked?blockedUntil:'',blockKind:blocked?blockKind:'',thirdDate};
+}
+function winnerEvaluateAgainst(records,name,prize,asOf=todayISO(),blocks=winnerBankSnapshot?.blocks){
+  const personKey=winnerPersonKey(name);
+  const history=records
+    .filter(record=>(record.personKey||winnerPersonKey(record.name))===personKey)
+    .filter(record=>!record.date||record.date<=asOf)
+    .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+  const cycle=winnerCycleInfo(history,asOf);
+  const manualBlock=winnerManualBlockFor(name,blocks);
+  const prizeKey=winnerPrizeKey(prize);
+  const samePrize=!!prizeKey&&history.some(record=>winnerResolvedPrizeKey(record)===prizeKey);
+  let status='APTO';
+  let title=history.length?'APTO':'PRIMEIRA PREMIAÇÃO / APTO';
+  let reason=history.length?'OUVINTE LIBERADO PARA NOVA PREMIAÇÃO.':'NENHUM HISTÓRICO LOCALIZADO PARA ESTE NOME.';
+  if(manualBlock){
+    status='BLOQUEADO';
+    title='NÃO SORTEAR';
+    reason=manualBlock.reason?`BLOQUEIO MANUAL: ${upper(manualBlock.reason)}.`:'OUVINTE INCLUÍDO NA LISTA DE NÃO SORTEAR.';
+  }else if(samePrize){
+    const previous=history.find(record=>winnerResolvedPrizeKey(record)===prizeKey);
+    status='BLOQUEADO';
+    title='JÁ GANHOU ESTE PRÊMIO';
+    reason=previous?`MESMO PRÊMIO REGISTRADO EM ${formatBR(previous.date)} · ${upper(previous.program||'PROGRAMA')}.`:'ESTE PRÊMIO JÁ CONSTA NO HISTÓRICO.';
+  }else if(cycle.blocked){
+    status='BLOQUEADO';
+    title=cycle.blockKind==='LONG'?'BLOQUEADO — 3ª PREMIAÇÃO':'BLOQUEADO — 28 DIAS';
+    reason=`LIBERAÇÃO AUTOMÁTICA EM ${formatBR(cycle.blockedUntil)}.`;
+  }else if(cycle.cycleCount===2){
+    status='ATENCAO';
+    title='ATENÇÃO — ESTA SERÁ A 3ª PREMIAÇÃO';
+    reason='A CONFIRMAÇÃO INICIARÁ O BLOQUEIO DE 8 MESES.';
+  }
+  return {name:upper(name),personKey,history,total:history.length,cycleCount:cycle.cycleCount,blockedUntil:cycle.blockedUntil,blockKind:cycle.blockKind,samePrize,manualBlocked:!!manualBlock,manualBlock,status,title,reason,allowed:status!=='BLOQUEADO'};
+}
+function winnerContextForItem(item){
+  return {sourceRef:`ITEM:${item?.id||''}`,date:item?.date||todayISO(),program:upper(item?.program||programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||'PROGRAMA'),prize:upper(item?.title||distributionById(item?.distributionId)?.title||distributionById(item?.distributionId)?.show||distributionById(item?.distributionId)?.prize||item?.prize||'PRÊMIO')};
+}
+function winnerContextForPromo(promo,item){
+  const date=item?.date||promo?.drawDate||todayISO();
+  const slot=formatStudioTime(item?.slot||promo?.drawTime||'');
+  return {sourceRef:`PROMO:${promo?.id||''}:${date}:${slot}`,date,program:upper(item?.program||programFromSchedule(date,slot,STUDIO_STATION)||promo?.program||'RESULTADO PROMOÇÃO'),prize:upper(promo?.prize||promo?.name||promo?.title||item?.prize||'PROMOÇÃO')};
+}
+function winnerSuggestions(name){
+  return winnerSimilarityCandidates(name,5);
+}
+function winnerSimilarityRejected(field,name){
+  const inputKey=winnerPersonKey(name);
+  if(field.dataset.similarityInputKey!==inputKey){
+    field.dataset.similarityInputKey=inputKey;
+    field.dataset.similarityRejected='';
+  }
+  return new Set(String(field.dataset.similarityRejected||'').split(',').filter(Boolean));
+}
+function winnerSuggestionsForField(field,name){
+  const rejected=winnerSimilarityRejected(field,name);
+  return winnerSuggestions(name).filter(candidate=>!rejected.has(candidate.key));
+}
+function resolveStudioWinnerSimilarity(input,button,validate){
+  if(!input||!button) return;
+  const action=button.dataset.winnerSimilarity;
+  const candidateKey=button.dataset.candidateKey||'';
+  if(action==='same'){
+    input.value=upper(button.dataset.candidateName||'');
+    input.dataset.similarityInputKey=winnerPersonKey(input.value);
+    input.dataset.similarityRejected='';
+  }else{
+    const rejected=winnerSimilarityRejected(input,input.value);
+    rejected.add(candidateKey);
+    input.dataset.similarityRejected=[...rejected].join(',');
+  }
+  validate();
+  input.focus();
+}
+function setWinnerBankModalState(mode,text){
+  const box=$('winnerBankModalState');
+  if(!box) return;
+  box.className=`winnerBankModalState ${mode||''}`.trim();
+  box.textContent=text;
+}
+function applyWinnerBankSnapshot(value){
+  winnerBankSnapshot=JSON.parse(JSON.stringify(value||{}));
+  winnerBankRecords=winnerRecordList(value?.records??value??{}).map(record=>({...record,name:upper(record.name),program:upper(record.program),prize:upper(record.prize),personKey:record.personKey||winnerPersonKey(record.name),prizeKey:record.prizeKey||winnerPrizeKey(record.prize)}));
+  winnerBankReady=value?.initialized===true||winnerBankRecords.length>0;
+  if(winnerBankReady) setWinnerBankModalState('online',`BANCO FIREBASE CONECTADO · ${winnerBankRecords.length} PREMIAÇÃO(ÕES) NO HISTÓRICO.`);
+  else setWinnerBankModalState('error','IMPORTAÇÃO INICIAL PENDENTE. A CONFIRMAÇÃO DE GANHADORES ESTÁ BLOQUEADA.');
+  if($('winnerModal')?.classList.contains('show')) validateAllWinnerInputs();
+  if($('promoResultWinnersList')) validateAllPromoWinnerInputs();
+}
+function initWinnerBank(force=false){
+  if(!firebaseConfigReady()){
+    winnerBankReady=false;
+    setWinnerBankModalState('error','BANCO DE GANHADORES INDISPONÍVEL. A CONFIRMAÇÃO ESTÁ BLOQUEADA.');
+    updateWinnerSaveState();
+    return;
+  }
+  try{
+    const app=window.firebase.apps&&window.firebase.apps.length?window.firebase.app():window.firebase.initializeApp(FIREBASE_CONFIG);
+    winnerBankRef=window.firebase.database(app).ref(WINNER_BANK_PATH);
+    if(!winnerBankStarted){
+      winnerBankStarted=true;
+      winnerBankRef.on('value',snapshot=>applyWinnerBankSnapshot(snapshot.val()||{}),error=>{
+        console.error('WINNER BANK LOAD ERROR',error);
+        winnerBankReady=false;
+        setWinnerBankModalState('error','ERRO AO CONSULTAR O BANCO. A CONFIRMAÇÃO ESTÁ BLOQUEADA.');
+        updateWinnerSaveState();
+      });
+    }
+    if(force){
+      setWinnerBankModalState('','ATUALIZANDO BANCO DE GANHADORES...');
+      winnerBankRef.get().then(snapshot=>applyWinnerBankSnapshot(snapshot.val()||{})).catch(error=>{
+        console.error('WINNER BANK REFRESH ERROR',error);
+        winnerBankReady=false;
+        setWinnerBankModalState('error','NÃO FOI POSSÍVEL ATUALIZAR O BANCO. A CONFIRMAÇÃO ESTÁ BLOQUEADA.');
+        updateWinnerSaveState();
+      });
+    }
+  }catch(error){
+    console.error('WINNER BANK INIT ERROR',error);
+    winnerBankReady=false;
+    setWinnerBankModalState('error','ERRO AO INICIAR O BANCO. A CONFIRMAÇÃO ESTÁ BLOQUEADA.');
+    updateWinnerSaveState();
+  }
+}
+function winnerEligibilityHtml(result,suggestions=[]){
+  if(!result) return '<div class="winnerEligibilityHead"><strong>DIGITE O NOME COMPLETO PARA CONSULTAR</strong><span>AGUARDANDO</span></div><p>A PESQUISA SERÁ FEITA AUTOMATICAMENTE NO HISTÓRICO DO FIREBASE.</p>';
+  const history=result.history.map(record=>`<div><strong>${formatBR(record.date)}</strong><span>${esc(upper(record.program||'PROGRAMA'))}</span><span>${esc(winnerResolvedPrize(record)||'PRÊMIO')}</span></div>`).join('');
+  const candidate=suggestions[0];
+  const suggestionHtml=candidate?`<div class="winnerSuggestions"><div class="winnerSimilarityPrompt">POSSÍVEL CADASTRO EXISTENTE — CONFIRME ANTES DE CONTINUAR</div><div class="winnerSimilarityCompare"><div class="winnerSimilarityName"><span>NOME DIGITADO</span><b>${esc(result.name)}</b></div><span class="winnerSimilarityScore">${Math.round(candidate.score*100)}% PARECIDO</span><div class="winnerSimilarityName"><span>NOME NO FIREBASE</span><b>${esc(candidate.name)}</b></div></div><div class="winnerSimilarityActions"><button class="winnerSuggestion same" type="button" data-winner-similarity="same" data-candidate-key="${esc(candidate.key)}" data-candidate-name="${esc(candidate.name)}">É A MESMA PESSOA</button><button class="winnerSuggestion" type="button" data-winner-similarity="different" data-candidate-key="${esc(candidate.key)}">SÃO PESSOAS DIFERENTES</button></div></div>`:result.similarityDifferent?'<div class="winnerSimilarityDone">REVISÃO CONCLUÍDA: PESSOAS DIFERENTES.</div>':'';
+  const statusLabel=result.status==='ATENCAO'?'ATENÇÃO':result.status;
+  const located=result.total?`NOME LOCALIZADO: ${result.name}. `:'';
+  const manualAction=result.name?`<div class="winnerManualActions"><button class="winnerManualBtn" type="button" data-winner-manual-toggle="${result.manualBlocked?'unblock':'block'}" data-winner-name="${esc(result.name)}">${result.manualBlocked?'DESBLOQUEAR OUVINTE':'SUGERIR NÃO SORTEAR'}</button></div>`:'';
+  return `<div class="winnerEligibilityHead"><strong>${esc(result.title)}</strong><span>${esc(statusLabel)} · ${result.total} PREMIAÇÃO(ÕES)</span></div><p>${esc(located+result.reason)}</p>${history?`<div class="winnerEligibilityHistory">${history}</div>`:''}${suggestionHtml}${manualAction}`;
+}
+async function toggleStudioWinnerManualBlock(name,active){
+  initWinnerBank();
+  await ensureStudioFirebaseOnline();
+  if(!winnerBankRef) throw new Error('BANCO DE GANHADORES INDISPONÍVEL.');
+  const cleanName=upper(name);
+  const key=winnerPersonKey(cleanName);
+  const operator=studioOperatorIdentity(true);
+  if(!operator){ alert('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.'); return; }
+  const verb=active?'INCLUIR EM NÃO SORTEAR':'DESBLOQUEAR';
+  if(!confirm(`${verb} ESTE OUVINTE?\n\n${cleanName}`)) return;
+  if(!confirm(`CONFIRMAÇÃO FINAL\n\n${verb}: ${cleanName}?\n\nO HISTÓRICO E OS PRAZOS AUTOMÁTICOS SERÃO PRESERVADOS.`)) return;
+  const reason=active?upper(prompt('MOTIVO DO BLOQUEIO:', 'NÃO SORTEAR / CAÇA-PRÊMIO')||'NÃO SORTEAR'):'';
+  const now=new Date();
+  await studioRetry(()=>winnerBankRef.child(`blocks/${key}`).transaction(current=>{
+    const previous=current&&typeof current==='object'?current:{};
+    if(active) return {...previous,key,name:cleanName,active:true,reason,createdAt:previous.createdAt||now.toISOString(),createdAtLabel:previous.createdAtLabel||now.toLocaleString('pt-BR'),createdBy:previous.createdBy||operator.name,updatedAt:now.toISOString(),updatedAtLabel:now.toLocaleString('pt-BR'),updatedBy:operator.name,operatorSector:operator.sector};
+    return {...previous,key,name:cleanName,active:false,unblockedAt:now.toISOString(),unblockedAtLabel:now.toLocaleString('pt-BR'),unblockedBy:operator.name,updatedAt:now.toISOString(),updatedAtLabel:now.toLocaleString('pt-BR'),updatedBy:operator.name,operatorSector:operator.sector};
+  },undefined,false));
+  await winnerBankRef.update({schemaVersion:2,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'});
+  await appendStudioAudit({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:active?'INCLUSÃO EM NÃO SORTEAR':'DESBLOQUEIO MANUAL DE OUVINTE',target:cleanName,targetId:key,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:active?reason:'HISTÓRICO E PRAZOS PRESERVADOS.',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});
+  initWinnerBank(true);
+}
+function validateAllWinnerInputs(){
+  const item=currentItemRecord();
+  const fields=Array.from(document.querySelectorAll('.winnerNameField'));
+  if(!item||!fields.length){ winnerInputChecks=[]; updateWinnerSaveState(); return; }
+  const context=winnerContextForItem(item);
+  const counts=new Map();
+  fields.forEach(field=>{ const key=winnerPersonKey(field.value); if(key) counts.set(key,(counts.get(key)||0)+1); });
+  winnerInputChecks=fields.map((field,index)=>{
+    const name=upper(field.value);
+    const host=$(`winnerEligibility${index}`);
+    if(!name){
+      if(host){ host.className='winnerEligibility neutral'; host.innerHTML=winnerEligibilityHtml(null); }
+      return {name:'',allowed:false,status:'PENDENTE'};
+    }
+    const availableHistory=winnerBankRecords.filter(record=>!(record.source==='ESTUDIO_JP1017'&&record.sourceRef===context.sourceRef));
+    const rejected=winnerSimilarityRejected(field,name);
+    const suggestions=winnerSuggestionsForField(field,name);
+    let result=winnerEvaluateAgainst(availableHistory,name,context.prize,context.date);
+    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL CADASTRO EXISTENTE',reason:'CONFIRME SE É A MESMA PESSOA OU SE SÃO PESSOAS DIFERENTES.',allowed:false};
+    else if(!result.total&&rejected.size) result={...result,similarityDifferent:true,reason:`${result.reason} REVISÃO DE NOME CONCLUÍDA.`};
+    if((counts.get(result.personKey)||0)>1) result={...result,status:'BLOQUEADO',title:'NOME REPETIDO NESTE SORTEIO',reason:'CADA PESSOA DEVE APARECER APENAS UMA VEZ.',allowed:false};
+    if(!winnerBankReady) result={...result,status:'BLOQUEADO',title:'CONSULTA INDISPONÍVEL',reason:'AGUARDE A CONEXÃO COM O FIREBASE ANTES DE CONFIRMAR.',allowed:false};
+    if(host){ const visual=result.status==='ATENCAO'?'atencao':result.status==='BLOQUEADO'&&result.blockKind==='SHORT'&&!result.manualBlocked&&!result.samePrize?'curto':result.status==='BLOQUEADO'?'bloqueado':result.status==='PENDENTE'?'neutral':'apto'; host.className=`winnerEligibility ${visual}`; host.innerHTML=winnerEligibilityHtml(result,suggestions); }
+    return result;
+  });
+  updateWinnerSaveState();
+}
+function updateWinnerSaveState(){
+  const button=$('saveWinnerBtn');
+  if(!button) return;
+  const fields=Array.from(document.querySelectorAll('.winnerNameField'));
+  const ready=winnerBankReady&&fields.length>0&&winnerInputChecks.length===fields.length&&winnerInputChecks.every(check=>check.name&&check.allowed);
+  button.disabled=!ready;
+  button.title=ready?'CONFIRMAR E REGISTRAR NO FIREBASE':'TODOS OS GANHADORES PRECISAM ESTAR APTOS E VALIDADOS';
+}
+function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
+function studioPublishedPrizeItems(){
+  const live=monthData().items||[], published=state.publishedPrograms?.[currentMonth];
+  if(!published?.items?.length) return live;
+  const liveMap=new Map(live.map(i=>[i.id,i]));
+  const mutable=['winnerName','winnerNames','winnerCapacity','status','resultAt','resultAtLabel','deliveredAt','deliveredAtLabel','deliveredBy'];
+  return published.items.map(base=>{
+    const current=liveMap.get(base.id)||{}; const row={...base};
+    mutable.forEach(k=>{ if(Object.prototype.hasOwnProperty.call(current,k)) row[k]=current[k]; });
+    return row;
+  });
+}
+function pad(n){return String(n).padStart(2,'0');}
+function formatBR(iso){if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
+function slotParts(slot){
+  const raw=String(slot||'').trim().toUpperCase().replace(/\s+/g,'');
+  const m=raw.match(/^(\d{1,2})(?:H|:)?(\d{2})?$/);
+  if(!m) return null;
+  const hour=Number(m[1]), minute=Number(m[2]||0);
+  if(hour<0||hour>23||![0,30].includes(minute)) return null;
+  return {hour,minute};
+}
+function slotHour(slot){const p=slotParts(slot);return p?p.hour:0;}
+function slotMinute(slot){const p=slotParts(slot);return p?p.minute:0;}
+function formatStudioTime(slot){const p=slotParts(slot);return p?`${pad(p.hour)}H${p.minute===30?'30':''}`:upper(slot||'--H');}
+function timeToHHMM(slot){const p=slotParts(slot);return p?`${pad(p.hour)}:${pad(p.minute)}`:'00:00';}
+function currentHourKey(){
+  const d=currentSlotDate();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}-${pad(d.getHours())}-${pad(d.getMinutes())}`;
+}
+function dateISO(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function todayISO(){
+  try{
+    const parts = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).reduce((acc,p)=>{acc[p.type]=p.value;return acc;},{});
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }catch(err){return dateISO(new Date());}
+}
+function currentCalendarMonth(){return todayISO().slice(0,7);}
+function selectStudioMonth(){
+  const calendarMonth=currentCalendarMonth();
+  if(state.months && state.months[calendarMonth]){
+    currentMonth=calendarMonth;
+    state.currentMonth=calendarMonth;
+  }else{
+    currentMonth=state.currentMonth||Object.keys(state.months||{})[0]||currentMonth;
+  }
+}
+
+function hourDateFromItem(item){return itemDateTime(item);}
+function currentSlotDate(){
+  const d=new Date();
+  d.setSeconds(0,0);
+  d.setMinutes(d.getMinutes()<30?0:30);
+  return d;
+}
+function currentHourDate(){return currentSlotDate();}
+function virtualItemFromDate(d){
+  const date=dateISO(d);
+  const slot=formatStudioTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
+  const program=programFromSchedule(date,slot,STUDIO_STATION) || 'PROMOÇÕES';
+  return {id:'__VIRTUAL__',date,slot,program,title:'PROMOÇÕES',notes:'',__virtual:true,__hasScheduledPrize:false};
+}
+function virtualCurrentItem(){return virtualItemFromDate(currentSlotDate());}
+function distributionById(id){return monthData().distributions?.find(d=>d.id===id)||null;}
+function safeFont(font){
+  const opts=['Segoe UI','Arial','Calibri','Tahoma','Verdana','Trebuchet MS','Times New Roman','Georgia','Courier New','Impact','Lucida Console'];
+  return opts.includes(font) ? font : 'Segoe UI';
+}
+function safeHex(value,fallback){return /^#[0-9A-Fa-f]{6}$/.test(String(value||'')) ? value : fallback;}
+function safeSize(value,min,max,fallback){const n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,n)):fallback;}
+function defaultTextStyle(type){return type==='title'?{font:'Segoe UI',size:38,color:'#171c26'}:{font:'Segoe UI',size:20,color:'#465161'};}
+function inlineTextStyle(style,type){
+  const d=defaultTextStyle(type), s=style||d;
+  return `font-family:'${safeFont(s.font||d.font)}', Arial, sans-serif;font-size:${safeSize(s.size,type==='title'?18:12,type==='title'?64:36,d.size)}px;color:${safeHex(s.color,d.color)};font-weight:${s.bold?1000:(type==='title'?950:650)}`;
+}
+function itemTitle(i){return upper(i.title||distributionById(i.distributionId)?.title||i.prize||'SEM TÍTULO CADASTRADO');}
+function itemDesc(i){return i.description||i.notes||distributionById(i.distributionId)?.description||'SEM DESCRIÇÃO CADASTRADA.';}
+function itemTitleStyle(i){return i.titleStyle||distributionById(i.distributionId)?.titleStyle||defaultTextStyle('title');}
+function itemDescStyle(i){return i.descriptionStyle||distributionById(i.distributionId)?.descriptionStyle||defaultTextStyle('desc');}
+function itemDateTime(i){
+  const date=i.date||'9999-12-31';
+  return new Date(`${date}T${timeToHHMM(i.slot)}:00`);
+}
+function promoRefDate(p){return p.drawDate||p.startDate||'';}
+function promoHour(p){return slotHour(p.drawTime||'');}
+function promoStartDate(p){return p?.startDate || p?.date || p?.drawDate || p?.resultDate || '';}
+function promoEndDate(p){return p?.endDate || p?.drawDate || p?.resultDate || p?.startDate || p?.date || '';}
+function promoDateAllowed(p,date){
+  const start=promoStartDate(p);
+  const end=promoEndDate(p);
+  if(start && date<start) return false;
+  if(end && date>end) return false;
+  return true;
+}
+function promoHourAllowed(p,item){
+  const itemTime=timeToHHMM(item?.slot||'');
+  const hour=itemTime.slice(0,2);
+  const date=item?.date||'';
+  if(!hour || hour==='00') return false;
+  if(!promoDateAllowed(p,date)) return false;
+  if(!isMerchan(p) && isPromoResultForItem(p,item)) return true;
+  const hours=Array.isArray(p.readHours) ? p.readHours.map(h=>timeToHHMM(h)).filter(v=>v!=='00:00') : [];
+  if(hours.length) return hours.some(v=>v.endsWith(':30') ? v===itemTime : v.slice(0,2)===hour);
+  const mode=p.readMode||'all';
+  if(mode==='selected') return false;
+  if(p.drawTime && (p.drawDate||p.resultDate)===date) return timeToHHMM(p.drawTime)===itemTime;
+  return mode==='all';
+}
+function isMerchan(p){
+  const k=upper(p.kind||p.promoKind||p.type||'');
+  const local=upper(p.local||'');
+  const name=upper(p.name||p.title||'');
+  return k==='MERCHAN' || k==='MERCHANDISING' || local.includes('MERCHAN') || name.includes('MERCHAN');
+}
+function readHourKeys(item,promo){
+  const date=(item&&item.date)||promoRefDate(promo)||'';
+  const time=timeToHHMM(item?item.slot:(promo?.drawTime||''));
+  const hour=time.slice(0,2);
+  const minute=time.slice(3,5);
+  const configured=(promo?.readHours||[]).map(value=>timeToHHMM(value));
+  const explicitHalfHour=configured.includes(`${hour}:30`);
+  const useExactHalf=minute==='30' && explicitHalfHour;
+  const keys=useExactHalf
+    ? [`${date}-${hour}30`]
+    : [`${date}-${hour}00`,`${date}-${hour}`];
+  return [...new Set(keys)];
+}
+function readHourKey(item,promo){return readHourKeys(item,promo)[0];}
+function hourMapValue(map,item,promo){
+  if(!map) return undefined;
+  for(const key of readHourKeys(item,promo)){
+    if(Object.prototype.hasOwnProperty.call(map,key)) return map[key];
+  }
+  return undefined;
+}
+function validReadTimestamp(value){
+  if(!value) return '';
+  if(typeof value==='object'){
+    value=value.confirmedAt||value.readAt||value.at||value.iso||value.value||'';
+  }
+  if(typeof value!=='string') return '';
+  const d=new Date(value);
+  return Number.isNaN(d.getTime()) ? '' : value;
+}
+function readTimestampForHour(p,item){
+  const direct=validReadTimestamp(hourMapValue(p?.readByHour,item,p));
+  if(direct) return direct;
+
+  const keys=readHourKeys(item,p);
+  const logs=Array.isArray(p?.readLog) ? [...p.readLog].reverse() : [];
+  const match=logs.find(log=>{
+    if(!log) return false;
+    if(log.key && keys.includes(log.key)) return true;
+    const sameDate=!log.date || log.date===(item?.date||'');
+    const sameSlot=!log.slot || timeToHHMM(log.slot)===timeToHHMM(item?.slot||'');
+    const sameStation=!log.station || log.station===STUDIO_STATION;
+    return sameDate && sameSlot && sameStation;
+  });
+  return validReadTimestamp(match?.confirmedAt||match?.readAt||'');
+}
+function readTimeLabel(value){
+  const timestamp=validReadTimestamp(value);
+  if(!timestamp) return '';
+  const d=new Date(timestamp);
+  return `FEITA ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function normalizeStationValue(value){
+  const v=upper(value||'');
+  if(!v || v==='ALL' || v==='AMBAS' || v==='TODAS') return 'ALL';
+  if(v.includes('NEWS') || v.includes('98')) return 'JPNEWS983';
+  if(v.includes('JP1017') || v.includes('101') || v.includes('JOVEMPAN') || v.includes('JOVEM PAN')) return 'JP1017';
+  return v;
+}
+function stationAllowed(p){
+  const st=normalizeStationValue(p?.station||'ALL');
+  if(st==='ALL') return true;
+  return st===STUDIO_STATION;
+}
+function genericProgramName(program){
+  const p=upper(program||'');
+  return !p || p==='TODOS' || p==='TODAS' || p==='SELECIONE' || p==='PROGRAMAÇÃO NORMAL' || p==='PROGRAMACAO NORMAL' || p==='PROGRAMA NORMAL' || p==='GRADE NORMAL';
+}
+function programMatchesMerchan(p,item){
+  if(!isMerchan(p)) return true;
+  const program=upper(p.program||p.programName||'');
+  const itemProgram=upper(item?.program||'');
+  if(genericProgramName(program) || genericProgramName(itemProgram)) return true;
+  return itemProgram===program;
+}
+function merchanHourAllowed(p,item){
+  if(!isMerchan(p)) return true;
+  const h=pad(slotHour(item.slot));
+  const start=p.readStartHour || '';
+  const end=p.readEndHour || '';
+  if(start && h < pad(slotHour(start))) return false;
+  if(end && h > pad(slotHour(end))) return false;
+  return true;
+}
+function renderStudioDateStamp(){
+  const el=$('studioDateStamp');
+  if(!el) return;
+  const d=new Date();
+  const days=['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];
+  el.textContent=`${days[d.getDay()]} · ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+}
+
+
+function minutesOf(time){
+  const raw=String(time||'').trim().toUpperCase();
+  const hMatch=raw.match(/(\d{1,2})H/);
+  if(hMatch) return Number(hMatch[1])*60;
+  const m=raw.match(/(\d{1,2}):(\d{2})/);
+  if(m) return Number(m[1])*60+Number(m[2]);
+  const n=raw.match(/(\d{1,2})/);
+  return n ? Number(n[1])*60 : 0;
+}
+function studioDayNumber(value){
+  const v=upper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(v.includes('DOM')||v.includes('SUN')) return 0;
+  if(v.includes('SEG')||v.includes('MON')) return 1;
+  if(v.includes('TER')||v.includes('TUE')) return 2;
+  if(v.includes('QUA')||v.includes('WED')) return 3;
+  if(v.includes('QUI')||v.includes('THU')) return 4;
+  if(v.includes('SEX')||v.includes('FRI')) return 5;
+  if(v.includes('SAB')||v.includes('SAT')) return 6;
+  if(/^\d$/.test(v)) return Number(v);
+  return null;
+}
+function studioDayValues(rule){
+  if(Array.isArray(rule)){
+    const out=rule.map(v=>typeof v==='number'?v:studioDayNumber(v)).filter(v=>Number.isInteger(v)&&v>=0&&v<=6);
+    return out.length?[...new Set(out)]:[1,2,3,4,5];
+  }
+  const raw=upper(rule||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(!raw) return [1,2,3,4,5];
+  if(raw==='ALL'||raw.includes('TODOS')||raw.includes('TODO DIA')) return [0,1,2,3,4,5,6];
+  if(raw.includes('SEG A SAB')||raw.includes('MON-SAT')||raw.includes('MON SAT')) return [1,2,3,4,5,6];
+  if(raw.includes('SEG A SEX')||raw.includes('MON-FRI')||raw.includes('MON FRI')) return [1,2,3,4,5];
+  if(raw==='SAT'||raw.includes('SABADO')) return [6];
+  if(raw==='SUN'||raw.includes('DOMINGO')) return [0];
+  const vals=[];
+  raw.split(/[,;|/ ]+/).forEach(part=>{const n=studioDayNumber(part);if(Number.isInteger(n)&&n>=0&&n<=6) vals.push(n);});
+  return vals.length?[...new Set(vals)]:[1,2,3,4,5];
+}
+function dayMatchesSchedule(date,days){
+  const [y,m,d]=String(date||todayISO()).split('-').map(Number);
+  const dow=new Date(y,(m||1)-1,d||1).getDay();
+  return studioDayValues(days).includes(dow);
+}
+function studioScheduleDays(p){ return p?.days ?? p?.dias ?? p?.weekdays ?? p?.dayRule ?? p?.regraDias ?? ''; }
+function studioScheduleName(p){ return upper(p?.name||p?.program||p?.programa||p?.title||p?.titulo||p?.nome||''); }
+function studioScheduleStart(p){ return p?.startTime||p?.start||p?.inicio||p?.horaInicio||p?.hora_inicio||p?.from||p?.begin||''; }
+function studioScheduleEnd(p){ return p?.endTime||p?.end||p?.fim||p?.horaFim||p?.hora_fim||p?.to||''; }
+function programFromSchedule(date,slot,station=STUDIO_STATION){
+  const rows=Array.isArray(state.programSchedules) ? state.programSchedules : [];
+  const minute=minutesOf(slot);
+  const hit=rows
+    .filter(p=>(!p.station || p.station===station || p.station==='ALL'))
+    .filter(p=>dayMatchesSchedule(date,studioScheduleDays(p)))
+    .find(p=>minute>=minutesOf(studioScheduleStart(p)) && minute<minutesOf(studioScheduleEnd(p)));
+  return hit ? studioScheduleName(hit) : '';
+}
+function promoResultStations(p){
+  const st=normalizeStationValue(p?.station || STUDIO_STATION);
+  if(st==='ALL') return ['JP1017','JPNEWS983'];
+  return [st];
+}
+function promoResultSlot(p){
+  return formatStudioTime(p?.resultSlot || p?.drawTime || '');
+}
+function promoOccurrences(p){
+  if(Array.isArray(p?.occurrences)&&p.occurrences.length) return p.occurrences;
+  if(p?.drawDate&&p?.drawTime) return [{id:`${p.id}|${p.drawDate}|${timeToHHMM(p.drawTime)}`,date:p.drawDate,time:p.drawTime,qtyPlanned:Math.max(1,Number(p.qtyPerDraw||1)||1),actualQty:0,status:'AGENDADO'}];
+  return [];
+}
+function promoOccurrenceForItem(p,item){
+  if(!p||!item) return null;
+  return promoOccurrences(p).find(o=>o.date===(item.date||'')&&slotHour(o.time||p.drawTime)===slotHour(item.slot));
+}
+function isPromoResultForItem(p,item){
+  if(!p || !item || isMerchan(p)) return false;
+  if(!stationAllowed(p)) return false;
+  return !!promoOccurrenceForItem(p,item);
+}
+function promoResultVirtualRows(){
+  const physical=new Set((studioPublishedPrizeItems()||[])
+    .filter(i=>i.sourceType==='promo-result' && i.promoId)
+    .map(i=>`${i.promoId}|${i.station||STUDIO_STATION}|${i.occurrenceId||''}|${i.date}|${formatStudioTime(i.slot)}`));
+  const rows=[];
+  [...(monthData().promos||[])].filter(p=>!isMerchan(p)&&p&&p.id).filter(p=>promoResultStations(p).includes(STUDIO_STATION)).forEach(p=>{
+    promoOccurrences(p).filter(o=>upper(o.status||'')!=='CANCELADO').forEach(o=>{
+      const slot=formatStudioTime(o.time||p.drawTime); const occurrenceId=o.id||`${p.id}|${o.date}|${timeToHHMM(o.time||p.drawTime)}`;
+      const exactKey=`${p.id}|${STUDIO_STATION}|${occurrenceId}|${o.date}|${slot}`;
+      const legacyKey=`${p.id}|${STUDIO_STATION}||${o.date}|${slot}`;
+      if(physical.has(exactKey)||physical.has(legacyKey)) return;
+      const itemRef={date:o.date,slot}; const program=programFromSchedule(o.date,slot,STUDIO_STATION)||upper(p.program||'RESULTADO PROMOÇÃO');
+      const name=upper(p.name||p.title||'PROMOÇÃO'); const winners=promoWinnerList(p,itemRef);
+      rows.push({id:`PROMO_RESULT_${p.id}_${occurrenceId}_${STUDIO_STATION}`,date:o.date,slot,station:STUDIO_STATION,program,distributionId:p.distributionId||'',prize:name,title:`RESULTADO: ${name}`,qty:Math.max(1,Number(o.qtyPlanned||p.qtyPerDraw||1)||1),channel:'RÁDIO',status:winners.length?'REALIZADO':'PENDENTE',winnerName:winners.map(w=>w.name).join(', '),notes:`RESULTADO DO SORTEIO PROGRAMADO PARA ESTE HORÁRIO. ${upper(p.local||'PROMOÇÃO')}.`,titleStyle:p.titleStyle||defaultTextStyle('title'),descriptionStyle:p.descriptionStyle||defaultTextStyle('desc'),sourceType:'promo-result',promoId:p.id,occurrenceId,__virtualPromoResult:true});
+    });
+  });
+  return rows;
+}
+
+function studioMerchanScheduleMode(p){return String(p?.merchanScheduleMode||p?.rotationMode||'fixed').toLowerCase()==='rotation'?'rotation':'fixed';}
+function studioRotationHours(p){return (p?.readHours||[]).map(value=>formatStudioTime(value)).filter(Boolean).sort((a,b)=>minutesOf(a)-minutesOf(b));}
+function studioRotationSignature(p){return `${normalizeStationValue(p?.station||STUDIO_STATION)}|${upper(p?.program||'')}|${studioRotationHours(p).join('|')}`;}
+function studioRotationMembers(p,item){
+  if(studioMerchanScheduleMode(p)!=='rotation') return [p];
+  const sig=studioRotationSignature(p),date=item?.date||todayISO();
+  return [...(monthData().promos||[])].filter(row=>isMerchan(row)&&studioMerchanScheduleMode(row)==='rotation'&&studioRotationSignature(row)===sig&&stationAllowed(row)&&promoDateAllowed(row,date)&&programMatchesMerchan(row,item)&&promoHourAllowed(row,item)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
+}
+function studioRotationAssignedPromo(p,item){
+  if(studioMerchanScheduleMode(p)!=='rotation') return p;
+  const members=studioRotationMembers(p,item); if(!members.length) return null;
+  const frozen=members.find(row=>!!readTimestampForHour(row,item)); if(frozen) return frozen;
+  const hours=studioRotationHours(p); const slot=formatStudioTime(item?.slot||''); const slotIndex=Math.max(0,hours.indexOf(slot));
+  const date=new Date(`${item?.date||todayISO()}T12:00:00`); const serial=Math.floor(date.getTime()/86400000);
+  return members[(serial+slotIndex)%members.length]||members[0];
+}
+function studioRotationAllows(p,item){const assigned=studioRotationAssignedPromo(p,item);return !assigned||assigned.id===p.id;}
+function promoEligibleForItemHour(p,item){
+  if(!p || !item) return false;
+  if(!stationAllowed(p)) return false;
+  if(!promoDateAllowed(p,item.date||'')) return false;
+  if(isMerchan(p) && (!programMatchesMerchan(p,item) || !merchanHourAllowed(p,item))) return false;
+  if(!promoHourAllowed(p,item)) return false;
+  if(isMerchan(p) && studioMerchanScheduleMode(p)==='rotation' && !studioRotationAllows(p,item)) return false;
+  return true;
+}
+function isPromoReadForHour(p,item){
+  return !!readTimestampForHour(p,item);
+}
+function pautasForItemHour(item,includeRead=false,kind='all'){
+  return [...(monthData().promos||[])]
+    .filter(p=>promoEligibleForItemHour(p,item))
+    .filter(p=>kind==='all' || (kind==='merchan' ? isMerchan(p) : !isMerchan(p)))
+    .filter(p=>includeRead || !isPromoReadForHour(p,item))
+    .sort((a,b)=>(a.drawTime||'').localeCompare(b.drawTime||'')||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
+}
+function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
+function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
+function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
+function findPromoById(id){return monthData().promos?.find(p=>p.id===id)||null;}
+function studioStationLabel(){
+  return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS' : 'JOVEMPAN';
+}
+function studioFullStationLabel(){
+  return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS 98,3' : 'JOVEMPAN 101,7';
+}
+function buildStudioContext(item,promo){
+  const date=item?.date||todayISO();
+  const program=promo?(isMerchan(promo)?'MERCHAN':'PROMO / PAUTA'):(item?.program||(item?.__virtual?'SEM PROGRAMA':'PROGRAMA'));
+  const now=currentSlotDate();
+  const manualInfo=manual?`<span class="manualConsult">CONSULTANDO ${esc(formatStudioTime(item?.slot||''))} · AGORA ${esc(formatStudioTime(`${pad(now.getHours())}:${pad(now.getMinutes())}`))}</span><button class="returnNowBtn" type="button" onclick="returnStudioToNow()">VOLTAR PARA AGORA</button>`:'';
+  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span><span>${esc(upper(program))}</span><span class="online">FIREBASE</span>${manualInfo}</div>`;
+}
+function studioPrizePending(item){return !!(item&&!item.__virtual&&item.sourceType!=='promo-result'&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
+function buildStudioPendingStrip(item){
+  const pending=allPautasForItemHour(item,false),all=allPautasForItemHour(item,true);
+  const mer=pending.filter(isMerchan),pro=pending.filter(p=>!isMerchan(p)); const prize=studioPrizePending(item);
+  const tags=[]; if(prize)tags.push('<span class="opTag urgent">SORTEIO / RESULTADO PENDENTE</span>'); if(mer.length)tags.push(`<span class="opTag urgent">${mer.length} MERCHAN${mer.length>1?'S':''} PENDENTE${mer.length>1?'S':''}</span>`); if(pro.length)tags.push(`<span class="opTag">${pro.length} PROMO / PAUTA PENDENTE${pro.length>1?'S':''}</span>`);
+  if(tags.length)return `<div class="studioOpsStrip"><strong>AGORA · O QUE PRECISA SER FEITO</strong><div>${tags.join('')}</div></div>`;
+  const hadAny=(!item?.__virtual)||all.length;
+  return `<div class="studioOpsStrip done"><strong>${hadAny?'OPERAÇÃO CONCLUÍDA ✓':'NENHUMA AÇÃO PROGRAMADA'}</strong></div>`;
+}
+function previousStudioPendencies(){
+  const now=currentSlotDate(),today=todayISO(); if(dateISO(now)!==today)return[];
+  const rows=allPrizeRows(),out=[],seen=new Set();
+  const cursor=new Date(now); cursor.setHours(0,0,0,0);
+  while(cursor<now){
+    const date=dateISO(cursor),slot=formatStudioTime(`${pad(cursor.getHours())}:${pad(cursor.getMinutes())}`);
+    const exact=itemIndexForDate(rows,cursor); const item=exact>=0?rows[exact]:virtualItemFromDate(cursor);
+    if(exact>=0&&studioPrizePending(item)){const key=`P|${date}|${slot}`;if(!seen.has(key)){seen.add(key);out.push({date,slot,label:`SORTEIO / RESULTADO · ${itemTitle(item)}`,promoId:''});}}
+    allPautasForItemHour(item,false).forEach(p=>{const key=`${p.id}|${date}|${slot}`;if(seen.has(key))return;seen.add(key);out.push({date,slot,label:`${isMerchan(p)?'MERCHAN':'PROMO'} · ${upper(p.name||p.title||'PAUTA')}`,promoId:p.id});});
+    cursor.setMinutes(cursor.getMinutes()+30);
+  }
+  return out.slice(-4).reverse();
+}
+function buildPreviousPendingStrip(){
+  if(manual)return''; const rows=previousStudioPendencies(); if(!rows.length)return'';
+  return `<div class="previousPending"><strong>PENDÊNCIA ANTERIOR</strong>${rows.map(r=>`<button type="button" onclick="jumpToStudioPending('${esc(r.date)}','${esc(r.slot)}','${esc(r.promoId)}')"><span>${esc(r.slot)}</span>${esc(r.label)}</button>`).join('')}</div>`;
+}
+function studioOperationActive(){return !!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
+function scheduleManualReturn(){clearTimeout(manualReturnTimer);if(!manual)return;manualLastInteractionAt=Date.now();manualReturnTimer=setTimeout(()=>{if(!manual)return;if(studioOperationActive()){scheduleManualReturn();return;}returnStudioToNow();},MANUAL_RETURN_MS);}
+function returnStudioToNow(){clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;selectedPromoId=null;render();}
+function jumpToStudioPending(date,slot,promoId=''){const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=promoId||null;scheduleManualReturn();render();}
+window.returnStudioToNow=returnStudioToNow;window.jumpToStudioPending=jumpToStudioPending;
+function pautaTypeLabel(p){
+  if(isMerchan(p)) return 'MERCHAN';
+  const k=upper(p.kind||p.promoKind||p.type||'PROMO');
+  if(k==='PAUTA') return 'PAUTA ESPECIAL';
+  if(k==='AVISO') return 'AVISO';
+  return 'PROMOÇÃO';
+}
+function readLogRowsForDate(date=todayISO()){
+  const rows=[];
+  (monthData().promos||[]).forEach(p=>{
+    (p.readLog||[]).forEach(r=>{
+      if((r.station||STUDIO_STATION)!==STUDIO_STATION) return;
+      if((r.date||'')!==date) return;
+      rows.push({
+        at:r.confirmedAt||r.at||'',
+        text:`${r.confirmedAtLabel||readTimeLabel(r.confirmedAt||r.at).replace('FEITA ','')} · ${studioStationLabel()} · ${upper(r.program||'PROGRAMA')} · ${upper(r.type||pautaTypeLabel(p))} ${upper(r.name||p.name||p.title||'PAUTA')} LIDA`
+      });
+    });
+    Object.entries(p.readByHour||{}).forEach(([key,value])=>{
+      const keyDate=String(key).slice(0,10);
+      if(keyDate!==date) return;
+      const already=(p.readLog||[]).some(r=>(r.key===key || (r.date===keyDate && r.confirmedAt===value)) && (r.station||STUDIO_STATION)===STUDIO_STATION);
+      if(already) return;
+      rows.push({
+        at:value,
+        text:`${readTimeLabel(value).replace('FEITA ','')} · ${studioStationLabel()} · ${upper(p.readProgram||p.program||'PROGRAMA')} · ${pautaTypeLabel(p)} ${upper(p.name||p.title||'PAUTA')} LIDA`
+      });
+    });
+  });
+  return rows.sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(-18);
+}
+function renderReadHistoryTicker(){
+  const host=$('readHistoryTicker');
+  if(!host) return;
+  const rows=readLogRowsForDate(todayISO());
+  host.classList.toggle('single', rows.length<=1);
+  if(!rows.length){
+    host.innerHTML=`<div class="readHistoryTickerTrack"><span>${esc(studioStationLabel())} · SEM LEITURAS CONFIRMADAS HOJE</span></div>`;
+    return;
+  }
+  const textRows=rows.map(r=>r.text);
+  const loopRows=textRows.length>1 ? textRows.concat(textRows) : textRows;
+  host.innerHTML=`<div class="readHistoryTickerTrack">${loopRows.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
+}
+function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
+function buildPromoFooter(item){
+  const pautas=allPautasForItemHour(item,true).filter(p=>ALLOW_PROMO_SHORTCUT || isMerchan(p));
+  const emptyClass=pautas.length ? '' : ' isEmpty';
+  return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{
+    const readAt=readTimestampForHour(p,item);
+    const done=!!readAt;
+    const type=pautaTypeLabel(p);
+    const isM=isMerchan(p);
+    const name=upper(p.name||p.title||(isM?'MERCHAN':'PROMOÇÃO'));
+    const typeClass=isM?'merchan':'promo';
+    if(done){
+      const time=readTimeLabel(readAt).replace('FEITA ','');
+      const label=`${name} · LIDA ${time}`;
+      return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(label)}"><span class="verticalMarquee"><span class="verticalStack"><span>${esc(name)}</span><span>LIDA ${esc(time)}</span></span></span></button>`;
+    }
+    return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+name)}">${esc(name)}</button>`;
+  }).join('')}</div></div>`;
+}
+function buildPautaList(item,kind){
+  const pautas=pautasForItemHour(item,true,kind);
+  const emptyLabel=kind==='merchan'?'SEM MERCHAN CADASTRADO PARA ESTE HORÁRIO':'SEM PROMOÇÕES CADASTRADAS PARA ESTE HORÁRIO';
+  if(!pautas.length) return `<button class="promoListItem" type="button">${emptyLabel}</button>`;
+  return pautas.map(p=>{
+    const read=isPromoReadForHour(p,item);
+    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
+  }).join('');
+}
+function buildPromoList(item){return buildPautaList(item,'promo');}
+function buildMerchanList(item){return buildPautaList(item,'merchan');}
+function buildHourReadList(item){
+  const pautas=allPautasForItemHour(item,true);
+  if(!pautas.length) return `<div class="promoListItem" type="button">SEM PROMOÇÕES OU MERCHAN CADASTRADOS PARA ESTE HORÁRIO</div>`;
+  return `<div class="hourReadList">${pautas.map(p=>{
+    const read=isPromoReadForHour(p,item);
+    const label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';
+    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,\'${esc(p.id)}\')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
+  }).join('')}</div>`;
+}
+
+function promoResultForHour(p,item){
+  if(!p) return '';
+  return (item && hourMapValue(p.resultByHour,item,p)) || p.resultName || '';
+}
+function normalizeWinnerList(list){
+  if(!Array.isArray(list)) return [];
+  const seen=new Set();
+  return list.map(w=>typeof w==='string'?{name:upper(w)}:{...w,name:upper(w?.name||'')})
+    .filter(w=>w.name)
+    .filter(w=>{ if(seen.has(w.name)) return false; seen.add(w.name); return true; });
+}
+function promoWinnerList(p,item){
+  if(!p) return [];
+  const byHourValue=item ? hourMapValue(p.resultWinnersByHour,item,p) : null;
+  const byHour = Array.isArray(byHourValue) ? byHourValue : null;
+  const base = byHour || p.resultWinners || [];
+  const list=normalizeWinnerList(base);
+  if(list.length) return list;
+  const current=promoResultForHour(p,item);
+  return current ? normalizeWinnerList(String(current).split(',').map(name=>({name}))) : [];
+}
+function mergeWinnerDelivery(previous,next){
+  const prev=normalizeWinnerList(previous);
+  const prevMap=new Map(prev.map(w=>[w.name,w]));
+  return normalizeWinnerList(next).map(w=>{
+    const old=prevMap.get(w.name);
+    return old ? {...w,registeredAt:old.registeredAt||w.registeredAt||'',registeredAtLabel:old.registeredAtLabel||w.registeredAtLabel||'',deliveredAt:old.deliveredAt||'',deliveredAtLabel:old.deliveredAtLabel||'',deliveredBy:old.deliveredBy||'',reuseStatus:old.reuseStatus||'',reuseAt:old.reuseAt||'',reuseAtLabel:old.reuseAtLabel||'',reusedItemId:old.reusedItemId||''} : w;
+  });
+}
+function collectPromoWinnerInputs(){
+  return Array.from(document.querySelectorAll('.promoResultWinnerInput'))
+    .map(input=>({name:upper(input.value||'')}))
+    .filter(w=>w.name);
+}
+function promoWinnerInputRow(w={},index=0){
+  return `<div class="promoWinnerCandidate" data-promo-winner-index="${index}"><div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(w.name||'')}" placeholder="NOME DO GANHADOR"><button class="${index?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${index?'REMOVER':'ADICIONAR GANHADOR'}">${index?'×':'+'}</button></div><div class="winnerEligibility neutral promoWinnerEligibility" id="promoWinnerEligibility${index}">${winnerEligibilityHtml(null)}</div></div>`;
+}
+function updatePromoWinnerSaveState(){
+  const button=$('savePromoResultInline');
+  if(!button) return;
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
+  const ready=winnerBankReady&&fields.length>0&&promoWinnerChecks.length===fields.length&&promoWinnerChecks.every(check=>check.name&&check.allowed);
+  button.disabled=!ready;
+  button.title=ready?'CONFIRMAR RESULTADO E REGISTRAR NO FIREBASE':'TODOS OS GANHADORES PRECISAM ESTAR APTOS E VALIDADOS';
+}
+function validateAllPromoWinnerInputs(){
+  const promo=currentPromoForRead();
+  const item=currentDisplayItem||virtualCurrentItem();
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
+  if(!promo||!item||!fields.length){ promoWinnerChecks=[]; updatePromoWinnerSaveState(); return; }
+  const context=winnerContextForPromo(promo,item);
+  const availableHistory=winnerBankRecords.filter(record=>!(record.source==='ESTUDIO_JP1017'&&record.sourceRef===context.sourceRef));
+  const counts=new Map();
+  fields.forEach(field=>{ const key=winnerPersonKey(field.value); if(key) counts.set(key,(counts.get(key)||0)+1); });
+  promoWinnerChecks=fields.map((field,index)=>{
+    const name=upper(field.value);
+    const host=$(`promoWinnerEligibility${index}`);
+    if(!name){ if(host){ host.className='winnerEligibility neutral promoWinnerEligibility'; host.innerHTML=winnerEligibilityHtml(null); } return {name:'',allowed:false,status:'PENDENTE'}; }
+    const rejected=winnerSimilarityRejected(field,name);
+    const suggestions=winnerSuggestionsForField(field,name);
+    let result=winnerEvaluateAgainst(availableHistory,name,context.prize,context.date);
+    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL CADASTRO EXISTENTE',reason:'CONFIRME SE É A MESMA PESSOA OU SE SÃO PESSOAS DIFERENTES.',allowed:false};
+    else if(!result.total&&rejected.size) result={...result,similarityDifferent:true,reason:`${result.reason} REVISÃO DE NOME CONCLUÍDA.`};
+    if((counts.get(result.personKey)||0)>1) result={...result,status:'BLOQUEADO',title:'NOME REPETIDO NESTE SORTEIO',reason:'CADA PESSOA DEVE APARECER APENAS UMA VEZ.',allowed:false};
+    if(!winnerBankReady) result={...result,status:'BLOQUEADO',title:'CONSULTA INDISPONÍVEL',reason:'AGUARDE A CONEXÃO COM O FIREBASE ANTES DE CONFIRMAR.',allowed:false};
+    if(host){ const visual=result.status==='ATENCAO'?'atencao':result.status==='BLOQUEADO'&&result.blockKind==='SHORT'&&!result.manualBlocked&&!result.samePrize?'curto':result.status==='BLOQUEADO'?'bloqueado':result.status==='PENDENTE'?'neutral':'apto'; host.className=`winnerEligibility promoWinnerEligibility ${visual}`; host.innerHTML=winnerEligibilityHtml(result,suggestions); }
+    return result;
+  });
+  updatePromoWinnerSaveState();
+}
+function addPromoWinnerField(value=''){
+  const list=$('promoResultWinnersList');
+  if(!list) return;
+  const values=Array.from(list.querySelectorAll('.promoResultWinnerInput')).map(input=>input.value);
+  values.push(value);
+  list.innerHTML=values.map((name,index)=>promoWinnerInputRow({name},index)).join('');
+  const last=list.querySelector('.promoWinnerCandidate:last-child input');
+  if(last) last.focus();
+  validateAllPromoWinnerInputs();
+}
+function studioOperationToken(value){
+  let hash=2166136261;
+  const text=String(value||'');
+  for(let index=0;index<text.length;index+=1){hash^=text.charCodeAt(index);hash=Math.imul(hash,16777619);}
+  return (hash>>>0).toString(36).toUpperCase();
+}
+async function cleanupStudioWinnerOperation(operationId){
+  if(!operationId||!winnerBankRef) return;
+  await studioRetry(()=>winnerBankRef.child('records').transaction(current=>{
+    const map=winnerRecordMap(current||{});
+    Object.keys(map).forEach(key=>{if(map[key]?.operationId===operationId&&map[key]?.operationStatus==='PENDING')delete map[key];});
+    return map;
+  },undefined,false));
+}
+async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,context,occurrenceKey=''}){
+  await ensureStudioFirebaseOnline();
+  initWinnerBank();
+  if(!winnerBankRef) throw new Error('BANCO DE GANHADORES INDISPONÍVEL.');
+  const operator=studioOperatorIdentity(true);
+  if(!operator) throw new Error('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.');
+  const cleanNames=(names||[]).map(upper).filter(Boolean);
+  if(!cleanNames.length) throw new Error('NENHUM GANHADOR INFORMADO.');
+  const now=new Date();
+  const monthKey=studioOutcomeMonthKey(context);
+  let operationId=`V56_${studioOperationToken(`${context.sourceRef}|${cleanNames.join('|')}|${now.getTime()}`)}`;
+  const recordIds=cleanNames.map(()=>winnerBankRef.child('records').push().key);
+  let rejection=null;
+  let operationCreated=false;
+
+  const bankResult=await studioRetry(async()=>{
+    const result=await winnerBankRef.transaction(current=>{
+      rejection=null;
+      operationCreated=false;
+      const bank=current&&typeof current==='object'?JSON.parse(JSON.stringify(current)):{};
+      const map=winnerRecordMap(bank.records||{});
+      const previous=Object.values(map).filter(record=>record?.source==='ESTUDIO_JP1017'&&record?.sourceRef===context.sourceRef);
+      if(previous.length){
+        const previousNames=previous.map(record=>upper(record.name)).sort();
+        const requestedNames=[...cleanNames].sort();
+        if(previousNames.join('|')!==requestedNames.join('|')){
+          rejection={title:'RESULTADO JÁ CONFIRMADO',reason:'ESTE SORTEIO JÁ FOI CONFIRMADO COM OUTRO(S) GANHADOR(ES).'};
+          return;
+        }
+        operationCreated=previous.some(record=>record.operationStatus==='PENDING');
+        if(operationCreated&&previous[0]?.operationId) operationId=previous[0].operationId;
+        previous.forEach(record=>{map[record.id]={...record,updatedAt:now.toISOString()};});
+        bank.records=map;
+        bank.initialized=true;
+        bank.schemaVersion=2;
+        return bank;
+      }
+      const working=winnerRecordList(map).filter(record=>record.sourceRef!==context.sourceRef);
+      for(let index=0;index<cleanNames.length;index+=1){
+        const name=cleanNames[index];
+        const eligibility=winnerEvaluateAgainst(working,name,context.prize,context.date,bank.blocks||{});
+        if(!eligibility.allowed){rejection=eligibility;return;}
+        const id=recordIds[index];
+        const record={id,name,date:context.date,program:context.program,prize:context.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(context.prize),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,operationId,operationStatus:'PENDING',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector};
+        map[id]=record;
+        working.push(record);
+        operationCreated=true;
+      }
+      bank.records=map;
+      bank.initialized=true;
+      bank.schemaVersion=2;
+      bank.updatedAtISO=now.toISOString();
+      bank.source='ESTUDIO_JP1017';
+      return bank;
+    },undefined,false);
+    if(!result?.committed){
+      const error=new Error(rejection?.reason||'O BANCO DE GANHADORES NÃO CONFIRMOU A PREMIAÇÃO.');
+      error.eligibility=rejection;
+      error.retryable=!rejection;
+      throw error;
+    }
+    return result;
+  });
+
+  let stateConflict='';
+  let targetFound=false;
+  let stateChanged=false;
+  try{
+    const stateResult=await studioRetry(async()=>{
+      stateConflict='';targetFound=false;stateChanged=false;
+      const result=await firebaseRef.child(`months/${monthKey}/${collection}`).transaction(current=>{
+        const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+        const index=rows.findIndex(row=>row?.id===recordId);
+        if(index<0) return;
+        targetFound=true;
+        const row=rows[index];
+        let previousNames=[];
+        if(collection==='items') previousNames=String(row.winnerName||'').split(',').map(upper).filter(Boolean);
+        if(collection==='promos'&&occurrenceKey) previousNames=normalizeWinnerList(row.resultWinnersByHour?.[occurrenceKey]||[]).map(w=>w.name);
+        if(previousNames.length){
+          if([...previousNames].sort().join('|')===[...cleanNames].sort().join('|')) return rows;
+          stateConflict='ESTE RESULTADO JÁ FOI CONFIRMADO EM OUTRO COMPUTADOR.';
+          return;
+        }
+        rows[index]={...row,...JSON.parse(JSON.stringify(patch)),winnerOperationId:operationId,updatedAt:now.toISOString()};
+        stateChanged=true;
+        return rows;
+      },undefined,false);
+      if(!result?.committed){
+        const error=new Error(stateConflict||'O SORTEIO NÃO FOI LOCALIZADO OU O FIREBASE NÃO CONFIRMOU O RESULTADO.');
+        error.retryable=!stateConflict;
+        throw error;
+      }
+      return result;
+    });
+    if(!targetFound) throw new Error('O SORTEIO NÃO FOI LOCALIZADO NA BASE OFICIAL.');
+
+    const finalRecords=await studioRetry(async()=>{
+      const result=await winnerBankRef.child('records').transaction(current=>{
+        const map=winnerRecordMap(current||{});
+        Object.keys(map).forEach(key=>{if(map[key]?.operationId===operationId)map[key]={...map[key],operationStatus:'CONFIRMED',confirmedAt:now.toISOString(),updatedAt:now.toISOString()};});
+        return map;
+      },undefined,false);
+      if(!result?.committed) throw new Error('A FINALIZAÇÃO DO BANCO DE GANHADORES NÃO FOI CONFIRMADA.');
+      return result;
+    });
+    await winnerBankRef.update({initialized:true,schemaVersion:2,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'});
+    await firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_GRANULAR_RESULT'});
+    if(stateChanged){
+      await appendStudioAudit({id:`LOG_${operationId}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});
+    }
+    const remoteRows=stateResult.snapshot.val();
+    if(state.months?.[monthKey]) state.months[monthKey][collection]=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    const bankSnapshot=bankResult.snapshot.val()||{};
+    applyWinnerBankSnapshot({...bankSnapshot,records:finalRecords.snapshot.val()||{}});
+    return true;
+  }catch(error){
+    if(operationCreated){
+      try{await cleanupStudioWinnerOperation(operationId);}catch(cleanupError){console.error('ERRO AO LIMPAR RESERVA DO BANCO:',cleanupError);}
+    }
+    throw error;
+  }
+}
+async function commitStudioOutcomeAtomic(payload){
+  return commitStudioOutcomeAtomicV56(payload);
+}
+async function savePromoResultInline(){
+  const busyButton=$('savePromoResultInline'); if(busyButton?.dataset.busy==='1') return;
+  const p=currentPromoForRead(); const item=currentDisplayItem||virtualCurrentItem(); if(!p||!item) return;
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput')); const winners=collectPromoWinnerInputs();
+  if(!winners.length||fields.some(field=>!upper(field.value))){ fields.find(field=>!upper(field.value))?.focus(); return; }
+  const occurrence=promoOccurrenceForItem(p,item); const capacity=Math.max(1,Number(occurrence?.qtyPlanned||p.qtyPerDraw||item.qty||1)||1);
+  if(winners.length>capacity){ alert(`ESTE SORTEIO PREVÊ NO MÁXIMO ${capacity} GANHADOR(ES).`); return; }
+  validateAllPromoWinnerInputs(); if(!winnerBankReady||promoWinnerChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
+  const button=$('savePromoResultInline'); button.dataset.busy='1'; button.disabled=true; button.textContent='VALIDANDO E SALVANDO...';
+  try{
+    const context=winnerContextForPromo(p,item), now=new Date(), key=readHourKey(item,p), previous=promoWinnerList(p,item);
+    const prepared=winners.map(w=>({...w,registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')})); const merged=mergeWinnerDelivery(previous,prepared); const joined=merged.map(w=>w.name).join(', ');
+    const resultByHour={...(p.resultByHour||{}),[key]:joined}; const resultWinnersByHour={...(p.resultWinnersByHour||{}),[key]:merged};
+    const occurrences=promoOccurrences(p).map(o=>promoOccurrenceForItem({...p,occurrences:[o]},item)?{...o,status:'REALIZADO',actualQty:merged.length,resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')}:{...o});
+    const patch={resultByHour,resultWinnersByHour,resultWinners:merged,resultName:joined,resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR'),resultSlot:formatStudioTime(item.slot),resultDate:item.date||todayISO(),occurrences};
+    await commitStudioOutcomeAtomic({collection:'promos',recordId:p.id,patch,names:merged.map(w=>w.name),context,occurrenceKey:key});
+    render();
+  }catch(error){ console.error('ERRO AO SALVAR RESULTADO DA PROMOÇÃO:',error); alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR O RESULTADO.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`); initWinnerBank(true); }
+  finally{ if(button){ button.dataset.busy='0'; button.textContent='SALVAR RESULTADO'; updatePromoWinnerSaveState(); } }
+}
+
+function shouldShowPromoResultBox(p,item){
+  if(!p || !item || isMerchan(p)) return false;
+  return isPromoResultForItem(p,item);
+}
+
+function buildPromoResultBox(p,item){
+  const winners=promoWinnerList(p,item);
+  const inputRows=(winners.length?winners:[{name:''}]).map((w,idx)=>promoWinnerInputRow(w,idx)).join('');
+  const saved=winners.length ? `<div class="resultSavedList">${winners.map(w=>`<div class="resultSaved">GANHADOR: ${esc(w.name)}${w.deliveredAtLabel?` · RETIRADO ${esc(w.deliveredAtLabel)}`:''}</div>`).join('')}</div>` : '';
+  return `<div class="resultBox">
+    <label>RESULTADO / GANHADOR DO SORTEIO</label>
+    <div class="resultWinnersList" id="promoResultWinnersList">${inputRows}</div>
+    <div class="pautaActions" style="justify-content:flex-start;margin-top:4px"><button class="modalBtn primary" id="savePromoResultInline" type="button">SALVAR RESULTADO</button></div>
+    ${saved}
+  </div>`;
+}
+
+function historyRowsForDate(date){
+  const rows=[];
+  const pushRow=(row)=>{
+    if(!row || !row.title) return;
+    const dedupeKey=`${row.source||''}|${row.id||''}|${row.time||''}|${row.title||''}|${row.result||''}`;
+    if(rows.some(r=>r.__dedupeKey===dedupeKey)) return;
+    rows.push({...row,__dedupeKey:dedupeKey});
+  };
+
+  (monthData().items||[])
+    .filter(i=>i && i.date===date)
+    .filter(i=>(i.station||'JP1017')===STUDIO_STATION)
+    .filter(i=>upper(i.status)==='REALIZADO' || upper(i.winnerName||''))
+    .forEach(i=>pushRow({
+      source:'item',
+      id:i.id||'',
+      type:'PRÊMIO',
+      typeClass:'prize',
+      time:formatStudioTime(i.slot),
+      sort:`${i.date}T${timeToHHMM(i.slot)}`,
+      title:itemTitle(i),
+      sub:i.program||'',
+      result:upper(i.winnerName||'REALIZADO')
+    }));
+
+  (monthData().promos||[])
+    .filter(p=>p && !isMerchan(p))
+    .filter(p=>stationAllowed(p))
+    .forEach(p=>{
+      const title=upper(p.name||p.title||'PROMOÇÃO');
+      const baseSub=upper(p.local||p.program||'PROMOÇÃO');
+      const byHour=p.resultWinnersByHour||{};
+      Object.entries(byHour).forEach(([key,list])=>{
+        if(String(key).slice(0,10)!==date) return;
+        const winners=normalizeWinnerList(list).map(w=>w.name).join(', ');
+        if(!winners) return;
+        const km=String(key).match(/-(\d{2})(\d{2})?$/);
+        const keySlot=km ? `${km[1]}H${km[2]==='30'?'30':''}` : (p.resultSlot||p.drawTime||'');
+        pushRow({
+          source:'promo-hour-winners',
+          id:p.id||'',
+          type:'PROMOÇÃO',
+          typeClass:'promo',
+          time:formatStudioTime(keySlot),
+          sort:`${date}T${timeToHHMM(keySlot)}`,
+          title,
+          sub:baseSub,
+          result:winners
+        });
+      });
+
+      Object.entries(p.resultByHour||{}).forEach(([key,value])=>{
+        if(String(key).slice(0,10)!==date) return;
+        const winner=upper(value||'');
+        if(!winner) return;
+        const km=String(key).match(/-(\d{2})(\d{2})?$/);
+        const keySlot=km ? `${km[1]}H${km[2]==='30'?'30':''}` : (p.resultSlot||p.drawTime||'');
+        pushRow({
+          source:'promo-hour-result',
+          id:p.id||'',
+          type:'PROMOÇÃO',
+          typeClass:'promo',
+          time:formatStudioTime(keySlot),
+          sort:`${date}T${timeToHHMM(keySlot)}`,
+          title,
+          sub:baseSub,
+          result:winner
+        });
+      });
+
+      const winners=promoWinnerList(p,null).map(w=>w.name).join(', ') || upper(p.resultName||'');
+      const resultDate=p.resultDate || (p.resultName||winners ? p.drawDate : '');
+      if(resultDate===date && winners){
+        const slot=p.resultSlot || p.drawTime || '';
+        const hour=pad(slotHour(slot));
+        pushRow({
+          source:'promo-result',
+          id:p.id||'',
+          type:'PROMOÇÃO',
+          typeClass:'promo',
+          time:formatStudioTime(slot),
+          sort:`${date}T${hour||'23'}:00`,
+          title,
+          sub:baseSub,
+          result:winners
+        });
+      }
+    });
+
+  return rows.sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title));
+}
+function renderHistoryList(){
+  const date=$('historyDateInput')?.value || historyDate || todayISO();
+  historyDate=date;
+  const rows=historyRowsForDate(date);
+  const box=$('historyList');
+  if(!box) return;
+  box.innerHTML=rows.length ? rows.map(r=>`<div class="historyItem"><div class="historyTime">${esc(r.time)}</div><div class="historyInfo"><strong>${esc(r.title)}</strong><span>${esc(r.sub?upper(r.sub):'SORTEIO REALIZADO')}</span><em>GANHADOR: ${esc(r.result)}</em></div><span class="historyType ${esc(r.typeClass||'promo')}">${esc(r.type)}</span></div>`).join('') : '<div class="empty">NENHUM SORTEIO REALIZADO PARA ESTA DATA.</div>';
+}
+function openHistoryModal(){
+  historyDate=(currentDisplayItem && currentDisplayItem.date) || todayISO();
+  if($('historyDateInput')) $('historyDateInput').value=historyDate;
+  renderHistoryList();
+  $('historyModal').classList.add('show');
+}
+function closeHistoryModal(){
+  $('historyModal').classList.remove('show');
+}
+
+function startPromoRead(promoId){
+  const p=findPromoById(promoId);
+  if(!p) return;
+  selectedPromoId=promoId;
+  render();
+}
+function closePromoReadModal(){
+  selectedPromoId=null;
+  render();
+}
+async function confirmPromoReadV56(event){
+  if(event){event.preventDefault();event.stopPropagation();}
+  const button=event?.currentTarget||$('confirmPromoReadInline');
+  const p=currentPromoForRead();
+  const item=currentDisplayItem||virtualCurrentItem();
+  if(!p||!item||button?.dataset.busy==='1') return;
+  const operator=studioOperatorIdentity(true);
+  if(!operator){alert('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.');return;}
+  if(button){button.dataset.busy='1';button.disabled=true;button.textContent='SALVANDO...';}
+  try{
+    await ensureStudioFirebaseOnline();
+    const now=new Date(),iso=now.toISOString(),key=readHourKey(item,p),logId=`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    const monthKey=String(item.date||todayISO()).slice(0,7);
+    let duplicate=false,found=false,changed=false;
+    const result=await studioRetry(async()=>{
+      duplicate=false;found=false;changed=false;
+      const tx=await firebaseRef.child(`months/${monthKey}/promos`).transaction(current=>{
+        const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+        const index=rows.findIndex(row=>row?.id===p.id);
+        if(index<0) return;
+        found=true;
+        const row=rows[index],keys=readHourKeys(item,row);
+        if(keys.some(value=>validReadTimestamp(row?.readByHour?.[value]))){duplicate=true;return rows;}
+        row.readByHour={...(row.readByHour||{}),[key]:iso};
+        row.readLog=Array.isArray(row.readLog)?row.readLog:[];
+        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
+        row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(item.program||'PROGRAMA');row.updatedAt=iso;
+        rows[index]=row;changed=true;return rows;
+      },undefined,false);
+      if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}
+      return tx;
+    });
+    const remoteRows=result.snapshot.val();
+    if(state.months?.[monthKey]) state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
+    if(changed){
+      await firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_GRANULAR_READ'});
+      await appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')});
+    }
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+    selectedPromoId=null;render();
+  }catch(error){
+    console.error('ERRO AO CONFIRMAR LEITURA:',error);
+    alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');
+  }finally{
+    if(button){button.dataset.busy='0';button.disabled=false;button.textContent='CONFIRMAR LEITURA';}
+  }
+}
+async function confirmPromoRead(event){ return confirmPromoReadV56(event); }
+window.confirmPromoRead=confirmPromoRead;
+function isAutoGeneratedStudioPrize(item){
+  const source=upper(item?.generatedBy||item?.sourceType||'');
+  return item?.autoRadioPlanner===true || source.includes('SMART_RADIO') || source==='RADIO_PLANNER';
+}
+function isScheduledStudioPrize(item){
+  if(!item || !item.date || !item.slot) return false;
+  if((item.station||'JP1017')!==STUDIO_STATION) return false;
+  const channel=upper(item.channel||'RÁDIO');
+  if(channel && channel!=='RÁDIO') return false;
+  if(upper(item.status||'')==='CANCELADO') return false;
+  // R5: item gerado automaticamente só aparece no Estúdio se o programa
+  // realmente existir na grade cadastrada para aquele dia e horário.
+  if(isAutoGeneratedStudioPrize(item) && !programFromSchedule(item.date,item.slot,STUDIO_STATION)) return false;
+  return !!(item.prize || item.title || item.distributionId);
+}
+function allPrizeRows(){
+  const items=[...studioPublishedPrizeItems()]
+    .filter(isScheduledStudioPrize);
+  const virtualResults=promoResultVirtualRows();
+  return [...items,...virtualResults]
+    .sort((a,b)=>itemDateTime(a)-itemDateTime(b)||upper(a.program).localeCompare(upper(b.program)));
+}
+function sameHour(a,b){
+  return a.getFullYear()===b.getFullYear() &&
+         a.getMonth()===b.getMonth() &&
+         a.getDate()===b.getDate() &&
+         a.getHours()===b.getHours() &&
+         a.getMinutes()===b.getMinutes();
+}
+function itemIndexForDate(rows,target){
+  return rows.findIndex(i=>sameHour(itemDateTime(i),target));
+}
+function adaptiveItemIndexForDate(rows,target){
+  const exact=itemIndexForDate(rows,target);
+  if(exact>=0) return exact;
+
+  // Se o bloco atual é de meia hora e não existe item às HH30,
+  // mantém o prêmio da hora cheia durante a segunda metade da hora.
+  if(target.getMinutes()>=30){
+    const fullHour=new Date(target);
+    fullHour.setMinutes(0,0,0);
+    const fullIndex=itemIndexForDate(rows,fullHour);
+    if(fullIndex>=0) return fullIndex;
+  }
+  return -1;
+}
+function itemForDate(rows,target){
+  const idx=adaptiveItemIndexForDate(rows,target);
+  if(idx>=0) return {idx,item:rows[idx],hasScheduledItem:true};
+  return {idx:-1,item:virtualItemFromDate(target),hasScheduledItem:false};
+}
+function currentHourIndex(rows){
+  return adaptiveItemIndexForDate(rows,currentSlotDate());
+}
+function autoIndex(rows){
+  if(!rows.length)return -1;
+  const now=new Date();
+  const current=adaptiveItemIndexForDate(rows,currentSlotDate());
+  if(current>=0)return current;
+  const upcoming=rows.findIndex(i=>itemDateTime(i)>=now);
+  if(upcoming>=0)return upcoming;
+  return rows.length-1;
+}
+function timeClass(item){
+  const now=new Date();
+  const dt=itemDateTime(item);
+  const active=itemForDate(allPrizeRows(),currentSlotDate()).item;
+  if(item && active && !active.__virtual && item.id===active.id) return 'time-now';
+  if(item?.__virtual && sameHour(dt,currentSlotDate())) return 'time-now';
+  if(dt < now) return 'time-past';
+  return 'time-next';
+}
+function currentItemRecord(){
+  if(!currentDisplayItem || currentDisplayItem.__virtual) return null;
+  return monthData().items?.find(i=>i.id===currentDisplayItem.id) || null;
+}
+function winnerCapacity(item){
+  return Math.max(1,Number(item?.winnerCapacity||item?.qty||1)||1);
+}
+function existingWinnerNames(item){
+  const list=Array.isArray(item?.winnerNames)?item.winnerNames:[];
+  const names=list.map(upper).filter(Boolean);
+  if(names.length) return names;
+  return String(item?.winnerName||'').split(',').map(upper).filter(Boolean);
+}
+function renderWinnerInputs(names=[]){
+  const item=currentItemRecord();
+  const max=winnerCapacity(item);
+  const list=$('winnerInputsList');
+  const rows=(names.length?names:['']).slice(0,max);
+  list.innerHTML=rows.map((name,index)=>`<div class="winnerCandidate" data-winner-index="${index}"><div class="winnerInputLine"><input class="winnerNameField" type="text" maxlength="120" autocomplete="off" value="${esc(name)}" placeholder="GANHADOR ${index+1}"><button class="winnerRemoveBtn" type="button" onclick="removeWinnerInput(${index})" ${rows.length===1?'disabled':''}>×</button></div><div class="winnerEligibility neutral" id="winnerEligibility${index}">${winnerEligibilityHtml(null)}</div></div>`).join('');
+  const hint=$('winnerModalHint');
+  if(hint) hint.innerHTML=`ESTE HORÁRIO POSSUI <span class="winnerCapacityNote">${max} ${max===1?'PRÊMIO / GANHADOR':'PRÊMIOS / GANHADORES'}</span>. USE O BOTÃO + PARA ADICIONAR OS NOMES.`;
+  if($('addWinnerBtn')) $('addWinnerBtn').disabled=rows.length>=max;
+  winnerInputChecks=[];
+  updateWinnerSaveState();
+  setTimeout(validateAllWinnerInputs,20);
+}
+function addWinnerInput(){
+  const values=Array.from(document.querySelectorAll('.winnerNameField')).map(input=>input.value);
+  const item=currentItemRecord();
+  if(values.length>=winnerCapacity(item)) return;
+  values.push('');
+  renderWinnerInputs(values);
+  setTimeout(()=>document.querySelectorAll('.winnerNameField')[values.length-1]?.focus(),20);
+}
+function removeWinnerInput(index){
+  const values=Array.from(document.querySelectorAll('.winnerNameField')).map(input=>input.value);
+  if(values.length<=1) return;
+  values.splice(index,1);
+  renderWinnerInputs(values);
+}
+function openWinnerModal(){
+  const item=currentItemRecord();
+  if(!item) return;
+  initWinnerBank(true);
+  renderWinnerInputs(existingWinnerNames(item));
+  $('winnerModal').classList.add('show');
+  setTimeout(()=>document.querySelector('.winnerNameField')?.focus(),30);
+}
+function closeWinnerModal(){
+  $('winnerModal').classList.remove('show');
+  winnerInputChecks=[];
+}
+async function saveWinner(){
+  const button=$('saveWinnerBtn'); if(button?.dataset.busy==='1') return;
+  const item=currentItemRecord(); if(!item) return;
+  const fields=Array.from(document.querySelectorAll('.winnerNameField')), names=fields.map(input=>upper(input.value));
+  if(!names.length||names.some(name=>!name)){ fields.find(input=>!upper(input.value))?.focus(); return; }
+  const max=winnerCapacity(item); if(names.length>max){ alert(`ESTE HORÁRIO PERMITE NO MÁXIMO ${max} GANHADOR(ES).`); return; }
+  validateAllWinnerInputs(); if(!winnerBankReady||winnerInputChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
+  button.dataset.busy='1'; button.disabled=true; button.textContent='VALIDANDO E SALVANDO...';
+  try{
+    const context=winnerContextForItem(item), now=new Date();
+    const patch={winnerNames:names,winnerName:names.join(', '),winnerCapacity:max,status:'REALIZADO',resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')};
+    await commitStudioOutcomeAtomic({collection:'items',recordId:item.id,patch,names,context});
+    closeWinnerModal(); render();
+  }catch(error){ console.error('ERRO AO SALVAR GANHADORES:',error); alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR OS GANHADORES.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`); initWinnerBank(true); validateAllWinnerInputs(); }
+  finally{ button.dataset.busy='0'; button.textContent='SALVAR GANHADOR(ES)'; updateWinnerSaveState(); }
+}
+function step(delta){
+  const base = manualHourDateMs !== null
+    ? new Date(manualHourDateMs)
+    : (currentDisplayItem ? hourDateFromItem(currentDisplayItem) : currentSlotDate());
+  base.setMinutes(base.getMinutes()+(delta*30),0,0);
+  manualHourDateMs=base.getTime();
+  manual=true;
+  selectedPromoId=null;
+  scheduleManualReturn();
+  render();
+}
+
+function hideStudioShortcutLists(except=''){
+  const promoList=$('promoList');
+  const merchanList=$('merchanList');
+  if(promoList && except!=='promo') promoList.classList.remove('show');
+  if(merchanList && except!=='merchan') merchanList.classList.remove('show');
+}
+function studioShortcutClick(event,type){
+  if(event){ event.preventDefault(); event.stopPropagation(); }
+  if(type==='promo'){
+    if(!ALLOW_PROMO_SHORTCUT) return;
+    const list=$('promoList');
+    if(list){
+      const open=!list.classList.contains('show');
+      hideStudioShortcutLists('promo');
+      list.classList.toggle('show',open);
+    }
+    return;
+  }
+  if(type==='merchan'){
+    const list=$('merchanList');
+    if(list){
+      const open=!list.classList.contains('show');
+      hideStudioShortcutLists('merchan');
+      list.classList.toggle('show',open);
+    }
+    return;
+  }
+  if(type==='history'){
+    hideStudioShortcutLists('');
+    openHistoryModal();
+    return;
+  }
+}
+function studioPautaItemClick(event,promoId){
+  if(event){ event.preventDefault(); event.stopPropagation(); }
+  hideStudioShortcutLists('');
+  startPromoRead(promoId);
+}
+window.studioShortcutClick=studioShortcutClick;
+window.studioPautaItemClick=studioPautaItemClick;
+
+function render(){
+  renderStudioDateStamp();
+  const rows=allPrizeRows();
+  let item=null;
+  if(!manual){
+    const target=currentHourDate();
+    const found=itemForDate(rows,target);
+    selectedIndex=found.idx;
+    manualHourDateMs=null;
+    item=found.item;
+  }else{
+    const target=manualHourDateMs!==null ? new Date(manualHourDateMs) : currentHourDate();
+    const found=itemForDate(rows,target);
+    selectedIndex=found.idx;
+    item=found.item;
+  }
+  if(item && !item.__virtual) item.__hasScheduledPrize = item.sourceType!=='promo-result';
+  currentDisplayItem=item;
+  if(selectedPromoId && item && !allPautasForItemHour(item,true).some(p=>p.id===selectedPromoId)){
+    selectedPromoId=null;
+  }
+  if(!selectedPromoId && item && item.sourceType==='promo-result' && item.promoId){
+    selectedPromoId=item.promoId;
+  }
+  if(!selectedPromoId && item && item.__virtual){
+    const pending=allPautasForItemHour(item,false);
+    if(pending.length) selectedPromoId=pending[0].id;
+  }
+  const promo=currentPromoForRead();
+  const isVirtual=!!item.__virtual;
+  const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
+  const promoBody = promo ? `
+      ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${isMerchan(promo)&&studioMerchanScheduleMode(promo)==='rotation'?`<small class="rotationInfo">RODÍZIO · ${(promo.readHours||[]).map(formatStudioTime).join(' / ')}</small>`:''}</div>
+      <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
+      ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
+      <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA</button></div>
+    ` : isVirtual ? `
+      <div class="emptyStudioBox"><strong>SEM PAUTA PARA ESTE HORÁRIO</strong><span>NENHUM PRÊMIO, PROMOÇÃO OU MERCHAN CADASTRADO PARA AGORA.</span></div>
+    ` : `
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(itemTitleStyle(item),'title')}">${esc(itemTitle(item))}</h1></div>
+      <div class="descBox"><p class="desc" style="${inlineTextStyle(itemDescStyle(item),'desc')}">${esc(itemDesc(item))}</p></div>
+      ${winnerBlock}
+      <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'EDITAR GANHADOR' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'EDITAR GANHADOR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
+    `;
+  $('pautaPanel').innerHTML=`
+    <div class="pautaHead">
+      <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
+      <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PROMO / PAUTA') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
+      <div class="headNav">
+        ${ALLOW_PROMO_SHORTCUT ? `
+        <div class="promoListWrap">
+          <button class="promoListBtn ${promo&&!isMerchan(promo)?'active':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PROMOÇÕES" title="P = PROMOÇÕES">P<small>PROMO</small></button>
+          <div class="promoList" id="promoList">${buildPromoList(item)}</div>
+        </div>` : ''}
+        <div class="promoListWrap">
+          <button class="promoListBtn ${promo&&isMerchan(promo)?'active':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHAN" title="M = MERCHAN">M<small>MERCHAN</small></button>
+          <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
+        </div>
+        <button class="promoListBtn history" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="SORTEIOS REALIZADOS" title="H = SORTEIOS REALIZADOS NO DIA">H<small>HIST.</small></button>
+        <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
+        <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
+      </div>
+    </div>
+    ${buildStudioContext(item,promo)}
+    ${buildStudioPendingStrip(item)}
+    ${buildPreviousPendingStrip()}
+    <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
+    ${buildPromoFooter(item)}`;
+  $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
+  $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
+  const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
+  const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',closePromoReadModal);
+  const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.onclick=confirmPromoRead;
+  const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);
+  const resultList=$('promoResultWinnersList');
+  if(resultList){
+    resultList.addEventListener('input',e=>{ if(e.target.classList.contains('promoResultWinnerInput')) validateAllPromoWinnerInputs(); });
+    resultList.addEventListener('click',e=>{
+      const manual=e.target.closest('[data-winner-manual-toggle]');
+      if(manual){
+        toggleStudioWinnerManualBlock(manual.dataset.winnerName,manual.dataset.winnerManualToggle==='block').catch(error=>{console.error(error);alert(error.message||'NÃO FOI POSSÍVEL ATUALIZAR O BLOQUEIO.');});
+        return;
+      }
+      const similarity=e.target.closest('[data-winner-similarity]');
+      if(similarity){
+        const candidate=similarity.closest('.promoWinnerCandidate');
+        const input=candidate?.querySelector('.promoResultWinnerInput');
+        resolveStudioWinnerSimilarity(input,similarity,validateAllPromoWinnerInputs);
+        return;
+      }
+      const add=e.target.closest('.resultAddBtn');
+      const remove=e.target.closest('.resultRemoveBtn');
+      if(add) addPromoWinnerField('');
+      if(remove){
+        const candidate=remove.closest('.promoWinnerCandidate');
+        const values=Array.from(resultList.querySelectorAll('.promoResultWinnerInput')).map(input=>input.value);
+        const index=Array.from(resultList.querySelectorAll('.promoWinnerCandidate')).indexOf(candidate);
+        if(index>=0) values.splice(index,1);
+        resultList.innerHTML=(values.length?values:['']).map((name,rowIndex)=>promoWinnerInputRow({name},rowIndex)).join('');
+        validateAllPromoWinnerInputs();
+      }
+    });
+    setTimeout(validateAllPromoWinnerInputs,20);
+  }
+  const promoBtn=$('promoListBtn');
+  if(promoBtn) promoBtn.onclick=e=>studioShortcutClick(e,'promo');
+  const merchanBtn=$('merchanListBtn');
+  if(merchanBtn) merchanBtn.onclick=e=>studioShortcutClick(e,'merchan');
+  const historyBtn=$('historyListBtn');
+  if(historyBtn) historyBtn.onclick=e=>studioShortcutClick(e,'history');
+  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId));
+}
+$('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
+$('saveWinnerBtn').addEventListener('click',saveWinner);
+$('addWinnerBtn').addEventListener('click',addWinnerInput);
+$('winnerInputsList').addEventListener('input',event=>{ if(event.target.classList.contains('winnerNameField')) validateAllWinnerInputs(); });
+$('winnerInputsList').addEventListener('click',event=>{
+  const manual=event.target.closest('[data-winner-manual-toggle]');
+  if(manual){
+    toggleStudioWinnerManualBlock(manual.dataset.winnerName,manual.dataset.winnerManualToggle==='block').catch(error=>{console.error(error);alert(error.message||'NÃO FOI POSSÍVEL ATUALIZAR O BLOQUEIO.');});
+    return;
+  }
+  const similarity=event.target.closest('[data-winner-similarity]');
+  if(!similarity) return;
+  const candidate=similarity.closest('.winnerCandidate');
+  const input=candidate?.querySelector('.winnerNameField');
+  resolveStudioWinnerSimilarity(input,similarity,validateAllWinnerInputs);
+});
+$('winnerModal').addEventListener('click',e=>{ if(e.target.id==='winnerModal') closeWinnerModal(); });
+$('winnerModal').addEventListener('keydown',e=>{
+  if(e.key==='Enter' && e.target.classList.contains('winnerNameField')){ e.preventDefault(); saveWinner(); }
+  if(e.key==='Escape'){ closeWinnerModal(); }
+});
+
+document.addEventListener('click',e=>{
+  const shortcut=e.target.closest('#promoListBtn,#merchanListBtn,#historyListBtn');
+  if(shortcut){
+    if(shortcut.id==='promoListBtn') return studioShortcutClick(e,'promo');
+    if(shortcut.id==='merchanListBtn') return studioShortcutClick(e,'merchan');
+    if(shortcut.id==='historyListBtn') return studioShortcutClick(e,'history');
+  }
+  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]');
+  if(pauta) return studioPautaItemClick(e,pauta.dataset.promoId);
+});
+
+document.addEventListener('click',e=>{ const h=e.target.closest('#historyListBtn, #historyBtn, [data-history]'); if(h){ e.preventDefault(); openHistoryModal(); }});
+$('closeHistoryBtn').addEventListener('click',closeHistoryModal);
+$('historyTodayBtn').addEventListener('click',()=>{ $('historyDateInput').value=todayISO(); renderHistoryList(); });
+$('historyDateInput').addEventListener('change',renderHistoryList);
+$('historyModal').addEventListener('click',e=>{ if(e.target.id==='historyModal') closeHistoryModal(); });
+document.addEventListener('pointerdown',()=>{if(manual)scheduleManualReturn();},{passive:true});
+document.addEventListener('keydown',()=>{if(manual)scheduleManualReturn();});
+window.addEventListener('storage',()=>{state=loadState();selectStudioMonth();if(!manual)selectedIndex=-1;render();});
+window.addEventListener('focus',()=>syncStateFromApi(true));
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStateFromApi(true); });
+setInterval(()=>{
+  const hk=currentHourKey();
+  if(hk!==lastHourKey){
+    manual=false;
+    selectedIndex=-1;
+    selectedPromoId=null;
+    manualHourDateMs=null;
+    lastHourKey=hk;
+  }
+  if(!manual) selectedIndex=-1;
+  renderStudioDateStamp();
+  syncStateFromApi(false);
+  if(!manual) render();
+},3000);
+selectStudioMonth();
+if($('historyDateInput')) $('historyDateInput').value=todayISO();
+render();
+syncStateFromApi(true);
+initWinnerBank(true);
+setTimeout(()=>syncStateFromApi(true),1800);
+setTimeout(()=>syncStateFromApi(true),6000);
+</script>
+</body>
+</html>
