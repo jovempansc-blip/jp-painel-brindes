@@ -1,4 +1,19 @@
-# JP Workspace V56.4 — relatório de implantação
+# JP Workspace V56.5 — relatório de implantação
+
+## Catálogo de Prêmios V56.5
+
+- Incluída a aba PRÊMIOS exclusivamente no Painel Principal.
+- O catálogo é montado automaticamente a partir das distribuições de todos os meses e dos registros do Banco de Ganhadores.
+- Títulos repetidos em meses diferentes são unificados sem apagar ou reescrever os cadastros de origem.
+- A descrição histórica mais recente passa a ser a sugestão inicial quando ainda não existe um padrão administrado.
+- Ao digitar ou selecionar um título já cadastrado na nova distribuição, a descrição padrão é carregada automaticamente.
+- O operador pode editar o texto daquela distribuição; depois da edição, o sistema não substitui o conteúdo silenciosamente.
+- Ao salvar uma distribuição, título, prêmio, descrição e estilos passam a alimentar o catálogo central no Firebase.
+- A descrição padrão também pode ser alterada diretamente na aba PRÊMIOS. Essa ação preserva integralmente as descrições históricas.
+- A aba mostra os últimos sorteios, reunindo corretamente os nomes de 2, 3 ou 4 ganhadores do mesmo resultado.
+- A busca global também localiza e abre registros do Catálogo de Prêmios.
+- A gravação do catálogo participa da proteção multiusuário já existente, com detecção de conflito por título.
+- Validação automatizada concluída com 124 testes e nenhuma falha.
 
 ## Correção V56.4 — horários e exceção de rodízio
 
@@ -33,7 +48,7 @@
 - Corrigida a criação do item realocado para uma unidade retornada.
 - Validação automatizada concluída com 88 testes e nenhuma falha.
 
-Data da consolidação: 01/08/2026
+Data da consolidação: 03/08/2026
 
 ## Base utilizada
 
@@ -88,7 +103,7 @@ Data da consolidação: 01/08/2026
 
 ## Testes executados
 
-- 80 verificações automatizadas: 0 falhas.
+- 124 verificações automatizadas: 0 falhas.
 - Sintaxe JavaScript das sete páginas.
 - Inicialização das sete páginas em ambiente de navegador simulado.
 - IDs únicos no DOM, botões identificados e referências locais válidas.
@@ -100,11 +115,13 @@ Data da consolidação: 01/08/2026
 - Ausência do Banco de Ganhadores na JP News e na Recepção.
 - Ausência de gravação do estado inteiro nos Estúdios, OPEC e Recepção.
 - Padronização do Firebase SDK e remoção do código legado.
-- Teste real em nó temporário isolado do Firebase: escrita, leitura, atualização e exclusão aprovadas. O nó foi removido ao final.
+- Catálogo de Prêmios com títulos repetidos entre meses, descrição histórica mais recente e persistência automática.
+- Preservação da descrição editada manualmente pelo operador.
+- Agrupamento de vários ganhadores no mesmo sorteio e abertura de nova distribuição preenchida pelo catálogo.
 
 ## Implantação
 
-1. Gere um Backup completo pela V55 atualmente publicada.
+1. Gere um Backup completo pela versão atualmente publicada.
 2. Substitua no GitHub somente os arquivos presentes neste pacote.
 3. Preserve os nomes dos sete arquivos HTML e da pasta `assets`, pois os links atuais dependem deles.
 4. Abra o Painel Principal e confirme FIREBASE ONLINE.

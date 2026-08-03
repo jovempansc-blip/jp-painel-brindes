@@ -3135,6 +3135,34 @@ main{
 @media(max-width:600px){.winnerBankKpis,.winnerBankToolbar,.winnerImportSummary{grid-template-columns:1fr}.winnerBankActions{grid-column:auto}.winnerDetailHero{grid-template-columns:1fr}.winnerHistoryRow{grid-template-columns:1fr}}
 @media(max-width:600px){.winnerSimilarityCompare,.winnerEquivalenceRow{grid-template-columns:1fr}.winnerSimilarityScore{justify-self:start}}
 
+/* V56.5 — CATÁLOGO CENTRAL DE PRÊMIOS */
+.prizeCatalogKpis{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:8px;margin-bottom:12px}
+.prizeCatalogKpi{border:1px solid var(--line);border-radius:17px;background:#fff;padding:12px 14px;box-shadow:var(--soft-shadow)}
+.prizeCatalogKpi span{display:block;color:var(--muted);font-size:8.5px;font-weight:950;letter-spacing:.06em}
+.prizeCatalogKpi strong{display:block;margin-top:5px;color:#171c26;font-size:23px;font-weight:1000}
+.prizeCatalogToolbar{display:grid;grid-template-columns:minmax(260px,1fr) 210px;gap:8px;align-items:end;margin:0 0 10px}
+.prizeCatalogTable td{vertical-align:top}
+.prizeCatalogTitle strong{display:block;color:#171c26;font-size:11.5px;font-weight:1000;line-height:1.25}
+.prizeCatalogTitle small{display:block;margin-top:4px;color:var(--muted);font-size:8px;font-weight:850}
+.prizeCatalogDescription{max-width:460px;white-space:pre-wrap;color:#495668;font-size:9.5px;font-weight:800;line-height:1.45}
+.prizeCatalogDescription.empty{color:#a15e00;font-style:italic}
+.prizeCatalogDraws{display:grid;gap:5px;min-width:250px}
+.prizeCatalogDraw{padding:6px 7px;border:1px solid #e4e8ee;border-radius:10px;background:#f8fafc}
+.prizeCatalogDraw strong{display:block;color:#171c26;font-size:8.5px;font-weight:1000}
+.prizeCatalogDraw span{display:block;margin-top:2px;color:#697486;font-size:7.8px;font-weight:850;line-height:1.35}
+.prizeCatalogNoDraw{color:#8992a0;font-size:8px;font-weight:900}
+.prizeCatalogActions{display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap;min-width:170px}
+.prizeCatalogActions .btn{min-height:29px;padding:0 9px;font-size:8px}
+.prizeCatalogDetail{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.prizeCatalogDetailBox{min-width:0;border:1px solid var(--line);border-radius:15px;background:#f8fafc;padding:11px}
+.prizeCatalogDetailBox>strong{display:block;margin-bottom:8px;color:#171c26;font-size:9px;font-weight:1000}
+.prizeCatalogDetailList{display:grid;gap:6px;max-height:250px;overflow:auto}
+.prizeCatalogDetailRow{padding:8px 9px;border:1px solid #e1e6ed;border-radius:11px;background:#fff}
+.prizeCatalogDetailRow strong{display:block;font-size:8.5px;color:#171c26}
+.prizeCatalogDetailRow span{display:block;margin-top:3px;color:#647083;font-size:7.8px;font-weight:850;line-height:1.35;white-space:pre-wrap}
+@media(max-width:950px){.prizeCatalogKpis{grid-template-columns:1fr 1fr}.prizeCatalogDetail{grid-template-columns:1fr}.prizeCatalogTable{min-width:1020px}}
+@media(max-width:600px){.prizeCatalogKpis,.prizeCatalogToolbar{grid-template-columns:1fr}}
+
 
 /* V56 — BUSCA GLOBAL OPERACIONAL */
 .appHeader .globalSearchField{position:relative!important;z-index:120!important}
@@ -3363,6 +3391,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 
   <nav class="tabs" aria-label="NAVEGAÇÃO DO PAINEL">
     <button class="tabBtn active" data-view="distribuicao">DISTRIBUIÇÃO GERAL</button>
+    <button class="tabBtn" data-view="premios">PRÊMIOS</button>
     <button class="tabBtn" data-view="programacao">PROGRAMAÇÃO</button>
     <button class="tabBtn" data-view="digital">PROMO / MERCHAN</button>
     <button class="tabBtn" data-view="pauta">PAUTA DE ESTÚDIO</button>
@@ -3409,6 +3438,24 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
           <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="view-premios">
+      <div class="panel">
+        <div class="panelHead">
+          <div><h2>PRÊMIOS</h2><p>CATÁLOGO HISTÓRICO COM DESCRIÇÃO PADRÃO E ÚLTIMOS SORTEIOS REALIZADOS.</p></div>
+          <div class="panelActions"><button class="btn red" id="newDistFromCatalogBtn" type="button">+ NOVA DISTRIBUIÇÃO</button></div>
+        </div>
+        <div class="panelBody">
+          <div class="prizeCatalogKpis" id="prizeCatalogKpis"></div>
+          <div class="serverSourceBox"><strong>REAPROVEITAMENTO AUTOMÁTICO:</strong> ao selecionar um título já cadastrado, a descrição padrão é carregada na nova distribuição e permanece editável. Alterações no catálogo não modificam as descrições históricas.</div>
+          <div class="prizeCatalogToolbar">
+            <div class="field"><label>PESQUISAR TÍTULO, DESCRIÇÃO OU GANHADOR</label><input class="control" id="prizeCatalogSearch" autocomplete="off" placeholder="DIGITE PARA PESQUISAR"></div>
+            <div class="field"><label>ORDENAR</label><select class="control" id="prizeCatalogOrder"><option value="recent" selected>USO MAIS RECENTE</option><option value="draw">SORTEIO MAIS RECENTE</option><option value="name">TÍTULO A-Z</option></select></div>
+          </div>
+          <div class="tableWrap"><table class="promoMainTable prizeCatalogTable"><thead><tr><th>TÍTULO</th><th>DESCRIÇÃO PADRÃO</th><th>CADASTROS</th><th>ÚLTIMO USO</th><th>ÚLTIMOS SORTEIOS</th><th>AÇÕES</th></tr></thead><tbody id="prizeCatalogTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -3771,7 +3818,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
           <div class="field"><label>INÍCIO</label><input class="control" type="date" id="distStartDate" required></div>
           <div class="field"><label>TÉRMINO</label><input class="control" type="date" id="distEndDate" required></div>
           <div class="field wide"><label>PRÊMIO</label><input class="control" id="distPrize" required></div>
-          <div class="field wide"><label>TÍTULO</label><input class="control" id="distTitle">
+          <div class="field wide"><label>TÍTULO</label><input class="control" id="distTitle" list="distTitleDatalist" autocomplete="off"><span class="ticketFormHint" id="distCatalogHint">AO ESCOLHER UM TÍTULO JÁ CADASTRADO, A DESCRIÇÃO PADRÃO SERÁ CARREGADA AUTOMATICAMENTE.</span>
             <div class="textStyleEditor" aria-label="EDITOR DO TÍTULO DA DISTRIBUIÇÃO">
               <label class="miniField"><span>FONTE DO TÍTULO</span><select id="distTitleFont"></select></label>
               <label class="miniField"><span>TAMANHO</span><input id="distTitleSize" type="number" min="10" max="42" step="1"></label>
@@ -3836,6 +3883,26 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
           </div>
         </div>
         <div class="formActions"><button class="btn" type="button" id="generateDistRadioBtn">GERAR DISTRIBUIÇÃO INTELIGENTE</button><button class="btn red" type="submit">SALVAR DISTRIBUIÇÃO</button><button class="btn" type="button" data-close="distDrawer">CANCELAR</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="drawer" id="prizeCatalogDrawer" aria-hidden="true">
+  <div class="drawerCard">
+    <div class="drawerHead"><h3>DESCRIÇÃO PADRÃO DO PRÊMIO</h3><button class="btn small" data-close="prizeCatalogDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <form id="prizeCatalogForm">
+        <input type="hidden" id="prizeCatalogKey">
+        <div class="formGrid">
+          <div class="field full"><label>TÍTULO DO CATÁLOGO</label><input class="control" id="prizeCatalogTitle" readonly></div>
+          <div class="field full"><label>DESCRIÇÃO PADRÃO PARA NOVAS DISTRIBUIÇÕES</label><textarea class="control" id="prizeCatalogDescription"></textarea><span class="ticketFormHint">ESTA ALTERAÇÃO VALE SOMENTE PARA OS PRÓXIMOS CADASTROS. O HISTÓRICO CONTINUA INALTERADO.</span></div>
+        </div>
+        <div class="prizeCatalogDetail">
+          <div class="prizeCatalogDetailBox"><strong>ÚLTIMAS DESCRIÇÕES USADAS</strong><div class="prizeCatalogDetailList" id="prizeCatalogUsageHistory"></div></div>
+          <div class="prizeCatalogDetailBox"><strong>ÚLTIMOS SORTEIOS REALIZADOS</strong><div class="prizeCatalogDetailList" id="prizeCatalogDrawHistory"></div></div>
+        </div>
+        <div class="formActions"><button class="btn red" type="submit">SALVAR DESCRIÇÃO PADRÃO</button><button class="btn" type="button" data-close="prizeCatalogDrawer">CANCELAR</button></div>
       </form>
     </div>
   </div>
@@ -4040,6 +4107,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 </div>
 
 <datalist id="programDatalist"></datalist>
+<datalist id="distTitleDatalist"></datalist>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -6239,7 +6307,7 @@ function firebaseConfigReady(){
 function mergeFirebaseStates(primary,secondary){
   const sources=[primary,secondary].filter(source=>source&&source.months);
   if(!sources.length) return null;
-  const out={currentMonth:'',months:{},schedules:[],programSchedules:[]};
+  const out={currentMonth:'',months:{},schedules:[],programSchedules:[],prizeCatalog:{}};
   const rootCollections=['schedules','programSchedules','auditLog','trash'];
   const mergeRows=(targetRows=[],sourceRows=[])=>{
     const rows=firebaseList(targetRows);
@@ -6265,6 +6333,13 @@ function mergeFirebaseStates(primary,secondary){
       out.months[monthKey]=target;
     });
     rootCollections.forEach(collection=>{ out[collection]=mergeRows(out[collection]||[],source[collection]||[]); });
+    Object.entries(source.prizeCatalog||{}).forEach(([key,entry])=>{
+      if(!entry||typeof entry!=='object') return;
+      const current=out.prizeCatalog[key];
+      const currentTime=String(current?.updatedAt||current?.createdAt||'');
+      const incomingTime=String(entry.updatedAt||entry.createdAt||'');
+      if(!current||incomingTime>=currentTime) out.prizeCatalog[key]=clone(entry);
+    });
     ['publishedPrograms','programVersions','systemMeta','pendingOps'].forEach(key=>{
       if(source[key]!==undefined) out[key]=clone(source[key]);
     });
@@ -6423,6 +6498,23 @@ function applyCollectionPlanToRows(currentRows,baseRows,localRows,context='REGIS
   });
   return rows.filter(Boolean);
 }
+function applyKeyedObjectPlan(currentValue,baseValue,localValue,context='REGISTRO'){
+  const current=currentValue&&typeof currentValue==='object'&&!Array.isArray(currentValue)?clone(currentValue):{};
+  const base=baseValue&&typeof baseValue==='object'&&!Array.isArray(baseValue)?baseValue:{};
+  const local=localValue&&typeof localValue==='object'&&!Array.isArray(localValue)?localValue:{};
+  new Set([...Object.keys(base),...Object.keys(local)]).forEach(key=>{
+    const baseEntry=base[key];
+    const localEntry=local[key];
+    const currentEntry=current[key];
+    if(sameValue(baseEntry,localEntry)) return;
+    if(!sameValue(currentEntry,baseEntry)&&!sameValue(currentEntry,localEntry)){
+      throw new Error(`CONFLITO DE EDIÇÃO EM ${context}: ${key}. ATUALIZE OS DADOS ANTES DE SALVAR.`);
+    }
+    if(localEntry===undefined) delete current[key];
+    else current[key]=clone(localEntry);
+  });
+  return current;
+}
 function mergeAuditRows(remoteRows,localRows){
   const map=new Map();
   [...firebaseList(remoteRows),...firebaseList(localRows)].forEach((row,index)=>{
@@ -6460,6 +6552,7 @@ async function persistGranularState(){
       canonical.auditLog=mergeAuditRows(canonical.auditLog||[],state.auditLog||[]);
       canonical.trash=mergeAuditRows(canonical.trash||[],state.trash||[]);
       canonical.pendingOps=mergeAuditRows(canonical.pendingOps||[],state.pendingOps||[]);
+      canonical.prizeCatalog=applyKeyedObjectPlan(canonical.prizeCatalog||{},baseline.prizeCatalog||{},state.prizeCatalog||{},'CATÁLOGO DE PRÊMIOS');
       canonical.publishedPrograms=clone(state.publishedPrograms||canonical.publishedPrograms||{});
       canonical.programVersions=clone(state.programVersions||canonical.programVersions||{});
       canonical.systemMeta={...(canonical.systemMeta||{}),...(clone(state.systemMeta||{}))};
@@ -7020,6 +7113,7 @@ function applyWinnerBankSnapshot(value){
   const manualBlocks=Object.values(winnerBankSnapshot.blocks||{}).filter(block=>block?.active===true).length;
   setWinnerBankState('online',`${winnerBankRecords.length} PREMIAÇÃO(ÕES) · ${manualBlocks} BLOQUEIO(S) MANUAL(IS) · FIREBASE CONECTADO.`);
   renderWinnerBank();
+  if(activeView==='premios') renderPrizeCatalog();
 }
 function initWinnerBank(force=false){
   if(!firebaseConfigReady()){
@@ -7823,6 +7917,14 @@ function normalizePanelState(data){
   data.publishedPrograms ||= {};
   data.programVersions ||= {};
   data.systemMeta ||= {};
+  if(!data.prizeCatalog||typeof data.prizeCatalog!=='object'||Array.isArray(data.prizeCatalog)) data.prizeCatalog={};
+  Object.entries(data.prizeCatalog).forEach(([key,entry])=>{
+    if(!entry||typeof entry!=='object'){ delete data.prizeCatalog[key]; return; }
+    entry.key=key;
+    entry.title=norm(entry.title||entry.prize||String(key).replace(/_/g,' '));
+    entry.prize=norm(entry.prize||entry.title);
+    entry.description=textNorm(entry.description||'');
+  });
   const trashCutoff=Date.now()-(WINNER_TRASH_RETENTION_DAYS*24*60*60*1000);
   data.trash=data.trash.filter(row=>{
     const created=Date.parse(row?.createdAt||'');
@@ -8080,6 +8182,7 @@ function globalSearchRows(query){
   (state.schedules||[]).forEach(r=>add('AGENDAMENTO',r.name||r.title||r.type||'AGENDAMENTO',`${r.notes||''} · ${r.destination||''} · ${r.station||''}`,'agendamento',{id:r.id||'',date:r.startDate||''}));
   (state.programSchedules||[]).forEach(r=>add('HORÁRIO',r.name||r.program||'PROGRAMA',`${r.station||''} · ${r.startTime||''}–${r.endTime||''} · ${(r.days||[]).join(' ')}`,'horarios',{id:r.id||''}));
   (winnerBankRecords||[]).forEach(r=>add('GANHADOR',r.name||'GANHADOR',`${formatBR(r.date)} · ${r.program||''} · ${winnerResolvedPrize(r)}`,'ganhadores',{id:r.id||'',date:r.date||''}));
+  prizeCatalogRows().forEach(entry=>add('CATÁLOGO DE PRÊMIOS',entry.title,`${entry.description||'SEM DESCRIÇÃO PADRÃO'} · ${entry.draws.length} SORTEIO(S)`,'premios',{prizeKey:entry.key,date:entry.lastDrawDate||entry.latestUseDate||''}));
   return rows.sort((a,b)=>a.score-b.score||globalSearchNorm(a.title).localeCompare(globalSearchNorm(b.title))||globalSearchNorm(a.detail).localeCompare(globalSearchNorm(b.detail))).slice(0,100);
 }
 function globalSearchResultHtml(r,index,compact=false){
@@ -8116,6 +8219,8 @@ function openGlobalSearchResult(index){
     const targetWeek=weekLabel(row.date); if(targetWeek&&$('weekFilter')) $('weekFilter').value=targetWeek; renderProgramacao();
   }else if(row.view==='distribuicao'){
     if($('distSearchInput')) $('distSearchInput').value=row.title||''; renderDistribuicao();
+  }else if(row.view==='premios'){
+    if($('prizeCatalogSearch')) $('prizeCatalogSearch').value=row.title||''; renderPrizeCatalog();
   }else if(row.view==='ganhadores'){
     if($('winnerBankSearch')) $('winnerBankSearch').value=row.title||''; renderWinnerBank();
   }
@@ -8168,6 +8273,226 @@ function distributionLabel(d){
   if(!d) return '';
   const prize = norm(d.prize || '');
   return prize || 'SEM PRÊMIO';
+}
+function prizeCatalogKey(value){
+  return norm(value)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,220);
+}
+function prizeCatalogPlain(value){
+  return norm(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]+/g,' ').replace(/\s+/g,' ').trim();
+}
+function prizeCatalogTitleFromDistribution(d){
+  return norm(d?.title||d?.prize||d?.show||'');
+}
+function prizeCatalogUseDate(d,monthKey=''){
+  return String(d?.endDate||d?.startDate||d?.date||(monthKey?`${monthKey}-01`:'' )||'').slice(0,10);
+}
+function rememberPrizeCatalog(d,{manual=false}={}){
+  const title=prizeCatalogTitleFromDistribution(d);
+  const key=prizeCatalogKey(title);
+  if(!key) return null;
+  state.prizeCatalog ||= {};
+  const previous=state.prizeCatalog[key]&&typeof state.prizeCatalog[key]==='object'?state.prizeCatalog[key]:{};
+  const description=textNorm(d?.description||d?.notes||'');
+  const now=new Date().toISOString();
+  const entry={
+    ...previous,
+    key,
+    title,
+    prize:norm(d?.prize||previous.prize||title),
+    description:description||textNorm(previous.description||''),
+    titleStyle:clone(d?.titleStyle||previous.titleStyle||defaultPromoTextStyle('title')),
+    descriptionStyle:clone(d?.descriptionStyle||previous.descriptionStyle||defaultPromoTextStyle('desc')),
+    sourceDistributionId:d?.id||previous.sourceDistributionId||'',
+    lastUsedDate:prizeCatalogUseDate(d)||previous.lastUsedDate||'',
+    createdAt:previous.createdAt||now,
+    updatedAt:now,
+    source:manual?'CATALOGO_MANUAL':'CADASTRO_DISTRIBUICAO'
+  };
+  if(manual) entry.manualDescription=true;
+  state.prizeCatalog[key]=entry;
+  return entry;
+}
+function prizeCatalogRows(){
+  const map=new Map();
+  const ensure=(title,seed={})=>{
+    const normalizedTitle=norm(title||seed.title||seed.prize||'');
+    const key=prizeCatalogKey(normalizedTitle);
+    if(!key) return null;
+    if(!map.has(key)) map.set(key,{key,title:normalizedTitle,prize:norm(seed.prize||normalizedTitle),meta:null,usages:[],draws:[],usageIds:new Set(),drawMap:new Map()});
+    const entry=map.get(key);
+    if(seed.title&&!entry.title) entry.title=norm(seed.title);
+    if(seed.prize&&!entry.prize) entry.prize=norm(seed.prize);
+    return entry;
+  };
+  Object.entries(state.prizeCatalog||{}).forEach(([key,meta])=>{
+    if(!meta||typeof meta!=='object') return;
+    const entry=ensure(meta.title||meta.prize||String(key).replace(/_/g,' '),meta);
+    if(entry) entry.meta={...clone(meta),key:entry.key};
+  });
+  Object.entries(state.months||{}).sort(([a],[b])=>a.localeCompare(b)).forEach(([monthKey,m])=>{
+    (m?.distributions||[]).forEach((d,index)=>{
+      const entry=ensure(prizeCatalogTitleFromDistribution(d),{title:prizeCatalogTitleFromDistribution(d),prize:d?.prize});
+      if(!entry) return;
+      const usageId=String(d?.id||`${monthKey}_${index}`);
+      const usage={id:usageId,monthKey,date:prizeCatalogUseDate(d,monthKey),description:textNorm(d?.description||d?.notes||''),prize:norm(d?.prize||''),title:prizeCatalogTitleFromDistribution(d)};
+      const oldIndex=entry.usages.findIndex(row=>row.id===usageId);
+      if(oldIndex<0) entry.usages.push(usage);
+      else if(String(usage.date||'')>=String(entry.usages[oldIndex].date||'')) entry.usages[oldIndex]=usage;
+      entry.usageIds.add(usageId);
+      entry.usageIds.add(usageId);
+    });
+    (m?.items||[]).filter(item=>!item?.distributionId&&norm(item?.title||item?.prize)).forEach((item,index)=>{
+      const entry=ensure(item.title||item.prize,{title:item.title||item.prize,prize:item.prize});
+      if(!entry) return;
+      const usageId=`ITEM:${item.id||`${monthKey}_${index}`}`;
+      if(!entry.usageIds.has(usageId)){
+        entry.usageIds.add(usageId);
+        entry.usages.push({id:usageId,monthKey,date:String(item.date||`${monthKey}-01`).slice(0,10),description:textNorm(item.notes||item.description||''),prize:norm(item.prize||''),title:norm(item.title||item.prize||'')});
+      }
+    });
+  });
+  const addDraw=(title,row={})=>{
+    const entry=ensure(title,{title,prize:title});
+    if(!entry) return;
+    const sourceKey=String(row.sourceRef||row.itemId||'');
+    const drawId=sourceKey||[row.date||'',prizeCatalogPlain(row.program||''),entry.key].join('|');
+    let draw=entry.drawMap.get(drawId);
+    if(!draw){
+      draw={id:drawId,date:String(row.date||'').slice(0,10),program:norm(row.program||''),names:[],createdAt:row.createdAt||''};
+      entry.drawMap.set(drawId,draw);
+      entry.draws.push(draw);
+    }
+    const names=Array.isArray(row.names)?row.names:[row.name];
+    names.map(winnerUpper).filter(Boolean).forEach(name=>{if(!draw.names.includes(name)) draw.names.push(name);});
+    if(!draw.program&&row.program) draw.program=norm(row.program);
+    if(!draw.date&&row.date) draw.date=String(row.date).slice(0,10);
+  };
+  (winnerBankRecords||[]).forEach(record=>addDraw(winnerResolvedPrize(record),{sourceRef:record.sourceRef||'',date:record.date||'',program:record.program||'',name:record.name||'',createdAt:record.createdAt||''}));
+  Object.values(state.months||{}).forEach(m=>{
+    (m?.items||[]).filter(item=>itemEffectiveStatus(item)==='REALIZADO').forEach(item=>{
+      const sourceRef=`ITEM:${item.id||''}`;
+      const already=(winnerBankRecords||[]).some(record=>String(record.sourceRef||'')===sourceRef);
+      if(already) return;
+      const distribution=(m?.distributions||[]).find(d=>String(d?.id||'')===String(item.distributionId||''))||{};
+      const names=Array.isArray(item.winnerNames)&&item.winnerNames.length?item.winnerNames:String(item.winnerName||'').split(/\s*,\s*/).filter(Boolean);
+      addDraw(item.title||distribution.title||item.prize||distribution.prize,{itemId:sourceRef,date:item.date||'',program:item.program||'',names,createdAt:item.resultAt||item.updatedAt||''});
+    });
+  });
+  return [...map.values()].map(entry=>{
+    entry.usages.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.monthKey||'').localeCompare(String(a.monthKey||'')));
+    entry.draws.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+    const hasMeta=!!entry.meta;
+    const historicalDescription=entry.usages.find(row=>row.description)?.description||'';
+    const description=hasMeta?textNorm(entry.meta.description||''):historicalDescription;
+    const latestUseDate=entry.usages[0]?.date||entry.meta?.lastUsedDate||'';
+    return {
+      key:entry.key,
+      title:norm(entry.meta?.title||entry.title),
+      prize:norm(entry.meta?.prize||entry.prize||entry.title),
+      description,
+      titleStyle:clone(entry.meta?.titleStyle||defaultPromoTextStyle('title')),
+      descriptionStyle:clone(entry.meta?.descriptionStyle||defaultPromoTextStyle('desc')),
+      usageCount:entry.usageIds.size,
+      latestUseDate,
+      lastDrawDate:entry.draws[0]?.date||'',
+      usages:entry.usages,
+      draws:entry.draws,
+      manualDescription:entry.meta?.manualDescription===true
+    };
+  });
+}
+function prizeCatalogEntry(key){
+  return prizeCatalogRows().find(entry=>entry.key===key)||null;
+}
+function findPrizeCatalogTemplate(title){
+  const key=prizeCatalogKey(title);
+  if(!key) return null;
+  return prizeCatalogRows().find(entry=>entry.key===key&&entry.description)||null;
+}
+function prizeCatalogDrawText(draw){
+  const names=(draw?.names||[]).filter(Boolean);
+  const winnerText=names.length<=2?names.join(' + '):`${names.slice(0,2).join(' + ')} + ${names.length-2}`;
+  return winnerText||'GANHADOR NÃO INFORMADO';
+}
+function renderPrizeCatalog(){
+  const table=$('prizeCatalogTable');
+  const kpis=$('prizeCatalogKpis');
+  if(!table||!kpis) return;
+  const all=prizeCatalogRows();
+  const drawTotal=all.reduce((total,entry)=>total+entry.draws.length,0);
+  const usageTotal=all.reduce((total,entry)=>total+entry.usageCount,0);
+  kpis.innerHTML=`
+    <div class="prizeCatalogKpi"><span>TÍTULOS NO CATÁLOGO</span><strong>${all.length}</strong></div>
+    <div class="prizeCatalogKpi"><span>COM DESCRIÇÃO PADRÃO</span><strong>${all.filter(entry=>entry.description).length}</strong></div>
+    <div class="prizeCatalogKpi"><span>CADASTROS HISTÓRICOS</span><strong>${usageTotal}</strong></div>
+    <div class="prizeCatalogKpi"><span>SORTEIOS REGISTRADOS</span><strong>${drawTotal}</strong></div>`;
+  const query=prizeCatalogPlain($('prizeCatalogSearch')?.value||'');
+  const order=$('prizeCatalogOrder')?.value||'recent';
+  const rows=all.filter(entry=>{
+    if(!query) return true;
+    const haystack=prizeCatalogPlain([entry.title,entry.prize,entry.description,...entry.draws.flatMap(draw=>[draw.program,...draw.names])].join(' '));
+    return haystack.includes(query);
+  }).sort((a,b)=>{
+    if(order==='name') return a.title.localeCompare(b.title,'pt-BR');
+    if(order==='draw') return String(b.lastDrawDate||'').localeCompare(String(a.lastDrawDate||''))||a.title.localeCompare(b.title,'pt-BR');
+    return String(b.latestUseDate||b.lastDrawDate||'').localeCompare(String(a.latestUseDate||a.lastDrawDate||''))||a.title.localeCompare(b.title,'pt-BR');
+  });
+  table.innerHTML=rows.length?rows.map(entry=>{
+    const description=entry.description||'SEM DESCRIÇÃO PADRÃO. USE EDITAR PADRÃO PARA CADASTRAR.';
+    const visibleDescription=description.length>360?`${description.slice(0,357)}...`:description;
+    const draws=entry.draws.slice(0,3);
+    const drawHtml=draws.length?draws.map(draw=>`<div class="prizeCatalogDraw"><strong>${formatBR(draw.date)||'DATA NÃO INFORMADA'} · ${esc(draw.program||'PROGRAMA NÃO INFORMADO')}</strong><span>${esc(prizeCatalogDrawText(draw))}</span></div>`).join(''):'<span class="prizeCatalogNoDraw">NENHUM SORTEIO LOCALIZADO.</span>';
+    return `<tr><td class="prizeCatalogTitle"><strong>${esc(entry.title)}</strong><small>${esc(entry.prize!==entry.title?entry.prize:'CATÁLOGO AUTOMÁTICO')}</small></td><td><div class="prizeCatalogDescription ${entry.description?'':'empty'}">${esc(visibleDescription)}</div></td><td class="num">${entry.usageCount}</td><td>${formatBR(entry.latestUseDate)||'-'}</td><td><div class="prizeCatalogDraws">${drawHtml}</div></td><td><div class="prizeCatalogActions"><button class="btn red" type="button" data-prize-catalog-action="use" data-prize-key="${esc(entry.key)}">USAR</button><button class="btn" type="button" data-prize-catalog-action="edit" data-prize-key="${esc(entry.key)}">EDITAR PADRÃO</button></div></td></tr>`;
+  }).join(''):'<tr><td colspan="6"><div class="winnerEmpty">NENHUM PRÊMIO ENCONTRADO.</div></td></tr>';
+  populatePrizeCatalogDatalist(all);
+}
+function populatePrizeCatalogDatalist(entries=prizeCatalogRows()){
+  const datalist=$('distTitleDatalist');
+  if(!datalist) return;
+  datalist.innerHTML=entries.slice().sort((a,b)=>a.title.localeCompare(b.title,'pt-BR')).map(entry=>`<option value="${esc(entry.title)}">${esc(entry.prize||'')}</option>`).join('');
+}
+function openPrizeCatalogEditor(key){
+  const entry=prizeCatalogEntry(key);
+  if(!entry) return;
+  $('prizeCatalogKey').value=entry.key;
+  $('prizeCatalogTitle').value=entry.title;
+  $('prizeCatalogDescription').value=entry.description||'';
+  $('prizeCatalogUsageHistory').innerHTML=entry.usages.filter(usage=>usage.description).slice(0,12).map(usage=>`<div class="prizeCatalogDetailRow"><strong>${formatBR(usage.date)||usage.monthKey||'DATA NÃO INFORMADA'} · ${esc(usage.title||entry.title)}</strong><span>${esc(usage.description)}</span></div>`).join('')||'<div class="winnerEmpty">NENHUMA DESCRIÇÃO HISTÓRICA LOCALIZADA.</div>';
+  $('prizeCatalogDrawHistory').innerHTML=entry.draws.slice(0,12).map(draw=>`<div class="prizeCatalogDetailRow"><strong>${formatBR(draw.date)||'DATA NÃO INFORMADA'} · ${esc(draw.program||'PROGRAMA NÃO INFORMADO')}</strong><span>${esc(prizeCatalogDrawText(draw))}</span></div>`).join('')||'<div class="winnerEmpty">NENHUM SORTEIO LOCALIZADO.</div>';
+  openDrawer('prizeCatalogDrawer');
+}
+function savePrizeCatalogEntry(event){
+  event.preventDefault();
+  const key=$('prizeCatalogKey')?.value||'';
+  const entry=prizeCatalogEntry(key);
+  if(!entry) return;
+  const description=textNorm($('prizeCatalogDescription')?.value||'');
+  const previous=clone(state.prizeCatalog?.[key]||{});
+  const stored=rememberPrizeCatalog({id:previous.sourceDistributionId||'',title:entry.title,prize:entry.prize,description,titleStyle:entry.titleStyle,descriptionStyle:entry.descriptionStyle,startDate:entry.latestUseDate},{manual:true});
+  auditEvent('ALTERAÇÃO DA DESCRIÇÃO PADRÃO',entry.title,{targetId:key,before:previous,after:stored,origin:'CATÁLOGO DE PRÊMIOS',note:'O HISTÓRICO DAS DISTRIBUIÇÕES FOI PRESERVADO.'});
+  saveState(true);
+  closeDrawer('prizeCatalogDrawer');
+  render();
+  toast('DESCRIÇÃO PADRÃO ATUALIZADA · HISTÓRICO PRESERVADO.');
+}
+function openNewDistributionFromCatalog(key=''){
+  const entry=key?prizeCatalogEntry(key):null;
+  clearDistForm();
+  if(entry){
+    $('distPrize').value=entry.prize||entry.title;
+    $('distTitle').value=entry.title;
+    $('distDescription').value=entry.description||'';
+    $('distDescription').dataset.catalogAutofilled='1';
+    $('distDescription').dataset.catalogKey=entry.key;
+    setPromoStyleControls('distTitle',entry.titleStyle,'title');
+    setPromoStyleControls('distDesc',entry.descriptionStyle,'desc');
+    if($('distCatalogHint')) $('distCatalogHint').textContent=entry.description?'DESCRIÇÃO PADRÃO CARREGADA DO CATÁLOGO. VOCÊ PODE EDITÁ-LA NESTA DISTRIBUIÇÃO.':'TÍTULO LOCALIZADO, MAS AINDA SEM DESCRIÇÃO PADRÃO.';
+  }
+  setView('distribuicao');
+  openDrawer('distDrawer');
+  setTimeout(()=>$(entry?'distTotal':'distPrize')?.focus(),30);
 }
 function isTicketDist(d){
   return !!d && (d.prizeType === 'ingresso' || d.ticketMode === 'ingresso' || d.isTicket === true || d.ticketDefaultUnit === 'pair');
@@ -9315,6 +9640,7 @@ function render(){
   $('monthInput').value=state.currentMonth;renderFilters();renderStats();
   if(activeView==='programacao')renderProgramacao();
   else if(activeView==='distribuicao')renderDistribuicao();
+  else if(activeView==='premios')renderPrizeCatalog();
   else if(activeView==='digital')renderPromos();
   else if(activeView==='pauta')renderStudioPauta();
   else if(activeView==='horarios')renderProgramSchedules();
@@ -10015,6 +10341,7 @@ function renderResumo(){
 function populateDatalists(){
   const programs=[...new Set([...monthData().items.map(i=>norm(i.program)),...programSchedules().map(p=>norm(p.name))].filter(Boolean))].sort();
   $('programDatalist').innerHTML=programs.map(p=>`<option value="${esc(p)}"></option>`).join('');
+  populatePrizeCatalogDatalist();
 }
 function populateDistributionSelect(){
   const sel=$('itemDistribution'); const current=sel.value;
@@ -10469,6 +10796,7 @@ $('itemForm').addEventListener('submit',e=>{
       if(item.title){ linked.title=item.title; linked.titleStyle=item.titleStyle; }
       if(item.notes){ linked.description=item.notes; linked.notes=item.notes; linked.descriptionStyle=item.descriptionStyle; }
       linked.updatedAt=new Date().toISOString();
+      rememberPrizeCatalog(linked);
     }
   }
   const idx=monthData().items.findIndex(i=>i.id===idVal);
@@ -11524,6 +11852,9 @@ CADASTRE O PROGRAMA/DIA/HORÁRIO OU ESCOLHA OUTRO HORÁRIO VÁLIDO.`);
 
 function clearDistForm(){
   $('distForm').reset(); $('distId').value=''; $('distDrawerTitle').textContent='NOVA DISTRIBUIÇÃO'; $('distDate').value=todayISO(); $('distShow').value=''; $('distStartDate').value=todayISO(); $('distEndDate').value=todayISO(); $('distTotal').value=0; $('distTitle').value=''; $('distDescription').value='';
+  $('distDescription').dataset.catalogAutofilled='0';
+  $('distDescription').dataset.catalogKey='';
+  if($('distCatalogHint')) $('distCatalogHint').textContent='AO ESCOLHER UM TÍTULO JÁ CADASTRADO, A DESCRIÇÃO PADRÃO SERÁ CARREGADA AUTOMATICAMENTE.';
   if($('distPrizeType')) $('distPrizeType').value='brinde';
   if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value='unit';
   renderDistDestinations([{key:'ar',qty:0,unit:$('distTicketDefaultUnit')?.value||'unit',note:''}]);
@@ -11539,28 +11870,46 @@ function allDistributionsAcrossMonths(){
 }
 function findDistributionTemplateByTitle(title, excludeId=''){
   const target=norm(title);
-  if(!target || target.length < 4) return null;
+  if(!target || target.length < 2) return null;
+  const catalog=findPrizeCatalogTemplate(target);
+  if(catalog) return catalog;
   const rows=allDistributionsAcrossMonths()
     .filter(d=>d && d.id!==excludeId)
-    .filter(d=>norm(d.title || '') === target || norm(d.prize || '') === target)
+    .filter(d=>prizeCatalogKey(d.title||d.prize||'')===prizeCatalogKey(target))
     .filter(d=>norm(d.description || d.notes || ''))
-    .sort((a,b)=>String(b.createdAt||b.startDate||b.date||'').localeCompare(String(a.createdAt||a.startDate||a.date||'')));
+    .sort((a,b)=>String(b.endDate||b.startDate||b.date||b.createdAt||'').localeCompare(String(a.endDate||a.startDate||a.date||a.createdAt||'')));
   return rows[0] || null;
 }
 function applyDistributionTemplateFromTitle(force=false){
-  const title=$('distTitle')?.value || '';
+  const title=norm($('distTitle')?.value || $('distPrize')?.value || '');
   const currentId=$('distId')?.value || '';
   const found=findDistributionTemplateByTitle(title,currentId);
-  if(!found) return;
+  const hint=$('distCatalogHint');
+  if(!found){
+    if(hint&&title) hint.textContent='TÍTULO NOVO: A DESCRIÇÃO INFORMADA SERÁ SALVA COMO PADRÃO APÓS A CONFIRMAÇÃO.';
+    return false;
+  }
   const currentDesc=textNorm($('distDescription')?.value || '');
   const incomingDesc=textNorm(found.description || found.notes || '');
-  if(!incomingDesc) return;
-  if(currentDesc && !force) return;
+  const autoFilled=$('distDescription')?.dataset.catalogAutofilled==='1';
+  const foundKey=found.key||prizeCatalogKey(found.title||found.prize||title);
+  if(!incomingDesc){
+    if(hint) hint.textContent='TÍTULO LOCALIZADO, MAS AINDA SEM DESCRIÇÃO PADRÃO.';
+    return false;
+  }
+  if(!force&&autoFilled&&$('distDescription')?.dataset.catalogKey===foundKey&&currentDesc===incomingDesc) return true;
+  if(currentDesc && !force && !autoFilled) return false;
+  if(!norm($('distTitle')?.value)) $('distTitle').value=norm(found.title||found.prize||title);
+  if(!norm($('distPrize')?.value)) $('distPrize').value=norm(found.prize||found.title||title);
   $('distDescription').value=incomingDesc;
+  $('distDescription').dataset.catalogAutofilled='1';
+  $('distDescription').dataset.catalogKey=foundKey;
   if(found.descriptionStyle) setPromoStyleControls('distDesc', found.descriptionStyle, 'desc');
   if(found.titleStyle && !$('distId')?.value) setPromoStyleControls('distTitle', found.titleStyle, 'title');
+  if(hint) hint.textContent='DESCRIÇÃO PADRÃO CARREGADA DO CATÁLOGO. VOCÊ PODE EDITÁ-LA NESTA DISTRIBUIÇÃO.';
   updateDistPairsPreview();
-  toast('DESCRIÇÃO REAPROVEITADA DO CADASTRO ANTERIOR.');
+  toast('DESCRIÇÃO REAPROVEITADA DO CATÁLOGO DE PRÊMIOS.');
+  return true;
 }
 
 
@@ -11821,6 +12170,9 @@ function distributionCampaignSegmentTotal(distId,key){
 function editDist(distId){
   const d=distributionById(distId); if(!d) return;
   clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; renderDistDestinations(destinationsFromDistribution(d)); if($('distDailyLimit')) $('distDailyLimit').value=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1)); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
+  $('distDescription').dataset.catalogAutofilled='0';
+  $('distDescription').dataset.catalogKey=prizeCatalogKey(d.title||d.prize||'');
+  if($('distCatalogHint')) $('distCatalogHint').textContent='DESCRIÇÃO DESTA DISTRIBUIÇÃO. AO SALVAR, ELA TAMBÉM SERÁ A NOVA DESCRIÇÃO PADRÃO DO TÍTULO.';
 }
 function distributionDependencies(distId){
   const items=[],promos=[],pendingWithdrawals=[];
@@ -11877,6 +12229,7 @@ REDUZA/CANCELE OS SORTEIOS VINCULADOS ANTES DE DIMINUIR A QUANTIDADE.`); return 
   const wasNew=!existing.id;
   const before=existing.id?clone(existing):'';
   storeDistributionAcrossMonths(d,state.currentMonth,wasNew);
+  rememberPrizeCatalog(d);
   syncDistributionToLinkedRadioItems(d);
   auditEvent(wasNew?'CADASTRO DE PRÊMIO':'ALTERAÇÃO DE DISTRIBUIÇÃO',distributionLabel(d),{targetId:d.id,before,after:d,note:`COMPETÊNCIA ${state.currentMonth}`});
   saveState(true);
@@ -12540,10 +12893,25 @@ bind('promoKind','change',()=>{updatePromoKindMode(); updatePromoPreview();});
 bind('promoStation','change',()=>{populateProgramSelects(); updatePromoKindMode(); applyProgramHoursToPromo(); updatePromoPreview();});
 bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotationSlots('dist')));
 
+bind('prizeCatalogSearch','input',renderPrizeCatalog);
+bind('prizeCatalogOrder','change',renderPrizeCatalog);
+bind('newDistFromCatalogBtn','click',()=>openNewDistributionFromCatalog(''));
+bind('prizeCatalogForm','submit',savePrizeCatalogEntry);
 bind('distTitle','blur',()=>applyDistributionTemplateFromTitle(false));
 bind('distTitle','change',()=>applyDistributionTemplateFromTitle(false));
+bind('distTitle','input',()=>applyDistributionTemplateFromTitle(false));
 bind('distPrize','blur',()=>{ if(!norm($('distTitle')?.value)) applyDistributionTemplateFromTitle(false); });
+bind('distDescription','input',()=>{ $('distDescription').dataset.catalogAutofilled='0'; });
 bind('generateDistRadioBtn','click',()=>saveDistributionFromForm(true));
+
+document.addEventListener('click',event=>{
+  const button=event.target.closest('[data-prize-catalog-action]');
+  if(!button) return;
+  const action=button.dataset.prizeCatalogAction;
+  const key=button.dataset.prizeKey||'';
+  if(action==='use') openNewDistributionFromCatalog(key);
+  else if(action==='edit') openPrizeCatalogEditor(key);
+});
 
 if($('distRotationHours')) $('distRotationHours').addEventListener('change',()=>syncRotationAllFromHours('dist'));
 if($('distRotationAll')) $('distRotationAll').addEventListener('change',()=>{
