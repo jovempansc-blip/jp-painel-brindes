@@ -2433,13 +2433,23 @@ function promoResultVirtualRows(){
   });return rows;
 }
 
+function studioOpecTextType(p){const value=String(p?.opecTextType||p?.textType||'').toLowerCase();return value==='institutional'||value==='promotional'?value:'legacy';}
+function studioOpecClientId(p){return upper(p?.opecClientId||p?.clientId||'');}
+function studioOpecPublished(p){return String(p?.opecPublicationStatus||'published').toLowerCase()!=='draft';}
+function studioOpecVisible(p){const status=upper(p?.status||'PENDENTE');return !!p&&!p.opecArchived&&!p.opecForceEnded&&studioOpecPublished(p)&&status!=='CANCELADO'&&status!=='CANCELADA';}
+function studioOpecPriority(p){const type=studioOpecTextType(p);return type==='promotional'?30:type==='institutional'?20:10;}
+function studioOpecVersion(p){return Math.max(1,Number(p?.opecTextVersion)||1);}
+function studioOpecRawEligible(p,item){if(!isMerchan(p)||!studioOpecVisible(p)||!stationAllowed(p)||!promoDateAllowed(p,item?.date||''))return false;if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item)||!promoHourAllowed(p,item))return false;return true;}
+function studioEffectiveOpecTextFor(p,item){const clientId=studioOpecClientId(p);if(!clientId)return p;const candidates=[...(monthData().promos||[])].filter(row=>studioOpecClientId(row)===clientId&&normalizeStationValue(row?.station||STUDIO_STATION)===normalizeStationValue(p?.station||STUDIO_STATION)&&upper(row?.program||'')===upper(p?.program||'')&&studioOpecRawEligible(row,item));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')||String(b.id||'').localeCompare(String(a.id||'')))[0];}
+function studioEffectiveOpecTextAllows(p,item){const chosen=studioEffectiveOpecTextFor(p,item);return !chosen||chosen.id===p.id;}
+function studioOpecContextLabel(p){if(!isMerchan(p)||studioOpecTextType(p)==='legacy')return'';return studioOpecTextType(p)==='promotional'?`PROMOCIONAL ATÉ ${formatBR(p.endDate||p.drawDate||'')} · RETORNO INSTITUCIONAL AUTOMÁTICO`:`INSTITUCIONAL · VERSÃO ${studioOpecVersion(p)}`;}
 function studioMerchanScheduleMode(p){return String(p?.merchanScheduleMode||p?.rotationMode||'fixed').toLowerCase()==='rotation'?'rotation':'fixed';}
 function studioRotationHours(p){return (p?.readHours||[]).map(value=>formatStudioTime(value)).filter(Boolean).sort((a,b)=>minutesOf(a)-minutesOf(b));}
 function studioRotationSignature(p){return `${normalizeStationValue(p?.station||STUDIO_STATION)}|${upper(p?.program||'')}|${studioRotationHours(p).join('|')}`;}
 function studioRotationMembers(p,item){
   if(studioMerchanScheduleMode(p)!=='rotation') return [p];
   const sig=studioRotationSignature(p),date=item?.date||todayISO();
-  return [...(monthData().promos||[])].filter(row=>isMerchan(row)&&studioMerchanScheduleMode(row)==='rotation'&&studioRotationSignature(row)===sig&&stationAllowed(row)&&promoDateAllowed(row,date)&&programMatchesMerchan(row,item)&&promoHourAllowed(row,item)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
+  return [...(monthData().promos||[])].filter(row=>isMerchan(row)&&studioMerchanScheduleMode(row)==='rotation'&&studioRotationSignature(row)===sig&&studioOpecRawEligible(row,item)&&studioEffectiveOpecTextAllows(row,item)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
 }
 function studioRotationAssignedPromo(p,item){
   if(studioMerchanScheduleMode(p)!=='rotation') return p;
@@ -2452,6 +2462,7 @@ function studioRotationAssignedPromo(p,item){
 function studioRotationAllows(p,item){const assigned=studioRotationAssignedPromo(p,item);return !assigned||assigned.id===p.id;}
 function promoEligibleForItemHour(p,item){
   if(!p || !item) return false;
+  if(isMerchan(p)&&(!studioOpecRawEligible(p,item)||!studioEffectiveOpecTextAllows(p,item)))return false;
   if(!stationAllowed(p)) return false;
   if(!promoDateAllowed(p,item.date||'')) return false;
   if(isMerchan(p) && (!programMatchesMerchan(p,item) || !merchanHourAllowed(p,item))) return false;
@@ -2840,7 +2851,7 @@ async function confirmPromoReadV56(event){
         const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const index=rows.findIndex(row=>row?.id===p.id);if(index<0)return;found=true;
         const row=rows[index],keys=readHourKeys(item,row);if(keys.some(value=>validReadTimestamp(row?.readByHour?.[value]))){duplicate=true;return rows;}
         row.readByHour={...(row.readByHour||{}),[key]:iso};row.readLog=Array.isArray(row.readLog)?row.readLog:[];
-        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
+        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textSnapshot:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
         row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(item.program||'PROGRAMA');row.updatedAt=iso;rows[index]=row;changed=true;return rows;
       },undefined,false);
       if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;
@@ -3062,7 +3073,7 @@ function render(){
   const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
-      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${isMerchan(promo)&&studioMerchanScheduleMode(promo)==='rotation'?`<small class="rotationInfo">RODÍZIO · ${(promo.readHours||[]).map(formatStudioTime).join(' / ')}</small>`:''}</div>
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${studioOpecContextLabel(promo)?`<small class="rotationInfo">${esc(studioOpecContextLabel(promo))}</small>`:''}${isMerchan(promo)&&studioMerchanScheduleMode(promo)==='rotation'?`<small class="rotationInfo">RODÍZIO · ${(promo.readHours||[]).map(formatStudioTime).join(' / ')}</small>`:''}</div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
       <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA</button></div>

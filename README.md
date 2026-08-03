@@ -1,8 +1,20 @@
-# JP Workspace V56.8
+# JP Workspace V56.9
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Ajuste V56.9
+
+- O OPEC passou a cadastrar cada pauta por CLIENTE e classificar o texto como INSTITUCIONAL, PROMOCIONAL ou LEGADO.
+- O período do contrato foi separado da vigência de cada texto.
+- Durante a vigência de um promocional, o institucional do mesmo cliente, emissora, programa e horário é suspenso automaticamente.
+- Ao terminar o promocional, o institucional volta ao Estúdio sem depender de reativação manual ou de o painel estar aberto.
+- Nova aba CLIENTES E TEXTOS com pesquisa, filtros, versões, arquivo, retorno previsto e histórico de utilização.
+- Botão NOVO PROMOCIONAL reaproveita cliente, contrato, emissora, programa, horários e texto institucional de retorno.
+- Rascunhos e arquivados não aparecem nos Estúdios; conflitos entre promocionais sobrepostos são bloqueados.
+- Alterações em textos já lidos geram nova versão e cada confirmação preserva uma cópia exata do título e do texto apresentado ao locutor.
+- Registros anteriores permanecem intactos e aparecem como LEGADO até serem classificados pela OPEC.
 
 ## Ajuste V56.8
 

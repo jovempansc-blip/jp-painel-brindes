@@ -1,4 +1,23 @@
-# JP Workspace V56.8 — relatório de implantação
+# JP Workspace V56.9 — relatório de implantação
+
+## Banco de clientes e alternância de textos V56.9
+
+- Incluído no OPEC o cadastro de CLIENTE, TIPO DO TEXTO, INÍCIO/FIM DO CONTRATO e INÍCIO/FIM DA VIGÊNCIA DO TEXTO.
+- Textos podem ser classificados como INSTITUCIONAL, PROMOCIONAL ou LEGADO.
+- O promocional possui vínculo explícito com o institucional que deve retornar ao seu encerramento.
+- A decisão do texto é feita em tempo real por cliente, emissora, programa, data e horário; não depende de rotina agendada ou painel aberto.
+- Durante a vigência promocional, o institucional equivalente deixa de gerar leitura e não aparece duplicado no Estúdio.
+- Encerrada a vigência, o institucional volta automaticamente nos dois Estúdios.
+- Incluída a aba CLIENTES E TEXTOS com indicadores, pesquisa, filtros por emissora/tipo/status, versões, vigência, destino, última leitura e ações.
+- A partir de um institucional, a OPEC pode abrir um NOVO PROMOCIONAL já com cliente, contrato, programa, horários e retorno preenchidos.
+- Incluídos SALVAR RASCUNHO, PUBLICAR, NOVA VERSÃO, ENCERRAR PROMOCIONAL AGORA, ARQUIVAR e REATIVAR.
+- Dois promocionais do mesmo cliente não podem ocupar o mesmo programa, horário e período sem uma nova versão identificada.
+- Rascunhos, arquivados, cancelados e promocionais encerrados não são enviados aos locutores.
+- Cada leitura salva cliente, tipo, versão, título e texto exatos no registro de confirmação.
+- Alterações de conteúdo após leituras confirmadas são transformadas em nova versão, preservando a comprovação anterior.
+- Cadastros existentes não são modificados automaticamente e aparecem como LEGADO para classificação segura.
+- JP 101,7 e JP News 98,3 receberam a mesma resolução institucional/promocional; o Banco de Ganhadores continua exclusivo da JP 101,7.
+- Validação automatizada concluída com 156 testes e nenhuma falha.
 
 ## Caixa de seleção visível por segmento V56.8
 
@@ -136,7 +155,7 @@ Data da consolidação: 03/08/2026
 
 ## Testes executados
 
-- 139 verificações automatizadas: 0 falhas.
+- 156 verificações automatizadas: 0 falhas.
 - Sintaxe JavaScript das sete páginas.
 - Inicialização das sete páginas em ambiente de navegador simulado.
 - IDs únicos no DOM, botões identificados e referências locais válidas.
@@ -155,6 +174,9 @@ Data da consolidação: 03/08/2026
 - Exibição exclusiva do último sorteio na aba PRÊMIOS.
 - Seleção independente de IND. ou PAR nos destinos da distribuição.
 - Consumo e saldo real em distribuição mista, persistência por canal e recuperação na edição.
+- Cadastro de cliente, contrato, tipo institucional/promocional e retorno automático.
+- Prioridade promocional durante a vigência e retomada institucional após o encerramento.
+- Bloqueio de sobreposição, exclusão de rascunhos/arquivados dos Estúdios e preservação da versão efetivamente lida.
 
 ## Implantação
 
