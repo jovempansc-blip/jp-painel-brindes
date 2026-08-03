@@ -1,4 +1,12 @@
-# JP Workspace V56 — relatório de implantação
+# JP Workspace V56.1 — relatório de implantação
+
+## Correção V56.1 — título nos retornos
+
+- O painel agora prioriza o campo TÍTULO do prêmio vinculado, em vez da categoria genérica como INGRESSO ou CINEMA.
+- A regra atende a Home, o sino, a janela de retornos, as confirmações, o reaproveitamento, a Diretoria, os relatórios e a Recepção.
+- Na ausência de um título cadastrado, permanece o nome genérico como alternativa segura.
+- Corrigida a criação do item realocado para uma unidade retornada.
+- Validação automatizada concluída com 88 testes e nenhuma falha.
 
 Data da consolidação: 01/08/2026
 

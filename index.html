@@ -8113,7 +8113,7 @@ function closeCurrentMonthControlled(){
 }
 function reopenMonth(key=state.currentMonth){normalizePanelState(state);if(!state.systemMeta.closedMonths?.[key]){alert('ESTE MÊS NÃO ESTÁ MARCADO COMO FECHADO.');return;}if(!confirm(`REABRIR ${labelMonth(key)} PARA CORREÇÕES?`))return;delete state.systemMeta.closedMonths[key];auditEvent('REABERTURA MENSAL',labelMonth(key));saveState(true);render();toast('MÊS REABERTO.');}
 function reportDateDefaults(){const [y,m]=state.currentMonth.split('-').map(Number),last=new Date(y,m,0).getDate();return {from:`${state.currentMonth}-01`,to:`${state.currentMonth}-${String(last).padStart(2,'0')}`};}
-function reportPromoWinnerRows(){const rows=[];uniqueConsolidatedPromos().forEach(p=>promoAllWinnerObjects(p).forEach(w=>{const date=w.registeredAt?String(w.registeredAt).slice(0,10):(String(w.occurrenceKey||'').match(/^(\d{4}-\d{2}-\d{2})/)?.[1]||p.resultDate||p.drawDate||'');rows.push({date,name:w.name,prize:p.name||p.title||'PROMOÇÃO',program:p.local||'PROMOÇÃO',deliveredAt:w.deliveredAt||'',pickupDays:p.pickupBusinessDays||5});}));return rows;}
+function reportPromoWinnerRows(){const rows=[];uniqueConsolidatedPromos().forEach(p=>{const dist=distributionCampaignCopies(p.distributionId||'')[0]?.d||{};promoAllWinnerObjects(p).forEach(w=>{const date=w.registeredAt?String(w.registeredAt).slice(0,10):(String(w.occurrenceKey||'').match(/^(\d{4}-\d{2}-\d{2})/)?.[1]||p.resultDate||p.drawDate||'');rows.push({date,name:w.name,prize:returnPromoPrize(p,w,dist),program:p.local||'PROMOÇÃO',deliveredAt:w.deliveredAt||'',pickupDays:p.pickupBusinessDays||5});});});return rows;}
 function renderAdminReports(){
   const host=$('adminReportContent');if(!host)return;const def=reportDateDefaults();if(!$('adminReportFrom').value)$('adminReportFrom').value=def.from;if(!$('adminReportTo').value)$('adminReportTo').value=def.to;const from=$('adminReportFrom').value,to=$('adminReportTo').value,type=$('adminReportType').value||'all';
   const inRange=d=>d&&d>=from&&d<=to;const months=Object.entries(state.months||{}).filter(([key])=>key>=from.slice(0,7)&&key<=to.slice(0,7));
@@ -9524,7 +9524,14 @@ function winnerRegisteredDate(p,w){
 }
 function returnItemPrize(item,month){
   const distribution=(month?.distributions||[]).find(d=>d?.id===item?.distributionId)||{};
-  return norm(item?.prize||item?.title||distribution.prize||distribution.title||'PRÊMIO');
+  return norm(item?.prizeTitle||item?.title||distribution.title||distribution.show||item?.prize||distribution.prize||'PRÊMIO');
+}
+function returnPromoPrize(p,w,distribution={}){
+  return norm(
+    w?.prizeTitle||w?.title||w?.prize||
+    p?.prizeTitle||distribution?.title||distribution?.show||
+    p?.title||p?.name||distribution?.prize||'PROMOÇÃO'
+  );
 }
 function returnRecords(includeHandled=false){
   const now=new Date(),records=[];
@@ -9539,7 +9546,7 @@ function returnRecords(includeHandled=false){
       if(w.reuseStatus&&!includeHandled) return;
       const dist=distributionCampaignCopies(p.distributionId||'')[0]?.d||{};
       const monthKey=(registered?`${registered.getFullYear()}-${String(registered.getMonth()+1).padStart(2,'0')}`:(keyDate||p.drawDate||state.currentMonth).slice(0,7));
-      records.push({kind:'promo',monthKey,promoId:p.id,winnerIndex:w._idx,occurrenceKey:w.occurrenceKey||'',id:`promo:${p.id}:${w.occurrenceKey||'top'}:${w._idx}:${winnerPersonKey(w.name)}`,distributionId:p.distributionId||'',prize:norm(p.name||p.title||dist.prize||'PROMOÇÃO'),winner:w.name,deadline,deadlineDays:days,deadlineLabel:deadline.toLocaleDateString('pt-BR'),registeredLabel:registered?registered.toLocaleString('pt-BR'):'',status:w.reuseStatus||'pendente',source:p.local||'PROMOÇÃO',promo:p});
+      records.push({kind:'promo',monthKey,promoId:p.id,winnerIndex:w._idx,occurrenceKey:w.occurrenceKey||'',id:`promo:${p.id}:${w.occurrenceKey||'top'}:${w._idx}:${winnerPersonKey(w.name)}`,distributionId:p.distributionId||'',prize:returnPromoPrize(p,w,dist),winner:w.name,deadline,deadlineDays:days,deadlineLabel:deadline.toLocaleDateString('pt-BR'),registeredLabel:registered?registered.toLocaleString('pt-BR'):'',status:w.reuseStatus||'pendente',source:p.local||'PROMOÇÃO',promo:p});
     });
   });
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
@@ -9653,8 +9660,8 @@ function reuseReturnedPrize(recordId){
     distributionId:d.id||'',
     prize:distributionLabel(d) || r.prize,
     title:d.title || r.prize,
-    qty:Math.max(1,num(plan.qty)||1),
-    winnerCapacity:Math.max(1,num(plan.qty)||1),
+    qty:1,
+    winnerCapacity:1,
     channel:'RÁDIO',
     station:'JP1017',
     status:'PENDENTE',

@@ -821,6 +821,7 @@ function itemTitle(i){const d=distributionById(i.distributionId);return upper(i.
 function itemDesc(i){const d=distributionById(i.distributionId);return i.notes||d.description||'';}
 function channelName(i){return upper(i.channel||'RÁDIO');}
 function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
+function promoPrizeTitle(p){const d=distributionById(p?.distributionId);return upper(p?.prizeTitle||d.title||d.show||p?.title||p?.name||d.prize||'PROMOÇÃO');}
 firebase.initializeApp(FIREBASE_CONFIG);
 const firebaseRef=firebase.database().ref(FIREBASE_ROOT_PATH);
 const receptionPendingSaves=new Set();
@@ -959,7 +960,7 @@ function resultRowsForDate(date){
     const days=Math.max(1,Math.min(5,Number(p.pickupBusinessDays)||5));
     promoWinnerOccurrences(p).filter(w=>w.occurrenceDate===date).forEach(w=>{
       const reg=registeredDateForPromo({...p,resultDate:w.occurrenceDate,drawDate:w.occurrenceDate,drawTime:w.occurrenceTime},w),deadline=deadlineInfo(reg,w.deliveredAt||'',days);
-      promos.push({source:'promo',id:p.id,winnerIndex:w.winnerIndex,occurrenceKey:w.occurrenceKey||'',date,time:w.occurrenceTime||p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${w.occurrenceTime||(p.drawTime||'23:59').slice(0,5)}`,title:promoTitle(p),sub:upper(p.local||p.type||'PROMOÇÃO'),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',deadlineLabel:deadline.label,deadlineClass:deadline.className,expired:!w.deliveredAt&&deadline.expired,deadlineDays:days});
+      promos.push({source:'promo',id:p.id,winnerIndex:w.winnerIndex,occurrenceKey:w.occurrenceKey||'',date,time:w.occurrenceTime||p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${w.occurrenceTime||(p.drawTime||'23:59').slice(0,5)}`,title:promoPrizeTitle(p),sub:upper(p.local||p.type||'PROMOÇÃO'),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',deadlineLabel:deadline.label,deadlineClass:deadline.className,expired:!w.deliveredAt&&deadline.expired,deadlineDays:days});
     });
   });
   return [...items,...promos].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title)||a.result.localeCompare(b.result));
