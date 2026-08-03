@@ -1,4 +1,25 @@
-# JP Workspace V56.6 — relatório de implantação
+# JP Workspace V56.8 — relatório de implantação
+
+## Caixa de seleção visível por segmento V56.8
+
+- O campo de modo de cada destino deixou de ter aparência de indicador cinza.
+- Cada linha mostra uma caixa branca com seta vermelha e as opções `INDIVIDUAL` e `PAR`.
+- Rádio, App, Redes Sociais, Reservado, Externa, Camarote e Camarim continuam sendo configurados de forma independente.
+- A largura do campo foi ampliada para exibir `INDIVIDUAL` sem cortar o texto.
+- O cálculo e a gravação por destino implementados na V56.7 foram mantidos integralmente.
+- Validação automatizada concluída com 139 testes e nenhuma falha.
+
+## Distribuição independente por destino V56.7
+
+- O indicador fixo de unidade foi substituído por um seletor `IND.` / `PAR` em cada destino da nova distribuição.
+- Rádio, App, Redes Sociais, Reservado, Externa, Camarote e Camarim podem usar modos diferentes dentro do mesmo prêmio.
+- O campo PADRÃO DE ENTREGA define somente o modo inicial dos novos destinos; escolhas já feitas por linha são preservadas.
+- O resumo identifica o modo de cada segmento e, quando a distribuição é mista, calcula consumo e saldo em unidades físicas.
+- Um registro individual consome uma unidade; um registro em par consome duas unidades.
+- O Firebase recebe o modo de cada canal em `ticketUnits`, sem alterar a estrutura dos registros existentes.
+- Ao editar uma distribuição, cada destino recupera seu modo salvo, com compatibilidade para registros antigos que possuíam apenas o padrão geral.
+- A validação automatizada confirmou troca imediata, persistência, reabertura e cálculo de saldo misto.
+- Validação automatizada concluída com 137 testes e nenhuma falha.
 
 ## Catálogo restrito e compacto V56.6
 
@@ -115,7 +136,7 @@ Data da consolidação: 03/08/2026
 
 ## Testes executados
 
-- 128 verificações automatizadas: 0 falhas.
+- 139 verificações automatizadas: 0 falhas.
 - Sintaxe JavaScript das sete páginas.
 - Inicialização das sete páginas em ambiente de navegador simulado.
 - IDs únicos no DOM, botões identificados e referências locais válidas.
@@ -132,6 +153,8 @@ Data da consolidação: 03/08/2026
 - Agrupamento de vários ganhadores no mesmo sorteio e abertura de nova distribuição preenchida pelo catálogo.
 - Exclusão de títulos existentes somente no Banco de Ganhadores das opções da Distribuição Geral.
 - Exibição exclusiva do último sorteio na aba PRÊMIOS.
+- Seleção independente de IND. ou PAR nos destinos da distribuição.
+- Consumo e saldo real em distribuição mista, persistência por canal e recuperação na edição.
 
 ## Implantação
 

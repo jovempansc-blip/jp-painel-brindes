@@ -1150,7 +1150,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 .destList{display:grid;gap:7px}
 .destRow{
   display:grid;
-  grid-template-columns:minmax(120px,1fr) 88px 90px 95px minmax(150px,1.3fr) 30px;
+  grid-template-columns:minmax(120px,1fr) 88px 112px 95px minmax(150px,1.3fr) 30px;
   gap:7px;
   align-items:center;
   border:1px solid #e1e7ee;
@@ -1184,7 +1184,27 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 }
 .destReserveNote{display:none}
 .destRow.isReserve .destReserveNote{display:block}
-.destRow:not(.isTicket) .destUnit{display:none}
+.destRow .destUnit{display:block}
+.destRow .destUnit{
+  appearance:none;
+  -webkit-appearance:none;
+  cursor:pointer;
+  text-align:left;
+  text-align-last:left;
+  padding-left:12px;
+  padding-right:28px;
+  border-color:#cbd3df;
+  background:
+    linear-gradient(45deg,transparent 50%,#c9002b 50%) calc(100% - 14px) 12px/5px 5px no-repeat,
+    linear-gradient(135deg,#c9002b 50%,transparent 50%) calc(100% - 9px) 12px/5px 5px no-repeat,
+    #fff;
+  box-shadow:0 0 0 2px rgba(201,0,43,.035);
+}
+.destRow .destUnit:hover,
+.destRow .destUnit:focus{
+  border-color:#c9002b;
+  box-shadow:0 0 0 3px rgba(201,0,43,.09);
+}
 .destRow:not(.isTicket) .destConsumption{grid-column:auto}
 .destActions{
   display:flex;
@@ -3831,7 +3851,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
           </div>
           <div class="field"><label>TOTAL UNITÁRIO</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"></div>
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
-          <div class="field"><label>MODO DE ENTREGA</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">CONVERTE O TOTAL UNITÁRIO EM PRÊMIOS DISTRIBUÍVEIS.</span></div>
+          <div class="field"><label>PADRÃO DE ENTREGA</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE O MODO INICIAL. CADA DESTINO PODE SER ALTERADO ENTRE IND. E PAR.</span></div>
           <div class="field"><label>DISPONÍVEL</label><input class="control" id="distPairsPreview" readonly value="0 PRÊMIOS"></div>
 
           
@@ -11945,16 +11965,13 @@ function renderDistDestinations(rows=[]){
     const key=r.key;
     const label=DESTINATION_LABELS[key]||key;
     const qty=num(r.qty);
-    const rowUnit=key==='reservado' ? normalizeReservationUnit(r.unit||globalUnit) : globalUnit;
-    const unitLabel=rowUnit==='pair'?'PAR':'IND.';
+    const rowUnit=normalizeReservationUnit(r.unit||globalUnit);
     const consumed=destinationConsumed(qty,rowUnit,true);
-    const reserveUnitControl = key==='reservado'
-      ? `<select class="destUnit destReserveUnit" aria-label="TIPO DA RESERVA"><option value="unit" ${rowUnit==='unit'?'selected':''}>INDIVIDUAL</option><option value="pair" ${rowUnit==='pair'?'selected':''}>PAR</option></select>`
-      : `<div class="destUnitFixed">${unitLabel}</div><input type="hidden" class="destUnit" value="${globalUnit}">`;
+    const unitControl = `<select class="destUnit ${key==='reservado'?'destReserveUnit':''}" aria-label="MODO DE ENTREGA ${esc(label)}" title="ESCOLHA INDIVIDUAL OU PAR PARA ${esc(label)}"><option value="unit" ${rowUnit==='unit'?'selected':''}>INDIVIDUAL</option><option value="pair" ${rowUnit==='pair'?'selected':''}>PAR</option></select>`;
     return `<div class="destRow ${rowUnit==='pair'?'isTicket':''} ${key==='reservado'?'isReserve':''}" data-dest-row data-key="${esc(key)}" data-reserve-id="${esc(r.id||'')}">
       <div class="destName">${esc(label)}</div>
       <input class="destQty" type="number" min="0" step="1" value="${qty}" aria-label="QUANTIDADE ${esc(label)}">
-      ${reserveUnitControl}
+      ${unitControl}
       <div class="destConsumption">${rowUnit==='pair'?`${consumed} UNID.`:`${consumed} UNID.`}</div>
       <input class="destReserveNote" value="${esc(r.note||'')}" placeholder="DESCREVA A SOLICITAÇÃO INTERNA / RESERVA">
       <button class="actionIcon danger destRemove" type="button" title="REMOVER"><span class="iconGlyph">🗑</span></button>
@@ -11969,8 +11986,8 @@ function collectDistDestinationValues(existing={}){
     const key=row.dataset.key;
     const qty=num(row.querySelector('.destQty')?.value);
     if(!key || qty<=0) return;
+    const unit=normalizeReservationUnit(row.querySelector('.destUnit')?.value || globalUnit);
     if(key==='reservado'){
-      const unit=normalizeReservationUnit(row.querySelector('.destReserveUnit, .destUnit')?.value || globalUnit);
       const note=norm(row.querySelector('.destReserveNote')?.value || '');
       result.reservas.push({id:row.dataset.reserveId||id('RSV'),qty,unit,note});
       result.reservado+=qty;
@@ -11978,7 +11995,7 @@ function collectDistDestinationValues(existing={}){
       if(note) result.reservadoNote = result.reservadoNote ? `${result.reservadoNote} · ${note}` : note;
     }else{
       result[key]=(result[key]||0)+qty;
-      result.ticketUnits[key]=globalUnit;
+      result.ticketUnits[key]=unit;
     }
   });
   result.ticketUnits.reservado='mixed';
@@ -11986,7 +12003,7 @@ function collectDistDestinationValues(existing={}){
 }
 function destinationsFromDistribution(d){
   const base=['ar','app','rs','rua','camarote','camarim'].map(key=>({
-    key,qty:num(d[key]),unit:distributionDeliveryUnit(d),note:''
+    key,qty:num(d[key]),unit:ticketUnit(d,key),note:''
   })).filter(r=>r.qty>0);
   const reservas=reservationEntries(d).map(r=>({key:'reservado',id:r.id,qty:num(r.qty),unit:normalizeReservationUnit(r.unit),note:r.note||''}));
   return base.concat(reservas);
@@ -11999,7 +12016,7 @@ function addDistributionDestination(key){
     key:row.dataset.key,
     id:row.dataset.reserveId || '',
     qty:num(row.querySelector('.destQty')?.value),
-    unit:row.dataset.key==='reservado' ? normalizeReservationUnit(row.querySelector('.destReserveUnit, .destUnit')?.value || distributionFormDeliveryUnit()) : distributionFormDeliveryUnit(),
+    unit:normalizeReservationUnit(row.querySelector('.destUnit')?.value || distributionFormDeliveryUnit()),
     note:row.querySelector('.destReserveNote')?.value || ''
   })).filter(r=>r.qty>0 || r.key==='reservado');
   rows.push({key:selected,id:selected==='reservado'?id('RSV'):'',qty:1,unit:distributionFormDeliveryUnit(),note:''});
@@ -12016,35 +12033,38 @@ function updateDistDestinationSummary(){
   const odd=formTechnicalRemainder();
   let distributedPackages=0;
   let consumedReal=0;
+  const activeUnits=new Set();
   const labels=[];
   distDestRows().forEach(row=>{
     const key=row.dataset.key;
     const qty=num(row.querySelector('.destQty')?.value);
-    const unit=key==='reservado' ? normalizeReservationUnit(row.querySelector('.destReserveUnit, .destUnit')?.value || globalUnit) : globalUnit;
+    const unit=normalizeReservationUnit(row.querySelector('.destUnit')?.value || globalUnit);
     const consumed=destinationConsumed(qty,unit,true);
     const c=row.querySelector('.destConsumption');
     if(c) c.textContent=`${consumed} UNID.`;
-    const fixed=row.querySelector('.destUnitFixed');
-    if(fixed) fixed.textContent=unit==='pair'?'PAR':'IND.';
-    const hidden=row.querySelector('input.destUnit');
-    if(hidden) hidden.value=unit;
     row.classList.toggle('isTicket', unit==='pair');
     if(qty>0){
+      activeUnits.add(unit);
       distributedPackages+=qty;
       consumedReal+=consumed;
       labels.push(`${DESTINATION_LABELS[key]||key}: ${qty} ${reservationUnitLong(unit,qty)}`);
     }
   });
   const saldoReal=total-consumedReal;
-  const saldoPackages=Math.floor(saldoReal/mult);
+  const mixed=activeUnits.size>1;
+  const effectiveUnit=activeUnits.size===1 ? [...activeUnits][0] : globalUnit;
+  const effectiveMult=effectiveUnit==='pair'?2:1;
+  const saldoPackages=Math.floor(saldoReal/effectiveMult);
   box.classList.toggle('bad',saldoReal<0);
-  const unitName=globalUnit==='pair'?'PARES':'UNIDADES';
+  const unitName=effectiveUnit==='pair'?'PARES':'UNIDADES';
   const distributedLabel=`${distributedPackages} REGISTRO(S)`;
-  const saldoLabel=`${saldoPackages} ${unitName}`;
+  const saldoLabel=mixed?`${saldoReal} UNIDADES`:`${saldoPackages} ${unitName}`;
   const consumedLabel=`${consumedReal} UNIDADES CONSUMIDAS`;
-  const saldoRealLabel=globalUnit==='pair'?` / ${saldoReal} UNIDADES RESTANTES`:` / ${saldoReal} UNIDADES RESTANTES`;
+  const saldoRealLabel=mixed?'':` / ${saldoReal} UNIDADES RESTANTES`;
+  const modeLabel=mixed?'MISTO · IND. + PAR':(effectiveUnit==='pair'?'PAR':'INDIVIDUAL');
+  const availableLabel=mixed?`${total} UNIDADES`:`${Math.floor(total/effectiveMult)} ${unitName}`;
   box.innerHTML = labels.length
-    ? `<strong>${esc(labels.join(' · '))}</strong><span>TOTAL UNITÁRIO ${total} · DISTRIBUÍVEL ${available} ${unitName} · DISTRIBUÍDO ${distributedLabel} · ${consumedLabel} · SALDO ${saldoLabel}${saldoRealLabel}${odd?` · SOBRA TÉCNICA ${odd} UNID.`:''}</span>`
+    ? `<strong>${esc(labels.join(' · '))}</strong><span>TOTAL UNITÁRIO ${total} · MODO ${modeLabel} · DISTRIBUÍDO ${distributedLabel} · ${consumedLabel} · SALDO ${saldoLabel}${saldoRealLabel}${!mixed&&effectiveUnit==='pair'&&total%2?` · SOBRA TÉCNICA ${total%2} UNID.`:''}</span>`
     : `<strong>NENHUM DESTINO ADICIONADO</strong><span>TOTAL UNITÁRIO ${total} · DISTRIBUÍVEL ${available} ${unitName} · DISTRIBUÍDO 0 · SALDO ${available} ${unitName}${odd?` · SOBRA TÉCNICA ${odd} UNID.`:''}</span>`;
   if(conv){
     const cells=conv.querySelectorAll('div');
@@ -12054,10 +12074,10 @@ function updateDistDestinationSummary(){
       cell.innerHTML=`<span>${esc(label)}</span><strong>${esc(value)}</strong>${sub?`<small>${esc(sub)}</small>`:''}`;
     };
     setCell(0,'TOTAL UNITÁRIO',String(total));
-    setCell(1,'MODO DE ENTREGA',globalUnit==='pair'?'PAR':'INDIVIDUAL');
-    setCell(2,'DISTRIBUÍVEL',`${available} ${unitName}`, odd?`${odd} UNID. SEM PAR`:'' );
+    setCell(1,'MODO DE ENTREGA',modeLabel);
+    setCell(2,'DISTRIBUÍVEL',availableLabel, !mixed&&effectiveUnit==='pair'&&total%2?`${total%2} UNID. SEM PAR`:'' );
     setCell(3,'DISTRIBUÍDO',distributedLabel, consumedLabel);
-    setCell(4,'SALDO',saldoLabel, `${saldoReal} UNIDADES RESTANTES`);
+    setCell(4,'SALDO',saldoLabel, mixed?'':`${saldoReal} UNIDADES RESTANTES`);
     conv.classList.toggle('bad',saldoReal<0);
   }
 }
@@ -12077,7 +12097,7 @@ function updateDistPairsPreview(){
     key:row.dataset.key,
     id:row.dataset.reserveId || '',
     qty:num(row.querySelector('.destQty')?.value),
-    unit:row.dataset.key==='reservado' ? normalizeReservationUnit(row.querySelector('.destReserveUnit, .destUnit')?.value || unit) : unit,
+    unit:normalizeReservationUnit(row.querySelector('.destUnit')?.value || unit),
     note:row.querySelector('.destReserveNote')?.value || ''
   }));
   if(rows.length) renderDistDestinations(rows);

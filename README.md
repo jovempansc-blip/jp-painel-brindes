@@ -1,8 +1,23 @@
-# JP Workspace V56.6
+# JP Workspace V56.8
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Ajuste V56.8
+
+- O modo de cada segmento agora aparece claramente como caixa de seleção branca e editável.
+- As opções são exibidas por extenso como `INDIVIDUAL` e `PAR`, com seta vermelha de abertura.
+- O campo recebeu destaque ao passar o mouse ou selecionar, eliminando a aparência anterior de indicador cinza bloqueado.
+- A lógica independente e o cálculo físico de unidades da V56.7 foram preservados.
+
+## Ajuste V56.7
+
+- Cada destino da distribuição — Rádio, App, Redes Sociais, Reservado, Externa, Camarote e Camarim — permite escolher `IND.` ou `PAR` de forma independente.
+- A escolha padrão continua disponível para iniciar novos destinos, mas não substitui uma decisão já feita em outra linha.
+- Distribuições mistas passam a mostrar consumo e saldo em unidades físicas: 1 individual consome 1 unidade e 1 par consome 2 unidades.
+- O modo escolhido em cada destino é salvo no Firebase e restaurado ao editar novamente o prêmio.
+- A validação impede que a combinação de individuais e pares ultrapasse o total unitário disponível.
 
 ## Ajuste V56.1
 
