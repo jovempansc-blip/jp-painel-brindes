@@ -3277,14 +3277,16 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 }
 .appHeader .syncStatusBtn{
   width:16px!important;min-width:16px!important;height:16px!important;min-height:16px!important;padding:0!important;
-  margin:0 2px 0 0!important;border-radius:999px!important;border:2px solid #c7d2df!important;background:#97a5b6!important;box-shadow:none!important;
+  margin:0 2px 0 0!important;border-radius:999px!important;border:2px solid #f0c98c!important;background:#fffaf2!important;box-shadow:0 0 0 3px rgba(208,134,22,.10)!important;
   display:inline-flex!important;align-items:center!important;justify-content:center!important;position:relative!important;
 }
-.appHeader .syncStatusBtn .syncDot{width:6px!important;height:6px!important;border-radius:50%!important;background:rgba(255,255,255,.94)!important;display:block!important}
-.appHeader .syncStatusBtn.online{background:#0f9f56!important;border-color:#0f9f56!important}
-.appHeader .syncStatusBtn.saving{background:#d08616!important;border-color:#d08616!important}
-.appHeader .syncStatusBtn.error{background:#c92b48!important;border-color:#c92b48!important}
-.appHeader .syncStatusBtn.local{background:#d08616!important;border-color:#d08616!important}
+.appHeader .syncStatusBtn .syncDot{width:8px!important;height:8px!important;border-radius:50%!important;background:#d08616!important;display:block!important}
+.appHeader .syncStatusBtn.online{background:#f2fff8!important;border-color:#8edbb5!important;box-shadow:0 0 0 3px rgba(15,159,86,.10)!important}
+.appHeader .syncStatusBtn.online .syncDot{background:#0f9f56!important}
+.appHeader .syncStatusBtn.saving,.appHeader .syncStatusBtn.local{background:#fffaf2!important;border-color:#f0c98c!important;box-shadow:0 0 0 3px rgba(208,134,22,.10)!important}
+.appHeader .syncStatusBtn.saving .syncDot,.appHeader .syncStatusBtn.local .syncDot{background:#d08616!important}
+.appHeader .syncStatusBtn.error{background:#fff5f7!important;border-color:#ee9cab!important;box-shadow:0 0 0 3px rgba(201,43,72,.10)!important}
+.appHeader .syncStatusBtn.error .syncDot{background:#c92b48!important}
 .appHeader .syncStatusBtn::after{
   content:attr(data-sync-tip);position:absolute;left:50%;bottom:calc(100% + 10px);
   transform:translateX(-50%) translateY(4px);min-width:max-content;max-width:min(520px,calc(100vw - 28px));
@@ -6503,11 +6505,11 @@ function updateSyncStatus(mode='local',text='LOCAL'){
   if(!btn) return;
   btn.classList.remove('online','saving','error','local');
   btn.classList.add(mode);
-  const statusTitle = mode==='online' ? (firebaseBaseEmpty?'FIREBASE CONECTADO — BASE OFICIAL VAZIA':'FIREBASE ONLINE') : mode==='saving' ? 'CONECTANDO OU SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'SEM CONEXÃO COM O FIREBASE — RECONECTANDO';
+  const statusTitle = mode==='online' ? (firebaseBaseEmpty?'FIREBASE CONECTADO — BASE OFICIAL VAZIA':'FIREBASE ONLINE') : mode==='saving' ? 'CONECTANDO OU SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'MODO LOCAL — SEM CONEXÃO COM O FIREBASE';
   btn.title = statusTitle;
   btn.setAttribute('aria-label',statusTitle);
   const dbHost = String(FIREBASE_CONFIG.databaseURL||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
-  const connLabel = mode==='online' ? 'CONECTADO' : mode==='saving' ? 'SINCRONIZANDO' : mode==='error' ? 'ERRO DE CONEXÃO' : 'RECONECTANDO';
+  const connLabel = mode==='online' ? 'CONECTADO AO FIREBASE' : mode==='saving' ? 'CONECTANDO / SINCRONIZANDO' : mode==='error' ? 'ERRO DE CONEXÃO' : 'MODO LOCAL';
   btn.setAttribute('data-sync-tip', `${connLabel} • ${FIREBASE_CONFIG.projectId||'FIREBASE'} • ${dbHost} • /${FIREBASE_ROOT_PATH}`);
   if(statusText) statusText.textContent = text;
   if(updated){
@@ -6546,7 +6548,7 @@ async function handleEmptyFirebase(){
   firebaseBaseEmpty = true;
   firebaseServerLoaded = true;
   normalizePanelState(state);
-  updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
+  updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
   renderBackup();
 }
 function initFirebaseSync(){
@@ -6571,7 +6573,7 @@ function initFirebaseSync(){
         updateSyncStatus('online','FIREBASE ONLINE');
         if(firebasePendingSave && firebaseServerLoaded) queueApiSave(80);
       }else{
-        updateSyncStatus('local','RECONECTANDO');
+        updateSyncStatus('local','MODO LOCAL');
       }
     }, err=>{
       firebaseConnectionKnown = true;
@@ -6619,6 +6621,23 @@ function syncStateFromApi(force=false){
     }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
   }
 }
+function handleBrowserConnectionChange(){
+  if(navigator.onLine===false){
+    firebaseConnected=false;
+    firebaseConnectionKnown=true;
+    updateSyncStatus('local','MODO LOCAL');
+    return;
+  }
+  if(!firebaseReady){
+    firebaseStarted=false;
+    initFirebaseSync();
+    return;
+  }
+  if(!firebaseConnected){
+    updateSyncStatus('saving','CONECTANDO');
+    syncStateFromApi(true);
+  }
+}
 function queueApiSave(delay=80){
   clearTimeout(firebaseSaveTimer);
   updateSyncStatus('saving','SALVANDO');
@@ -6630,7 +6649,7 @@ async function saveStateToApi(){
     if(!firebaseReady || !firebaseRef) return;
   }
   if(!firebaseConnected){
-    updateSyncStatus(firebaseConnectionKnown?'local':'saving',firebaseConnectionKnown?'RECONECTANDO':'CONECTANDO');
+    updateSyncStatus(firebaseConnectionKnown?'local':'saving',firebaseConnectionKnown?'MODO LOCAL':'CONECTANDO');
     return;
   }
   try{
@@ -6682,7 +6701,7 @@ async function saveStateToApi(){
     firebaseBaseEmpty=false;
     firebaseServerLoaded=true;
     firebasePendingSave=false;
-    updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
+    updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
     renderBackup();
     if(hadPendingSave) toast('ALTERAÇÕES CONFIRMADAS NO FIREBASE.');
   }catch(err){
@@ -7592,7 +7611,7 @@ async function forceUploadLocalToFirebase(){
   initFirebaseSync();
   if(!firebaseReady || !firebaseRef || !firebaseConnected){
     alert('FIREBASE NÃO CONECTADO. AGUARDE A RECONEXÃO ANTES DE ENVIAR A BASE.');
-    updateSyncStatus(firebaseConnectionKnown?'local':'saving',firebaseConnectionKnown?'RECONECTANDO':'CONECTANDO');
+    updateSyncStatus(firebaseConnectionKnown?'local':'saving',firebaseConnectionKnown?'MODO LOCAL':'CONECTANDO');
     return;
   }
   try{
@@ -7622,7 +7641,7 @@ async function verifyFirebaseState(){
     if(!remote){
       lastFirebaseDiagnostic={counts:{months:0,items:0,distributions:0,promos:0,schedules:0,programSchedules:0},checkedAtLabel:new Date().toLocaleString('pt-BR')};
       firebaseBaseEmpty=true;
-      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
+      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
       renderBackup();
       alert('FIREBASE VAZIO. NÃO HÁ BASE OFICIAL SALVA.');
       return;
@@ -7651,12 +7670,12 @@ async function forceLoadFirebaseToLocal(){
       lastFirebaseDiagnostic={counts:backupCounts(remoteState),checkedAtLabel:new Date().toLocaleString('pt-BR'),savedAt:payload?.savedAt||''};
       applyRemoteFirebaseState(remoteState);
       firebasePendingSave=false;
-      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
+      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
       toast('DADOS DO FIREBASE CARREGADOS NESTE NAVEGADOR.');
     }else{
       alert('O FIREBASE AINDA NÃO TEM DADOS SALVOS. ENVIE OS DADOS A PARTIR DO NAVEGADOR ONDE ELES APARECEM.');
       firebaseBaseEmpty=true;
-      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'RECONECTANDO');
+      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
     }
   }catch(err){
     console.warn('FORCE LOAD FIREBASE ERROR',err);
@@ -12595,6 +12614,8 @@ window.addEventListener('storage',()=>{
   normalizePanelState(state);
   render();
 });
+window.addEventListener('online',handleBrowserConnectionChange);
+window.addEventListener('offline',handleBrowserConnectionChange);
 populatePromoReadHours();
 updatePromoReadScheduleState();
 setOfficialCalendarMonth(true);

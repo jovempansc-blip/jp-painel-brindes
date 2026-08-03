@@ -2201,8 +2201,8 @@ function currentHourDate(){return currentSlotDate();}
 function virtualItemFromDate(d){
   const date=dateISO(d);
   const slot=formatStudioTime(`${pad(d.getHours())}:${pad(d.getMinutes())}`);
-  const program=programFromSchedule(date,slot,STUDIO_STATION) || 'PROMOÇÕES';
-  return {id:'__VIRTUAL__',date,slot,program,title:'PROMOÇÕES',notes:'',__virtual:true,__hasScheduledPrize:false};
+  const program=programFromSchedule(date,slot,STUDIO_STATION) || '';
+  return {id:'__VIRTUAL__',date,slot,program,title:'',notes:'',__virtual:true,__hasScheduledPrize:false};
 }
 function virtualCurrentItem(){return virtualItemFromDate(currentSlotDate());}
 function distributionById(id){return monthData().distributions?.find(d=>d.id===id)||null;}
@@ -2481,10 +2481,11 @@ function studioFullStationLabel(){
 }
 function buildStudioContext(item,promo){
   const date=item?.date||todayISO();
-  const program=promo?(isMerchan(promo)?'MERCHAN':'PROMO / PAUTA'):(item?.program||(item?.__virtual?'SEM PROGRAMA':'PROGRAMA'));
+  const program=item?.program||programFromSchedule(date,item?.slot||'',STUDIO_STATION)||'';
+  const programInfo=program?`<span>${esc(upper(program))}</span>`:'';
   const now=currentSlotDate();
   const manualInfo=manual?`<span class="manualConsult">CONSULTANDO ${esc(formatStudioTime(item?.slot||''))} · AGORA ${esc(formatStudioTime(`${pad(now.getHours())}:${pad(now.getMinutes())}`))}</span><button class="returnNowBtn" type="button" onclick="returnStudioToNow()">VOLTAR PARA AGORA</button>`:'';
-  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span><span>${esc(upper(program))}</span><span class="online">FIREBASE</span>${manualInfo}</div>`;
+  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span>${programInfo}${manualInfo}</div>`;
 }
 function studioPrizePending(item){return !!(item&&!item.__virtual&&item.sourceType!=='promo-result'&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
 function buildStudioPendingStrip(item){

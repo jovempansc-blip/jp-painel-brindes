@@ -1,4 +1,12 @@
-# JP Workspace V56.1 — relatório de implantação
+# JP Workspace V56.2 — relatório de implantação
+
+## Correção V56.2 — conexão e limpeza operacional
+
+- Indicador de conexão do Painel Principal atualizado com cores diretas no ponto central: verde Firebase, laranja modo local/conexão e vermelho erro.
+- Detecção automática mantida pelo Firebase e reforçada pelos eventos online/offline do navegador.
+- Segunda fileira duplicada de filtros removida da Recepção; todos os atalhos necessários permanecem na fileira principal.
+- Selos PROMOÇÕES sem conteúdo e FIREBASE removidos dos dois links de Estúdio.
+- Validação automatizada concluída com 104 testes e nenhuma falha.
 
 ## Correção V56.1 — título nos retornos
 
