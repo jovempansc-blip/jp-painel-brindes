@@ -1,4 +1,16 @@
-# JP Workspace V56.5 — relatório de implantação
+# JP Workspace V56.6 — relatório de implantação
+
+## Catálogo restrito e compacto V56.6
+
+- O campo TÍTULO da nova distribuição lista somente títulos únicos que já existem na Distribuição Geral.
+- O Banco de Ganhadores continua sendo consultado para localizar o último sorteio, mas não fornece opções ao campo TÍTULO.
+- Registros existentes apenas no Excel/histórico de ganhadores foram retirados do Catálogo de Prêmios.
+- A escolha de um título conhecido continua carregando automaticamente a descrição padrão correspondente.
+- A aba PRÊMIOS passou a mostrar apenas o último sorteio de cada título.
+- A descrição da tabela foi limitada visualmente a três linhas; o texto completo permanece disponível em EDITAR PADRÃO.
+- As colunas receberam proporções fixas e as ações foram empilhadas para evitar sobreposição.
+- Indicadores agora separam títulos com e sem descrição padrão e identificam premiações registradas.
+- Validação automatizada concluída com 128 testes e nenhuma falha.
 
 ## Catálogo de Prêmios V56.5
 
@@ -103,7 +115,7 @@ Data da consolidação: 03/08/2026
 
 ## Testes executados
 
-- 124 verificações automatizadas: 0 falhas.
+- 128 verificações automatizadas: 0 falhas.
 - Sintaxe JavaScript das sete páginas.
 - Inicialização das sete páginas em ambiente de navegador simulado.
 - IDs únicos no DOM, botões identificados e referências locais válidas.
@@ -118,6 +130,8 @@ Data da consolidação: 03/08/2026
 - Catálogo de Prêmios com títulos repetidos entre meses, descrição histórica mais recente e persistência automática.
 - Preservação da descrição editada manualmente pelo operador.
 - Agrupamento de vários ganhadores no mesmo sorteio e abertura de nova distribuição preenchida pelo catálogo.
+- Exclusão de títulos existentes somente no Banco de Ganhadores das opções da Distribuição Geral.
+- Exibição exclusiva do último sorteio na aba PRÊMIOS.
 
 ## Implantação
 

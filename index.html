@@ -3135,24 +3135,28 @@ main{
 @media(max-width:600px){.winnerBankKpis,.winnerBankToolbar,.winnerImportSummary{grid-template-columns:1fr}.winnerBankActions{grid-column:auto}.winnerDetailHero{grid-template-columns:1fr}.winnerHistoryRow{grid-template-columns:1fr}}
 @media(max-width:600px){.winnerSimilarityCompare,.winnerEquivalenceRow{grid-template-columns:1fr}.winnerSimilarityScore{justify-self:start}}
 
-/* V56.5 — CATÁLOGO CENTRAL DE PRÊMIOS */
+/* V56.6 — CATÁLOGO CENTRAL DE PRÊMIOS */
 .prizeCatalogKpis{display:grid;grid-template-columns:repeat(4,minmax(145px,1fr));gap:8px;margin-bottom:12px}
 .prizeCatalogKpi{border:1px solid var(--line);border-radius:17px;background:#fff;padding:12px 14px;box-shadow:var(--soft-shadow)}
 .prizeCatalogKpi span{display:block;color:var(--muted);font-size:8.5px;font-weight:950;letter-spacing:.06em}
 .prizeCatalogKpi strong{display:block;margin-top:5px;color:#171c26;font-size:23px;font-weight:1000}
 .prizeCatalogToolbar{display:grid;grid-template-columns:minmax(260px,1fr) 210px;gap:8px;align-items:end;margin:0 0 10px}
-.prizeCatalogTable td{vertical-align:top}
+.prizeCatalogTable{width:100%;min-width:1120px;table-layout:fixed}
+.prizeCatalogTable td{vertical-align:top;text-align:left;padding:11px 12px}
+.prizeCatalogTable th{text-align:left}
+.prizeCatalogTable .num{text-align:center}
+.prizeCatalogTitleCol{width:20%}.prizeCatalogDescriptionCol{width:32%}.prizeCatalogCountCol{width:7%}.prizeCatalogDateCol{width:10%}.prizeCatalogDrawCol{width:19%}.prizeCatalogActionCol{width:12%}
 .prizeCatalogTitle strong{display:block;color:#171c26;font-size:11.5px;font-weight:1000;line-height:1.25}
 .prizeCatalogTitle small{display:block;margin-top:4px;color:var(--muted);font-size:8px;font-weight:850}
-.prizeCatalogDescription{max-width:460px;white-space:pre-wrap;color:#495668;font-size:9.5px;font-weight:800;line-height:1.45}
+.prizeCatalogDescription{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;white-space:pre-wrap;color:#495668;font-family:Arial,sans-serif;font-size:10.5px;font-weight:700;line-height:1.45;text-align:left}
 .prizeCatalogDescription.empty{color:#a15e00;font-style:italic}
-.prizeCatalogDraws{display:grid;gap:5px;min-width:250px}
+.prizeCatalogDraws{display:grid;gap:5px;min-width:0}
 .prizeCatalogDraw{padding:6px 7px;border:1px solid #e4e8ee;border-radius:10px;background:#f8fafc}
 .prizeCatalogDraw strong{display:block;color:#171c26;font-size:8.5px;font-weight:1000}
 .prizeCatalogDraw span{display:block;margin-top:2px;color:#697486;font-size:7.8px;font-weight:850;line-height:1.35}
 .prizeCatalogNoDraw{color:#8992a0;font-size:8px;font-weight:900}
-.prizeCatalogActions{display:flex;gap:5px;align-items:center;justify-content:center;flex-wrap:wrap;min-width:170px}
-.prizeCatalogActions .btn{min-height:29px;padding:0 9px;font-size:8px}
+.prizeCatalogActions{display:flex;flex-direction:column;gap:5px;align-items:stretch;justify-content:flex-start;min-width:0}
+.prizeCatalogActions .btn{width:100%;min-height:30px;padding:0 8px;font-size:7.8px;white-space:nowrap}
 .prizeCatalogDetail{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .prizeCatalogDetailBox{min-width:0;border:1px solid var(--line);border-radius:15px;background:#f8fafc;padding:11px}
 .prizeCatalogDetailBox>strong{display:block;margin-bottom:8px;color:#171c26;font-size:9px;font-weight:1000}
@@ -3160,7 +3164,7 @@ main{
 .prizeCatalogDetailRow{padding:8px 9px;border:1px solid #e1e6ed;border-radius:11px;background:#fff}
 .prizeCatalogDetailRow strong{display:block;font-size:8.5px;color:#171c26}
 .prizeCatalogDetailRow span{display:block;margin-top:3px;color:#647083;font-size:7.8px;font-weight:850;line-height:1.35;white-space:pre-wrap}
-@media(max-width:950px){.prizeCatalogKpis{grid-template-columns:1fr 1fr}.prizeCatalogDetail{grid-template-columns:1fr}.prizeCatalogTable{min-width:1020px}}
+@media(max-width:950px){.prizeCatalogKpis{grid-template-columns:1fr 1fr}.prizeCatalogDetail{grid-template-columns:1fr}.prizeCatalogTable{min-width:1050px}}
 @media(max-width:600px){.prizeCatalogKpis,.prizeCatalogToolbar{grid-template-columns:1fr}}
 
 
@@ -3445,7 +3449,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
     <section class="view" id="view-premios">
       <div class="panel">
         <div class="panelHead">
-          <div><h2>PRÊMIOS</h2><p>CATÁLOGO HISTÓRICO COM DESCRIÇÃO PADRÃO E ÚLTIMOS SORTEIOS REALIZADOS.</p></div>
+          <div><h2>PRÊMIOS</h2><p>TÍTULOS CADASTRADOS NA DISTRIBUIÇÃO GERAL, DESCRIÇÃO PADRÃO E ÚLTIMO SORTEIO REALIZADO.</p></div>
           <div class="panelActions"><button class="btn red" id="newDistFromCatalogBtn" type="button">+ NOVA DISTRIBUIÇÃO</button></div>
         </div>
         <div class="panelBody">
@@ -3455,7 +3459,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
             <div class="field"><label>PESQUISAR TÍTULO, DESCRIÇÃO OU GANHADOR</label><input class="control" id="prizeCatalogSearch" autocomplete="off" placeholder="DIGITE PARA PESQUISAR"></div>
             <div class="field"><label>ORDENAR</label><select class="control" id="prizeCatalogOrder"><option value="recent" selected>USO MAIS RECENTE</option><option value="draw">SORTEIO MAIS RECENTE</option><option value="name">TÍTULO A-Z</option></select></div>
           </div>
-          <div class="tableWrap"><table class="promoMainTable prizeCatalogTable"><thead><tr><th>TÍTULO</th><th>DESCRIÇÃO PADRÃO</th><th>CADASTROS</th><th>ÚLTIMO USO</th><th>ÚLTIMOS SORTEIOS</th><th>AÇÕES</th></tr></thead><tbody id="prizeCatalogTable"></tbody></table></div>
+          <div class="tableWrap"><table class="promoMainTable prizeCatalogTable"><colgroup><col class="prizeCatalogTitleCol"><col class="prizeCatalogDescriptionCol"><col class="prizeCatalogCountCol"><col class="prizeCatalogDateCol"><col class="prizeCatalogDrawCol"><col class="prizeCatalogActionCol"></colgroup><thead><tr><th>TÍTULO</th><th>DESCRIÇÃO PADRÃO</th><th>CADASTROS</th><th>ÚLTIMO USO</th><th>ÚLTIMO SORTEIO</th><th>AÇÕES</th></tr></thead><tbody id="prizeCatalogTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -3900,7 +3904,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
         </div>
         <div class="prizeCatalogDetail">
           <div class="prizeCatalogDetailBox"><strong>ÚLTIMAS DESCRIÇÕES USADAS</strong><div class="prizeCatalogDetailList" id="prizeCatalogUsageHistory"></div></div>
-          <div class="prizeCatalogDetailBox"><strong>ÚLTIMOS SORTEIOS REALIZADOS</strong><div class="prizeCatalogDetailList" id="prizeCatalogDrawHistory"></div></div>
+          <div class="prizeCatalogDetailBox"><strong>ÚLTIMO SORTEIO REALIZADO</strong><div class="prizeCatalogDetailList" id="prizeCatalogDrawHistory"></div></div>
         </div>
         <div class="formActions"><button class="btn red" type="submit">SALVAR DESCRIÇÃO PADRÃO</button><button class="btn" type="button" data-close="prizeCatalogDrawer">CANCELAR</button></div>
       </form>
@@ -8182,7 +8186,7 @@ function globalSearchRows(query){
   (state.schedules||[]).forEach(r=>add('AGENDAMENTO',r.name||r.title||r.type||'AGENDAMENTO',`${r.notes||''} · ${r.destination||''} · ${r.station||''}`,'agendamento',{id:r.id||'',date:r.startDate||''}));
   (state.programSchedules||[]).forEach(r=>add('HORÁRIO',r.name||r.program||'PROGRAMA',`${r.station||''} · ${r.startTime||''}–${r.endTime||''} · ${(r.days||[]).join(' ')}`,'horarios',{id:r.id||''}));
   (winnerBankRecords||[]).forEach(r=>add('GANHADOR',r.name||'GANHADOR',`${formatBR(r.date)} · ${r.program||''} · ${winnerResolvedPrize(r)}`,'ganhadores',{id:r.id||'',date:r.date||''}));
-  prizeCatalogRows().forEach(entry=>add('CATÁLOGO DE PRÊMIOS',entry.title,`${entry.description||'SEM DESCRIÇÃO PADRÃO'} · ${entry.draws.length} SORTEIO(S)`,'premios',{prizeKey:entry.key,date:entry.lastDrawDate||entry.latestUseDate||''}));
+  prizeCatalogRows().forEach(entry=>add('CATÁLOGO DE PRÊMIOS',entry.title,`${entry.description||'SEM DESCRIÇÃO PADRÃO'} · ÚLTIMO SORTEIO ${formatBR(entry.lastDrawDate)||'NÃO LOCALIZADO'}`,'premios',{prizeKey:entry.key,date:entry.lastDrawDate||entry.latestUseDate||''}));
   return rows.sort((a,b)=>a.score-b.score||globalSearchNorm(a.title).localeCompare(globalSearchNorm(b.title))||globalSearchNorm(a.detail).localeCompare(globalSearchNorm(b.detail))).slice(0,100);
 }
 function globalSearchResultHtml(r,index,compact=false){
@@ -8341,20 +8345,10 @@ function prizeCatalogRows(){
       if(oldIndex<0) entry.usages.push(usage);
       else if(String(usage.date||'')>=String(entry.usages[oldIndex].date||'')) entry.usages[oldIndex]=usage;
       entry.usageIds.add(usageId);
-      entry.usageIds.add(usageId);
-    });
-    (m?.items||[]).filter(item=>!item?.distributionId&&norm(item?.title||item?.prize)).forEach((item,index)=>{
-      const entry=ensure(item.title||item.prize,{title:item.title||item.prize,prize:item.prize});
-      if(!entry) return;
-      const usageId=`ITEM:${item.id||`${monthKey}_${index}`}`;
-      if(!entry.usageIds.has(usageId)){
-        entry.usageIds.add(usageId);
-        entry.usages.push({id:usageId,monthKey,date:String(item.date||`${monthKey}-01`).slice(0,10),description:textNorm(item.notes||item.description||''),prize:norm(item.prize||''),title:norm(item.title||item.prize||'')});
-      }
     });
   });
   const addDraw=(title,row={})=>{
-    const entry=ensure(title,{title,prize:title});
+    const entry=map.get(prizeCatalogKey(title));
     if(!entry) return;
     const sourceKey=String(row.sourceRef||row.itemId||'');
     const drawId=sourceKey||[row.date||'',prizeCatalogPlain(row.program||''),entry.key].join('|');
@@ -8380,7 +8374,7 @@ function prizeCatalogRows(){
       addDraw(item.title||distribution.title||item.prize||distribution.prize,{itemId:sourceRef,date:item.date||'',program:item.program||'',names,createdAt:item.resultAt||item.updatedAt||''});
     });
   });
-  return [...map.values()].map(entry=>{
+  return [...map.values()].filter(entry=>entry.usageIds.size>0).map(entry=>{
     entry.usages.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.monthKey||'').localeCompare(String(a.monthKey||'')));
     entry.draws.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
     const hasMeta=!!entry.meta;
@@ -8421,13 +8415,13 @@ function renderPrizeCatalog(){
   const kpis=$('prizeCatalogKpis');
   if(!table||!kpis) return;
   const all=prizeCatalogRows();
-  const drawTotal=all.reduce((total,entry)=>total+entry.draws.length,0);
-  const usageTotal=all.reduce((total,entry)=>total+entry.usageCount,0);
+  const described=all.filter(entry=>entry.description).length;
+  const awardTotal=all.reduce((total,entry)=>total+entry.draws.reduce((drawSum,draw)=>drawSum+Math.max(1,(draw.names||[]).length),0),0);
   kpis.innerHTML=`
-    <div class="prizeCatalogKpi"><span>TÍTULOS NO CATÁLOGO</span><strong>${all.length}</strong></div>
-    <div class="prizeCatalogKpi"><span>COM DESCRIÇÃO PADRÃO</span><strong>${all.filter(entry=>entry.description).length}</strong></div>
-    <div class="prizeCatalogKpi"><span>CADASTROS HISTÓRICOS</span><strong>${usageTotal}</strong></div>
-    <div class="prizeCatalogKpi"><span>SORTEIOS REGISTRADOS</span><strong>${drawTotal}</strong></div>`;
+    <div class="prizeCatalogKpi"><span>TÍTULOS DA DISTRIBUIÇÃO</span><strong>${all.length}</strong></div>
+    <div class="prizeCatalogKpi"><span>COM DESCRIÇÃO PADRÃO</span><strong>${described}</strong></div>
+    <div class="prizeCatalogKpi"><span>SEM DESCRIÇÃO PADRÃO</span><strong>${Math.max(0,all.length-described)}</strong></div>
+    <div class="prizeCatalogKpi"><span>PREMIAÇÕES REGISTRADAS</span><strong>${awardTotal}</strong></div>`;
   const query=prizeCatalogPlain($('prizeCatalogSearch')?.value||'');
   const order=$('prizeCatalogOrder')?.value||'recent';
   const rows=all.filter(entry=>{
@@ -8441,17 +8435,16 @@ function renderPrizeCatalog(){
   });
   table.innerHTML=rows.length?rows.map(entry=>{
     const description=entry.description||'SEM DESCRIÇÃO PADRÃO. USE EDITAR PADRÃO PARA CADASTRAR.';
-    const visibleDescription=description.length>360?`${description.slice(0,357)}...`:description;
-    const draws=entry.draws.slice(0,3);
-    const drawHtml=draws.length?draws.map(draw=>`<div class="prizeCatalogDraw"><strong>${formatBR(draw.date)||'DATA NÃO INFORMADA'} · ${esc(draw.program||'PROGRAMA NÃO INFORMADO')}</strong><span>${esc(prizeCatalogDrawText(draw))}</span></div>`).join(''):'<span class="prizeCatalogNoDraw">NENHUM SORTEIO LOCALIZADO.</span>';
-    return `<tr><td class="prizeCatalogTitle"><strong>${esc(entry.title)}</strong><small>${esc(entry.prize!==entry.title?entry.prize:'CATÁLOGO AUTOMÁTICO')}</small></td><td><div class="prizeCatalogDescription ${entry.description?'':'empty'}">${esc(visibleDescription)}</div></td><td class="num">${entry.usageCount}</td><td>${formatBR(entry.latestUseDate)||'-'}</td><td><div class="prizeCatalogDraws">${drawHtml}</div></td><td><div class="prizeCatalogActions"><button class="btn red" type="button" data-prize-catalog-action="use" data-prize-key="${esc(entry.key)}">USAR</button><button class="btn" type="button" data-prize-catalog-action="edit" data-prize-key="${esc(entry.key)}">EDITAR PADRÃO</button></div></td></tr>`;
+    const latestDraw=entry.draws[0]||null;
+    const drawHtml=latestDraw?`<div class="prizeCatalogDraw"><strong>${formatBR(latestDraw.date)||'DATA NÃO INFORMADA'} · ${esc(latestDraw.program||'PROGRAMA NÃO INFORMADO')}</strong><span>${esc(prizeCatalogDrawText(latestDraw))}</span></div>`:'<span class="prizeCatalogNoDraw">NENHUM SORTEIO LOCALIZADO.</span>';
+    return `<tr><td class="prizeCatalogTitle"><strong>${esc(entry.title)}</strong><small>${esc(entry.prize!==entry.title?entry.prize:'DISTRIBUIÇÃO GERAL')}</small></td><td><div class="prizeCatalogDescription ${entry.description?'':'empty'}" title="${esc(description)}">${esc(description)}</div></td><td class="num">${entry.usageCount}</td><td>${formatBR(entry.latestUseDate)||'-'}</td><td><div class="prizeCatalogDraws">${drawHtml}</div></td><td><div class="prizeCatalogActions"><button class="btn red" type="button" data-prize-catalog-action="use" data-prize-key="${esc(entry.key)}">USAR</button><button class="btn" type="button" data-prize-catalog-action="edit" data-prize-key="${esc(entry.key)}">EDITAR PADRÃO</button></div></td></tr>`;
   }).join(''):'<tr><td colspan="6"><div class="winnerEmpty">NENHUM PRÊMIO ENCONTRADO.</div></td></tr>';
   populatePrizeCatalogDatalist(all);
 }
 function populatePrizeCatalogDatalist(entries=prizeCatalogRows()){
   const datalist=$('distTitleDatalist');
   if(!datalist) return;
-  datalist.innerHTML=entries.slice().sort((a,b)=>a.title.localeCompare(b.title,'pt-BR')).map(entry=>`<option value="${esc(entry.title)}">${esc(entry.prize||'')}</option>`).join('');
+  datalist.innerHTML=entries.slice().sort((a,b)=>a.title.localeCompare(b.title,'pt-BR')).map(entry=>`<option value="${esc(entry.title)}"></option>`).join('');
 }
 function openPrizeCatalogEditor(key){
   const entry=prizeCatalogEntry(key);
@@ -8460,7 +8453,7 @@ function openPrizeCatalogEditor(key){
   $('prizeCatalogTitle').value=entry.title;
   $('prizeCatalogDescription').value=entry.description||'';
   $('prizeCatalogUsageHistory').innerHTML=entry.usages.filter(usage=>usage.description).slice(0,12).map(usage=>`<div class="prizeCatalogDetailRow"><strong>${formatBR(usage.date)||usage.monthKey||'DATA NÃO INFORMADA'} · ${esc(usage.title||entry.title)}</strong><span>${esc(usage.description)}</span></div>`).join('')||'<div class="winnerEmpty">NENHUMA DESCRIÇÃO HISTÓRICA LOCALIZADA.</div>';
-  $('prizeCatalogDrawHistory').innerHTML=entry.draws.slice(0,12).map(draw=>`<div class="prizeCatalogDetailRow"><strong>${formatBR(draw.date)||'DATA NÃO INFORMADA'} · ${esc(draw.program||'PROGRAMA NÃO INFORMADO')}</strong><span>${esc(prizeCatalogDrawText(draw))}</span></div>`).join('')||'<div class="winnerEmpty">NENHUM SORTEIO LOCALIZADO.</div>';
+  $('prizeCatalogDrawHistory').innerHTML=entry.draws.slice(0,1).map(draw=>`<div class="prizeCatalogDetailRow"><strong>${formatBR(draw.date)||'DATA NÃO INFORMADA'} · ${esc(draw.program||'PROGRAMA NÃO INFORMADO')}</strong><span>${esc(prizeCatalogDrawText(draw))}</span></div>`).join('')||'<div class="winnerEmpty">NENHUM SORTEIO LOCALIZADO.</div>';
   openDrawer('prizeCatalogDrawer');
 }
 function savePrizeCatalogEntry(event){

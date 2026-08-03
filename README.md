@@ -1,4 +1,4 @@
-# JP Workspace V56.5
+# JP Workspace V56.6
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
@@ -41,3 +41,12 @@ Esta versão foi consolidada sobre o conteúdo atual do repositório principal. 
 - O texto continua editável; uma alteração manual nunca é substituída silenciosamente.
 - A descrição padrão pode ser administrada sem alterar nenhuma descrição histórica.
 - Cada nova distribuição confirmada alimenta o catálogo no Firebase automaticamente.
+
+## Ajuste V56.6
+
+- O catálogo e a lista do campo TÍTULO agora usam exclusivamente títulos existentes na Distribuição Geral.
+- Prêmios presentes somente no histórico importado de ganhadores não aparecem mais como opções de nova distribuição.
+- Cada título aparece uma única vez e continua carregando automaticamente sua descrição padrão.
+- A aba PRÊMIOS mostra somente o último sorteio realizado de cada título.
+- Descrições longas foram compactadas em três linhas e os botões passaram a ocupar uma coluna própria, sem sobreposição.
+- Indicadores foram ajustados para títulos da distribuição, descrições pendentes e premiações registradas.
