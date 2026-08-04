@@ -2108,9 +2108,12 @@ async function ensureStudioFirebaseOnline(){
   return true;
 }
 function studioOutcomeMonthKey(context={}){
+  const valid=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));
   const candidate=String(context.date||'').slice(0,7);
-  if(candidate&&state.months?.[candidate]) return candidate;
-  return currentMonth||candidate||todayISO().slice(0,7);
+  if(valid(candidate)&&state.months?.[candidate]) return candidate;
+  if(valid(currentMonth)) return currentMonth;
+  if(valid(candidate)) return candidate;
+  return todayISO().slice(0,7);
 }
 async function appendStudioAudit(entry){
   const row={...entry};
@@ -3211,88 +3214,103 @@ function studioOperationToken(value){
   for(let index=0;index<text.length;index+=1){hash^=text.charCodeAt(index);hash=Math.imul(hash,16777619);}
   return (hash>>>0).toString(36).toUpperCase();
 }
-async function cleanupStudioWinnerOperation(operationId){
-  if(!operationId||!winnerBankRef) return;
-  await studioRetry(()=>winnerBankRef.child('records').transaction(current=>{
-    const map=winnerRecordMap(current||{});
-    Object.keys(map).forEach(key=>{if(map[key]?.operationId===operationId&&map[key]?.operationStatus==='PENDING')delete map[key];});
-    return map;
-  },undefined,false));
+function studioOutcomeError(error,stage){
+  const source=error instanceof Error?error:new Error(String(error||'ERRO DESCONHECIDO'));
+  if(!source.studioStage){source.studioStage=stage;source.message=`ETAPA ${stage}: ${source.message||'FALHA NÃO IDENTIFICADA.'}`;}
+  return source;
 }
-async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,context,occurrenceKey=''}){
-  await ensureStudioFirebaseOnline();
-  initWinnerBank();
-  if(!winnerBankRef) throw new Error('BANCO DE GANHADORES INDISPONÍVEL.');
-  const operator=studioOperatorIdentity(true);
-  if(!operator) throw new Error('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.');
-  const cleanNames=(names||[]).map(upper).filter(Boolean);
-  if(!cleanNames.length) throw new Error('NENHUM GANHADOR INFORMADO.');
-  const now=new Date();
-  const monthKey=studioOutcomeMonthKey(context);
-  let operationId=`V56_${studioOperationToken(`${context.sourceRef}|${cleanNames.join('|')}|${now.getTime()}`)}`;
-  const recordIds=cleanNames.map(()=>winnerBankRef.child('records').push().key);
-  let rejection=null;
-  let operationCreated=false;
-
-  const bankResult=await studioRetry(async()=>{
-    const result=await winnerBankRef.transaction(current=>{
-      rejection=null;
-      operationCreated=false;
-      const bank=current&&typeof current==='object'?JSON.parse(JSON.stringify(current)):{};
-      const map=winnerRecordMap(bank.records||{});
-      const previous=Object.values(map).filter(record=>record?.source==='ESTUDIO_JP1017'&&record?.sourceRef===context.sourceRef);
-      if(previous.length){
-        const previousNames=previous.map(record=>upper(record.name)).sort();
-        const requestedNames=[...cleanNames].sort();
-        if(previousNames.join('|')!==requestedNames.join('|')){
-          rejection={title:'RESULTADO JÁ CONFIRMADO',reason:'ESTE SORTEIO JÁ FOI CONFIRMADO COM OUTRO(S) GANHADOR(ES).'};
-          return;
-        }
-        operationCreated=previous.some(record=>record.operationStatus==='PENDING');
-        if(operationCreated&&previous[0]?.operationId) operationId=previous[0].operationId;
-        Object.keys(map).forEach(key=>{
-          const record=map[key];
-          if(record?.source==='ESTUDIO_JP1017'&&record?.sourceRef===context.sourceRef) map[key]={...record,updatedAt:now.toISOString()};
-        });
-        bank.records=map;
-        bank.initialized=true;
-        bank.schemaVersion=2;
-        return bank;
-      }
-      const working=winnerRecordList(map).filter(record=>record.sourceRef!==context.sourceRef);
-      for(let index=0;index<cleanNames.length;index+=1){
-        const name=cleanNames[index];
-        const eligibility=winnerEvaluateAgainst(working,name,context.prize,context.date,bank.blocks||{});
-        if(!eligibility.allowed){rejection=eligibility;return;}
-        const id=recordIds[index];
-        const record={id,name,date:context.date,program:context.program,prize:context.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(context.prize),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,operationId,operationStatus:'PENDING',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector};
-        map[id]=record;
-        working.push(record);
-        operationCreated=true;
-      }
-      bank.records=map;
-      bank.initialized=true;
-      bank.schemaVersion=2;
-      bank.updatedAtISO=now.toISOString();
-      bank.source='ESTUDIO_JP1017';
-      return bank;
-    },undefined,false);
+async function acquireStudioWinnerLocks(personKeys,operationId,operator){
+  const acquired=[];
+  const unique=[...new Set(personKeys.filter(Boolean))].sort();
+  for(const key of unique){
+    const now=Date.now();
+    const result=await studioRetry(()=>winnerBankRef.child('locks').child(key).transaction(current=>{
+      const expiresAt=Date.parse(current?.expiresAt||'');
+      if(current?.operationId&&current.operationId!==operationId&&Number.isFinite(expiresAt)&&expiresAt>now) return;
+      return {operationId,personKey:key,source:'ESTUDIO_JP1017',operatorName:operator.name,createdAt:new Date(now).toISOString(),expiresAt:new Date(now+120000).toISOString()};
+    },undefined,false));
     if(!result?.committed){
-      const error=new Error(rejection?.reason||'O BANCO DE GANHADORES NÃO CONFIRMOU A PREMIAÇÃO.');
-      error.eligibility=rejection;
-      error.retryable=!rejection;
+      await releaseStudioWinnerLocks(acquired,operationId);
+      const error=new Error('ESTE OUVINTE ESTÁ SENDO CONFIRMADO EM OUTRO COMPUTADOR. AGUARDE ALGUNS SEGUNDOS E TENTE NOVAMENTE.');
+      error.retryable=false;
       throw error;
     }
-    return result;
-  });
-
-  let stateConflict='';
-  let targetFound=false;
+    acquired.push(key);
+  }
+  return acquired;
+}
+async function releaseStudioWinnerLocks(personKeys,operationId){
+  if(!winnerBankRef||!operationId) return;
+  await Promise.allSettled((personKeys||[]).map(key=>winnerBankRef.child('locks').child(key).transaction(current=>current?.operationId===operationId?null:current,undefined,false)));
+}
+async function removeStudioWinnerRecords(recordKeys){
+  if(!winnerBankRef||!recordKeys?.length) return;
+  await Promise.allSettled(recordKeys.map(key=>winnerBankRef.child('records').child(key).remove()));
+}
+async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,context,occurrenceKey=''}){
+  let operationId='';
+  let lockOperationId='';
+  let acquiredLocks=[];
+  let insertedRecordKeys=[];
   let stateChanged=false;
   try{
+    try{await ensureStudioFirebaseOnline();}catch(error){throw studioOutcomeError(error,'CONEXÃO');}
+    initWinnerBank();
+    if(!winnerBankRef) throw studioOutcomeError(new Error('BANCO DE GANHADORES INDISPONÍVEL.'),'CONEXÃO');
+    if(!['items','promos'].includes(collection)) throw studioOutcomeError(new Error('TIPO DE RESULTADO INVÁLIDO.'),'PREPARAÇÃO');
+    const operator=studioOperatorIdentity(true);
+    if(!operator) throw studioOutcomeError(new Error('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.'),'IDENTIFICAÇÃO');
+    const cleanNames=(names||[]).map(upper).filter(Boolean);
+    if(!cleanNames.length) throw studioOutcomeError(new Error('NENHUM GANHADOR INFORMADO.'),'VALIDAÇÃO');
+    const now=new Date();
+    const monthKey=studioOutcomeMonthKey(context);
+    operationId=`V5611_${studioOperationToken(`${context.sourceRef}|${cleanNames.join('|')}|${now.getTime()}`)}`;
+    lockOperationId=operationId;
+    try{acquiredLocks=await acquireStudioWinnerLocks(cleanNames.map(winnerPersonKey),lockOperationId,operator);}catch(error){throw studioOutcomeError(error,'TRAVA DO OUVINTE');}
+
+    let bank={};
+    try{bank=(await studioRetry(()=>winnerBankRef.get())).val()||{};}catch(error){throw studioOutcomeError(error,'LEITURA DO BANCO');}
+    const map=winnerRecordMap(bank.records||{});
+    const previousEntries=Object.entries(map).filter(([,record])=>record?.source==='ESTUDIO_JP1017'&&record?.sourceRef===context.sourceRef);
+    const requestedNames=[...cleanNames].sort();
+    let resultRecordKeys=[];
+    if(previousEntries.length){
+      const previousNames=previousEntries.map(([,record])=>upper(record.name)).sort();
+      if(previousNames.join('|')!==requestedNames.join('|')){
+        const error=new Error('ESTE SORTEIO JÁ FOI CONFIRMADO COM OUTRO(S) GANHADOR(ES).');
+        error.eligibility={title:'RESULTADO JÁ CONFIRMADO',reason:error.message};
+        error.retryable=false;
+        throw studioOutcomeError(error,'VALIDAÇÃO');
+      }
+      resultRecordKeys=previousEntries.map(([key])=>key);
+      const previousOperation=previousEntries.find(([,record])=>record?.operationId)?.[1]?.operationId;
+      if(previousOperation) operationId=previousOperation;
+    }else{
+      const working=winnerRecordList(map).filter(record=>record.sourceRef!==context.sourceRef);
+      const additions={};
+      for(const name of cleanNames){
+        const eligibility=winnerEvaluateAgainst(working,name,context.prize,context.date,bank.blocks||{});
+        if(!eligibility.allowed){
+          const error=new Error(eligibility.reason||'O OUVINTE NÃO ESTÁ APTO.');
+          error.eligibility=eligibility;
+          error.retryable=false;
+          throw studioOutcomeError(error,'VALIDAÇÃO');
+        }
+        const id=winnerBankRef.child('records').push().key;
+        const record={id,name,date:context.date,program:context.program,prize:context.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(context.prize),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,operationId,operationStatus:'CONFIRMED',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),confirmedAt:now.toISOString(),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector};
+        additions[id]=record;
+        insertedRecordKeys.push(id);
+        resultRecordKeys.push(id);
+        working.push(record);
+      }
+      try{await studioRetry(()=>winnerBankRef.child('records').update(additions));}catch(error){throw studioOutcomeError(error,'GRAVAÇÃO DO GANHADOR');}
+    }
+
+    let stateConflict='';
+    let targetFound=false;
     const stateResult=await studioRetry(async()=>{
       stateConflict='';targetFound=false;stateChanged=false;
-      const result=await firebaseRef.child(`months/${monthKey}/${collection}`).transaction(current=>{
+      const result=await firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
         const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
         const index=rows.findIndex(row=>row?.id===recordId);
         if(index<0) return;
@@ -3316,34 +3334,27 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
         throw error;
       }
       return result;
-    });
-    if(!targetFound) throw new Error('O SORTEIO NÃO FOI LOCALIZADO NA BASE OFICIAL.');
+    }).catch(error=>{throw studioOutcomeError(error,'GRAVAÇÃO DO HORÁRIO');});
+    if(!targetFound) throw studioOutcomeError(new Error('O SORTEIO NÃO FOI LOCALIZADO NA BASE OFICIAL.'),'GRAVAÇÃO DO HORÁRIO');
 
-    const finalRecords=await studioRetry(async()=>{
-      const result=await winnerBankRef.child('records').transaction(current=>{
-        const map=winnerRecordMap(current||{});
-        Object.keys(map).forEach(key=>{if(map[key]?.operationId===operationId)map[key]={...map[key],operationStatus:'CONFIRMED',confirmedAt:now.toISOString(),updatedAt:now.toISOString()};});
-        return map;
-      },undefined,false);
-      if(!result?.committed) throw new Error('A FINALIZAÇÃO DO BANCO DE GANHADORES NÃO FOI CONFIRMADA.');
-      return result;
-    });
-    await winnerBankRef.update({initialized:true,schemaVersion:2,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'});
-    await firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_GRANULAR_RESULT'});
+    await Promise.allSettled(resultRecordKeys.map(key=>winnerBankRef.child('records').child(key).update({operationStatus:'CONFIRMED',confirmedAt:now.toISOString(),updatedAt:now.toISOString()})));
+    await Promise.allSettled([
+      winnerBankRef.update({initialized:true,schemaVersion:2,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'}),
+      firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_11_INCREMENTAL_RESULT'})
+    ]);
     if(stateChanged){
-      await appendStudioAudit({id:`LOG_${operationId}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});
+      try{await appendStudioAudit({id:`LOG_${operationId}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});}catch(auditError){console.warn('AUDITORIA DO RESULTADO PENDENTE:',auditError);}
     }
     const remoteRows=stateResult.snapshot.val();
     if(state.months?.[monthKey]) state.months[monthKey][collection]=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-    const bankSnapshot=bankResult.snapshot.val()||{};
-    applyWinnerBankSnapshot({...bankSnapshot,records:finalRecords.snapshot.val()||{}});
+    try{applyWinnerBankSnapshot((await winnerBankRef.get()).val()||{});}catch(refreshError){initWinnerBank(true);}
     return true;
   }catch(error){
-    if(operationCreated){
-      try{await cleanupStudioWinnerOperation(operationId);}catch(cleanupError){console.error('ERRO AO LIMPAR RESERVA DO BANCO:',cleanupError);}
-    }
+    if(insertedRecordKeys.length&&!stateChanged) await removeStudioWinnerRecords(insertedRecordKeys);
     throw error;
+  }finally{
+    await releaseStudioWinnerLocks(acquiredLocks,lockOperationId);
   }
 }
 async function commitStudioOutcomeAtomic(payload){

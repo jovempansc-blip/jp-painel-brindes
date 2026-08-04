@@ -1,8 +1,18 @@
-# JP Workspace V56.10
+# JP Workspace V56.11
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Correção definitiva V56.11
+
+- O Estúdio JP 101,7 deixou de reprocessar o Banco de Ganhadores inteiro ao confirmar um nome.
+- Cada nova premiação é gravada de forma incremental com uma chave automática válida gerada pelo Firebase.
+- Uma trava temporária por ouvinte evita duas confirmações simultâneas em computadores diferentes e é removida automaticamente ao final.
+- O horário e o Banco de Ganhadores são atualizados em etapas controladas, com limpeza automática se o horário não puder ser confirmado.
+- O caminho do mês é validado e montado por segmentos seguros antes da gravação.
+- Se houver uma nova falha, a mensagem identifica a etapa exata: conexão, leitura, validação, gravação do ganhador ou gravação do horário.
+- O histórico importado não é renomeado, reconstruído ou reenviado durante a confirmação.
 
 ## Correção V56.10
 

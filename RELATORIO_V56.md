@@ -1,4 +1,16 @@
-# JP Workspace V56.10 — relatório de implantação
+# JP Workspace V56.11 — relatório de implantação
+
+## Gravação incremental do Estúdio V56.11
+
+- Substituída a transação sobre o Banco de Ganhadores completo por inclusão incremental somente dos novos registros.
+- Cada premiação utiliza a chave automática criada pelo `push()` do Firebase; nenhum nome, prêmio ou ID histórico participa do caminho de gravação.
+- Incluída trava temporária por pessoa para impedir confirmações simultâneas do mesmo ouvinte em dois computadores.
+- Após a validação, o registro é gravado no histórico e o item do horário é atualizado separadamente por mês e coleção.
+- Se a atualização do horário falhar, os registros recém-inseridos são removidos automaticamente antes de liberar a trava.
+- Repetições do mesmo resultado permanecem idempotentes: o sistema reconhece os nomes já gravados e não cria duplicações.
+- Auditoria e metadados não impedem a confirmação principal caso sofram uma falha secundária de conexão.
+- Mensagens de erro agora identificam a etapa operacional exata, eliminando diagnósticos genéricos.
+- Validação automatizada concluída com 163 testes e nenhuma falha, incluindo histórico legado, um a quatro ganhadores, liberação de travas e confirmação incremental.
 
 ## Correção do salvamento de ganhadores V56.10
 
