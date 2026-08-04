@@ -2099,12 +2099,10 @@ function studioOperatorIdentity(required=false,force=false){
 async function ensureStudioFirebaseOnline(){
   if(!firebaseReady||!firebaseRef) initFirebaseSync();
   if(!firebaseReady||!firebaseRef) throw new Error('FIREBASE INDISPONÍVEL.');
-  const connectedRef=window.firebase.database().ref('.info/connected');
-  const snapshot=await Promise.race([
-    connectedRef.get(),
+  await Promise.race([
+    firebaseRef.child('savedAt').get(),
     new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))
   ]);
-  if(snapshot.val()!==true) throw new Error('SEM CONEXÃO COM O FIREBASE. AGUARDE A RECONEXÃO E TENTE NOVAMENTE.');
   return true;
 }
 function studioOutcomeMonthKey(context={}){

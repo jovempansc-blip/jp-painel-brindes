@@ -1,4 +1,14 @@
-# JP Workspace V56.11 — relatório de implantação
+# JP Workspace V56.12 — relatório de implantação
+
+## Correção da etapa de conexão V56.12
+
+- A mensagem de diagnóstico da V56.11 localizou a falha antes da validação do ouvinte: `ETAPA CONEXÃO: Invalid token in path`.
+- A origem era a criação de uma referência no caminho especial `.info/connected` durante cada confirmação.
+- Essa referência foi retirada da rotina de salvamento do Estúdio JP 101,7.
+- O teste de disponibilidade agora executa uma leitura no nó `savedAt` dentro da referência oficial `jp-painel-brindes/state` já inicializada pelo painel.
+- Uma leitura concluída confirma que a instância, o endereço do banco e as permissões de leitura estão operacionais; a própria gravação continua sendo a confirmação definitiva de escrita.
+- Consulta de histórico, comparação de nomes, prêmios repetidos, bloqueios de 28 dias, bloqueio de 8 meses, lista manual e validação de até quatro ganhadores permanecem inalterados.
+- Validação automatizada concluída com 166 testes e nenhuma falha.
 
 ## Gravação incremental do Estúdio V56.11
 

@@ -1,8 +1,15 @@
-# JP Workspace V56.11
+# JP Workspace V56.12
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Correção de conexão V56.12
+
+- Removida do salvamento do Estúdio JP 101,7 a consulta especial `.info/connected`, identificada pela mensagem `ETAPA CONEXÃO: Invalid token in path`.
+- A conexão passa a ser confirmada por uma leitura real no caminho oficial `jp-painel-brindes/state`.
+- A mudança ocorre antes da consulta e gravação do ganhador, permitindo que as regras de aptidão sejam executadas normalmente.
+- A gravação incremental, as travas por ouvinte e todas as regras da V56.11 foram preservadas.
 
 ## Correção definitiva V56.11
 
