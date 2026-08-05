@@ -1,4 +1,20 @@
-# JP Workspace V56.12 — relatório de implantação
+# JP Workspace V56.13 — relatório de implantação
+
+## Estabilidade dos links e confirmação da Recepção V56.13
+
+- A falha de retirada foi reproduzida com um ganhador, prêmio, data, horário e programa equivalentes ao caso informado na Recepção.
+- A Recepção grava somente a baixa do ganhador selecionado por transação no mês e na coleção oficiais e aguarda a confirmação do Firebase antes de atualizar a interface.
+- A cópia local usada durante a confirmação é isolada do registro exibido; se a transação falhar, o prêmio continua pendente sem uma baixa apenas visual.
+- A verificação de disponibilidade deixou de usar `.info/connected` abaixo de `jp-painel-brindes/state`. Esse caminho era inválido nessa posição e podia interromper confirmações antes da escrita.
+- O indicador nativo continua sendo usado da forma suportada pelo Firebase, diretamente na raiz do banco, distinguindo conexão real de dados mantidos no cache local.
+- A mesma instabilidade foi removida preventivamente do Estúdio JP News 98,3 e do OPEC, além das correções já aplicadas ao Estúdio JP 101,7.
+- O Painel Principal deriva o indicador verde, laranja ou vermelho do carregamento real da referência oficial, combinado aos eventos online/offline do navegador.
+- PAINEL PRINCIPAL, RECEPÇÃO, OPEC, ESTÚDIO JP 101,7 e ESTÚDIO JP NEWS 98,3 passam a registrar automaticamente o setor responsável. Não há solicitação do nome do operador em nenhuma confirmação operacional.
+- Auditoria e metadados são gravados de forma complementar: uma falha secundária nesses registros não transforma uma baixa, resultado ou texto principal já confirmado em erro para o usuário.
+- Meses são aceitos como caminho somente no formato válido `AAAA-MM`, impedindo que valores legados malformados sejam enviados ao Firebase.
+- Foram mantidas as confirmações explícitas das ações críticas, como confirmar retirada, publicar resultado, bloquear um ouvinte ou restaurar backup; foi removida somente a digitação do nome do operador.
+- O Banco de Ganhadores permanece exclusivo do Estúdio JP 101,7 e do Painel Principal; Recepção e JP News não receberam acesso ao histórico.
+- Validação automatizada concluída com 176 testes e nenhuma falha, incluindo uma retirada persistida na Recepção e a ausência de solicitação de nome nos cinco painéis operacionais.
 
 ## Correção da etapa de conexão V56.12
 
@@ -133,7 +149,7 @@
 - Corrigida a criação do item realocado para uma unidade retornada.
 - Validação automatizada concluída com 88 testes e nenhuma falha.
 
-Data da consolidação: 03/08/2026
+Data da consolidação: 05/08/2026
 
 ## Base utilizada
 
@@ -159,7 +175,7 @@ Data da consolidação: 03/08/2026
 
 - NÃO SORTEAR e NÃO SORTEAR MAIS foram unificados.
 - O Painel Principal e o Estúdio JP 101,7 podem bloquear e desbloquear ouvintes.
-- Toda alteração exige duas confirmações, identificação do operador, data, hora e motivo.
+- Toda alteração exige duas confirmações, identificação automática do setor, data, hora e motivo.
 - O desbloqueio manual não apaga histórico e não reinicia prazos automáticos.
 - A JP News 98,3 e a Recepção não acessam o Banco de Ganhadores.
 
@@ -181,14 +197,18 @@ Data da consolidação: 03/08/2026
 
 ## Administração e rastreabilidade
 
-- Registro do nome do operador e setor nas ações auditadas.
+- Registro automático do painel/setor responsável nas ações auditadas, sem pedir nome ao usuário.
 - Lixeira com retenção automática de 30 dias.
 - Últimas 10 versões publicadas da programação preservadas.
 - Auditoria limitada aos 2.500 registros mais recentes, preservando o comportamento existente.
 
 ## Testes executados
 
-- 156 verificações automatizadas: 0 falhas.
+- 176 verificações automatizadas: 0 falhas.
+- Confirmação realista de retirada na Recepção com persistência individual no mês correto.
+- Identidade automática de setor no Painel Principal, OPEC, Recepção e nos dois Estúdios, sem abrir solicitação de nome.
+- Ausência de `.info/connected` aninhado em qualquer referência de dados e uso exclusivo na raiz correta do Firebase.
+- Validação do mês antes de qualquer caminho mensal de gravação nos painéis operacionais.
 - Sintaxe JavaScript das sete páginas.
 - Inicialização das sete páginas em ambiente de navegador simulado.
 - IDs únicos no DOM, botões identificados e referências locais válidas.

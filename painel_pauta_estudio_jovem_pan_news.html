@@ -2020,6 +2020,7 @@ const NEWS_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_jpnews';
 let firebaseStarted=false;
 let firebaseReady=false;
 let firebaseRef=null;
+let firebaseConnectionRef=null;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
 
@@ -2029,17 +2030,13 @@ function firebaseConfigReady(){
 function studioSleep(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
 async function studioRetry(operation,maxAttempts=3){let lastError;for(let attempt=1;attempt<=maxAttempts;attempt+=1){try{return await operation(attempt);}catch(error){lastError=error;if(error?.retryable===false)throw error;if(attempt<maxAttempts)await studioSleep(180*attempt);}}throw lastError;}
 function newsOperatorIdentity(required=false){
-  try{const saved=JSON.parse(sessionStorage.getItem(NEWS_OPERATOR_SESSION_KEY)||'null');if(saved?.name)return{name:upper(saved.name),sector:'ESTÚDIO JP NEWS 98,3'};}catch(error){}
-  if(!required)return{name:'NÃO INFORMADO',sector:'ESTÚDIO JP NEWS 98,3'};
-  const name=upper(prompt('IDENTIFICAÇÃO DO LOCUTOR / OPERADOR\n\nDIGITE SEU NOME COMPLETO:')||'');if(!name)return null;
-  const identity={name,sector:'ESTÚDIO JP NEWS 98,3',identifiedAt:new Date().toISOString()};sessionStorage.setItem(NEWS_OPERATOR_SESSION_KEY,JSON.stringify(identity));return identity;
+  return{name:'ESTÚDIO JP NEWS 98,3',sector:'ESTÚDIO JP NEWS 98,3',automatic:true};
 }
 async function ensureStudioFirebaseOnline(){
-  if(!firebaseReady||!firebaseRef)initFirebaseSync();if(!firebaseReady||!firebaseRef)throw new Error('FIREBASE INDISPONÍVEL.');
-  const snapshot=await Promise.race([window.firebase.database().ref('.info/connected').get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))]);
-  if(snapshot.val()!==true)throw new Error('SEM CONEXÃO COM O FIREBASE. AGUARDE A RECONEXÃO E TENTE NOVAMENTE.');return true;
+  if(!firebaseReady||!firebaseRef)initFirebaseSync();if(!firebaseReady||!firebaseRef||!firebaseConnectionRef)throw new Error('FIREBASE INDISPONÍVEL.');
+  const snapshot=await Promise.race([firebaseConnectionRef.get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))]);if(snapshot.val()!==true)throw new Error('FIREBASE OFFLINE. A ALTERAÇÃO NÃO FOI ENVIADA.');return true;
 }
-function newsMonthKey(date=''){const key=String(date||'').slice(0,7);return state.months?.[key]?key:(currentMonth||key||todayISO().slice(0,7));}
+function newsMonthKey(date=''){const valid=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));const key=String(date||'').slice(0,7);if(valid(key)&&state.months?.[key])return key;if(valid(currentMonth))return currentMonth;if(valid(key))return key;return todayISO().slice(0,7);}
 async function appendNewsAudit(entry){await studioRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(rows.some(row=>row?.id===entry.id))return rows;rows.push(entry);return rows.slice(-2500);},undefined,false));}
 function loadState(){
   try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s&&s.months)return s;}catch(e){}
@@ -2052,12 +2049,13 @@ function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
 }
-function studioRecordMonths(collection,idValue){
+function studioRecordMonths(collection,idValue,date=''){
+  const valid=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));
   const keys=[];
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
-    if((m?.[collection]||[]).some(row=>row?.id===idValue)) keys.push(monthKey);
+    if(valid(monthKey)&&(m?.[collection]||[]).some(row=>row?.id===idValue)) keys.push(monthKey);
   });
-  return keys.length?keys:[currentMonth||todayISO().slice(0,7)];
+  return keys.length?keys:[newsMonthKey(date)];
 }
 function pickStudioFields(record,fields){
   const patch={};
@@ -2069,20 +2067,20 @@ async function persistStudioRecord(collection,record,fields){
   if(!record?.id) throw new Error('REGISTRO SEM ID');
   await ensureStudioFirebaseOnline();
   const patch=pickStudioFields(record,fields);
-  const keys=studioRecordMonths(collection,record.id);
-  await Promise.all(keys.map(monthKey=>studioRetry(()=>firebaseRef.child(`months/${monthKey}/${collection}`).transaction(current=>{
+  const keys=studioRecordMonths(collection,record.id,record.resultDate||record.drawDate||record.date||record.startDate);
+  await Promise.all(keys.map(monthKey=>studioRetry(()=>firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
     const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
     const index=rows.findIndex(row=>row?.id===record.id);
     if(index<0) rows.push({...record,...patch});
     else rows[index]={...rows[index],...patch};
     return rows;
   },undefined,false))));
-  await firebaseRef.update({
+  await Promise.allSettled([firebaseRef.update({
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
     source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
-    version:'FIREBASE_RTDB_V56_GRANULAR'
-  });
+    version:'FIREBASE_RTDB_V56_13_STABLE'
+  })]);
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
 }
 function persistStudioPromo(record){
@@ -2122,7 +2120,9 @@ function initFirebaseSync(){
   }
   try{
     const app=window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
-    firebaseRef=window.firebase.database(app).ref(FIREBASE_ROOT_PATH);
+    const database=window.firebase.database(app);
+    firebaseRef=database.ref(FIREBASE_ROOT_PATH);
+    firebaseConnectionRef=database.ref('.info/connected');
     firebaseReady=true;
     firebaseRef.on('value', async snapshot=>{
       const payload=snapshot.val();
@@ -2658,14 +2658,13 @@ function addPromoWinnerField(value=''){
 async function commitNewsOutcomeAtomicV56({collection,recordId,patch,occurrenceKey=''}){
   await ensureStudioFirebaseOnline();
   const operator=newsOperatorIdentity(true);
-  if(!operator)throw new Error('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.');
   const now=new Date();
   const activeItem=currentDisplayItem||virtualCurrentItem();
   const monthKey=newsMonthKey(patch?.resultDate||activeItem?.date||todayISO());
   let duplicate=false,missing=false,changed=false;
   const result=await studioRetry(async()=>{
     duplicate=false;missing=false;changed=false;
-    const tx=await firebaseRef.child(`months/${monthKey}/${collection}`).transaction(current=>{
+    const tx=await firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
       const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
       const index=rows.findIndex(row=>row?.id===recordId);
       if(index<0){missing=true;return;}
@@ -2683,8 +2682,7 @@ async function commitNewsOutcomeAtomicV56({collection,recordId,patch,occurrenceK
   const remoteRows=result.snapshot.val();
   if(state.months?.[monthKey])state.months[monthKey][collection]=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
   if(changed){
-    await firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_GRANULAR_RESULT'});
-    await appendNewsAudit({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',targetId:recordId,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});
+    await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_13_STABLE_RESULT'}),appendNewsAudit({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',targetId:recordId,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   }
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   return true;
@@ -2839,7 +2837,7 @@ async function confirmPromoReadV56(event){
   const button=event?.currentTarget||$('confirmPromoReadInline');
   const p=currentPromoForRead(),item=currentDisplayItem||virtualCurrentItem();
   if(!p||!item||button?.dataset.busy==='1')return;
-  const operator=newsOperatorIdentity(true);if(!operator){alert('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.');return;}
+  const operator=newsOperatorIdentity(true);
   if(button){button.dataset.busy='1';button.disabled=true;button.textContent='SALVANDO...';}
   try{
     await ensureStudioFirebaseOnline();
@@ -2847,7 +2845,7 @@ async function confirmPromoReadV56(event){
     let duplicate=false,found=false,changed=false;
     const result=await studioRetry(async()=>{
       duplicate=false;found=false;changed=false;
-      const tx=await firebaseRef.child(`months/${monthKey}/promos`).transaction(current=>{
+      const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{
         const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const index=rows.findIndex(row=>row?.id===p.id);if(index<0)return;found=true;
         const row=rows[index],keys=readHourKeys(item,row);if(keys.some(value=>validReadTimestamp(row?.readByHour?.[value]))){duplicate=true;return rows;}
         row.readByHour={...(row.readByHour||{}),[key]:iso};row.readLog=Array.isArray(row.readLog)?row.readLog:[];
@@ -2857,7 +2855,7 @@ async function confirmPromoReadV56(event){
       if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;
     });
     const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
-    if(changed){await firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_GRANULAR_READ'});await appendNewsAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')});}
+    if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_13_STABLE_READ'}),appendNewsAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state));selectedPromoId=null;render();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
   finally{if(button){button.dataset.busy='0';button.disabled=false;button.textContent='CONFIRMAR LEITURA';}}

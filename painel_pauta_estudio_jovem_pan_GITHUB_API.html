@@ -2062,6 +2062,7 @@ const WINNER_SHORT_BLOCK_DAYS = 28;
 let firebaseStarted=false;
 let firebaseReady=false;
 let firebaseRef=null;
+let firebaseConnectionRef=null;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
 let winnerBankRef=null;
@@ -2085,24 +2086,16 @@ async function studioRetry(operation,maxAttempts=3){
   throw lastError;
 }
 function studioOperatorIdentity(required=false,force=false){
-  try{
-    const saved=JSON.parse(sessionStorage.getItem(STUDIO_OPERATOR_SESSION_KEY)||'null');
-    if(saved?.name&&!force) return {name:upper(saved.name),sector:'ESTÚDIO JP 101,7'};
-  }catch(error){}
-  if(!required&&!force) return {name:'NÃO INFORMADO',sector:'ESTÚDIO JP 101,7'};
-  const name=upper(prompt('IDENTIFICAÇÃO DO LOCUTOR / OPERADOR\n\nDIGITE SEU NOME COMPLETO:')||'');
-  if(!name) return null;
-  const identity={name,sector:'ESTÚDIO JP 101,7',identifiedAt:new Date().toISOString()};
-  sessionStorage.setItem(STUDIO_OPERATOR_SESSION_KEY,JSON.stringify(identity));
-  return identity;
+  return {name:'ESTÚDIO JP 101,7',sector:'ESTÚDIO JP 101,7',automatic:true};
 }
 async function ensureStudioFirebaseOnline(){
   if(!firebaseReady||!firebaseRef) initFirebaseSync();
-  if(!firebaseReady||!firebaseRef) throw new Error('FIREBASE INDISPONÍVEL.');
-  await Promise.race([
-    firebaseRef.child('savedAt').get(),
+  if(!firebaseReady||!firebaseRef||!firebaseConnectionRef) throw new Error('FIREBASE INDISPONÍVEL.');
+  const snapshot=await Promise.race([
+    firebaseConnectionRef.get(),
     new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))
   ]);
+  if(snapshot.val()!==true) throw new Error('FIREBASE OFFLINE. A ALTERAÇÃO NÃO FOI ENVIADA.');
   return true;
 }
 function studioOutcomeMonthKey(context={}){
@@ -2133,12 +2126,13 @@ function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
 }
-function studioRecordMonths(collection,idValue){
+function studioRecordMonths(collection,idValue,date=''){
+  const valid=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));
   const keys=[];
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
-    if((m?.[collection]||[]).some(row=>row?.id===idValue)) keys.push(monthKey);
+    if(valid(monthKey)&&(m?.[collection]||[]).some(row=>row?.id===idValue)) keys.push(monthKey);
   });
-  return keys.length?keys:[currentMonth||todayISO().slice(0,7)];
+  return keys.length?keys:[studioOutcomeMonthKey({date})];
 }
 function pickStudioFields(record,fields){
   const patch={};
@@ -2150,20 +2144,20 @@ async function persistStudioRecord(collection,record,fields){
   if(!record?.id) throw new Error('REGISTRO SEM ID');
   await ensureStudioFirebaseOnline();
   const patch=pickStudioFields(record,fields);
-  const keys=studioRecordMonths(collection,record.id);
-  await Promise.all(keys.map(monthKey=>studioRetry(()=>firebaseRef.child(`months/${monthKey}/${collection}`).transaction(current=>{
+  const keys=studioRecordMonths(collection,record.id,record.resultDate||record.drawDate||record.date||record.startDate);
+  await Promise.all(keys.map(monthKey=>studioRetry(()=>firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
     const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
     const index=rows.findIndex(row=>row?.id===record.id);
     if(index<0) rows.push({...record,...patch});
     else rows[index]={...rows[index],...patch};
     return rows;
   },undefined,false))));
-  await firebaseRef.update({
+  await Promise.allSettled([firebaseRef.update({
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
     source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
-    version:'FIREBASE_RTDB_V56_GRANULAR'
-  });
+    version:'FIREBASE_RTDB_V56_13_STABLE'
+  })]);
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
 }
 function persistStudioPromo(record){
@@ -2203,7 +2197,9 @@ function initFirebaseSync(){
   }
   try{
     const app=window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
-    firebaseRef=window.firebase.database(app).ref(FIREBASE_ROOT_PATH);
+    const database=window.firebase.database(app);
+    firebaseRef=database.ref(FIREBASE_ROOT_PATH);
+    firebaseConnectionRef=database.ref('.info/connected');
     firebaseReady=true;
     firebaseRef.on('value', async snapshot=>{
       const payload=snapshot.val();
@@ -2592,7 +2588,6 @@ async function toggleStudioWinnerManualBlock(name,active){
   const cleanName=upper(name);
   const key=winnerPersonKey(cleanName);
   const operator=studioOperatorIdentity(true);
-  if(!operator){ alert('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.'); return; }
   const verb=active?'INCLUIR EM NÃO SORTEAR':'DESBLOQUEAR';
   if(!confirm(`${verb} ESTE OUVINTE?\n\n${cleanName}`)) return;
   if(!confirm(`CONFIRMAÇÃO FINAL\n\n${verb}: ${cleanName}?\n\nO HISTÓRICO E OS PRAZOS AUTOMÁTICOS SERÃO PRESERVADOS.`)) return;
@@ -2603,8 +2598,7 @@ async function toggleStudioWinnerManualBlock(name,active){
     if(active) return {...previous,key,name:cleanName,active:true,reason,createdAt:previous.createdAt||now.toISOString(),createdAtLabel:previous.createdAtLabel||now.toLocaleString('pt-BR'),createdBy:previous.createdBy||operator.name,updatedAt:now.toISOString(),updatedAtLabel:now.toLocaleString('pt-BR'),updatedBy:operator.name,operatorSector:operator.sector};
     return {...previous,key,name:cleanName,active:false,unblockedAt:now.toISOString(),unblockedAtLabel:now.toLocaleString('pt-BR'),unblockedBy:operator.name,updatedAt:now.toISOString(),updatedAtLabel:now.toLocaleString('pt-BR'),updatedBy:operator.name,operatorSector:operator.sector};
   },undefined,false));
-  await winnerBankRef.update({schemaVersion:2,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'});
-  await appendStudioAudit({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:active?'INCLUSÃO EM NÃO SORTEAR':'DESBLOQUEIO MANUAL DE OUVINTE',target:cleanName,targetId:key,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:active?reason:'HISTÓRICO E PRAZOS PRESERVADOS.',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});
+  await Promise.allSettled([winnerBankRef.update({schemaVersion:2,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'}),appendStudioAudit({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:active?'INCLUSÃO EM NÃO SORTEAR':'DESBLOQUEIO MANUAL DE OUVINTE',target:cleanName,targetId:key,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:active?reason:'HISTÓRICO E PRAZOS PRESERVADOS.',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   initWinnerBank(true);
 }
 function validateAllWinnerInputs(){
@@ -3257,7 +3251,6 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     if(!winnerBankRef) throw studioOutcomeError(new Error('BANCO DE GANHADORES INDISPONÍVEL.'),'CONEXÃO');
     if(!['items','promos'].includes(collection)) throw studioOutcomeError(new Error('TIPO DE RESULTADO INVÁLIDO.'),'PREPARAÇÃO');
     const operator=studioOperatorIdentity(true);
-    if(!operator) throw studioOutcomeError(new Error('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.'),'IDENTIFICAÇÃO');
     const cleanNames=(names||[]).map(upper).filter(Boolean);
     if(!cleanNames.length) throw studioOutcomeError(new Error('NENHUM GANHADOR INFORMADO.'),'VALIDAÇÃO');
     const now=new Date();
@@ -3338,7 +3331,7 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     await Promise.allSettled(resultRecordKeys.map(key=>winnerBankRef.child('records').child(key).update({operationStatus:'CONFIRMED',confirmedAt:now.toISOString(),updatedAt:now.toISOString()})));
     await Promise.allSettled([
       winnerBankRef.update({initialized:true,schemaVersion:2,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'}),
-      firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_11_INCREMENTAL_RESULT'})
+      firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_13_STABLE_RESULT'})
     ]);
     if(stateChanged){
       try{await appendStudioAudit({id:`LOG_${operationId}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});}catch(auditError){console.warn('AUDITORIA DO RESULTADO PENDENTE:',auditError);}
@@ -3522,16 +3515,15 @@ async function confirmPromoReadV56(event){
   const item=currentDisplayItem||virtualCurrentItem();
   if(!p||!item||button?.dataset.busy==='1') return;
   const operator=studioOperatorIdentity(true);
-  if(!operator){alert('INFORME O NOME DO LOCUTOR / OPERADOR PARA CONTINUAR.');return;}
   if(button){button.dataset.busy='1';button.disabled=true;button.textContent='SALVANDO...';}
   try{
     await ensureStudioFirebaseOnline();
     const now=new Date(),iso=now.toISOString(),key=readHourKey(item,p),logId=`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-    const monthKey=String(item.date||todayISO()).slice(0,7);
+    const monthKey=studioOutcomeMonthKey({date:item.date||todayISO()});
     let duplicate=false,found=false,changed=false;
     const result=await studioRetry(async()=>{
       duplicate=false;found=false;changed=false;
-      const tx=await firebaseRef.child(`months/${monthKey}/promos`).transaction(current=>{
+      const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{
         const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
         const index=rows.findIndex(row=>row?.id===p.id);
         if(index<0) return;
@@ -3550,8 +3542,7 @@ async function confirmPromoReadV56(event){
     const remoteRows=result.snapshot.val();
     if(state.months?.[monthKey]) state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){
-      await firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_GRANULAR_READ'});
-      await appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')});
+      await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_13_STABLE_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
     }
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
     selectedPromoId=null;render();

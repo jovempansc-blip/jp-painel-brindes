@@ -3632,7 +3632,6 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
         <div class="panelHead">
           <div><h2>BANCO DE GANHADORES</h2><p>HISTÓRICO CENTRAL, ELEGIBILIDADE E BLOQUEIO AUTOMÁTICO DOS OUVINTES.</p></div>
           <div class="panelActions winnerBankActions">
-            <button class="btn" id="winnerOperatorBtn" type="button">OPERADOR</button>
             <button class="btn" id="winnerEquivalencesBtn" type="button">EQUIVALÊNCIAS</button>
             <button class="btn" id="blockWinnerBtn" type="button">NÃO SORTEAR</button>
             <button class="btn" id="importWinnersBtn" type="button">IMPORTAR EXCEL</button>
@@ -6684,18 +6683,14 @@ function initFirebaseSync(){
     firebaseReady = true;
     updateSyncStatus('saving','CONECTANDO');
     firebaseConnectionRef.on('value', snapshot=>{
-      firebaseConnectionKnown = true;
-      firebaseConnected = snapshot.val() === true;
-      if(firebaseConnected){
-        updateSyncStatus('online','FIREBASE ONLINE');
-        if(firebasePendingSave && firebaseServerLoaded) queueApiSave(80);
-      }else{
-        updateSyncStatus('local','MODO LOCAL');
-      }
-    }, err=>{
-      firebaseConnectionKnown = true;
-      firebaseConnected = false;
-      console.warn('FIREBASE CONNECTION ERROR', err);
+      firebaseConnectionKnown=true;
+      firebaseConnected=snapshot.val()===true;
+      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
+      if(firebaseConnected&&firebasePendingSave) queueApiSave(120);
+    },err=>{
+      firebaseConnectionKnown=true;
+      firebaseConnected=false;
+      console.warn('FIREBASE CONNECTION ERROR',err);
       updateSyncStatus('error','ERRO FIREBASE');
     });
     firebaseRef.on('value', async snapshot=>{
@@ -6713,6 +6708,8 @@ function initFirebaseSync(){
       firebasePendingSave = false;
       if(firebaseConnected) updateSyncStatus('online','FIREBASE ONLINE');
     }, err=>{
+      firebaseConnectionKnown = true;
+      firebaseConnected = false;
       console.warn('FIREBASE LOAD ERROR', err);
       updateSyncStatus('error','ERRO FIREBASE');
     });
@@ -6735,7 +6732,7 @@ function syncStateFromApi(force=false){
         applyRemoteFirebaseState(remoteState);
         firebasePendingSave=false;
       }
-    }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
+    }).catch(err=>{firebaseConnectionKnown=true;firebaseConnected=false;updateSyncStatus('error','ERRO FIREBASE');console.warn('FIREBASE FORCE LOAD ERROR',err);});
   }
 }
 function handleBrowserConnectionChange(){
@@ -7236,7 +7233,6 @@ async function setWinnerManualBlock(personKeyOrName,active=true){
   const key=winnerPersonKey(name);
   if(!name||!key) return;
   const operator=promptOperatorIdentity();
-  if(!operator){ alert('INFORME O NOME DO OPERADOR PARA CONTINUAR.'); return; }
   const verb=active?'BLOQUEAR E INCLUIR EM NÃO SORTEAR':'DESBLOQUEAR';
   if(!confirm(`${verb} ESTE OUVINTE?\n\n${name}`)) return;
   if(!confirm(`CONFIRMAÇÃO FINAL\n\n${verb}: ${name}?\n\nO HISTÓRICO E OS PRAZOS AUTOMÁTICOS SERÃO PRESERVADOS.`)) return;
@@ -7278,7 +7274,6 @@ async function persistWinnerEquivalences(groups,action,target){
   initWinnerBank();
   if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL.'); return false; }
   const operator=promptOperatorIdentity();
-  if(!operator){ alert('INFORME O NOME DO OPERADOR PARA CONTINUAR.'); return false; }
   const now=new Date();
   await winnerBankRef.child('settings/prizeEquivalences').set(groups);
   await winnerBankRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'PAINEL_PRINCIPAL',schemaVersion:2});
@@ -7396,7 +7391,6 @@ async function saveWinnerRecord(event){
   const form=event.currentTarget;
   if(form?.dataset.busy==='1') return;
   const operator=promptOperatorIdentity();
-  if(!operator){ alert('INFORME O NOME DO OPERADOR PARA CONTINUAR.'); return; }
   initWinnerBank();
   if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL.'); return; }
   const recordKey=$('winnerRecordId').value||winnerBankRef.child('records').push().key;
@@ -7664,7 +7658,6 @@ async function confirmWinnerImport(){
   }
   normalizeWinnerImportSimilarityLinks();
   const operator=promptOperatorIdentity();
-  if(!operator){ alert('INFORME O NOME DO OPERADOR PARA CONTINUAR.'); return; }
   initWinnerBank();
   if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL.'); return; }
   const button=$('confirmWinnerImportBtn');
@@ -8056,24 +8049,13 @@ function currentWeekLabelForMonth(key=state.currentMonth){
 }
 function id(prefix){ return prefix + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,6).toUpperCase(); }
 function readOperatorIdentity(){
-  try{
-    const saved=JSON.parse(sessionStorage.getItem(OPERATOR_SESSION_KEY)||'null');
-    if(saved?.name) return {name:norm(saved.name),sector:'PAINEL PRINCIPAL'};
-  }catch(error){}
-  return null;
+  return {name:'PAINEL PRINCIPAL',sector:'PAINEL PRINCIPAL',automatic:true};
 }
 function promptOperatorIdentity(force=false){
-  const current=readOperatorIdentity();
-  if(current&&!force) return current;
-  const typed=prompt('IDENTIFICAÇÃO DO OPERADOR\n\nDIGITE SEU NOME COMPLETO:');
-  const name=norm(typed||'');
-  if(!name) return null;
-  const identity={name,sector:'PAINEL PRINCIPAL',identifiedAt:new Date().toISOString()};
-  sessionStorage.setItem(OPERATOR_SESSION_KEY,JSON.stringify(identity));
-  return identity;
+  return readOperatorIdentity();
 }
 function currentOperatorIdentity(required=false){
-  return readOperatorIdentity()||(required?promptOperatorIdentity():null)||{name:'NÃO INFORMADO',sector:'PAINEL PRINCIPAL'};
+  return readOperatorIdentity();
 }
 function auditEvent(action,target='',details={}){
   normalizePanelState(state);
@@ -12963,7 +12945,6 @@ bind('winnerImportFileInput','change',event=>parseWinnerImportFile(event.target.
 bind('confirmWinnerImportBtn','click',confirmWinnerImport);
 bind('addWinnerRecordBtn','click',()=>openWinnerRecord());
 bind('blockWinnerBtn','click',startWinnerManualBlock);
-bind('winnerOperatorBtn','click',()=>{ const operator=promptOperatorIdentity(true); if(operator) toast(`OPERADOR IDENTIFICADO: ${operator.name}.`); });
 bind('winnerEquivalencesBtn','click',openWinnerEquivalences);
 bind('winnerEquivalenceForm','submit',saveWinnerEquivalence);
 bind('winnerRecordForm','submit',saveWinnerRecord);

@@ -1,8 +1,19 @@
-# JP Workspace V56.12
+# JP Workspace V56.13
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Estabilidade operacional V56.13
+
+- Corrigida a confirmação de retirada na Recepção, preservando o prêmio como pendente se a gravação oficial não for confirmada.
+- Eliminado de todas as páginas ativas o uso incorreto do caminho especial `.info/connected` abaixo da raiz do projeto, origem do erro `Invalid token in path`.
+- Estúdio JP 101,7, Estúdio JP News 98,3, OPEC e Recepção agora consultam `.info/connected` diretamente na raiz oficial do Firebase, sem anexá-lo ao caminho dos dados.
+- A identificação deixou de pedir o nome de quem está operando: o setor é registrado automaticamente como PAINEL PRINCIPAL, RECEPÇÃO, OPEC, ESTÚDIO JP 101,7 ou ESTÚDIO JP NEWS 98,3.
+- A Recepção só altera o cartão na tela depois que o Firebase confirma a baixa, evitando retirada apenas visual em caso de falha.
+- Auditoria e atualização de metadados são complementares e não anulam uma retirada ou resultado já gravado com sucesso.
+- Chaves de mês são validadas antes de formar caminhos de gravação, inclusive para dados históricos.
+- As regras do Banco de Ganhadores, o histórico e todas as funções anteriores foram preservados.
 
 ## Correção de conexão V56.12
 

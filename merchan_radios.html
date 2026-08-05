@@ -249,7 +249,9 @@ const FIREBASE_CONFIG={"apiKey":"AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE","authD
 const FIREBASE_ROOT_PATH="jp-painel-brindes/state";
 const OPEC_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_opec';
 firebase.initializeApp(FIREBASE_CONFIG);
-const ref=firebase.database().ref(FIREBASE_ROOT_PATH);
+const opecDatabase=firebase.database();
+const ref=opecDatabase.ref(FIREBASE_ROOT_PATH);
+const opecConnectionRef=opecDatabase.ref('.info/connected');
 const $=id=>document.getElementById(id);
 const $$=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
 const norm=value=>String(value??'').trim().replace(/\s+/g,' ').toUpperCase();
@@ -261,8 +263,8 @@ function todayISO(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMon
 function nowISO(){return new Date().toISOString();}
 const opecSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function opecRetry(operation,maxAttempts=3){let lastError;for(let attempt=1;attempt<=maxAttempts;attempt+=1){try{return await operation(attempt);}catch(error){lastError=error;if(error?.retryable===false)throw error;if(attempt<maxAttempts)await opecSleep(180*attempt);}}throw lastError;}
-function opecOperatorIdentity(){try{const saved=JSON.parse(sessionStorage.getItem(OPEC_OPERATOR_SESSION_KEY)||'null');if(saved?.name)return{name:norm(saved.name),sector:'OPEC'};}catch(error){}const name=norm(prompt('IDENTIFICAÇÃO DO OPERADOR OPEC\n\nDIGITE SEU NOME COMPLETO:')||'');if(!name)return null;const identity={name,sector:'OPEC',identifiedAt:nowISO()};sessionStorage.setItem(OPEC_OPERATOR_SESSION_KEY,JSON.stringify(identity));return identity;}
-async function ensureOpecOnline(){const snapshot=await Promise.race([firebase.database().ref('.info/connected').get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))]);if(snapshot.val()!==true)throw new Error('SEM CONEXÃO COM O FIREBASE. AGUARDE A RECONEXÃO E TENTE NOVAMENTE.');}
+function opecOperatorIdentity(){return{name:'OPEC',sector:'OPEC',automatic:true};}
+async function ensureOpecOnline(){const snapshot=await Promise.race([opecConnectionRef.get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))]);if(snapshot.val()!==true)throw new Error('FIREBASE OFFLINE. A ALTERAÇÃO NÃO FOI ENVIADA.');return true;}
 async function appendOpecAudit(entry){await opecRetry(()=>ref.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(!rows.some(row=>row?.id===entry.id))rows.push(entry);return rows.slice(-2500);},undefined,false));}
 function formatBR(value){if(!value)return'--';const [y,m,d]=String(value).split('-');return y&&m&&d?`${d}/${m}/${y}`:String(value);}
 function stationLabel(value){return value==='JPNEWS983'?'JOVEM PAN NEWS - 98,3':'JOVEM PAN - 101,7';}
@@ -278,6 +280,7 @@ function dayIndex(date){const [y,m,d]=String(date||todayISO()).split('-').map(Nu
 function dateObj(date){return new Date(`${date}T12:00:00`);}
 function dateRange(start,end){const rows=[];let cursor=dateObj(start);const limit=dateObj(end);while(cursor<=limit){rows.push(`${cursor.getFullYear()}-${pad(cursor.getMonth()+1)}-${pad(cursor.getDate())}`);cursor.setDate(cursor.getDate()+1);}return rows;}
 function monthLastDay(month){const [y,m]=month.split('-').map(Number);return `${month}-${pad(new Date(y,m,0).getDate())}`;}
+function validMonthKey(value){return /^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));}
 function monthKeysBetween(start,end){const keys=[];let [y,m]=start.slice(0,7).split('-').map(Number);const [ey,em]=end.slice(0,7).split('-').map(Number);while(y<ey||(y===ey&&m<=em)){keys.push(`${y}-${pad(m)}`);m++;if(m>12){m=1;y++;}}return keys;}
 function slotParts(value){const raw=String(value||'').trim().toUpperCase().replace(/\s+/g,'');const match=raw.match(/^(\d{1,2})(?:H|:)?(\d{2})?$/);if(!match)return null;const hour=Number(match[1]);const minute=Number(match[2]||0);if(hour<0||hour>23||![0,30].includes(minute))return null;return{hour,minute};}
 function slotMinutes(value){const parts=slotParts(value);return parts?parts.hour*60+parts.minute:9999;}
@@ -326,26 +329,25 @@ function setSaveState(mode,text){const element=$('saveState');element.className=
 function mergeReadData(base,copy){base.readByHour={...(base.readByHour||{}),...(copy.readByHour||{})};const logs=[...(base.readLog||[]),...(copy.readLog||[])];const seen=new Set();base.readLog=logs.filter(log=>{const key=log?.id||`${log?.key||''}|${log?.confirmedAt||log?.readAt||''}`;if(!key||seen.has(key))return false;seen.add(key);return true;});if(copy.readAt&&(!base.readAt||copy.readAt>base.readAt)){base.readAt=copy.readAt;base.readAtLabel=copy.readAtLabel||base.readAtLabel;base.readSlot=copy.readSlot||base.readSlot;}return base;}
 function allMerchans(){const groups=new Map();Object.entries(state.months||{}).forEach(([month,monthData])=>(monthData.promos||[]).forEach(promo=>{if(norm(promo.kind)!=='MERCHAN')return;const id=promo.id||`${month}-${promo.name||promo.title}`;if(!groups.has(id)){const clone=deepClone(promo);clone.__months=[month];groups.set(id,clone);return;}const current=groups.get(id);const merged=mergeReadData(current,promo);merged.__months=[...new Set([...(merged.__months||[]),month])];const currentUpdated=Date.parse(current.updatedAt||current.createdAt||0)||0;const copyUpdated=Date.parse(promo.updatedAt||promo.createdAt||0)||0;if(copyUpdated>currentUpdated){const reads={readByHour:merged.readByHour,readLog:merged.readLog,__months:merged.__months};Object.assign(merged,deepClone(promo),reads);}groups.set(id,merged);}));return [...groups.values()].sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.program).localeCompare(norm(b.program))||norm(a.name||a.title).localeCompare(norm(b.name||b.title)));}
 function findMerchan(id){const promo=allMerchans().find(row=>row.id===id);return promo?{p:promo,months:promo.__months||[]}:null;}
-function targetMonths(record){return monthKeysBetween(record.startDate,record.endDate||record.drawDate||record.startDate);}
+function targetMonths(record){return monthKeysBetween(record.startDate,record.endDate||record.drawDate||record.startDate).filter(validMonthKey);}
 async function transactionForRecord(record){
-  const operator=opecOperatorIdentity();if(!operator)throw Object.assign(new Error('INFORME O NOME DO OPERADOR PARA CONTINUAR.'),{retryable:false});
+  const operator=opecOperatorIdentity();
   await ensureOpecOnline();
   const target=new Set(targetMonths(record));
-  const existingMonths=Object.entries(state.months||{}).filter(([,month])=>(month.promos||[]).some(row=>row?.id===record.id)).map(([key])=>key);
-  const keys=[...new Set([...existingMonths,...target])];
+  const existingMonths=Object.entries(state.months||{}).filter(([key,month])=>validMonthKey(key)&&(month.promos||[]).some(row=>row?.id===record.id)).map(([key])=>key);
+  const keys=[...new Set([...existingMonths,...target])].filter(validMonthKey);
   for(const key of keys){
-    const result=await opecRetry(async()=>{const tx=await ref.child(`months/${key}/promos`).transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const existing=rows.find(row=>row?.id===record.id);const filtered=rows.filter(row=>row?.id!==record.id);if(!target.has(key))return filtered;const copy={...deepClone(record),updatedBy:operator.name,operatorSector:operator.sector};if(existing)mergeReadData(copy,existing);return [...filtered,copy];},undefined,false);if(!tx?.committed)throw new Error('GRAVAÇÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});
+    const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const existing=rows.find(row=>row?.id===record.id);const filtered=rows.filter(row=>row?.id!==record.id);if(!target.has(key))return filtered;const copy={...deepClone(record),updatedBy:operator.name,operatorSector:operator.sector};if(existing)mergeReadData(copy,existing);return [...filtered,copy];},undefined,false);if(!tx?.committed)throw new Error('GRAVAÇÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});
     state.months[key] ||= {label:key,items:[],promos:[],distributions:[]};const rows=result.snapshot.val();state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);
   }
-  const now=new Date();await ref.update({currentMonth:record.startDate.slice(0,7),updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_GRANULAR_OPEC'});
-  await appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});
+  const now=new Date(),savedMonth=String(record.startDate||'').slice(0,7);await Promise.allSettled([ref.update({currentMonth:validMonthKey(savedMonth)?savedMonth:todayISO().slice(0,7),updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_13_STABLE_OPEC'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   return state;
 }
 async function deleteRecord(id){
-  const operator=opecOperatorIdentity();if(!operator)throw Object.assign(new Error('INFORME O NOME DO OPERADOR PARA CONTINUAR.'),{retryable:false});
-  await ensureOpecOnline();const keys=Object.entries(state.months||{}).filter(([,month])=>(month.promos||[]).some(row=>row?.id===id)).map(([key])=>key);
-  for(const key of keys){const result=await opecRetry(async()=>{const tx=await ref.child(`months/${key}/promos`).transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);return rows.filter(row=>row?.id!==id);},undefined,false);if(!tx?.committed)throw new Error('EXCLUSÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});const rows=result.snapshot.val();if(state.months?.[key])state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);}
-  const now=new Date();await ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_GRANULAR_OPEC'});await appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'MERCHAN EXCLUÍDO',targetId:id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});return true;
+  const operator=opecOperatorIdentity();
+  await ensureOpecOnline();const keys=Object.entries(state.months||{}).filter(([key,month])=>validMonthKey(key)&&(month.promos||[]).some(row=>row?.id===id)).map(([key])=>key);
+  for(const key of keys){const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);return rows.filter(row=>row?.id!==id);},undefined,false);if(!tx?.committed)throw new Error('EXCLUSÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});const rows=result.snapshot.val();if(state.months?.[key])state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);}
+  const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_13_STABLE_OPEC'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'MERCHAN EXCLUÍDO',targetId:id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);return true;
 }
 function readKeys(date,slot){const hhmm=slotHHMM(slot);const compact=hhmm.replace(':','');const keys=[`${date}-${compact}`];if(hhmm.endsWith(':00'))keys.push(`${date}-${hhmm.slice(0,2)}`);return keys;}
 function validTimestamp(value){if(!value)return'';if(typeof value==='object')value=value.confirmedAt||value.readAt||value.at||value.iso||value.value||'';if(typeof value!=='string')return'';const parsed=new Date(value);return Number.isNaN(parsed.getTime())?'':value;}
