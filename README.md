@@ -1,8 +1,19 @@
-# JP Workspace V56.14
+# JP Workspace V56.15
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Cadastro OPEC e preview sob demanda V56.15
+
+- Removido o preview fixo da lateral do cadastro de merchan, deixando o formulário em largura integral.
+- Incluído o botão `VISUALIZAR NO ESTÚDIO` junto de LIMPAR, SALVAR RASCUNHO e PUBLICAR TEXTO.
+- O botão abre uma janela independente com os dados operacionais e a reprodução do título e do texto que serão apresentados ao locutor.
+- O preview pode ser fechado pelo botão, pela área externa ou pela tecla ESC, sem perder ou alterar o preenchimento.
+- O cadastro foi reorganizado em quatro blocos numerados: CLIENTE E CLASSIFICAÇÃO, DESTINO NO AR, VIGÊNCIA e HORÁRIOS DE LEITURA.
+- Início e fim do contrato agora permanecem na mesma linha; início e fim do texto também ficam lado a lado.
+- Datas finais anteriores às datas iniciais são corrigidas imediatamente no formulário.
+- Firebase, textos cadastrados, histórico de leituras, institucional/promocional e retorno automático permanecem inalterados.
 
 ## Correção definitiva da Recepção V56.14
 

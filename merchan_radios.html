@@ -43,13 +43,14 @@ button{cursor:pointer}
 .tabBtn{min-height:34px;border:1px solid transparent;border-radius:11px;background:transparent;color:#596475;padding:0 13px;font-size:9px;font-weight:1000;letter-spacing:.04em}
 .tabBtn.active{background:linear-gradient(180deg,#cf0a33,#b90d2f);border-color:#b90d2f;color:#fff;box-shadow:0 8px 16px rgba(185,13,47,.14)}
 .tabView{display:none}.tabView.active{display:block}
-.opecLayout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+.opecLayout{display:block;max-width:1040px;margin:0 auto}
 .formBlock,.sectionBlock{border:1px solid #e3e8ef;border-radius:18px;background:rgba(248,250,252,.76);padding:12px;margin-bottom:12px}
 .blockTitle,.sectionTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;color:#4f5968;font-size:10px;letter-spacing:.06em}
 .blockTitle strong,.sectionTitle strong{color:var(--ink);font-size:12px}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
 .field{display:grid;gap:5px;min-width:0}.full{grid-column:1/-1}
+.formCluster{border:1px solid #e3e8ef;border-radius:15px;background:rgba(255,255,255,.7);padding:11px;margin-top:9px}.formCluster:first-of-type{margin-top:0}.clusterTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;color:#697386;font-size:8px;letter-spacing:.07em}.clusterTitle strong{color:#272e39;font-size:10px}.grid.clientGrid{grid-template-columns:minmax(0,2fr) minmax(220px,1fr)}
 label{font-size:8.5px;color:#667283;letter-spacing:.075em;font-weight:1000}
 .control{width:100%;min-height:38px;border:1px solid #dce2eb;border-radius:13px;background:#fff;padding:8px 11px;color:var(--ink);font-weight:1000}
 .control:focus{border-color:rgba(185,13,47,.44);box-shadow:0 0 0 4px rgba(185,13,47,.07)}
@@ -70,13 +71,14 @@ textarea.control{min-height:154px;line-height:1.45;font-weight:650;resize:vertic
 .advanced{border:1px solid #e3e8ef;border-radius:15px;background:#fff;margin-top:10px;overflow:hidden}
 .advanced summary{list-style:none;cursor:pointer;padding:10px 12px;color:#667283;font-size:9.5px;font-weight:1000;letter-spacing:.06em}.advanced summary::-webkit-details-marker{display:none}
 .styleGrid{display:grid;grid-template-columns:minmax(0,1fr) 74px 52px 78px;gap:7px;align-items:end;padding:0 10px 10px}.styleGrid .control{min-height:31px;font-size:10px;padding:6px 8px;border-radius:10px}.styleGrid input[type=color]{padding:3px}
-.preview{position:sticky;top:16px;border:1px solid #dfe5ec;border-radius:20px;background:linear-gradient(180deg,#f7f9fc,#eef2f7);padding:12px}
+.preview{border:1px solid #dfe5ec;border-radius:20px;background:linear-gradient(180deg,#f7f9fc,#eef2f7);padding:12px}
 .previewLabel{font-size:9px;color:#697386;letter-spacing:.07em;margin-bottom:8px}
 .previewMeta{display:grid;gap:4px;margin-bottom:9px;color:#556171;font-size:8.5px;line-height:1.2}.previewMeta span{display:flex;justify-content:space-between;gap:8px;border:1px solid #e2e7ef;background:rgba(255,255,255,.82);border-radius:9px;padding:5px 7px}.previewMeta strong{color:var(--ink);text-align:right;max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .previewCard{background:#fff;border:1px solid #e1e7ef;border-radius:17px;overflow:hidden;box-shadow:0 6px 16px rgba(17,23,34,.035)}
 .previewTitle{border-left:3px solid var(--red);padding:12px 14px;font-size:22px;line-height:1.08;letter-spacing:-.035em;max-height:76px;overflow:auto}
 .previewDesc{background:#f3f6fa;border-top:1px solid #e1e7ee;padding:12px 14px;font-size:13.5px;line-height:1.43;text-transform:none;font-weight:650;white-space:pre-wrap;max-height:270px;overflow:auto}
 .readEstimate{margin-top:8px;border:1px solid #e3e8ef;border-radius:11px;background:rgba(255,255,255,.82);padding:7px 9px;color:#596475;font-size:9px}.readEstimate.warn{border-color:#ffd7a8;background:#fff7ec;color:#9a5600}
+.opecPreviewBackdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;padding:18px;background:rgba(17,23,34,.58);backdrop-filter:blur(5px)}.opecPreviewBackdrop[hidden]{display:none!important}.opecPreviewDialog{width:min(760px,100%);max-height:92vh;overflow:auto;border:1px solid #dce2eb;border-radius:24px;background:#fff;box-shadow:0 28px 80px rgba(17,23,34,.28)}.opecPreviewHead{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #e3e8ef;background:rgba(255,255,255,.96);backdrop-filter:blur(8px)}.opecPreviewHead div{display:grid;gap:3px}.opecPreviewHead strong{font-size:14px}.opecPreviewHead span{color:#697386;font-size:8px;letter-spacing:.06em}.opecPreviewClose{width:34px;min-width:34px;min-height:34px;border:1px solid #dce2eb;border-radius:11px;background:#f4f6fa;color:#171c26;font-size:18px;font-weight:900}.opecPreviewBody{padding:14px}.opecPreviewBody .preview{max-width:680px;margin:0 auto}.opecPreviewBody .previewMeta{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.opecPreviewBody .previewTitle{max-height:none;font-size:26px;padding:16px 18px}.opecPreviewBody .previewDesc{max-height:380px;font-size:16px;padding:16px 18px;line-height:1.5}.previewBtn{border-color:#ccd5e2;background:#fff;color:#27313e}.previewBtn::before{content:'◉';margin-right:6px;color:var(--red)}
 .toolbar{display:grid;grid-template-columns:minmax(180px,1fr) repeat(3,minmax(145px,auto));gap:8px;align-items:end;margin-bottom:10px}
 .toolbar.report{grid-template-columns:repeat(5,minmax(145px,1fr));}
 .modeBar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.modeBtn{min-height:31px;border:1px solid var(--line);border-radius:10px;background:#f4f6fa;color:#596475;padding:0 11px;font-size:8.5px;font-weight:1000}.modeBtn.active{background:#171c26;border-color:#171c26;color:#fff}
@@ -94,8 +96,8 @@ textarea.control{min-height:154px;line-height:1.45;font-weight:650;resize:vertic
 .summaryGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:10px}
 .summaryCard{border:1px solid var(--line);border-radius:15px;background:#fff;padding:11px;display:grid;gap:8px}.summaryCard h3{margin:0;font-size:11px;line-height:1.2}.summaryMeta{display:flex;gap:5px;flex-wrap:wrap}.summaryNumbers{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.summaryNumber{border:1px solid #e3e8ef;border-radius:10px;background:#f8fafc;padding:7px;text-align:center}.summaryNumber span{display:block;font-size:6.8px;color:var(--muted)}.summaryNumber strong{display:block;margin-top:4px;font-size:15px}.progress{height:7px;border-radius:999px;background:#eef1f5;overflow:hidden}.progress span{display:block;height:100%;background:linear-gradient(90deg,#2e9b65,#65bf8c);border-radius:inherit}
 .noPrint{}
-@media(max-width:1040px){.opecLayout,.grid,.grid.three{grid-template-columns:1fr}.preview{position:relative;top:auto}.readHours{grid-template-columns:repeat(4,1fr)}.toolbar,.toolbar.report{grid-template-columns:repeat(2,minmax(150px,1fr))}.summaryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:680px){.wrap{padding:8px}.head{align-items:flex-start;flex-direction:column}.readHours{grid-template-columns:repeat(3,1fr)}.styleGrid{grid-template-columns:1fr 68px 48px}.styleGrid select:last-child{grid-column:1/-1}.toolbar,.toolbar.report,.kpiGrid,.summaryGrid{grid-template-columns:1fr}.tabs{display:grid;grid-template-columns:1fr}.tabBtn{width:100%}}
+@media(max-width:1040px){.grid,.grid.three,.grid.clientGrid{grid-template-columns:1fr}.readHours{grid-template-columns:repeat(4,1fr)}.toolbar,.toolbar.report{grid-template-columns:repeat(2,minmax(150px,1fr))}.summaryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.wrap{padding:8px}.head{align-items:flex-start;flex-direction:column}.readHours{grid-template-columns:repeat(3,1fr)}.styleGrid{grid-template-columns:1fr 68px 48px}.styleGrid select:last-child{grid-column:1/-1}.toolbar,.toolbar.report,.kpiGrid,.summaryGrid{grid-template-columns:1fr}.tabs{display:grid;grid-template-columns:1fr}.tabBtn{width:100%}.opecPreviewBackdrop{padding:8px}.opecPreviewDialog{border-radius:18px}.opecPreviewBody{padding:9px}.opecPreviewBody .previewMeta{grid-template-columns:1fr}.opecPreviewBody .previewDesc{font-size:14px;max-height:48vh}.actions{justify-content:stretch}.actions .btn{flex:1 1 150px}}
 @media print{body{background:#fff}.logoBar,.head,.tabs,.toolbar,.modeBar,.toolbarActions,.noPrint{display:none!important}.wrap{max-width:none;padding:0}.panel{border:0;box-shadow:none}.body{padding:0}.tabView{display:none!important}#tab-relatorio{display:block!important}.tableWrap{overflow:visible;border:0}.table.reportTable{min-width:0;font-size:8px}.table th,.table td{padding:5px}.kpiGrid{grid-template-columns:repeat(5,1fr)}.summaryGrid{grid-template-columns:repeat(2,1fr)}}
 .opecAlert{display:block;margin-top:5px;font-size:8px;font-weight:950;letter-spacing:.035em;color:#6b7482}.opecAlert.warn{color:#a96700}.opecAlert.bad{color:#b21f36}
 .clientTextGuide{border:1px solid #bde9ce;border-radius:15px;background:#f4fcf7;padding:10px 12px;margin-bottom:10px;color:#176f46;font-size:9px;line-height:1.45;font-weight:950}
@@ -161,20 +163,38 @@ tbody tr:focus-within td{background:#fff8fa}
             <input type="hidden" id="clientId">
             <input type="hidden" id="supersedesId">
             <section class="formBlock">
-              <div class="blockTitle"><strong>ONDE ENTRA</strong><span>EMISSORA, PROGRAMA, PERÍODO E HORÁRIOS</span></div>
-              <div class="clientTextGuide">O PROMOCIONAL SUBSTITUI TEMPORARIAMENTE O INSTITUCIONAL DO MESMO CLIENTE. AO ENCERRAR, O TEXTO INSTITUCIONAL VOLTA AUTOMATICAMENTE AO ESTÚDIO.</div>
-              <div class="grid">
-                <div class="field full"><label>CLIENTE</label><input class="control" id="clientName" list="clientDatalist" autocomplete="off" required placeholder="DIGITE OU SELECIONE O CLIENTE"><datalist id="clientDatalist"></datalist><div class="helper" id="clientHint">CLIENTES JÁ CADASTRADOS SERÃO LOCALIZADOS AUTOMATICAMENTE.</div></div>
-                <div class="field"><label>TIPO DO TEXTO</label><select class="control" id="textType"><option value="institutional">INSTITUCIONAL</option><option value="promotional">PROMOCIONAL</option><option value="legacy">LEGADO / CLASSIFICAR</option></select></div>
-                <div class="field"><label>EMISSORA</label><select class="control" id="station" required><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
-                <div class="field"><label>PROGRAMA</label><select class="control" id="program" required></select><div class="helper" id="programHint">SELECIONE A EMISSORA PARA CARREGAR OS PROGRAMAS.</div></div>
-                <div class="field"><label>INÍCIO DO CONTRATO</label><input class="control" type="date" id="contractStartDate" required></div>
-                <div class="field"><label>FIM DO CONTRATO</label><input class="control" type="date" id="contractEndDate" required></div>
-                <div class="field"><label>INÍCIO DESTE TEXTO</label><input class="control" type="date" id="startDate" required></div>
-                <div class="field"><label>FIM DESTE TEXTO</label><input class="control" type="date" id="endDate" required></div><div class="field"><label>ALERTA DE RENOVAÇÃO</label><input class="control" type="date" id="textEndDate"><div class="helper">AVISA A OPEC ATÉ TRÊS DIAS ANTES DA TROCA.</div></div><div class="field"><label>DISTRIBUIÇÃO DOS HORÁRIOS</label><select class="control" id="scheduleMode"><option value="fixed">HORÁRIO FIXO</option><option value="rotation">RODÍZIO ENTRE HORÁRIOS</option></select><div class="helper" id="scheduleModeHint">FIXO: O MERCHAN ENTRA EM TODOS OS HORÁRIOS SELECIONADOS. RODÍZIO: MERCHANS DO MESMO GRUPO ALTERNAM ENTRE OS HORÁRIOS.</div></div>
-                <div class="field full conditionalField hidden" id="fallbackField"><label>AO ENCERRAR, VOLTAR PARA</label><select class="control" id="fallbackTextId"></select><div class="helper" id="fallbackHint">O TEXTO INSTITUCIONAL SERÁ RETOMADO AUTOMATICAMENTE.</div></div>
+              <div class="blockTitle"><strong>CADASTRO DO MERCHAN</strong><span>CLIENTE, DESTINO, PERÍODO E HORÁRIOS</span></div>
+              <div class="formCluster">
+                <div class="clusterTitle"><strong>1. CLIENTE E CLASSIFICAÇÃO</strong><span>QUEM ANUNCIA E QUAL TEXTO SERÁ USADO</span></div>
+                <div class="grid clientGrid">
+                  <div class="field"><label>CLIENTE</label><input class="control" id="clientName" list="clientDatalist" autocomplete="off" required placeholder="DIGITE OU SELECIONE O CLIENTE"><datalist id="clientDatalist"></datalist><div class="helper" id="clientHint">CLIENTES JÁ CADASTRADOS SERÃO LOCALIZADOS AUTOMATICAMENTE.</div></div>
+                  <div class="field"><label>TIPO DO TEXTO</label><select class="control" id="textType"><option value="institutional">INSTITUCIONAL</option><option value="promotional">PROMOCIONAL</option><option value="legacy">LEGADO / CLASSIFICAR</option></select></div>
+                  <div class="field full conditionalField hidden" id="fallbackField"><label>AO ENCERRAR, VOLTAR PARA</label><select class="control" id="fallbackTextId"></select><div class="helper" id="fallbackHint">O TEXTO INSTITUCIONAL SERÁ RETOMADO AUTOMATICAMENTE.</div></div>
+                  <div class="clientTextGuide full">O PROMOCIONAL SUBSTITUI TEMPORARIAMENTE O INSTITUCIONAL DO MESMO CLIENTE. AO ENCERRAR, O TEXTO INSTITUCIONAL VOLTA AUTOMATICAMENTE AO ESTÚDIO.</div>
+                </div>
+              </div>
+              <div class="formCluster">
+                <div class="clusterTitle"><strong>2. DESTINO NO AR</strong><span>EMISSORA E PROGRAMA</span></div>
+                <div class="grid">
+                  <div class="field"><label>EMISSORA</label><select class="control" id="station" required><option value="JP1017">JOVEM PAN - 101,7</option><option value="JPNEWS983">JOVEM PAN NEWS - 98,3</option></select></div>
+                  <div class="field"><label>PROGRAMA</label><select class="control" id="program" required></select><div class="helper" id="programHint">SELECIONE A EMISSORA PARA CARREGAR OS PROGRAMAS.</div></div>
+                </div>
+              </div>
+              <div class="formCluster">
+                <div class="clusterTitle"><strong>3. VIGÊNCIA</strong><span>CONTRATO E PERÍODO DE EXIBIÇÃO DESTE TEXTO</span></div>
+                <div class="grid">
+                  <div class="field"><label>INÍCIO DO CONTRATO</label><input class="control" type="date" id="contractStartDate" required></div>
+                  <div class="field"><label>FIM DO CONTRATO</label><input class="control" type="date" id="contractEndDate" required></div>
+                  <div class="field"><label>INÍCIO DESTE TEXTO</label><input class="control" type="date" id="startDate" required></div>
+                  <div class="field"><label>FIM DESTE TEXTO</label><input class="control" type="date" id="endDate" required></div>
+                  <div class="field"><label>ALERTA DE RENOVAÇÃO</label><input class="control" type="date" id="textEndDate"><div class="helper">AVISA A OPEC ATÉ TRÊS DIAS ANTES DA TROCA.</div></div>
+                  <div class="field"><label>DISTRIBUIÇÃO DOS HORÁRIOS</label><select class="control" id="scheduleMode"><option value="fixed">HORÁRIO FIXO</option><option value="rotation">RODÍZIO ENTRE HORÁRIOS</option></select><div class="helper" id="scheduleModeHint">FIXO: ENTRA EM TODOS OS HORÁRIOS. RODÍZIO: OS TEXTOS ALTERNAM ENTRE ELES.</div></div>
+                </div>
+              </div>
+              <div class="formCluster">
+                <div class="clusterTitle"><strong>4. HORÁRIOS DE LEITURA</strong><span>SELECIONE QUANDO A PAUTA DEVE APARECER</span></div>
                 <div class="field full">
-                  <div class="readHead"><label>HORÁRIOS DE LEITURA DA PAUTA</label><div class="readActions"><button class="miniBtn" type="button" id="selectAllHoursBtn">TODOS</button><button class="miniBtn" type="button" id="clearHoursBtn">LIMPAR</button></div></div>
+                  <div class="readHead"><label>HORÁRIOS DISPONÍVEIS NO PROGRAMA</label><div class="readActions"><button class="miniBtn" type="button" id="selectAllHoursBtn">TODOS</button><button class="miniBtn" type="button" id="clearHoursBtn">LIMPAR</button></div></div>
                   <div class="readHours" id="readHours"></div>
                   <div class="helper" id="hoursHint">OS HORÁRIOS SÃO GERADOS A PARTIR DO PROGRAMA CADASTRADO NA ABA HORÁRIOS.</div>
                 </div>
@@ -191,15 +211,9 @@ tbody tr:focus-within td{background:#fff8fa}
                 <div class="field full"><label>ESTILO DO TÍTULO</label><div class="styleGrid"><select class="control" id="titleFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option><option>Impact</option></select><input class="control" type="number" id="titleSize" min="18" max="54" value="24"><input class="control" type="color" id="titleColor" value="#171c26"><select class="control" id="titleBold"><option value="1">NEGRITO</option><option value="0">NORMAL</option></select></div></div>
                 <div class="field full"><label>ESTILO DA DESCRIÇÃO</label><div class="styleGrid"><select class="control" id="descFont"><option>Segoe UI</option><option>Arial</option><option>Calibri</option><option>Tahoma</option><option>Verdana</option><option>Georgia</option></select><input class="control" type="number" id="descSize" min="12" max="36" value="14"><input class="control" type="color" id="descColor" value="#465161"><select class="control" id="descBold"><option value="0">NORMAL</option><option value="1">NEGRITO</option></select></div></div>
               </details>
-              <div class="actions"><button class="btn" type="reset" id="resetBtn">LIMPAR</button><button class="btn blue" type="button" id="saveDraftBtn">SALVAR RASCUNHO</button><button class="btn red" type="submit" id="saveMerchanBtn">PUBLICAR TEXTO</button></div>
+              <div class="actions"><button class="btn" type="reset" id="resetBtn">LIMPAR</button><button class="btn previewBtn" type="button" id="openPreviewBtn">VISUALIZAR NO ESTÚDIO</button><button class="btn blue" type="button" id="saveDraftBtn">SALVAR RASCUNHO</button><button class="btn red" type="submit" id="saveMerchanBtn">PUBLICAR TEXTO</button></div>
             </section>
           </form>
-          <aside class="preview">
-            <div class="previewLabel">PREVIEW NO PAINEL DO ESTÚDIO</div>
-            <div class="previewMeta"><span>CLIENTE <strong id="previewClient">NÃO INFORMADO</strong></span><span>TIPO <strong id="previewType">INSTITUCIONAL</strong></span><span>EMISSORA <strong id="previewStation">JOVEM PAN - 101,7</strong></span><span>PROGRAMA <strong id="previewProgram">SELECIONE</strong></span><span>PERÍODO <strong id="previewPeriod">--</strong></span><span>HORÁRIOS <strong id="previewHours">--</strong></span><span>MODO <strong id="previewMode">FIXO</strong></span><span>RETORNO <strong id="previewFallback">NÃO SE APLICA</strong></span></div>
-            <div class="previewCard"><div class="previewTitle" id="previewTitle">TÍTULO DO MERCHAN</div><div class="previewDesc" id="previewDesc">TEXTO DO MERCHAN PARA LEITURA NO AR.</div></div>
-            <div class="readEstimate" id="previewEstimate">TEMPO ESTIMADO: 0S</div>
-          </aside>
         </div>
       </section>
 
@@ -243,6 +257,22 @@ tbody tr:focus-within td{background:#fff8fa}
       </section>
     </div>
   </div>
+</div>
+<div class="opecPreviewBackdrop" id="studioPreviewModal" hidden role="dialog" aria-modal="true" aria-labelledby="studioPreviewTitle">
+  <section class="opecPreviewDialog">
+    <header class="opecPreviewHead">
+      <div><strong id="studioPreviewTitle">VISUALIZAÇÃO NO ESTÚDIO</strong><span>EXATAMENTE COMO A PAUTA SERÁ APRESENTADA AO LOCUTOR</span></div>
+      <button class="opecPreviewClose" id="closePreviewBtn" type="button" aria-label="FECHAR VISUALIZAÇÃO" title="FECHAR">×</button>
+    </header>
+    <div class="opecPreviewBody">
+      <div class="preview">
+        <div class="previewLabel">DADOS OPERACIONAIS DA PAUTA</div>
+        <div class="previewMeta"><span>CLIENTE <strong id="previewClient">NÃO INFORMADO</strong></span><span>TIPO <strong id="previewType">INSTITUCIONAL</strong></span><span>EMISSORA <strong id="previewStation">JOVEM PAN - 101,7</strong></span><span>PROGRAMA <strong id="previewProgram">SELECIONE</strong></span><span>PERÍODO <strong id="previewPeriod">--</strong></span><span>HORÁRIOS <strong id="previewHours">--</strong></span><span>MODO <strong id="previewMode">FIXO</strong></span><span>RETORNO <strong id="previewFallback">NÃO SE APLICA</strong></span></div>
+        <div class="previewCard"><div class="previewTitle" id="previewTitle">TÍTULO DO MERCHAN</div><div class="previewDesc" id="previewDesc">TEXTO DO MERCHAN PARA LEITURA NO AR.</div></div>
+        <div class="readEstimate" id="previewEstimate">TEMPO ESTIMADO: 0S</div>
+      </div>
+    </div>
+  </section>
 </div>
 <script>
 const FIREBASE_CONFIG={"apiKey":"AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE","authDomain":"jp-painel-brindes.firebaseapp.com","databaseURL":"https://jp-painel-brindes-default-rtdb.firebaseio.com","projectId":"jp-painel-brindes","storageBucket":"jp-painel-brindes.firebasestorage.app","messagingSenderId":"843544648278","appId":"1:843544648278:web:066c8e64e17da046cf79f7","measurementId":"G-VB6Y2TS796"};
@@ -325,6 +355,9 @@ function styleFrom(prefix){return{font:$(prefix+'Font').value,size:Number($(pref
 function applyStyle(element,style,type){element.style.fontFamily=`'${style.font}', Arial, sans-serif`;const max=type==='title'?24:14;const fallback=type==='title'?22:13.5;element.style.fontSize=Math.min(Number(style.size)||fallback,max)+'px';element.style.color=style.color;element.style.fontWeight=style.bold?'1000':(type==='title'?'950':'650');}
 function readingSeconds(){const words=textNorm($('text').value).split(/\s+/).filter(Boolean).length;return Math.max(0,Math.ceil(words/2.6));}
 function updatePreview(){const title=norm($('title').value)||'TÍTULO DO MERCHAN';const description=textNorm($('text').value)||'TEXTO DO MERCHAN PARA LEITURA NO AR.';$('previewTitle').textContent=title;$('previewDesc').textContent=description;$('previewClient').textContent=norm($('clientName').value)||'NÃO INFORMADO';$('previewType').textContent=opecTextTypeLabel($('textType').value);$('previewStation').textContent=stationLabel($('station').value);$('previewProgram').textContent=norm($('program').value)||'SELECIONE';$('previewPeriod').textContent=`${formatBR($('startDate').value)} A ${formatBR($('endDate').value)}`;$('previewHours').textContent=selectedHours().join(', ')||'--';if($('previewMode'))$('previewMode').textContent=$('scheduleMode')?.value==='rotation'?'RODÍZIO':'FIXO';const fallback=$('fallbackTextId')?.selectedOptions?.[0]?.textContent||'';$('previewFallback').textContent=$('textType').value==='promotional'?(fallback||'INSTITUCIONAL PENDENTE'):'NÃO SE APLICA';const seconds=readingSeconds();const label=seconds>30?`TEMPO ESTIMADO: ${seconds}S · TEXTO LONGO`:`TEMPO ESTIMADO: ${seconds}S`;$('readingTime').textContent=label;$('previewEstimate').textContent=label;$('previewEstimate').classList.toggle('warn',seconds>30);applyStyle($('previewTitle'),styleFrom('title'),'title');applyStyle($('previewDesc'),styleFrom('desc'),'desc');}
+function openStudioPreview(){updatePreview();$('studioPreviewModal').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>$('closePreviewBtn')?.focus(),20);}
+function closeStudioPreview(){$('studioPreviewModal').hidden=true;document.body.style.overflow='';$('openPreviewBtn')?.focus();}
+function alignOpecDateRanges(){const contractStart=$('contractStartDate').value,contractEnd=$('contractEndDate').value,textStart=$('startDate').value,textEnd=$('endDate').value;if(contractStart&&(!contractEnd||contractEnd<contractStart))$('contractEndDate').value=contractStart;if(textStart&&(!textEnd||textEnd<textStart))$('endDate').value=textStart;if($('textEndDate').value&&textStart&&$('textEndDate').value<textStart)$('textEndDate').value=$('endDate').value||textStart;updatePreview();}
 function setSaveState(mode,text){const element=$('saveState');element.className='saveState'+(mode?` ${mode}`:'');element.textContent=text;}
 function mergeReadData(base,copy){base.readByHour={...(base.readByHour||{}),...(copy.readByHour||{})};const logs=[...(base.readLog||[]),...(copy.readLog||[])];const seen=new Set();base.readLog=logs.filter(log=>{const key=log?.id||`${log?.key||''}|${log?.confirmedAt||log?.readAt||''}`;if(!key||seen.has(key))return false;seen.add(key);return true;});if(copy.readAt&&(!base.readAt||copy.readAt>base.readAt)){base.readAt=copy.readAt;base.readAtLabel=copy.readAtLabel||base.readAtLabel;base.readSlot=copy.readSlot||base.readSlot;}return base;}
 function allMerchans(){const groups=new Map();Object.entries(state.months||{}).forEach(([month,monthData])=>(monthData.promos||[]).forEach(promo=>{if(norm(promo.kind)!=='MERCHAN')return;const id=promo.id||`${month}-${promo.name||promo.title}`;if(!groups.has(id)){const clone=deepClone(promo);clone.__months=[month];groups.set(id,clone);return;}const current=groups.get(id);const merged=mergeReadData(current,promo);merged.__months=[...new Set([...(merged.__months||[]),month])];const currentUpdated=Date.parse(current.updatedAt||current.createdAt||0)||0;const copyUpdated=Date.parse(promo.updatedAt||promo.createdAt||0)||0;if(copyUpdated>currentUpdated){const reads={readByHour:merged.readByHour,readLog:merged.readLog,__months:merged.__months};Object.assign(merged,deepClone(promo),reads);}groups.set(id,merged);}));return [...groups.values()].sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.program).localeCompare(norm(b.program))||norm(a.name||a.title).localeCompare(norm(b.name||b.title)));}
@@ -340,14 +373,14 @@ async function transactionForRecord(record){
     const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const existing=rows.find(row=>row?.id===record.id);const filtered=rows.filter(row=>row?.id!==record.id);if(!target.has(key))return filtered;const copy={...deepClone(record),updatedBy:operator.name,operatorSector:operator.sector};if(existing)mergeReadData(copy,existing);return [...filtered,copy];},undefined,false);if(!tx?.committed)throw new Error('GRAVAÇÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});
     state.months[key] ||= {label:key,items:[],promos:[],distributions:[]};const rows=result.snapshot.val();state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);
   }
-  const now=new Date(),savedMonth=String(record.startDate||'').slice(0,7);await Promise.allSettled([ref.update({currentMonth:validMonthKey(savedMonth)?savedMonth:todayISO().slice(0,7),updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_13_STABLE_OPEC'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
+  const now=new Date(),savedMonth=String(record.startDate||'').slice(0,7);await Promise.allSettled([ref.update({currentMonth:validMonthKey(savedMonth)?savedMonth:todayISO().slice(0,7),updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_15_OPEC_PREVIEW'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   return state;
 }
 async function deleteRecord(id){
   const operator=opecOperatorIdentity();
   await ensureOpecOnline();const keys=Object.entries(state.months||{}).filter(([key,month])=>validMonthKey(key)&&(month.promos||[]).some(row=>row?.id===id)).map(([key])=>key);
   for(const key of keys){const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);return rows.filter(row=>row?.id!==id);},undefined,false);if(!tx?.committed)throw new Error('EXCLUSÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});const rows=result.snapshot.val();if(state.months?.[key])state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);}
-  const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_13_STABLE_OPEC'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'MERCHAN EXCLUÍDO',targetId:id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);return true;
+  const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_15_OPEC_PREVIEW'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'MERCHAN EXCLUÍDO',targetId:id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);return true;
 }
 function readKeys(date,slot){const hhmm=slotHHMM(slot);const compact=hhmm.replace(':','');const keys=[`${date}-${compact}`];if(hhmm.endsWith(':00'))keys.push(`${date}-${hhmm.slice(0,2)}`);return keys;}
 function validTimestamp(value){if(!value)return'';if(typeof value==='object')value=value.confirmedAt||value.readAt||value.at||value.iso||value.value||'';if(typeof value!=='string')return'';const parsed=new Date(value);return Number.isNaN(parsed.getTime())?'':value;}
@@ -412,6 +445,8 @@ $$('.modeBtn').forEach(button=>button.addEventListener('click',()=>setReportMode
 $('clientName').addEventListener('input',()=>syncClientSelection(false));$('clientName').addEventListener('change',()=>syncClientSelection(true));$('textType').addEventListener('change',()=>textTypeChanged(true));$('station').addEventListener('change',fillPrograms);$('program').addEventListener('change',()=>{fillHours();fillFallbackOptions();});$('contractStartDate').addEventListener('change',()=>{if($('textType').value==='institutional')$('startDate').value=$('contractStartDate').value;updatePreview();});$('contractEndDate').addEventListener('change',()=>{if($('textType').value==='institutional'){$('endDate').value=$('contractEndDate').value;$('textEndDate').value=$('contractEndDate').value;}updatePreview();});$('startDate').addEventListener('change',()=>fillHours(selectedHours()));$('endDate').addEventListener('change',()=>{if(!$('textEndDate').value||$('textEndDate').value<$('startDate').value)$('textEndDate').value=$('endDate').value;fillHours(selectedHours());});$('textEndDate').addEventListener('change',updatePreview);$('scheduleMode')?.addEventListener('change',updatePreview);$('fallbackTextId').addEventListener('change',updatePreview);
 $('selectAllHoursBtn').addEventListener('click',()=>{$$('#readHours input').forEach(input=>input.checked=true);updatePreview();});$('clearHoursBtn').addEventListener('click',()=>{$$('#readHours input').forEach(input=>input.checked=false);updatePreview();});
 ['title','text','titleFont','titleSize','titleColor','titleBold','descFont','descSize','descColor','descBold'].forEach(id=>$(id).addEventListener('input',updatePreview));
+['contractStartDate','contractEndDate','startDate','endDate'].forEach(id=>$(id).addEventListener('change',alignOpecDateRanges));
+$('openPreviewBtn').addEventListener('click',openStudioPreview);$('closePreviewBtn').addEventListener('click',closeStudioPreview);$('studioPreviewModal').addEventListener('click',event=>{if(event.target===$('studioPreviewModal'))closeStudioPreview();});document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('studioPreviewModal').hidden)closeStudioPreview();});
 ['listSearch','listStationFilter','listStatusFilter','listMonthFilter'].forEach(id=>$(id).addEventListener(id==='listSearch'?'input':'change',renderList));
 ['bankSearch','bankStation','bankType','bankStatus'].forEach(id=>$(id).addEventListener(id==='bankSearch'?'input':'change',renderTextBank));
 ['reportDate','reportMonth','reportStation','reportPauta','reportStatus'].forEach(id=>$(id).addEventListener('change',()=>{if(id==='reportStation')fillReportPautas();renderReport();}));

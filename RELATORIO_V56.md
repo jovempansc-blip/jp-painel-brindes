@@ -1,4 +1,16 @@
-# JP Workspace V56.14 — relatório de implantação
+# JP Workspace V56.15 — relatório de implantação
+
+## Organização do cadastro e preview OPEC V56.15
+
+- O painel lateral permanente foi removido para evitar uma tela estreita, longa e visualmente dividida.
+- O formulário utiliza toda a largura disponível e segue uma sequência operacional numerada.
+- CLIENTE e TIPO ficam agrupados; EMISSORA e PROGRAMA formam o destino; os períodos de contrato e texto aparecem em pares cronológicos; a seleção de horários ocupa um bloco próprio.
+- O botão `VISUALIZAR NO ESTÚDIO` foi inserido na barra final de ações.
+- A visualização abre em modal e atualiza título, texto, cliente, tipo, emissora, programa, período, horários, modo, retorno institucional e tempo estimado.
+- Abrir ou fechar o preview não salva, limpa nem modifica os dados do formulário.
+- A correção automática de intervalos impede que a interface permaneça com término anterior ao início.
+- O comportamento foi validado em ambiente de navegador simulado, incluindo abertura, conteúdo, fechamento e preservação do cadastro.
+- Validação automatizada concluída com 185 testes e nenhuma falha.
 
 ## Remoção definitiva do token na Recepção V56.14
 
@@ -217,7 +229,12 @@ Data da consolidação: 05/08/2026
 
 ## Testes executados
 
-- 179 verificações automatizadas: 0 falhas.
+- 185 verificações automatizadas: 0 falhas.
+- Preview OPEC aberto somente sob demanda pelo botão da barra de ações.
+- Conteúdo do preview atualizado com o título e o texto digitados.
+- Fechamento do preview sem alterar o formulário.
+- Cadastro OPEC organizado em quatro blocos operacionais.
+- Correção de datas finais anteriores às respectivas datas iniciais.
 - Confirmação realista de retirada na Recepção com persistência individual no mês correto.
 - Confirmação de retirada com ID histórico contendo caracteres proibidos em caminhos do Firebase.
 - Ausência total de `.info/connected` no link da Recepção.
