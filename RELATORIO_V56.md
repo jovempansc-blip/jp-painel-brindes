@@ -1,4 +1,17 @@
-# JP Workspace V56.13 — relatório de implantação
+# JP Workspace V56.14 — relatório de implantação
+
+## Remoção definitiva do token na Recepção V56.14
+
+- Retirado completamente `.info/connected` da página `preview_recepcao.html`.
+- A disponibilidade é verificada por leitura do campo estático `savedAt` dentro da referência oficial já inicializada.
+- O registro é localizado por seu ID como conteúdo; em seguida, a gravação usa somente a chave física devolvida pelo Firebase.
+- A transação deixou de regravar toda a lista de itens ou promoções e passou a atualizar apenas o registro confirmado.
+- Nenhum nome de ganhador, título de prêmio, programa ou ID legado é transformado em caminho.
+- A rotina foi testada com um ID propositalmente inválido como chave — contendo `.`, `#`, `[`, `]` e `/` — e a retirada foi confirmada sem erro porque o ID permaneceu somente como dado.
+- Em caso de falha, a interface mantém o prêmio como pendente e informa a etapa precisa para diagnóstico.
+- Auditoria e metadados continuam complementares e não desfazem uma retirada principal já confirmada.
+- A confirmação registra automaticamente o setor RECEPÇÃO; não existe campo ou pergunta para digitar o nome do usuário.
+- Validação automatizada concluída com 179 testes e nenhuma falha.
 
 ## Estabilidade dos links e confirmação da Recepção V56.13
 
@@ -204,8 +217,11 @@ Data da consolidação: 05/08/2026
 
 ## Testes executados
 
-- 176 verificações automatizadas: 0 falhas.
+- 179 verificações automatizadas: 0 falhas.
 - Confirmação realista de retirada na Recepção com persistência individual no mês correto.
+- Confirmação de retirada com ID histórico contendo caracteres proibidos em caminhos do Firebase.
+- Ausência total de `.info/connected` no link da Recepção.
+- Transação restrita à chave física localizada, sem regravar a coleção inteira.
 - Identidade automática de setor no Painel Principal, OPEC, Recepção e nos dois Estúdios, sem abrir solicitação de nome.
 - Ausência de `.info/connected` aninhado em qualquer referência de dados e uso exclusivo na raiz correta do Firebase.
 - Validação do mês antes de qualquer caminho mensal de gravação nos painéis operacionais.

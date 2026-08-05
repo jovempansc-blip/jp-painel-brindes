@@ -1,8 +1,19 @@
-# JP Workspace V56.13
+# JP Workspace V56.14
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Correção definitiva da Recepção V56.14
+
+- Removido completamente do link da Recepção o token especial `.info/connected` que ainda podia gerar `Invalid token in path` ao confirmar uma retirada.
+- A conexão é verificada por uma leitura estática em `savedAt`, sem construir caminhos com nome, prêmio, ganhador ou ID histórico.
+- A Recepção localiza primeiro a chave física real do registro no Firebase e executa a transação somente naquele registro.
+- IDs históricos com ponto, `#`, colchetes ou barra permanecem apenas como conteúdo e nunca participam do caminho de gravação.
+- A baixa altera exclusivamente os campos de retirada do ganhador selecionado, preservando todo o restante do sorteio e evitando regravar a coleção completa.
+- Mensagens de falha agora identificam a etapa exata: CONEXÃO, LOCALIZAÇÃO ou GRAVAÇÃO DA RETIRADA.
+- A identificação continua automática como RECEPÇÃO, sem solicitar o nome de quem confirmou.
+- Todas as funções e dados anteriores foram preservados.
 
 ## Estabilidade operacional V56.13
 

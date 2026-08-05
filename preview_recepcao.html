@@ -818,14 +818,20 @@ function promoPrizeTitle(p){const d=distributionById(p?.distributionId);return u
 firebase.initializeApp(FIREBASE_CONFIG);
 const receptionDatabase=firebase.database();
 const firebaseRef=receptionDatabase.ref(FIREBASE_ROOT_PATH);
-const receptionConnectionRef=receptionDatabase.ref('.info/connected');
 const receptionPendingSaves=new Set();
 const receptionSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function receptionRetry(operation,maxAttempts=3){let lastError;for(let attempt=1;attempt<=maxAttempts;attempt+=1){try{return await operation(attempt);}catch(error){lastError=error;if(error?.retryable===false)throw error;if(attempt<maxAttempts)await receptionSleep(180*attempt);}}throw lastError;}
 function receptionOperatorIdentity(){
   return {name:'RECEPÇÃO',sector:'RECEPÇÃO',automatic:true};
 }
-async function ensureReceptionOnline(){const snapshot=await Promise.race([receptionConnectionRef.get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))]);if(snapshot.val()!==true)throw new Error('FIREBASE OFFLINE. A RETIRADA CONTINUA PENDENTE.');return true;}
+function receptionStageError(stage,error){const message=String(error?.message||error||'ERRO NÃO IDENTIFICADO').replace(/^ETAPA [^:]+:\s*/i,'');const wrapped=new Error(`ETAPA ${stage}: ${message}`);wrapped.retryable=error?.retryable;return wrapped;}
+async function ensureReceptionOnline(){
+  if(navigator.onLine===false)throw new Error('NAVEGADOR SEM CONEXÃO. A RETIRADA CONTINUA PENDENTE.');
+  try{
+    await Promise.race([firebaseRef.child('savedAt').get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONSULTAR O FIREBASE.')),6000))]);
+    return true;
+  }catch(error){throw receptionStageError('CONEXÃO',error);}
+}
 function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
@@ -840,6 +846,14 @@ function receptionRecordMonths(collection,idValue,date=''){
   const fallback=valid(currentMonth)?currentMonth:valid(candidate)?candidate:todayISO().slice(0,7);
   return keys.length?keys:[fallback];
 }
+async function locateReceptionRecord(collection,monthKey,idValue){
+  const collectionRef=firebaseRef.child('months').child(monthKey).child(collection);
+  const snapshot=await collectionRef.get();
+  const value=snapshot.val();
+  const entries=Array.isArray(value)?value.map((row,index)=>[String(index),row]).filter(([,row])=>row):Object.entries(value||{}).filter(([,row])=>row);
+  const match=entries.find(([,row])=>row?.id===idValue);
+  return match?{ref:collectionRef.child(match[0]),record:match[1]}:null;
+}
 async function saveReceptionRecord(source,record){
   const collection=source==='item'?'items':'promos';
   const fields=source==='item'?['winnerDeliveries','winnerNames','winnerName','deliveredAt','deliveredAtLabel','deliveredBy']:['resultWinners','resultName','resultWinnersByHour','resultByHour'];
@@ -851,15 +865,32 @@ async function saveReceptionRecord(source,record){
     const now=new Date(),patch={};fields.forEach(field=>{if(Object.prototype.hasOwnProperty.call(record,field))patch[field]=JSON.parse(JSON.stringify(record[field]));});patch.updatedAt=now.toISOString();patch.updatedBy=operator.name;patch.operatorSector=operator.sector;
     const keys=receptionRecordMonths(collection,record.id,record.resultDate||record.drawDate||record.date||record.startDate);let found=false;
     for(const key of keys){
-      let foundInMonth=false;
-      const result=await receptionRetry(async()=>{foundInMonth=false;const tx=await firebaseRef.child('months').child(key).child(collection).transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const index=rows.findIndex(row=>row?.id===record.id);if(index<0)return;foundInMonth=true;rows[index]={...rows[index],...patch};return rows;},undefined,false);if(!tx?.committed){const error=new Error(foundInMonth?'A RETIRADA NÃO FOI CONFIRMADA.':'REGISTRO NÃO ENCONTRADO NA BASE OFICIAL.');error.retryable=!foundInMonth;throw error;}return tx;});
-      if(foundInMonth){found=true;const rows=result.snapshot.val();if(state.months?.[key])state.months[key][collection]=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);}
+      try{
+        const result=await receptionRetry(async()=>{
+          const located=await locateReceptionRecord(collection,key,record.id);
+          if(!located){const error=new Error('REGISTRO NÃO ENCONTRADO NA BASE OFICIAL.');error.retryable=true;throw error;}
+          const tx=await located.ref.transaction(current=>{
+            if(!current||current.id!==record.id)return;
+            return {...current,...patch};
+          },undefined,false);
+          if(!tx?.committed){const error=new Error('O REGISTRO MUDOU DURANTE A CONFIRMAÇÃO.');error.retryable=true;throw error;}
+          return tx;
+        });
+        found=true;
+        const saved=result.snapshot.val();
+        const rows=state.months?.[key]?.[collection]||[];
+        const index=rows.findIndex(row=>row?.id===record.id);
+        if(index>=0)rows[index]=saved;
+      }catch(error){
+        if(String(error?.message||'').includes('REGISTRO NÃO ENCONTRADO'))continue;
+        throw receptionStageError('GRAVAÇÃO DA RETIRADA',error);
+      }
     }
-    if(!found)throw Object.assign(new Error('REGISTRO NÃO ENCONTRADO NA BASE OFICIAL.'),{retryable:false});
+    if(!found)throw Object.assign(new Error('ETAPA LOCALIZAÇÃO: REGISTRO NÃO ENCONTRADO NA BASE OFICIAL.'),{retryable:false});
     const log={id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'RETIRADA DE PRÊMIO ATUALIZADA',targetId:record.id,origin:'RECEPÇÃO',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')};
     await Promise.allSettled([
       receptionRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(!rows.some(row=>row?.id===log.id))rows.push(log);return rows.slice(-2500);},undefined,false)),
-      firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'RECEPCAO',version:'FIREBASE_RTDB_V56_13_STABLE_PICKUP'})
+      firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'RECEPCAO',version:'FIREBASE_RTDB_V56_14_RECEPTION_RECORD'})
     ]);
     localStorage.setItem('jp_programacao_brindes_distribuicao_v2',JSON.stringify(state));return true;
   }finally{receptionPendingSaves.delete(record.id);}
