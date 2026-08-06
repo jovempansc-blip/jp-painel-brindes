@@ -1,0 +1,19 @@
+JP WORKSPACE V56.16 — PACOTE PARA GITHUB PAGES
+
+ESTRUTURA CORRIGIDA:
+- index.html está na raiz do pacote.
+- assets está na raiz do pacote.
+- arquivo .nojekyll incluído para publicação estática direta, sem processamento Jekyll.
+- não há pasta externa envolvendo o site.
+
+PUBLICAÇÃO RECOMENDADA:
+1. No repositório, apague versões antigas, arquivos ZIP e pastas duplicadas que não fazem parte do site atual.
+2. Extraia este ZIP no computador.
+3. Envie o CONTEÚDO extraído para a raiz do branch main. Não envie apenas o ZIP.
+4. Em Settings > Pages, use:
+   Source: Deploy from a branch
+   Branch: main
+   Folder: / (root)
+5. Salve e aguarde a execução mais recente. Evite novos envios enquanto ela estiver processando.
+
+O arquivo index.html precisa aparecer diretamente na página inicial do repositório, no mesmo nível da pasta assets.
