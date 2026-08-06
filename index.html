@@ -6305,7 +6305,6 @@ const WINNER_SHORT_BLOCK_DAYS = 28;
 let firebaseStarted = false;
 let firebaseReady = false;
 let firebaseRef = null;
-let firebaseConnectionRef = null;
 let firebaseConnected = false;
 let firebaseConnectionKnown = false;
 let firebaseBaseEmpty = false;
@@ -6679,21 +6678,13 @@ function initFirebaseSync(){
     const app = window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
     const database = window.firebase.database(app);
     firebaseRef = database.ref(FIREBASE_ROOT_PATH);
-    firebaseConnectionRef = database.ref('.info/connected');
     firebaseReady = true;
     updateSyncStatus('saving','CONECTANDO');
-    firebaseConnectionRef.on('value', snapshot=>{
-      firebaseConnectionKnown=true;
-      firebaseConnected=snapshot.val()===true;
-      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
-      if(firebaseConnected&&firebasePendingSave) queueApiSave(120);
-    },err=>{
-      firebaseConnectionKnown=true;
-      firebaseConnected=false;
-      console.warn('FIREBASE CONNECTION ERROR',err);
-      updateSyncStatus('error','ERRO FIREBASE');
-    });
     firebaseRef.on('value', async snapshot=>{
+      firebaseConnectionKnown = true;
+      firebaseConnected = true;
+      updateSyncStatus('online','FIREBASE ONLINE');
+      if(firebasePendingSave) queueApiSave(120);
       firebaseInitialSnapshotSeen = true;
       const payload = snapshot.val();
       const remoteState = firebaseStateFromPayload(payload);
@@ -6723,8 +6714,16 @@ function initFirebaseSync(){
 }
 function syncStateFromApi(force=false){
   initFirebaseSync();
-  if(force && firebaseReady && firebaseRef){
-    firebaseRef.get().then(snapshot=>{
+  if(firebaseReady && firebaseRef){
+    const request=force?firebaseRef.get():firebaseRef.child('savedAt').get();
+    request.then(snapshot=>{
+      firebaseConnectionKnown=true;
+      firebaseConnected=true;
+      updateSyncStatus('online','FIREBASE ONLINE');
+      if(!force){
+        if(firebasePendingSave) queueApiSave(120);
+        return;
+      }
       const payload=snapshot.val();
       const remoteState=firebaseStateFromPayload(payload);
       if(remoteState && !(firebasePendingSave && firebaseServerLoaded)){
@@ -6732,7 +6731,12 @@ function syncStateFromApi(force=false){
         applyRemoteFirebaseState(remoteState);
         firebasePendingSave=false;
       }
-    }).catch(err=>{firebaseConnectionKnown=true;firebaseConnected=false;updateSyncStatus('error','ERRO FIREBASE');console.warn('FIREBASE FORCE LOAD ERROR',err);});
+    }).catch(err=>{
+      firebaseConnectionKnown=true;
+      firebaseConnected=false;
+      updateSyncStatus(navigator.onLine===false?'local':'error',navigator.onLine===false?'MODO LOCAL':'ERRO FIREBASE');
+      console.warn(force?'FIREBASE FORCE LOAD ERROR':'FIREBASE CONNECTION PROBE ERROR',err);
+    });
   }
 }
 function handleBrowserConnectionChange(){

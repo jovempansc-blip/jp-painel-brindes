@@ -890,7 +890,7 @@ async function saveReceptionRecord(source,record){
     const log={id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'RETIRADA DE PRÊMIO ATUALIZADA',targetId:record.id,origin:'RECEPÇÃO',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')};
     await Promise.allSettled([
       receptionRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(!rows.some(row=>row?.id===log.id))rows.push(log);return rows.slice(-2500);},undefined,false)),
-      firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'RECEPCAO',version:'FIREBASE_RTDB_V56_14_RECEPTION_RECORD'})
+      firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'RECEPCAO',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_RECEPTION'})
     ]);
     localStorage.setItem('jp_programacao_brindes_distribuicao_v2',JSON.stringify(state));return true;
   }finally{receptionPendingSaves.delete(record.id);}

@@ -2062,7 +2062,6 @@ const WINNER_SHORT_BLOCK_DAYS = 28;
 let firebaseStarted=false;
 let firebaseReady=false;
 let firebaseRef=null;
-let firebaseConnectionRef=null;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
 let winnerBankRef=null;
@@ -2090,13 +2089,17 @@ function studioOperatorIdentity(required=false,force=false){
 }
 async function ensureStudioFirebaseOnline(){
   if(!firebaseReady||!firebaseRef) initFirebaseSync();
-  if(!firebaseReady||!firebaseRef||!firebaseConnectionRef) throw new Error('FIREBASE INDISPONÍVEL.');
-  const snapshot=await Promise.race([
-    firebaseConnectionRef.get(),
-    new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))
-  ]);
-  if(snapshot.val()!==true) throw new Error('FIREBASE OFFLINE. A ALTERAÇÃO NÃO FOI ENVIADA.');
-  return true;
+  if(!firebaseReady||!firebaseRef) throw new Error('FIREBASE INDISPONÍVEL.');
+  if(navigator.onLine===false) throw new Error('NAVEGADOR SEM CONEXÃO.');
+  try{
+    await Promise.race([
+      firebaseRef.child('savedAt').get(),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONSULTAR O FIREBASE.')),6000))
+    ]);
+    return true;
+  }catch(error){
+    throw new Error(`FIREBASE INDISPONÍVEL: ${error?.message||error}`);
+  }
 }
 function studioOutcomeMonthKey(context={}){
   const valid=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));
@@ -2156,7 +2159,7 @@ async function persistStudioRecord(collection,record,fields){
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
     source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
-    version:'FIREBASE_RTDB_V56_13_STABLE'
+    version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'
   })]);
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
 }
@@ -2199,7 +2202,6 @@ function initFirebaseSync(){
     const app=window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
     const database=window.firebase.database(app);
     firebaseRef=database.ref(FIREBASE_ROOT_PATH);
-    firebaseConnectionRef=database.ref('.info/connected');
     firebaseReady=true;
     firebaseRef.on('value', async snapshot=>{
       const payload=snapshot.val();
@@ -3331,7 +3333,7 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     await Promise.allSettled(resultRecordKeys.map(key=>winnerBankRef.child('records').child(key).update({operationStatus:'CONFIRMED',confirmedAt:now.toISOString(),updatedAt:now.toISOString()})));
     await Promise.allSettled([
       winnerBankRef.update({initialized:true,schemaVersion:2,updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017'}),
-      firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_13_STABLE_RESULT'})
+      firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_RESULT'})
     ]);
     if(stateChanged){
       try{await appendStudioAudit({id:`LOG_${operationId}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});}catch(auditError){console.warn('AUDITORIA DO RESULTADO PENDENTE:',auditError);}
@@ -3542,7 +3544,7 @@ async function confirmPromoReadV56(event){
     const remoteRows=result.snapshot.val();
     if(state.months?.[monthKey]) state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){
-      await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_13_STABLE_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
+      await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
     }
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
     selectedPromoId=null;render();

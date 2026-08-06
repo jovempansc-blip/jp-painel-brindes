@@ -1,4 +1,16 @@
-# JP Workspace V56.15 — relatório de implantação
+# JP Workspace V56.16 — relatório de implantação
+
+## Correção global de caminhos Firebase V56.16
+
+- A ocorrência do erro `Invalid token in path` foi rastreada ao token especial de conexão ainda inicializado no Painel Principal, OPEC e nos dois Estúdios.
+- O token foi removido das sete páginas ativas, incluindo as páginas que já não o utilizavam, garantindo uma regra única para todo o pacote.
+- OPEC, Estúdios e Recepção testam disponibilidade por leitura em `savedAt`, dentro da referência oficial já inicializada.
+- O Painel Principal considera a conexão online somente após uma leitura real da raiz oficial ou do campo `savedAt`; falhas e modo offline continuam refletidos no indicador de cor.
+- A publicação OPEC foi testada com um ID legado contendo `.`, `#`, colchetes e `/`. O texto foi persistido porque o ID permaneceu como dado dentro da coleção, sem participar do caminho.
+- Caminhos mensais continuam segmentados e validados no formato `AAAA-MM`; chaves de ganhadores continuam automáticas ou fisicamente localizadas no Firebase.
+- Nenhum nome, título, prêmio, programa, cliente, texto ou ID histórico é usado para formar uma referência de gravação.
+- As rotinas de ganhadores, retiradas, OPEC, leituras de pauta, programação e administração permanecem incrementais.
+- Validação automatizada concluída com 185 testes e nenhuma falha.
 
 ## Organização do cadastro e preview OPEC V56.15
 
@@ -31,7 +43,7 @@
 - A Recepção grava somente a baixa do ganhador selecionado por transação no mês e na coleção oficiais e aguarda a confirmação do Firebase antes de atualizar a interface.
 - A cópia local usada durante a confirmação é isolada do registro exibido; se a transação falhar, o prêmio continua pendente sem uma baixa apenas visual.
 - A verificação de disponibilidade deixou de usar `.info/connected` abaixo de `jp-painel-brindes/state`. Esse caminho era inválido nessa posição e podia interromper confirmações antes da escrita.
-- O indicador nativo continua sendo usado da forma suportada pelo Firebase, diretamente na raiz do banco, distinguindo conexão real de dados mantidos no cache local.
+- O indicador passou a depender de leitura real da referência oficial e dos eventos online/offline do navegador; a consulta especial mencionada nesta versão histórica foi removida na V56.16.
 - A mesma instabilidade foi removida preventivamente do Estúdio JP News 98,3 e do OPEC, além das correções já aplicadas ao Estúdio JP 101,7.
 - O Painel Principal deriva o indicador verde, laranja ou vermelho do carregamento real da referência oficial, combinado aos eventos online/offline do navegador.
 - PAINEL PRINCIPAL, RECEPÇÃO, OPEC, ESTÚDIO JP 101,7 e ESTÚDIO JP NEWS 98,3 passam a registrar automaticamente o setor responsável. Não há solicitação do nome do operador em nenhuma confirmação operacional.
@@ -237,10 +249,10 @@ Data da consolidação: 05/08/2026
 - Correção de datas finais anteriores às respectivas datas iniciais.
 - Confirmação realista de retirada na Recepção com persistência individual no mês correto.
 - Confirmação de retirada com ID histórico contendo caracteres proibidos em caminhos do Firebase.
-- Ausência total de `.info/connected` no link da Recepção.
+- Ausência total de `.info/connected` nas sete páginas ativas.
 - Transação restrita à chave física localizada, sem regravar a coleção inteira.
 - Identidade automática de setor no Painel Principal, OPEC, Recepção e nos dois Estúdios, sem abrir solicitação de nome.
-- Ausência de `.info/connected` aninhado em qualquer referência de dados e uso exclusivo na raiz correta do Firebase.
+- Publicação OPEC com ID histórico inválido como chave, preservado exclusivamente como dado.
 - Validação do mês antes de qualquer caminho mensal de gravação nos painéis operacionais.
 - Sintaxe JavaScript das sete páginas.
 - Inicialização das sete páginas em ambiente de navegador simulado.

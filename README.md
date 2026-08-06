@@ -1,8 +1,19 @@
-# JP Workspace V56.15
+# JP Workspace V56.16
 
 Painel de Operações Artísticas, distribuição de brindes, pautas de estúdio e Banco de Ganhadores da Jovem Pan Floripa.
 
 Esta versão foi consolidada sobre o conteúdo atual do repositório principal. Consulte `RELATORIO_V56.md` antes da implantação.
+
+## Correção global do token Firebase V56.16
+
+- Eliminado o uso de `.info/connected` de todas as sete páginas ativas do painel.
+- Painel Principal, OPEC, Estúdio JP 101,7, Estúdio JP News 98,3 e Recepção confirmam a disponibilidade por leitura real na referência oficial ou no campo estático `savedAt`.
+- A publicação de texto OPEC não transforma ID, cliente, título, programa ou conteúdo em caminho do Firebase; esses valores permanecem somente como dados.
+- IDs históricos com `.`, `#`, colchetes ou `/` continuam preservados como conteúdo e não são reutilizados como chaves.
+- O indicador do Painel Principal continua automático: verde após leitura real do Firebase, laranja quando o navegador está offline e vermelho em erro de comunicação.
+- Confirmar ganhador, confirmar retirada, publicar texto, registrar leitura e administrar o banco continuam usando gravações incrementais e caminhos fixos ou validados.
+- Nenhum histórico, prêmio, programação, texto ou resultado existente é substituído por esta atualização.
+- Validação automatizada concluída com 185 testes e nenhuma falha.
 
 ## Cadastro OPEC e preview sob demanda V56.15
 
@@ -30,7 +41,7 @@ Esta versão foi consolidada sobre o conteúdo atual do repositório principal. 
 
 - Corrigida a confirmação de retirada na Recepção, preservando o prêmio como pendente se a gravação oficial não for confirmada.
 - Eliminado de todas as páginas ativas o uso incorreto do caminho especial `.info/connected` abaixo da raiz do projeto, origem do erro `Invalid token in path`.
-- Estúdio JP 101,7, Estúdio JP News 98,3, OPEC e Recepção agora consultam `.info/connected` diretamente na raiz oficial do Firebase, sem anexá-lo ao caminho dos dados.
+- Na V56.13, a consulta especial havia sido movida para a raiz; a V56.16 a remove completamente e usa leitura real em caminho estático.
 - A identificação deixou de pedir o nome de quem está operando: o setor é registrado automaticamente como PAINEL PRINCIPAL, RECEPÇÃO, OPEC, ESTÚDIO JP 101,7 ou ESTÚDIO JP NEWS 98,3.
 - A Recepção só altera o cartão na tela depois que o Firebase confirma a baixa, evitando retirada apenas visual em caso de falha.
 - Auditoria e atualização de metadados são complementares e não anulam uma retirada ou resultado já gravado com sucesso.

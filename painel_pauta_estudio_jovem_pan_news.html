@@ -2020,7 +2020,6 @@ const NEWS_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_jpnews';
 let firebaseStarted=false;
 let firebaseReady=false;
 let firebaseRef=null;
-let firebaseConnectionRef=null;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
 
@@ -2033,8 +2032,10 @@ function newsOperatorIdentity(required=false){
   return{name:'ESTÚDIO JP NEWS 98,3',sector:'ESTÚDIO JP NEWS 98,3',automatic:true};
 }
 async function ensureStudioFirebaseOnline(){
-  if(!firebaseReady||!firebaseRef)initFirebaseSync();if(!firebaseReady||!firebaseRef||!firebaseConnectionRef)throw new Error('FIREBASE INDISPONÍVEL.');
-  const snapshot=await Promise.race([firebaseConnectionRef.get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONFIRMAR A CONEXÃO.')),5000))]);if(snapshot.val()!==true)throw new Error('FIREBASE OFFLINE. A ALTERAÇÃO NÃO FOI ENVIADA.');return true;
+  if(!firebaseReady||!firebaseRef)initFirebaseSync();if(!firebaseReady||!firebaseRef)throw new Error('FIREBASE INDISPONÍVEL.');
+  if(navigator.onLine===false)throw new Error('NAVEGADOR SEM CONEXÃO.');
+  try{await Promise.race([firebaseRef.child('savedAt').get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONSULTAR O FIREBASE.')),6000))]);return true;}
+  catch(error){throw new Error(`FIREBASE INDISPONÍVEL: ${error?.message||error}`);}
 }
 function newsMonthKey(date=''){const valid=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));const key=String(date||'').slice(0,7);if(valid(key)&&state.months?.[key])return key;if(valid(currentMonth))return currentMonth;if(valid(key))return key;return todayISO().slice(0,7);}
 async function appendNewsAudit(entry){await studioRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(rows.some(row=>row?.id===entry.id))return rows;rows.push(entry);return rows.slice(-2500);},undefined,false));}
@@ -2079,7 +2080,7 @@ async function persistStudioRecord(collection,record,fields){
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
     source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
-    version:'FIREBASE_RTDB_V56_13_STABLE'
+    version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'
   })]);
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
 }
@@ -2122,7 +2123,6 @@ function initFirebaseSync(){
     const app=window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
     const database=window.firebase.database(app);
     firebaseRef=database.ref(FIREBASE_ROOT_PATH);
-    firebaseConnectionRef=database.ref('.info/connected');
     firebaseReady=true;
     firebaseRef.on('value', async snapshot=>{
       const payload=snapshot.val();
@@ -2682,7 +2682,7 @@ async function commitNewsOutcomeAtomicV56({collection,recordId,patch,occurrenceK
   const remoteRows=result.snapshot.val();
   if(state.months?.[monthKey])state.months[monthKey][collection]=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
   if(changed){
-    await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_13_STABLE_RESULT'}),appendNewsAudit({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',targetId:recordId,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
+    await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_RESULT'}),appendNewsAudit({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',targetId:recordId,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   }
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   return true;
@@ -2855,7 +2855,7 @@ async function confirmPromoReadV56(event){
       if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;
     });
     const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
-    if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_13_STABLE_READ'}),appendNewsAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
+    if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_READ'}),appendNewsAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state));selectedPromoId=null;render();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
   finally{if(button){button.dataset.busy='0';button.disabled=false;button.textContent='CONFIRMAR LEITURA';}}
