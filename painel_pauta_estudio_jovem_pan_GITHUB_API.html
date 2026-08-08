@@ -1813,6 +1813,24 @@ body{
 #savePromoResultInline:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:620px){.winnerEligibilityHistory div,.winnerSimilarityCompare{grid-template-columns:1fr}.winnerEligibilityHead{align-items:flex-start;flex-direction:column}.winnerSimilarityScore{justify-self:start}}
 
+
+/* === AV-57 · ALERTAS DE LEITURA MAIS LEVES + LETREIRO === */
+.promoPill.pending{background:#f5f9fd!important;border-color:#cdddeb!important;color:#355d7d!important;box-shadow:0 3px 10px rgba(44,82,112,.055)!important;animation:av57SoftPulse 1.8s ease-in-out infinite!important}
+.promoPill.pending.merchan{background:#f7f3f5!important;border-color:#dcc8d0!important;color:#704052!important}
+.promoPill.pending.promo{background:#fbf8f1!important;border-color:#e6dcc4!important;color:#76623b!important}
+@keyframes av57SoftPulse{0%,100%{filter:brightness(1);box-shadow:0 3px 10px rgba(44,82,112,.045)}50%{filter:brightness(.975);box-shadow:0 0 0 4px rgba(91,126,154,.07)}}
+.promoPill.read{background:#eef8f2!important;border-color:#c4e1cf!important;color:#356c4a!important;animation:none!important;overflow:hidden!important}
+.promoPill .av57Marquee{display:block;overflow:hidden;white-space:nowrap;width:100%}.promoPill .av57Marquee span{display:inline-block;min-width:100%;padding-left:100%;animation:av57Ticker 8s linear infinite;font-weight:1000}.promoPill.read:hover .av57Marquee span{animation-play-state:paused}
+@keyframes av57Ticker{from{transform:translateX(0)}to{transform:translateX(-100%)}}
+.promoPill .readCounter{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:18px;margin-left:5px;border:1px solid currentColor;border-radius:999px;padding:0 5px;font-size:7.5px;opacity:.82}
+.rotationInfo.av57{background:#f4f8fb;border-color:#d8e3ec;color:#557086}.promoFooterList{gap:7px!important}.promoPill{max-width:260px!important;min-height:27px!important;padding:4px 10px!important}
+
+
+/* AV-57.1 · SINO DE PENDÊNCIAS + ESTADOS OPERACIONAIS */
+@keyframes av571BellPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(173,23,40,.22)}50%{transform:scale(1.04);box-shadow:0 0 0 7px rgba(173,23,40,0)}}
+.studioPendingBell{position:relative;min-width:48px;height:45px;border:1px solid #d8dee7;border-radius:12px;background:#f6f8fa;color:#77808e;display:grid;grid-template-columns:20px 18px;grid-template-rows:24px 11px;align-items:center;justify-content:center;gap:0 2px;cursor:pointer;font:900 9px/1 "Segoe UI",Arial,sans-serif}.studioBellIcon{font-size:17px}.studioBellCount{display:grid;place-items:center;min-width:19px;height:19px;border-radius:10px;background:#e7ebf0;color:#687383;font-size:9px}.studioPendingBell small{grid-column:1/-1;font-size:6.5px;letter-spacing:.05em}.studioPendingBell.hasPending{background:#fff1f3;border-color:#efb4bd;color:#991d31;animation:av571BellPulse 1.55s ease-in-out infinite}.studioPendingBell.hasPending .studioBellCount{background:#ad1728;color:#fff}.studioPendingBell.hasLate{background:#ffe9ec;border-color:#e4929f;color:#861426}.studioPendingBackdrop{position:fixed;inset:0;z-index:12000;background:rgba(14,19,27,.52);display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}.studioPendingBackdrop[hidden]{display:none!important}.studioPendingDialog{width:min(760px,96vw);max-height:88vh;overflow:auto;border-radius:20px;background:#fff;box-shadow:0 28px 90px rgba(0,0,0,.28);border:1px solid #e0e5ec}.studioPendingModalHead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #e4e8ee;background:rgba(255,255,255,.97)}.studioPendingModalHead strong{display:block;font-size:13px}.studioPendingModalHead span{display:block;margin-top:3px;font-size:8px;color:#7c8591}.studioPendingClose{width:34px;height:34px;border:0;border-radius:50%;background:#f0f3f6;font-size:20px;cursor:pointer}.studioPendingModalBody{padding:12px;display:grid;gap:10px}.studioPendingGroup{border:1px solid #e1e6ed;border-radius:15px;background:#fafbfd;padding:9px}.studioPendingGroupTitle{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.studioPendingGroupTitle strong{font-size:9px;letter-spacing:.08em}.studioPendingGroupTitle span{min-width:24px;height:20px;border-radius:10px;background:#edf1f5;display:grid;place-items:center;font-size:8px;font-weight:1000}.studioPendingRow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px;border:1px solid #e3e8ef;border-radius:11px;background:#fff;margin-top:6px}.studioPendingRow.late{border-color:#f0c2c9;background:#fff7f8}.studioPendingRow strong{display:block;font-size:9px}.studioPendingRow span{display:block;margin-top:3px;font-size:7.5px;color:#707b89}.studioPendingActions{display:flex;gap:5px}.studioPendingActions button{border:1px solid #d7dde5;border-radius:9px;background:#fff;padding:7px 9px;font:900 7px/1 "Segoe UI",Arial;cursor:pointer}.studioPendingActions button.danger{border-color:#efb4bd;background:#fff0f2;color:#9d1b2f}.studioPendingEmpty{padding:10px;text-align:center;color:#88919d;font-size:8px}.studioMissedReasonBody{padding:16px}.studioMissedReasonBody label{display:block;font-size:8px;font-weight:1000;margin-bottom:6px}.studioMissedReasonBody textarea{width:100%;min-height:100px;resize:vertical;border:1px solid #d9dfe7;border-radius:12px;padding:10px;font:700 10px/1.4 "Segoe UI",Arial}.studioMissedReasonActions{display:flex;justify-content:flex-end;gap:7px;margin-top:10px}.studioMissedReasonActions button{border:1px solid #d9dfe7;border-radius:10px;background:#fff;padding:9px 12px;font:900 8px/1 "Segoe UI",Arial;cursor:pointer}.studioMissedReasonActions button.primary{background:#ad1728;border-color:#ad1728;color:#fff}.promoPill.missed{background:#f4f1f2!important;border-color:#dfc8cd!important;color:#7f4953!important;animation:none!important}.promoListItem.missed{background:#faf3f4!important;color:#8d3344!important}
+@media(max-width:700px){.studioPendingRow{grid-template-columns:1fr}.studioPendingActions{justify-content:flex-start}.studioPendingBell{min-width:44px}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -1977,8 +1995,8 @@ tbody tr:focus-within td{background:#fff8fa}
 /* R17 — OPERAÇÃO AO VIVO, PENDÊNCIAS E RODÍZIO */
 .studioContextBar{flex-wrap:wrap!important}.manualConsult{background:#fff6e8!important;color:#965500!important;border-color:#f2cf99!important}.returnNowBtn{min-height:25px;border:1px solid #d8dee7;border-radius:9px;background:#fff;padding:0 9px;font:900 8px/1 "Segoe UI",Arial,sans-serif;color:#4e5968;cursor:pointer}
 .studioOpsStrip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid #e5e9ef;background:#fff8eb}.studioOpsStrip strong{font-size:8px;color:#815000;letter-spacing:.05em}.studioOpsStrip>div{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.studioOpsStrip.done{background:#f5faf7}.studioOpsStrip.done strong{color:#26704a}.opTag{display:inline-flex;align-items:center;min-height:23px;padding:0 8px;border-radius:999px;border:1px solid #e1d2a9;background:#fff;color:#7c5b15;font-size:7.5px;font-weight:1000}.opTag.urgent{border-color:#f2b7c1;background:#fff4f6;color:#a41e37}
-.previousPending{display:grid;grid-template-columns:auto repeat(4,minmax(0,1fr));gap:5px;align-items:center;padding:7px 10px;border-bottom:1px solid #efd4a5;background:#fffaf1}.previousPending>strong{font-size:7.5px;color:#9b5b00;white-space:nowrap}.previousPending button{min-width:0;min-height:28px;border:1px solid #ead7b5;border-radius:9px;background:#fff;padding:5px 7px;text-align:left;color:#65470f;font:850 7.5px/1.2 "Segoe UI",Arial,sans-serif;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.previousPending button span{font-weight:1000;margin-right:5px;color:#b26000}.rotationInfo{display:block;margin-top:6px;color:#7b5b17;font-size:8px;font-weight:950;letter-spacing:.04em}
-@media(max-width:760px){.studioOpsStrip{align-items:flex-start;flex-direction:column}.studioOpsStrip>div{justify-content:flex-start}.previousPending{grid-template-columns:1fr}.previousPending button{white-space:normal}.returnNowBtn{width:100%}}
+.rotationInfo{display:block;margin-top:6px;color:#7b5b17;font-size:8px;font-weight:950;letter-spacing:.04em}
+@media(max-width:760px){.studioOpsStrip{align-items:flex-start;flex-direction:column}.studioOpsStrip>div{justify-content:flex-start}.returnNowBtn{width:100%}}
 </style>
 </head>
 <body>
@@ -2022,6 +2040,19 @@ tbody tr:focus-within td{background:#fff8fa}
   </div>
 </div>
 
+
+<div class="studioPendingBackdrop" id="studioPendingModal" hidden onclick="studioPendingBackdropClick(event)">
+  <section class="studioPendingDialog" role="dialog" aria-modal="true" aria-labelledby="studioPendingModalTitle">
+    <header class="studioPendingModalHead"><div><strong id="studioPendingModalTitle">PENDÊNCIAS DO LOCUTOR</strong><span>SOMENTE O QUE PRECISA SER EXECUTADO AGORA OU FICOU ATRASADO.</span></div><button class="studioPendingClose" type="button" onclick="closeStudioPendingModal()" aria-label="FECHAR">×</button></header>
+    <div class="studioPendingModalBody" id="studioPendingModalBody"></div>
+  </section>
+</div>
+<div class="studioPendingBackdrop" id="studioMissedReasonModal" hidden onclick="studioPendingBackdropClick(event)">
+  <section class="studioPendingDialog" style="width:min(560px,96vw)" role="dialog" aria-modal="true" aria-labelledby="studioMissedReasonTitle">
+    <header class="studioPendingModalHead"><div><strong id="studioMissedReasonTitle">MARCAR COMO NÃO REALIZADA</strong><span>A JUSTIFICATIVA FICARÁ NO HISTÓRICO E NO RELATÓRIO OPEC.</span></div><button class="studioPendingClose" type="button" onclick="closeStudioMissedReason()" aria-label="FECHAR">×</button></header>
+    <div class="studioMissedReasonBody"><label for="studioMissedReasonInput">MOTIVO / JUSTIFICATIVA</label><textarea id="studioMissedReasonInput" maxlength="280" placeholder="EX.: PROGRAMA ENCERRADO, FALHA OPERACIONAL, ORIENTAÇÃO DA OPEC..."></textarea><div class="studioMissedReasonActions"><button type="button" onclick="closeStudioMissedReason()">CANCELAR</button><button class="primary" id="studioMissedReasonConfirm" type="button" onclick="confirmStudioMissedReason()">CONFIRMAR NÃO REALIZADA</button></div></div>
+  </section>
+</div>
 <script>
 const STORAGE_KEY='jp_programacao_brindes_distribuicao_v2';
 const $=id=>document.getElementById(id);
@@ -2782,22 +2813,6 @@ function validReadTimestamp(value){
   const d=new Date(value);
   return Number.isNaN(d.getTime()) ? '' : value;
 }
-function readTimestampForHour(p,item){
-  const direct=validReadTimestamp(hourMapValue(p?.readByHour,item,p));
-  if(direct) return direct;
-
-  const keys=readHourKeys(item,p);
-  const logs=Array.isArray(p?.readLog) ? [...p.readLog].reverse() : [];
-  const match=logs.find(log=>{
-    if(!log) return false;
-    if(log.key && keys.includes(log.key)) return true;
-    const sameDate=!log.date || log.date===(item?.date||'');
-    const sameSlot=!log.slot || timeToHHMM(log.slot)===timeToHHMM(item?.slot||'');
-    const sameStation=!log.station || log.station===STUDIO_STATION;
-    return sameDate && sameSlot && sameStation;
-  });
-  return validReadTimestamp(match?.confirmedAt||match?.readAt||'');
-}
 function readTimeLabel(value){
   const timestamp=validReadTimestamp(value);
   if(!timestamp) return '';
@@ -2951,7 +2966,6 @@ function studioOpecVersion(p){return Math.max(1,Number(p?.opecTextVersion)||1);}
 function studioOpecRawEligible(p,item){if(!isMerchan(p)||!studioOpecVisible(p)||!stationAllowed(p)||!promoDateAllowed(p,item?.date||''))return false;if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item)||!promoHourAllowed(p,item))return false;return true;}
 function studioEffectiveOpecTextFor(p,item){const clientId=studioOpecClientId(p);if(!clientId)return p;const candidates=[...(monthData().promos||[])].filter(row=>studioOpecClientId(row)===clientId&&normalizeStationValue(row?.station||STUDIO_STATION)===normalizeStationValue(p?.station||STUDIO_STATION)&&upper(row?.program||'')===upper(p?.program||'')&&studioOpecRawEligible(row,item));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')||String(b.id||'').localeCompare(String(a.id||'')))[0];}
 function studioEffectiveOpecTextAllows(p,item){const chosen=studioEffectiveOpecTextFor(p,item);return !chosen||chosen.id===p.id;}
-function studioOpecContextLabel(p){if(!isMerchan(p)||studioOpecTextType(p)==='legacy')return'';return studioOpecTextType(p)==='promotional'?`PROMOCIONAL ATÉ ${formatBR(p.endDate||p.drawDate||'')} · RETORNO INSTITUCIONAL AUTOMÁTICO`:`INSTITUCIONAL · VERSÃO ${studioOpecVersion(p)}`;}
 function studioMerchanScheduleMode(p){return String(p?.merchanScheduleMode||p?.rotationMode||'fixed').toLowerCase()==='rotation'?'rotation':'fixed';}
 function studioRotationHours(p){return (p?.readHours||[]).map(value=>formatStudioTime(value)).filter(Boolean).sort((a,b)=>minutesOf(a)-minutesOf(b));}
 function studioRotationSignature(p){return `${normalizeStationValue(p?.station||STUDIO_STATION)}|${upper(p?.program||'')}|${studioRotationHours(p).join('|')}`;}
@@ -2969,29 +2983,6 @@ function studioRotationAssignedPromo(p,item){
   return members[(serial+slotIndex)%members.length]||members[0];
 }
 function studioRotationAllows(p,item){const assigned=studioRotationAssignedPromo(p,item);return !assigned||assigned.id===p.id;}
-function promoEligibleForItemHour(p,item){
-  if(!p || !item) return false;
-  if(isMerchan(p)&&(!studioOpecRawEligible(p,item)||!studioEffectiveOpecTextAllows(p,item)))return false;
-  if(!stationAllowed(p)) return false;
-  if(!promoDateAllowed(p,item.date||'')) return false;
-  if(isMerchan(p) && (!programMatchesMerchan(p,item) || !merchanHourAllowed(p,item))) return false;
-  if(!promoHourAllowed(p,item)) return false;
-  if(isMerchan(p) && studioMerchanScheduleMode(p)==='rotation' && !studioRotationAllows(p,item)) return false;
-  return true;
-}
-function isPromoReadForHour(p,item){
-  return !!readTimestampForHour(p,item);
-}
-function pautasForItemHour(item,includeRead=false,kind='all'){
-  return [...(monthData().promos||[])]
-    .filter(p=>promoEligibleForItemHour(p,item))
-    .filter(p=>kind==='all' || (kind==='merchan' ? isMerchan(p) : !isMerchan(p)))
-    .filter(p=>includeRead || !isPromoReadForHour(p,item))
-    .sort((a,b)=>(a.drawTime||'').localeCompare(b.drawTime||'')||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
-}
-function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
-function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
-function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
 function findPromoById(id){return monthData().promos?.find(p=>p.id===id)||null;}
 function studioStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS' : 'JOVEMPAN';
@@ -3016,6 +3007,108 @@ function buildStudioPendingStrip(item){
   const hadAny=(!item?.__virtual)||all.length;
   return `<div class="studioOpsStrip done"><strong>${hadAny?'OPERAÇÃO CONCLUÍDA ✓':'NENHUMA AÇÃO PROGRAMADA'}</strong></div>`;
 }
+
+/* ================= AV-57.1 · MOTOR GLOBAL DE LEITURAS ================= */
+function studioAV57Hash(value){let h=2166136261;for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+function studioAV57DateRange(start,end){const rows=[];let d=new Date(`${start}T12:00:00`),limit=new Date(`${end}T12:00:00`);while(d<=limit){rows.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`);d.setDate(d.getDate()+1);}return rows;}
+function studioAV57HourSlot(value){const hh=timeToHHMM(value).slice(0,2);return hh&&hh!=='00'?`${hh}H`:'';}
+function studioAV57Mode(p){const raw=String(p?.merchanScheduleMode||p?.promoScheduleMode||p?.scheduleMode||'fixed').toLowerCase();return raw==='rotation'||raw==='smart'?'rotation':'fixed';}
+function studioAV57Scope(p){return String(p?.opecFrequencyScope||p?.promoFrequencyScope||'').toLowerCase()||'legacy';}
+function studioAV57Count(p){return Math.max(1,Number(p?.opecFrequencyCount||p?.promoFrequencyCount||1)||1);}
+function studioAV57DateAllowed(p,date){const start=promoStartDate(p),end=promoEndDate(p);if(start&&date<start)return false;if(end&&date>end)return false;const excluded=new Set([...(p?.opecExcludedDates||[]),...(p?.promoReadExcludedDates||[])]);if(excluded.has(date))return false;const specific=[...(p?.opecSpecificDates||[]),...(p?.promoReadSpecificDates||[])];const mode=String(p?.opecDateMode||p?.promoReadDateMode||'range').toLowerCase();if(mode==='specific')return specific.includes(date);if(specific.includes(date))return true;const weekdays=(p?.opecWeekdays||p?.promoReadWeekdays||[]).map(Number);if(!weekdays.length)return true;const [y,m,d]=String(date).split('-').map(Number);return weekdays.includes(new Date(y,m-1,d).getDay());}
+function studioAV57ProgramHours(program,date){const rows=(Array.isArray(state.programSchedules)?state.programSchedules:[]).filter(r=>(!r.station||r.station===STUDIO_STATION||r.station==='ALL')&&upper(studioScheduleName(r))===upper(program)&&dayMatchesSchedule(date,studioScheduleDays(r)));const set=new Set();rows.forEach(r=>{for(let minute=Math.ceil(minutesOf(studioScheduleStart(r))/60)*60;minute<minutesOf(studioScheduleEnd(r));minute+=60)set.add(`${pad(Math.floor(minute/60))}H`);});return [...set].sort((a,b)=>minutesOf(a)-minutesOf(b));}
+function studioAV57RecordPrograms(p,date){if(Array.isArray(p?.opecPrograms)&&p.opecPrograms.length)return p.opecPrograms.filter(c=>!c.station||c.station===STUDIO_STATION||c.station==='ALL').map(c=>({program:upper(c.program),hours:(c.hours||[]).map(studioAV57HourSlot).filter(Boolean)})).filter(c=>c.program);const program=upper(p?.program||p?.programName||'');if(!program||genericProgramName(program))return[];let hours=(p?.readHours||[]).map(studioAV57HourSlot).filter(Boolean);if(!hours.length)hours=studioAV57ProgramHours(program,date);return[{program,hours}];}
+function studioAV57Visible(p){if(isMerchan(p))return studioOpecVisible(p);const st=upper(p?.status||'PENDENTE');return !!p&&!p.opecArchived&&!p.opecForceEnded&&st!=='CANCELADO'&&st!=='CANCELADA';}
+function studioAV57PauseBlocksSlot(p,date,slot){
+  const periods=Array.isArray(p?.opecPausePeriods)?p.opecPausePeriods:[];
+  if(!periods.length)return false;
+  const hh=timeToHHMM(slot),scheduled=new Date(`${date}T${hh}:00`).getTime();
+  return periods.some(period=>{const start=Date.parse(period?.startAt||'');const end=period?.endAt?Date.parse(period.endAt):Infinity;return Number.isFinite(start)&&scheduled>=start&&scheduled<=end;});
+}
+function studioAV57RawCandidates(p,date){
+  if(!studioAV57Visible(p)||!stationAllowed(p)||!studioAV57DateAllowed(p,date))return[];
+  const out=[];
+  studioAV57RecordPrograms(p,date).forEach(config=>{const allowed=studioAV57ProgramHours(config.program,date);if(!allowed.length)return;const hours=config.hours.length?config.hours:allowed;hours.forEach(slot=>{const normalized=studioAV57HourSlot(slot);if(allowed.includes(normalized)&&!studioAV57PauseBlocksSlot(p,date,normalized))out.push({program:config.program,slot:normalized});});});
+  return out.filter((v,i,a)=>a.findIndex(x=>x.program===v.program&&x.slot===v.slot)===i);
+}
+function studioAV57EffectiveMerchan(p,date,program,slot){const clientId=studioOpecClientId(p);if(!clientId||!isMerchan(p))return p;const candidates=[...(monthData().promos||[])].filter(row=>isMerchan(row)&&studioOpecClientId(row)===clientId&&studioAV57RawCandidates(row,date).some(c=>c.program===upper(program)&&c.slot===studioAV57HourSlot(slot)));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0];}
+function studioAV57Candidates(p,date){return studioAV57RawCandidates(p,date).filter(c=>{const chosen=studioAV57EffectiveMerchan(p,date,c.program,c.slot);return !chosen||chosen.id===p.id;});}
+function studioAV57Logs(p,item){const date=item?.date||'',slot=studioAV57HourSlot(item?.slot||''),program=upper(item?.program||programFromSchedule(date,item?.slot||'',STUDIO_STATION)||'');return (p?.readLog||[]).filter(log=>{if(!log)return false;if((log.station||STUDIO_STATION)!==STUDIO_STATION)return false;const logDate=log.date||String(log.key||'').slice(0,10);if(logDate!==date)return false;const logSlot=studioAV57HourSlot(log.slot||log.scheduledHour||'');if(logSlot&&logSlot!==slot)return false;const lp=upper(log.program||'');if(lp&&program&&lp!==program)return false;return !!validReadTimestamp(log.confirmedAt||log.readAt||'');}).sort((a,b)=>String(a.confirmedAt||a.readAt||'').localeCompare(String(b.confirmedAt||b.readAt||'')));}
+function studioAV57HistoryCount(p,program,slot,beforeDate){return (p?.readLog||[]).filter(log=>(log.station||STUDIO_STATION)===STUDIO_STATION&&(log.date||'')<beforeDate&&upper(log.program||'')===upper(program)&&studioAV57HourSlot(log.slot||log.scheduledHour||'')===studioAV57HourSlot(slot)&&validReadTimestamp(log.confirmedAt||log.readAt||'')).length;}
+function studioAV57LastCandidate(p,beforeDate){const logs=(p?.readLog||[]).filter(log=>(log.station||STUDIO_STATION)===STUDIO_STATION&&(log.date||'')<beforeDate&&validReadTimestamp(log.confirmedAt||log.readAt||'')).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.confirmedAt||'').localeCompare(String(a.confirmedAt||'')));const log=logs[0];return log?`${upper(log.program||'')}|${studioAV57HourSlot(log.slot||log.scheduledHour||'')}`:'';}
+function studioAV57PeriodDue(p,date){const total=Math.max(1,Number(p?.opecPeriodTotal||p?.promoPeriodTotal||p?.periodTotal||1)||1),start=promoStartDate(p)||date,end=promoEndDate(p)||start;const eligible=studioAV57DateRange(start,end).filter(d=>studioAV57Candidates(p,d).length);if(!eligible.length)return 0;const index=eligible.indexOf(date);if(index<0)return 0;const base=Math.floor(total/eligible.length),extra=total%eligible.length,offset=studioAV57Hash(`${p.id}|${start}|${end}`)%eligible.length;let count=base;for(let i=0;i<extra;i++)if((offset+i)%eligible.length===index)count++;return count;}
+function studioAV57Tokens(p,date){
+  const candidates=studioAV57Candidates(p,date);if(!candidates.length)return[];
+  const scope=studioAV57Scope(p),n=studioAV57Count(p),out=[];
+  if(scope==='hour'){candidates.forEach(c=>{for(let i=0;i<n;i++)out.push({p,candidates:[c],ordinal:i});});}
+  else if(scope==='program'){[...new Set(candidates.map(c=>c.program))].forEach(program=>{const pool=candidates.filter(c=>c.program===program);for(let i=0;i<n;i++)out.push({p,candidates:pool,ordinal:i,program});});}
+  else{let daily=n;if(scope==='period')daily=studioAV57PeriodDue(p,date);if(scope==='legacy')daily=1;for(let i=0;i<daily;i++)out.push({p,candidates,ordinal:i});}
+  return out.map((token,index)=>({...token,sequence:index+1}));
+}
+function studioAV57LegacyHourAllowed(p,item){const itemHour=studioAV57HourSlot(item?.slot||''),date=item?.date||'';if(!itemHour||!studioAV57DateAllowed(p,date)||!stationAllowed(p))return false;if(!isMerchan(p)&&isPromoResultForItem(p,item))return true;const configured=(p?.readHours||[]).map(studioAV57HourSlot).filter(Boolean);if(configured.length&&!configured.includes(itemHour))return false;if((p.readMode||'all')==='selected'&&!configured.length)return false;if(isMerchan(p)){const configs=studioAV57RecordPrograms(p,date);if(configs.length){const program=upper(item?.program||programFromSchedule(date,item?.slot||'',STUDIO_STATION)||'');if(!configs.some(c=>c.program===program&&(!c.hours.length||c.hours.includes(itemHour))))return false;}else if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item))return false;}return true;}
+function studioAV57FixedLoad(date){const load=new Map();(monthData().promos||[]).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='fixed').forEach(p=>{const candidates=studioAV57Candidates(p,date),scope=studioAV57Scope(p),count=scope==='hour'?studioAV57Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
+function studioAV57OverrideFor(p,date,sequence){
+  const rows=(Array.isArray(p?.opecOverrides)?p.opecOverrides:[]).filter(o=>!o?.disabled&&o?.date===date&&Number(o?.occurrence||o?.sequence||1)===Number(sequence));
+  if(!rows.length)return null;const row=rows[rows.length-1];return{program:upper(row.program||''),slot:studioAV57HourSlot(row.slot||''),reason:String(row.reason||'')};
+}
+function studioAV57SmartPlan(date){
+  const records=(monthData().promos||[]).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='rotation'&&stationAllowed(p)),load=studioAV57FixedLoad(date),out=new Map(),tokens=[];
+  records.forEach(p=>studioAV57Tokens(p,date).forEach(t=>tokens.push(t)));
+  tokens.sort((a,b)=>a.candidates.length-b.candidates.length||String(a.p.endDate||a.p.drawDate||'9999').localeCompare(String(b.p.endDate||b.p.drawDate||'9999'))||((studioAV57Hash(`${date}|${a.p.id}|${a.ordinal}`)%997)-(studioAV57Hash(`${date}|${b.p.id}|${b.ordinal}`)%997)));
+  tokens.forEach(token=>{const own=out.get(token.p.id)||[],last=studioAV57LastCandidate(token.p,date),override=studioAV57OverrideFor(token.p,date,token.sequence);let best=null,bestScore=Infinity;
+    const forced=override?token.candidates.find(c=>c.program===override.program&&c.slot===override.slot):null;
+    if(forced)best=forced;else token.candidates.forEach(c=>{const key=`${c.program}|${c.slot}`,loadScore=load.get(key)||0,hist=studioAV57HistoryCount(token.p,c.program,c.slot,date),repeat=own.filter(x=>x.program===c.program&&x.slot===c.slot).length,lastPenalty=last===key?32:0,score=loadScore*100+hist*13+repeat*48+lastPenalty+(studioAV57Hash(`${date}|${token.p.id}|${key}|${token.ordinal}`)%31)/100;if(score<bestScore){bestScore=score;best=c;}});
+    if(best){const key=`${best.program}|${best.slot}`;load.set(key,(load.get(key)||0)+1);own.push({...best,override:!!forced,overrideReason:override?.reason||''});out.set(token.p.id,own);}
+  });return out;
+}
+function studioRequiredReadsForHour(p,item){if(!p||!item||!studioAV57Visible(p)||!stationAllowed(p)||!studioAV57DateAllowed(p,item.date||''))return 0;const program=upper(item.program||programFromSchedule(item.date,item.slot,STUDIO_STATION)||''),slot=studioAV57HourSlot(item.slot);if(studioAV57Mode(p)==='rotation'){const plan=studioAV57SmartPlan(item.date||todayISO());return(plan.get(p.id)||[]).filter(c=>c.program===program&&c.slot===slot).length;}const candidates=studioAV57Candidates(p,item.date||'');if(candidates.length){if(!candidates.some(c=>c.program===program&&c.slot===slot))return 0;return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;}return studioAV57LegacyHourAllowed(p,item)?(studioAV57Scope(p)==='hour'?studioAV57Count(p):1):0;}
+function studioReadCountForHour(p,item){const logs=studioAV57Logs(p,item);if(logs.length)return logs.length;const direct=validReadTimestamp(hourMapValue(p?.readByHour,item,p));return direct?1:0;}
+function readTimestampForHour(p,item){const logs=studioAV57Logs(p,item);if(logs.length)return validReadTimestamp(logs[logs.length-1]?.confirmedAt||logs[logs.length-1]?.readAt||'');return validReadTimestamp(hourMapValue(p?.readByHour,item,p));}
+function promoEligibleForItemHour(p,item){return studioRequiredReadsForHour(p,item)>0;}
+function isPromoReadForHour(p,item){const required=studioRequiredReadsForHour(p,item);return required>0&&studioReadCountForHour(p,item)>=required;}
+function pautasForItemHour(item,includeRead=false,kind='all'){return [...(monthData().promos||[])].filter(p=>promoEligibleForItemHour(p,item)).filter(p=>kind==='all'||(kind==='merchan'?isMerchan(p):!isMerchan(p))).filter(p=>includeRead||!isPromoResolvedForHour(p,item)).sort((a,b)=>upper(a.name||a.title).localeCompare(upper(b.name||b.title)));}
+function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
+function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
+function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
+function studioAV57MissedLogs(p,item){
+  const date=item?.date||'',slot=studioAV57HourSlot(item?.slot||''),program=upper(item?.program||programFromSchedule(date,item?.slot||'',STUDIO_STATION)||'');
+  return (Array.isArray(p?.missedLog)?p.missedLog:[]).filter(log=>{if(!log||log.cancelledAt)return false;if((log.station||STUDIO_STATION)!==STUDIO_STATION)return false;if((log.date||'')!==date)return false;const logSlot=studioAV57HourSlot(log.slot||log.scheduledHour||'');if(logSlot&&logSlot!==slot)return false;const lp=upper(log.program||'');if(lp&&program&&lp!==program)return false;return true;}).sort((a,b)=>Number(a.occurrenceIndex||0)-Number(b.occurrenceIndex||0)||String(a.markedAt||'').localeCompare(String(b.markedAt||'')));
+}
+function studioMissedCountForHour(p,item){return studioAV57MissedLogs(p,item).length;}
+function studioResolvedCountForHour(p,item){return studioReadCountForHour(p,item)+studioMissedCountForHour(p,item);}
+function isPromoResolvedForHour(p,item){const required=studioRequiredReadsForHour(p,item);return required>0&&studioResolvedCountForHour(p,item)>=required;}
+function studioMissedReasonForHour(p,item){const rows=studioAV57MissedLogs(p,item);return rows.map(r=>r.reason).filter(Boolean).join(' · ');}
+function studioAV57Progress(p,item){const required=studioRequiredReadsForHour(p,item),done=Math.min(required,studioReadCountForHour(p,item)),missed=Math.min(Math.max(0,required-done),studioMissedCountForHour(p,item));return{required,done,missed,remaining:Math.max(0,required-done-missed),label:required>1?`${done}/${required}`:(done?'OK':missed?'NÃO REALIZADA':'PENDENTE')};}
+function studioOpecContextLabel(p){if(!isMerchan(p)||studioOpecTextType(p)==='legacy')return studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE · DISTRIBUIÇÃO BALANCEADA':'';const base=studioOpecTextType(p)==='promotional'?`PROMOCIONAL ATÉ ${formatBR(p.endDate||p.drawDate||'')} · RETORNO INSTITUCIONAL AUTOMÁTICO`:`INSTITUCIONAL · VERSÃO ${studioOpecVersion(p)}`;return `${base} · ${studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE':'HORÁRIO FIXO'}`;}
+function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(name+' · LEITURA CONFIRMADA '+time)}"><span class="av57Marquee"><span>${esc(name)} · LEITURA CONFIRMADA · ${esc(formatStudioTime(item.slot))}${progress.required>1?` · ${progress.done}/${progress.required}`:''} · ${esc(time)}</span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(name)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+name)}"><span>${esc(name)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
+function buildPautaList(item,kind){const pautas=pautasForItemHour(item,true,kind),emptyLabel=kind==='merchan'?'SEM MERCHAN PROGRAMADO PARA ESTE HORÁRIO':'SEM PROMO / PAUTA PROGRAMADA PARA ESTE HORÁRIO';if(!pautas.length)return `<button class="promoListItem" type="button">${emptyLabel}</button>`;return pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;}).join('');}
+function buildPromoList(item){return buildPautaList(item,'promo');}
+function buildMerchanList(item){return buildPautaList(item,'merchan');}
+function buildHourReadList(item){const pautas=allPautasForItemHour(item,true);if(!pautas.length)return `<div class="promoListItem">SEM PROMOÇÕES OU MERCHAN PROGRAMADOS PARA ESTE HORÁRIO</div>`;return `<div class="hourReadList">${pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''}</small></button>`;}).join('')}</div>`;}
+
+let studioPendingMissedContext=null;
+function studioPendingBellRows(){
+  const today=todayISO(),now=currentSlotDate();if(dateISO(now)!==today)return[];
+  const currentHour=now.getHours(),currentSlot=formatStudioTime(`${pad(now.getHours())}:${pad(now.getMinutes())}`),out=[],seen=new Set();
+  // Prize/result obligations keep their exact half-hour scheduling.
+  allPrizeRows().filter(item=>item.date===today).forEach(item=>{const dt=itemDateTime(item);if(dt>now||!studioPrizePending(item))return;const key=`PRIZE|${item.id}`;if(seen.has(key))return;seen.add(key);out.push({kind:'prize',date:item.date,slot:formatStudioTime(item.slot),program:upper(item.program||''),label:`SORTEIO / RESULTADO · ${itemTitle(item)}`,remaining:1,state:dt.getTime()===now.getTime()?'NOW':'LATE',promoId:''});});
+  for(let hour=0;hour<=currentHour;hour++){
+    const d=new Date(now);d.setHours(hour,hour===currentHour?now.getMinutes():0,0,0);const item=virtualItemFromDate(d);if(!item.program)continue;
+    allPautasForItemHour(item,true).forEach(p=>{const progress=studioAV57Progress(p,item);if(progress.remaining<1)return;const slot=studioAV57HourSlot(item.slot),key=`${p.id}|${today}|${upper(item.program)}|${slot}`;if(seen.has(key))return;seen.add(key);out.push({kind:'read',date:today,slot,program:upper(item.program),label:`${isMerchan(p)?'MERCHAN':'PROMO / PAUTA'} · ${upper(p.name||p.title||'PAUTA')}`,remaining:progress.remaining,required:progress.required,resolved:progress.done+progress.missed,state:hour===currentHour?'NOW':'LATE',promoId:p.id});});
+  }
+  return out.sort((a,b)=>(a.state==='LATE'?0:1)-(b.state==='LATE'?0:1)||minutesOf(a.slot)-minutesOf(b.slot)||a.label.localeCompare(b.label));
+}
+function studioPendingBellCount(){return studioPendingBellRows().reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0);}
+function studioPendingBellMarkup(){const rows=studioPendingBellRows(),count=rows.reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0),late=rows.some(r=>r.state==='LATE');return `<button class="studioPendingBell ${count?'hasPending':''} ${late?'hasLate':''}" id="studioPendingBellBtn" type="button" onclick="openStudioPendingModal(event)" title="${count?`${count} PENDÊNCIA(S) DO LOCUTOR`:'SEM PENDÊNCIAS'}" aria-label="PENDÊNCIAS DO LOCUTOR"><span class="studioBellIcon">🔔</span><span class="studioBellCount">${count}</span><small>PEND.</small></button>`;}
+function renderStudioPendingModal(){const host=$('studioPendingModalBody');if(!host)return;const rows=studioPendingBellRows(),nowRows=rows.filter(r=>r.state==='NOW'),lateRows=rows.filter(r=>r.state==='LATE');const renderGroup=(title,list,late)=>`<section class="studioPendingGroup"><div class="studioPendingGroupTitle"><strong>${title}</strong><span>${list.reduce((s,r)=>s+(r.remaining||1),0)}</span></div>${list.length?list.map(r=>`<div class="studioPendingRow ${late?'late':''}"><div><strong>${esc(r.label)}</strong><span>${esc(r.program||'PROGRAMA')} · ${esc(r.slot)}${r.required>1?` · FALTA(M) ${r.remaining}/${r.required}`:''}</span></div><div class="studioPendingActions"><button type="button" onclick="openStudioPendingFromBell('${esc(r.date)}','${esc(r.slot)}','${esc(r.promoId)}')">ABRIR</button>${late&&r.kind==='read'?`<button class="danger" type="button" onclick="requestStudioMissedReason('${esc(r.promoId)}','${esc(r.date)}','${esc(r.slot)}','${esc(r.program)}')">NÃO REALIZADA</button>`:''}</div></div>`).join(''):'<div class="studioPendingEmpty">NENHUMA.</div>'}</section>`;host.innerHTML=`${renderGroup('AGORA',nowRows,false)}${renderGroup('ATRASADAS',lateRows,true)}`;}
+function openStudioPendingModal(event){event?.preventDefault?.();event?.stopPropagation?.();renderStudioPendingModal();const modal=$('studioPendingModal');if(modal)modal.hidden=false;}
+function closeStudioPendingModal(){const modal=$('studioPendingModal');if(modal)modal.hidden=true;}
+function studioPendingBackdropClick(event){if(event.target?.id==='studioPendingModal')closeStudioPendingModal();if(event.target?.id==='studioMissedReasonModal')closeStudioMissedReason();}
+function openStudioPendingFromBell(date,slot,promoId){closeStudioPendingModal();jumpToStudioPending(date,slot,promoId||'');}
+function requestStudioMissedReason(promoId,date,slot,program){studioPendingMissedContext={promoId,date,slot,program};const modal=$('studioMissedReasonModal'),input=$('studioMissedReasonInput');if(input)input.value='';if(modal)modal.hidden=false;setTimeout(()=>input?.focus(),30);}
+function closeStudioMissedReason(){studioPendingMissedContext=null;const modal=$('studioMissedReasonModal');if(modal)modal.hidden=true;}
+async function confirmStudioMissedReason(){const ctx=studioPendingMissedContext,reason=textNorm($('studioMissedReasonInput')?.value||'');if(!ctx)return;if(!reason){alert('INFORME O MOTIVO DA LEITURA NÃO REALIZADA.');return;}const btn=$('studioMissedReasonConfirm');if(btn){btn.disabled=true;btn.textContent='SALVANDO...';}try{await markPromoReadMissed(ctx.promoId,ctx.date,ctx.slot,ctx.program,reason);closeStudioMissedReason();renderStudioPendingModal();}finally{if(btn){btn.disabled=false;btn.textContent='CONFIRMAR NÃO REALIZADA';}}}
+window.openStudioPendingModal=openStudioPendingModal;window.closeStudioPendingModal=closeStudioPendingModal;window.studioPendingBackdropClick=studioPendingBackdropClick;window.openStudioPendingFromBell=openStudioPendingFromBell;window.requestStudioMissedReason=requestStudioMissedReason;window.closeStudioMissedReason=closeStudioMissedReason;window.confirmStudioMissedReason=confirmStudioMissedReason;
 function previousStudioPendencies(){
   const now=currentSlotDate(),today=todayISO(); if(dateISO(now)!==today)return[];
   const rows=allPrizeRows(),out=[],seen=new Set();
@@ -3028,10 +3121,6 @@ function previousStudioPendencies(){
     cursor.setMinutes(cursor.getMinutes()+30);
   }
   return out.slice(-4).reverse();
-}
-function buildPreviousPendingStrip(){
-  if(manual)return''; const rows=previousStudioPendencies(); if(!rows.length)return'';
-  return `<div class="previousPending"><strong>PENDÊNCIA ANTERIOR</strong>${rows.map(r=>`<button type="button" onclick="jumpToStudioPending('${esc(r.date)}','${esc(r.slot)}','${esc(r.promoId)}')"><span>${esc(r.slot)}</span>${esc(r.label)}</button>`).join('')}</div>`;
 }
 function studioOperationActive(){return !!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
 function scheduleManualReturn(){clearTimeout(manualReturnTimer);if(!manual)return;manualLastInteractionAt=Date.now();manualReturnTimer=setTimeout(()=>{if(!manual)return;if(studioOperationActive()){scheduleManualReturn();return;}returnStudioToNow();},MANUAL_RETURN_MS);}
@@ -3083,44 +3172,6 @@ function renderReadHistoryTicker(){
   host.innerHTML=`<div class="readHistoryTickerTrack">${loopRows.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
 }
 function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
-function buildPromoFooter(item){
-  const pautas=allPautasForItemHour(item,true).filter(p=>ALLOW_PROMO_SHORTCUT || isMerchan(p));
-  const emptyClass=pautas.length ? '' : ' isEmpty';
-  return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{
-    const readAt=readTimestampForHour(p,item);
-    const done=!!readAt;
-    const type=pautaTypeLabel(p);
-    const isM=isMerchan(p);
-    const name=upper(p.name||p.title||(isM?'MERCHAN':'PROMOÇÃO'));
-    const typeClass=isM?'merchan':'promo';
-    if(done){
-      const time=readTimeLabel(readAt).replace('FEITA ','');
-      const label=`${name} · LIDA ${time}`;
-      return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(label)}"><span class="verticalMarquee"><span class="verticalStack"><span>${esc(name)}</span><span>LIDA ${esc(time)}</span></span></span></button>`;
-    }
-    return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+name)}">${esc(name)}</button>`;
-  }).join('')}</div></div>`;
-}
-function buildPautaList(item,kind){
-  const pautas=pautasForItemHour(item,true,kind);
-  const emptyLabel=kind==='merchan'?'SEM MERCHAN CADASTRADO PARA ESTE HORÁRIO':'SEM PROMOÇÕES CADASTRADAS PARA ESTE HORÁRIO';
-  if(!pautas.length) return `<button class="promoListItem" type="button">${emptyLabel}</button>`;
-  return pautas.map(p=>{
-    const read=isPromoReadForHour(p,item);
-    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
-  }).join('');
-}
-function buildPromoList(item){return buildPautaList(item,'promo');}
-function buildMerchanList(item){return buildPautaList(item,'merchan');}
-function buildHourReadList(item){
-  const pautas=allPautasForItemHour(item,true);
-  if(!pautas.length) return `<div class="promoListItem" type="button">SEM PROMOÇÕES OU MERCHAN CADASTRADOS PARA ESTE HORÁRIO</div>`;
-  return `<div class="hourReadList">${pautas.map(p=>{
-    const read=isPromoReadForHour(p,item);
-    const label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';
-    return `<button class="promoListItem ${read?'read':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,\'${esc(p.id)}\')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':'PENDENTE'} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;
-  }).join('')}</div>`;
-}
 
 function promoResultForHour(p,item){
   if(!p) return '';
@@ -3510,50 +3561,52 @@ function closePromoReadModal(){
   selectedPromoId=null;
   render();
 }
+async function markPromoReadMissed(promoId,date,slot,program,reason){
+  const p=findPromoById(promoId);if(!p)throw new Error('PAUTA NÃO LOCALIZADA.');
+  const item={date,slot,program:upper(program||programFromSchedule(date,slot,STUDIO_STATION)||'PROGRAMA')},progress=studioAV57Progress(p,item);if(progress.remaining<1)return;
+  const operator=studioOperatorIdentity(true),now=new Date(),iso=now.toISOString(),monthKey=studioOutcomeMonthKey(date),missId=`MISS-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;let found=false,changed=false,savedOccurrence=progress.done+progress.missed+1;
+  await ensureStudioFirebaseOnline();
+  const result=await studioRetry(async()=>{const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===promoId);if(index<0)return;found=true;const row=rows[index],required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return rows;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_1_PENDING_BELL'});row.updatedAt=iso;rows[index]=row;changed=true;return rows;},undefined,false);if(!tx?.committed){const error=new Error(found?'A OCORRÊNCIA NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
+  const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
+  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_1_PENDING_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));selectedPromoId=null;render();return changed;
+}
+window.markPromoReadMissed=markPromoReadMissed;
 async function confirmPromoReadV56(event){
   if(event){event.preventDefault();event.stopPropagation();}
-  const button=event?.currentTarget||$('confirmPromoReadInline');
-  const p=currentPromoForRead();
-  const item=currentDisplayItem||virtualCurrentItem();
-  if(!p||!item||button?.dataset.busy==='1') return;
+  const button=event?.currentTarget||$('confirmPromoReadInline'),p=currentPromoForRead(),item=currentDisplayItem||virtualCurrentItem();
+  if(!p||!item||button?.dataset.busy==='1')return;
+  const required=studioRequiredReadsForHour(p,item),before=studioReadCountForHour(p,item),beforeMissed=studioMissedCountForHour(p,item),beforeResolved=before+beforeMissed;
+  if(required<1){alert('ESTA PAUTA NÃO ESTÁ PROGRAMADA PARA ESTE HORÁRIO.');selectedPromoId=null;render();return;}
+  if(beforeResolved>=required){selectedPromoId=null;render();return;}
   const operator=studioOperatorIdentity(true);
   if(button){button.dataset.busy='1';button.disabled=true;button.textContent='SALVANDO...';}
+  let savedOccurrence=beforeResolved+1;
   try{
     await ensureStudioFirebaseOnline();
-    const now=new Date(),iso=now.toISOString(),key=readHourKey(item,p),logId=`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
-    const monthKey=studioOutcomeMonthKey({date:item.date||todayISO()});
-    let duplicate=false,found=false,changed=false;
+    const now=new Date(),iso=now.toISOString(),key=readHourKey(item,p),logId=`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,monthKey=studioOutcomeMonthKey(item.date||todayISO());
+    let found=false,changed=false,alreadyComplete=false;
     const result=await studioRetry(async()=>{
-      duplicate=false;found=false;changed=false;
+      found=false;changed=false;alreadyComplete=false;
       const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{
-        const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
-        const index=rows.findIndex(row=>row?.id===p.id);
-        if(index<0) return;
-        found=true;
-        const row=rows[index],keys=readHourKeys(item,row);
-        if(keys.some(value=>validReadTimestamp(row?.readByHour?.[value]))){duplicate=true;return rows;}
-        row.readByHour={...(row.readByHour||{}),[key]:iso};
-        row.readLog=Array.isArray(row.readLog)?row.readLog:[];
-        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textSnapshot:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
-        row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(item.program||'PROGRAMA');row.updatedAt=iso;
-        rows[index]=row;changed=true;return rows;
+        const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===p.id);if(index<0)return;found=true;
+        const row=rows[index],logs=studioAV57Logs(row,item);let existingCount=logs.length;
+        if(!existingCount&&validReadTimestamp(hourMapValue(row?.readByHour,item,row)))existingCount=1;
+        const existingMissed=studioMissedCountForHour(row,item),existingResolved=existingCount+existingMissed;
+        if(existingResolved>=required){alreadyComplete=true;return rows;}
+        savedOccurrence=existingResolved+1;
+        row.readByHour={...(row.readByHour||{}),[key]:iso};row.readLog=Array.isArray(row.readLog)?row.readLog:[];
+        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(item.program||programFromSchedule(item.date,item.slot,STUDIO_STATION)||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,plannerVersion:'AV57_SMART_BALANCE_V1',opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textSnapshot:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
+        row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(item.program||programFromSchedule(item.date,item.slot,STUDIO_STATION)||'PROGRAMA');row.updatedAt=iso;rows[index]=row;changed=true;return rows;
       },undefined,false);
-      if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}
-      return tx;
+      if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;
     });
-    const remoteRows=result.snapshot.val();
-    if(state.months?.[monthKey]) state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
-    if(changed){
-      await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
-    }
+    const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
+    if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'AV57_SMART_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
     localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-    selectedPromoId=null;render();
-  }catch(error){
-    console.error('ERRO AO CONFIRMAR LEITURA:',error);
-    alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');
-  }finally{
-    if(button){button.dataset.busy='0';button.disabled=false;button.textContent='CONFIRMAR LEITURA';}
-  }
+    selectedPromoId=(savedOccurrence<required)?p.id:null;render();
+  }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
+  finally{if(button){button.dataset.busy='0';button.disabled=false;button.textContent='CONFIRMAR LEITURA';}}
 }
 async function confirmPromoRead(event){ return confirmPromoReadV56(event); }
 window.confirmPromoRead=confirmPromoRead;
@@ -3783,10 +3836,10 @@ function render(){
   const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
-      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${studioOpecContextLabel(promo)?`<small class="rotationInfo">${esc(studioOpecContextLabel(promo))}</small>`:''}${isMerchan(promo)&&studioMerchanScheduleMode(promo)==='rotation'?`<small class="rotationInfo">RODÍZIO · ${(promo.readHours||[]).map(formatStudioTime).join(' / ')}</small>`:''}</div>
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
-      <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA</button></div>
+      <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required>1?`${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done+1}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}`:''}</button></div>
     ` : isVirtual ? `
       <div class="emptyStudioBox"><strong>SEM PAUTA PARA ESTE HORÁRIO</strong><span>NENHUM PRÊMIO, PROMOÇÃO OU MERCHAN CADASTRADO PARA AGORA.</span></div>
     ` : `
@@ -3810,13 +3863,13 @@ function render(){
           <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
         </div>
         <button class="promoListBtn history" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="SORTEIOS REALIZADOS" title="H = SORTEIOS REALIZADOS NO DIA">H<small>HIST.</small></button>
+        ${studioPendingBellMarkup()}
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
         <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
       </div>
     </div>
     ${buildStudioContext(item,promo)}
     ${buildStudioPendingStrip(item)}
-    ${buildPreviousPendingStrip()}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
     ${buildPromoFooter(item)}`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});

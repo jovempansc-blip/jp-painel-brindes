@@ -3385,6 +3385,35 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
   .appHeader .syncStatusBtn:hover::after,.appHeader .syncStatusBtn:focus-visible::after{transform:translateX(0) translateY(0)}
   .appHeader .syncStatusBtn::before{left:auto;right:4px}
 }
+
+/* AV-57 · pauta/promocao com veiculacao inteligente */
+#promoDrawer .av57ScheduleGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px;border:1px solid #e4e8ef;border-radius:14px;background:#f8f9fc}
+#promoDrawer .av57ProgramChoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:7px}
+#promoDrawer .av57ProgramChoice{position:relative;display:flex}
+#promoDrawer .av57ProgramChoice input{position:absolute;opacity:0;pointer-events:none}
+#promoDrawer .av57ProgramChoice span{width:100%;min-height:32px;display:flex;align-items:center;padding:7px 9px;border:1px solid #dce2eb;border-radius:10px;background:#fff;color:#596576;font-size:9px;font-weight:1000;cursor:pointer}
+#promoDrawer .av57ProgramChoice input:checked+span{border-color:#b8c8dd;background:#eef5fb;color:#27465f;box-shadow:inset 0 0 0 1px rgba(70,112,149,.08)}
+#promoDrawer .av57ProgramHours{display:grid;gap:7px;margin-top:8px}
+#promoDrawer .av57ProgramHourCard{border:1px solid #e2e7ef;border-radius:11px;background:#fff;padding:8px}
+#promoDrawer .av57ProgramHourCard strong{display:block;font-size:9px;color:#3b4655;margin-bottom:6px}
+#promoDrawer .av57ProgramHourList{display:flex;gap:5px;flex-wrap:wrap}
+#promoDrawer .av57ProgramHour{position:relative;display:inline-flex}
+#promoDrawer .av57ProgramHour input{position:absolute;opacity:0;pointer-events:none}
+#promoDrawer .av57ProgramHour span{min-width:43px;min-height:26px;padding:5px 7px;display:flex;align-items:center;justify-content:center;border:1px solid #dce2eb;border-radius:8px;background:#f8f9fb;color:#687485;font-size:9px;font-weight:1000;cursor:pointer}
+#promoDrawer .av57ProgramHour input:checked+span{background:#edf5ef;border-color:#b9d8c2;color:#2e6240}
+#promoDrawer .av57Weekdays{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+#promoDrawer .av57Weekday{position:relative;display:flex}
+#promoDrawer .av57Weekday input{position:absolute;opacity:0;pointer-events:none}
+#promoDrawer .av57Weekday span{min-width:40px;text-align:center;padding:6px 7px;border:1px solid #dce2eb;border-radius:8px;background:#fff;color:#6a7585;font-size:8px;font-weight:1000;cursor:pointer}
+#promoDrawer .av57Weekday input:checked+span{background:#eef5fb;border-color:#bdd0e1;color:#284b68}
+#promoDrawer .av57DateTool{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:end}
+#promoDrawer .av57DateTokens{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+#promoDrawer .av57DateToken{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid #dce2eb;border-radius:999px;background:#fff;color:#606b7a;font-size:8px;font-weight:1000}
+#promoDrawer .av57DateToken button{border:0;background:transparent;color:#a63247;font-weight:1000;cursor:pointer;padding:0}
+#promoDrawer .av57SmartHint{grid-column:1/-1;font-size:9px;line-height:1.4;color:#677385;padding:7px 9px;border-radius:10px;background:#fff;border:1px dashed #d8e0e9}
+#promoDrawer .av57SmartHint b{color:#34475a}
+#promoDrawer .av57Hidden{display:none!important}
+@media(max-width:720px){#promoDrawer .av57ScheduleGrid{grid-template-columns:1fr}#promoDrawer .av57ProgramChoices{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -3495,7 +3524,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
           <div class="filterBar promoFilterBar">
             <div class="field"><label>TIPO</label><select class="control" id="promoTypeFilter"><option value="">TODOS</option><option value="promo">PROMOÇÕES</option><option value="merchan">MERCHANS</option><option value="pauta">PAUTAS ESPECIAIS</option><option value="aviso">AVISOS</option></select></div>
             <div class="field"><label>RÁDIO</label><select class="control" id="promoStationFilter"><option value="">TODAS</option><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option><option value="ALL">AMBAS</option></select></div>
-            <div class="field"><label>STATUS</label><select class="control" id="promoStatusFilter"><option value="">TODOS</option><option value="active">ATIVAS</option><option value="ended">ENCERRADAS</option></select></div>
+            <div class="field"><label>STATUS</label><select class="control" id="promoStatusFilter"><option value="">TODOS</option><option value="active">ATIVAS</option><option value="paused">PAUSADAS</option><option value="ended">ENCERRADAS</option></select></div>
             <div class="field"><label>ORDENAR</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div>
           </div>
           <div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO / SORTEIO</th><th>HORÁRIOS</th><th>LOCAL / PROGRAMA</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div>
@@ -4029,12 +4058,26 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
               <div class="field"><label>TIPO DE CONTEÚDO</label><select class="control" id="promoKind"><option value="promo">PROMOÇÃO</option><option value="merchan">MERCHAN</option><option value="pauta">PAUTA ESPECIAL</option><option value="aviso">AVISO / COMUNICADO</option></select></div>
               <div class="field"><label>RÁDIO DA PAUTA</label><select class="control" id="promoStation"><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option><option value="ALL">AMBAS</option></select></div>
               <div class="field promoLocalField" id="promoLocalField"><label id="promoLocalLabel">CANAL DA PROMOÇÃO</label><select class="control" id="promoLocal"></select></div>
-              <div class="field merchanProgramField hidden" id="promoProgramField"><label id="promoProgramLabel">PROGRAMA / FAIXA</label><select class="control" id="promoProgram"></select></div>
+              <div class="field full">
+                <label>REGRA DE VEICULAÇÃO · AV-57</label>
+                <div class="av57ScheduleGrid">
+                  <label class="miniField"><span>MODO</span><select class="control" id="promoScheduleMode"><option value="fixed">HORÁRIO FIXO / SELECIONADO</option><option value="smart">RODÍZIO INTELIGENTE</option></select></label>
+                  <label class="miniField"><span>FREQUÊNCIA</span><select class="control" id="promoFrequencyScope"><option value="day">POR DIA</option><option value="program">POR PROGRAMA</option><option value="hour">POR HORA</option><option value="period">TOTAL NO PERÍODO</option></select></label>
+                  <label class="miniField" id="promoFrequencyCountField"><span>QUANTIDADE</span><input class="control" type="number" min="1" step="1" id="promoFrequencyCount" value="1"></label>
+                  <label class="miniField av57Hidden" id="promoPeriodTotalField"><span>TOTAL NO PERÍODO</span><input class="control" type="number" min="1" step="1" id="promoPeriodTotal" value="1"></label>
+                  <label class="miniField"><span>DIAS DE LEITURA</span><select class="control" id="promoReadDateMode"><option value="range">PERÍODO + DIAS DA SEMANA</option><option value="specific">SOMENTE DATAS ESPECÍFICAS</option></select></label>
+                  <div class="av57SmartHint" id="promoSmartHint"><b>HORÁRIO FIXO:</b> as horas marcadas são obrigações exatas. No rodízio inteligente, o sistema cruza programas, horas, carga e histórico confirmado para distribuir as leituras.</div>
+                </div>
+              </div>
+              <div class="field full" id="promoWeekdaysField"><label>DIAS DA SEMANA PERMITIDOS</label><div class="av57Weekdays" id="promoReadWeekdays"></div></div>
+              <div class="field"><label>ADICIONAR DATA ESPECÍFICA</label><div class="av57DateTool"><input class="control" type="date" id="promoSpecificDateInput"><button class="btn small" type="button" id="promoAddSpecificDate">+</button></div><div class="av57DateTokens" id="promoSpecificDates"></div></div>
+              <div class="field"><label>EXCLUIR DATA</label><div class="av57DateTool"><input class="control" type="date" id="promoExcludedDateInput"><button class="btn small" type="button" id="promoAddExcludedDate">+</button></div><div class="av57DateTokens" id="promoExcludedDates"></div></div>
+              <div class="field full merchanProgramField hidden" id="promoProgramField"><label id="promoProgramLabel">PROGRAMA(S) / FAIXAS PERMITIDAS</label><select class="control av57Hidden" id="promoProgram"></select><div class="av57ProgramChoices" id="promoProgramChoices"></div><div class="av57ProgramHours" id="promoProgramHours"></div></div>
               <div class="field full">
                 <label>HORÁRIOS DE LEITURA DA PAUTA</label>
                 <div class="promoReadSchedule" id="promoReadScheduleBox">
                   <div class="promoReadScheduleTop">
-                    <strong>ONDE ESSA PAUTA APARECE NO ESTÚDIO</strong>
+                    <strong id="promoReadScheduleTitle">ONDE ESSA PAUTA APARECE NO ESTÚDIO</strong>
                     <label class="promoReadAll"><input type="checkbox" id="promoReadAll" checked> TODOS OS HORÁRIOS</label>
                   </div>
                   <div class="promoReadHours" id="promoReadHours"></div>
@@ -9457,45 +9500,53 @@ function saveProgramSchedule(e){
     openDrawer('itemDrawer');
   }
 }
-function promoHoursForSelectedProgram(){
-  const program=norm($('promoProgram')?.value || '');
+function promoAV57ProgramRows(){
   const station=$('promoStation')?.value || 'JP1017';
-  if(!program) return [];
-  const rows=programSchedules()
-    .filter(p=>station==='ALL' || (p.station||'JP1017')===station)
-    .filter(p=>norm(p.name)===program);
-  const hours=new Set();
-  rows.forEach(p=>{
-    const start=Math.floor(minutesOf(p.startTime)/60);
-    const end=Math.ceil(minutesOf(p.endTime)/60);
-    for(let h=start; h<end; h++){
-      if(h>=6 && h<=22) hours.add(String(h).padStart(2,'0'));
-    }
-  });
+  return programSchedules().filter(p=>station==='ALL' || (p.station||'JP1017')===station);
+}
+function promoAV57ProgramNames(){
+  const station=$('promoStation')?.value || 'JP1017';
+  const programRows=promoAV57ProgramRows().map(p=>norm(p.name));
+  const itemRows=monthData().items.filter(i=>station==='ALL' || (i.station||'JP1017')===station).map(i=>norm(i.program));
+  return [...new Set([...programRows,...itemRows].filter(Boolean))].sort();
+}
+function promoAV57HoursForProgram(program){
+  const target=norm(program||''); if(!target) return [];
+  const rows=promoAV57ProgramRows().filter(p=>norm(p.name)===target), hours=new Set();
+  rows.forEach(p=>{const start=Math.floor(minutesOf(p.startTime)/60),end=Math.ceil(minutesOf(p.endTime)/60);for(let h=start;h<end;h++) if(h>=6&&h<=22) hours.add(String(h).padStart(2,'0'));});
   return [...hours].sort();
 }
+function promoHoursForSelectedProgram(){ return promoAV57HoursForProgram($('promoProgram')?.value||''); }
+function promoAV57SelectedPrograms(){ return Array.from(document.querySelectorAll('#promoProgramChoices input:checked')).map(i=>i.value); }
+function promoAV57RenderProgramHours(saved=[]){
+  const box=$('promoProgramHours'); if(!box) return;
+  const savedMap=new Map((saved||[]).map(c=>[norm(c.program),new Set((c.hours||[]).map(h=>String(h).replace(/\D/g,'').padStart(2,'0').slice(0,2)))]));
+  const selected=promoAV57SelectedPrograms();
+  box.innerHTML=selected.map(program=>{const hours=promoAV57HoursForProgram(program),set=savedMap.get(norm(program));return `<div class="av57ProgramHourCard" data-program="${esc(program)}"><strong>${esc(program)} · HORAS PERMITIDAS</strong><div class="av57ProgramHourList">${hours.length?hours.map(h=>`<label class="av57ProgramHour"><input type="checkbox" value="${h}" ${!set||set.has(h)?'checked':''}><span>${h}H</span></label>`).join(''):'<span class="uploadHint">SEM HORÁRIO CADASTRADO NA GRADE</span>'}</div></div>`;}).join('');
+}
+function promoAV57ProgramConfigsFromForm(){
+  return Array.from(document.querySelectorAll('#promoProgramHours .av57ProgramHourCard')).map(card=>({program:card.dataset.program,hours:Array.from(card.querySelectorAll('input:checked')).map(i=>i.value)})).filter(c=>c.program&&c.hours.length);
+}
+function promoAV57SetProgramConfigs(configs=[]){
+  const wanted=new Set((configs||[]).map(c=>norm(c.program)));
+  document.querySelectorAll('#promoProgramChoices input').forEach(i=>i.checked=wanted.has(norm(i.value)));
+  promoAV57RenderProgramHours(configs);
+  const first=(configs||[])[0]?.program||''; if($('promoProgram')) $('promoProgram').value=first;
+}
 function applyProgramHoursToPromo(){
-  if(!isPromoKindMerchan()) return;
-  const hours=promoHoursForSelectedProgram();
-  if(!hours.length) return;
-  setPromoReadControls({readMode:'selected',readHours:hours});
+  const configs=promoAV57ProgramConfigsFromForm();
+  const union=[...new Set(configs.flatMap(c=>c.hours))].sort();
+  if(union.length) setPromoReadControls({readMode:'selected',readHours:union});
+  const first=configs[0]?.program||promoAV57SelectedPrograms()[0]||''; if($('promoProgram')) $('promoProgram').value=first;
   updatePromoPreview();
 }
 function populateProgramSelects(){
-  const station=$('promoStation')?.value || 'JP1017';
-  const programRows=programSchedules()
-    .filter(p=>station==='ALL' || (p.station||'JP1017')===station)
-    .map(p=>norm(p.name));
-  const itemRows=monthData().items
-    .filter(i=>station==='ALL' || (i.station||'JP1017')===station)
-    .map(i=>norm(i.program));
-  const names=[...new Set([...programRows,...itemRows].filter(Boolean))].sort();
-  const promoProgram=$('promoProgram');
-  if(promoProgram){
-    const current=promoProgram.value;
-    promoProgram.innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');
-    if(names.includes(current)) promoProgram.value=current;
-  }
+  const names=promoAV57ProgramNames(), legacy=$('promoProgram'), current=legacy?.value||'';
+  if(legacy){legacy.innerHTML='<option value="">SELECIONE</option>'+names.map(n=>`<option>${esc(n)}</option>`).join('');if(names.includes(current))legacy.value=current;}
+  const box=$('promoProgramChoices'); if(!box) return;
+  const checked=new Set(promoAV57SelectedPrograms()); if(current) checked.add(current);
+  box.innerHTML=names.length?names.map(n=>`<label class="av57ProgramChoice"><input type="checkbox" value="${esc(n)}" ${checked.has(n)?'checked':''}><span>${esc(n)}</span></label>`).join(''):'<span class="uploadHint">CADASTRE A GRADE DE PROGRAMAS PARA HABILITAR A SELEÇÃO.</span>';
+  promoAV57RenderProgramHours();
 }
 function selectedRotationSlots(prefix){
   const all=$(`${prefix}RotationAll`)?.checked;
@@ -9574,25 +9625,26 @@ function isMerchanMain(p){
 function isPromoKindMerchan(){
   return $('promoKind')?.value==='merchan';
 }
+function promoAV57SmartMode(){ return ($('promoScheduleMode')?.value||'fixed')==='smart'; }
 function updatePromoKindMode(){
   const kind=$('promoKind')?.value || 'promo';
   const isM=kind==='merchan';
   const isPromo=kind==='promo';
+  const smart=promoAV57SmartMode();
   const lf=$('promoLocalField'), pf=$('promoProgramField');
   if(lf) lf.classList.toggle('hidden',isM);
-  if(pf) pf.classList.toggle('hidden',!isM);
+  if(pf) pf.classList.remove('hidden');
   if($('promoLocal')) $('promoLocal').required=!isM;
-  if($('promoProgram')) $('promoProgram').required=isM;
+  if($('promoProgram')) $('promoProgram').required=false;
 
-  if($('promoLocalLabel')){
-    $('promoLocalLabel').textContent = isPromo ? 'CANAL DA PROMOÇÃO' : 'CANAL / DESTINO DA PAUTA';
-  }
-  if($('promoProgramLabel')) $('promoProgramLabel').textContent='PROGRAMA / FAIXA';
+  if($('promoLocalLabel')) $('promoLocalLabel').textContent = isPromo ? 'CANAL DA PROMOÇÃO' : 'CANAL / DESTINO DA PAUTA';
+  if($('promoProgramLabel')) $('promoProgramLabel').textContent=smart?'PROGRAMA(S) / FAIXAS PERMITIDAS':'PROGRAMA / FAIXA';
   if($('promoDrawDateLabel')) $('promoDrawDateLabel').textContent = isM ? 'TÉRMINO' : (isPromo ? 'DATA DE SORTEIO' : 'DATA DE EXIBIÇÃO');
   if($('promoDrawTimeLabel')) $('promoDrawTimeLabel').textContent = isPromo ? 'HORA DO SORTEIO' : 'HORÁRIO';
   if($('promoDrawerTitle')) $('promoDrawerTitle').textContent = $('promoId')?.value ? `EDITAR ${promoKindLabel(kind)}` : `NOVA ${promoKindLabel(kind)}`;
   populatePromoLocalSelect();
   populateProgramSelects();
+  promoAV57UpdateScheduleUI();
   updatePromoPreview();
 }
 
@@ -10113,13 +10165,11 @@ function promoTypeClass(p){
   return promoTypeKey(p)==='merchan' ? 'merchan' : 'promo';
 }
 function promoStatusData(p){
+  if(p?.opecPaused)return {label:'PAUSADA',cls:'amber',key:'paused'};
   const now = new Date();
   let isEnded = false;
   const endDate = p.drawDate || p.endDate || '';
-  if(endDate){
-    const dt = new Date(`${endDate}T${p.drawTime || '23:59'}:00`);
-    if(!Number.isNaN(dt.getTime())) isEnded = dt < now;
-  }
+  if(endDate){const dt = new Date(`${endDate}T${p.drawTime || '23:59'}:00`);if(!Number.isNaN(dt.getTime())) isEnded = dt < now;}
   return isEnded ? {label:'ENCERRADA', cls:'green', key:'ended'} : {label:'ATIVA', cls:'blue', key:'active'};
 }
 function promoReadHoursLabel(p){
@@ -12386,10 +12436,46 @@ function promoInlineStyle(style,type){
   const s=style || d;
   return `font-family:'${safePromoFont(s.font || d.font)}', Arial, sans-serif;font-size:${safePromoSize(s.size,type==='title'?10:9,type==='title'?42:32,d.size)}px;color:${safePromoHex(s.color,d.color)}`;
 }
+let promoAV57SpecificDates=[];
+let promoAV57ExcludedDates=[];
+const PROMO_AV57_WEEKDAYS=[[1,'SEG'],[2,'TER'],[3,'QUA'],[4,'QUI'],[5,'SEX'],[6,'SÁB'],[0,'DOM']];
+function promoAV57InitWeekdays(){
+  const box=$('promoReadWeekdays'); if(!box||box.dataset.ready==='1') return;
+  box.innerHTML=PROMO_AV57_WEEKDAYS.map(([v,l])=>`<label class="av57Weekday"><input type="checkbox" value="${v}" ${v>=1&&v<=5?'checked':''}><span>${l}</span></label>`).join('');box.dataset.ready='1';
+}
+function promoAV57RenderDateTokens(){
+  const render=(id,arr)=>{const box=$(id);if(!box)return;box.innerHTML=arr.sort().map(d=>`<span class="av57DateToken">${esc(formatBR(d))}<button type="button" data-date="${esc(d)}" data-target="${id}">×</button></span>`).join('');};
+  render('promoSpecificDates',promoAV57SpecificDates);render('promoExcludedDates',promoAV57ExcludedDates);
+}
+function promoAV57SelectedWeekdays(){promoAV57InitWeekdays();return Array.from(document.querySelectorAll('#promoReadWeekdays input:checked')).map(i=>Number(i.value));}
+function promoAV57SetWeekdays(days=[]){promoAV57InitWeekdays();const set=new Set((days||[]).map(Number));document.querySelectorAll('#promoReadWeekdays input').forEach(i=>i.checked=set.size?set.has(Number(i.value)):(Number(i.value)>=1&&Number(i.value)<=5));}
+function promoAV57AddDate(type){const input=$(type==='specific'?'promoSpecificDateInput':'promoExcludedDateInput');if(!input?.value)return;const arr=type==='specific'?promoAV57SpecificDates:promoAV57ExcludedDates;if(!arr.includes(input.value))arr.push(input.value);input.value='';promoAV57RenderDateTokens();updatePromoPreview();}
+function promoAV57UpdateScheduleUI(){
+  promoAV57InitWeekdays();
+  const smart=promoAV57SmartMode(),scope=$('promoFrequencyScope')?.value||'day',specific=($('promoReadDateMode')?.value||'range')==='specific';
+  if($('promoPeriodTotalField')) $('promoPeriodTotalField').classList.toggle('av57Hidden',scope!=='period');
+  if($('promoFrequencyCountField')) $('promoFrequencyCountField').classList.toggle('av57Hidden',scope==='period');
+  if($('promoWeekdaysField')) $('promoWeekdaysField').classList.toggle('av57Hidden',specific);
+  if($('promoReadAll')) $('promoReadAll').disabled=smart;
+  if(smart && $('promoReadAll')) $('promoReadAll').checked=false;
+  if($('promoReadScheduleTitle')) $('promoReadScheduleTitle').textContent=smart?'JANELAS DE HORÁRIO PERMITIDAS PARA O CÁLCULO':'ONDE ESSA PAUTA APARECE NO ESTÚDIO';
+  if($('promoSmartHint')) $('promoSmartHint').innerHTML=smart?'<b>RODÍZIO INTELIGENTE:</b> cruza a carga de todas as pautas/merchans, histórico confirmado e faixas permitidas. O ciclo não é sequencial e se reequilibra automaticamente.':'<b>HORÁRIO FIXO:</b> cada hora marcada vira uma obrigação de leitura. Use datas específicas para uma inserção única e pontual.';
+  const pf=$('promoProgramField'); if(pf) pf.classList.remove('hidden');
+  updatePromoReadScheduleState();
+}
+function promoAV57FrequencyLabel(){
+  const smart=promoAV57SmartMode(),scope=$('promoFrequencyScope')?.value||'day',count=Math.max(1,Number($('promoFrequencyCount')?.value||1)||1),total=Math.max(1,Number($('promoPeriodTotal')?.value||1)||1);
+  if(!smart) return `${count}X POR HORA MARCADA · FIXO`;
+  if(scope==='period') return `${total} LEITURA(S) NO PERÍODO · RODÍZIO INTELIGENTE`;
+  return `${count}X ${scope==='program'?'POR PROGRAMA':scope==='hour'?'POR HORA':'POR DIA'} · RODÍZIO INTELIGENTE`;
+}
 function promoReadScheduleText(){
-  if($('promoReadAll')?.checked) return 'APARECE EM TODOS OS HORÁRIOS';
+  const freq=promoAV57FrequencyLabel();
+  if(!promoAV57SmartMode() && $('promoReadAll')?.checked) return `TODOS OS HORÁRIOS · ${freq}`;
+  const configs=promoAV57ProgramConfigsFromForm();
+  if(configs.length) return `${freq} · ${configs.map(c=>`${c.program}: ${c.hours.map(h=>h+'H').join(', ')}`).join(' · ')}`;
   const hours=getPromoReadHoursFromForm();
-  return hours.length ? `APARECE NO ESTÚDIO: ${hours.map(h=>h+'H').join(', ')}` : 'NENHUM HORÁRIO SELECIONADO';
+  return hours.length ? `${freq} · JANELAS: ${hours.map(h=>h+'H').join(', ')}` : `${freq} · NENHUM HORÁRIO SELECIONADO`;
 }
 function updatePromoPreview(){
   populatePromoFontSelects();
@@ -12407,7 +12493,7 @@ function updatePromoPreview(){
   const meta=$('promoPreviewMeta');
   if(meta){
     const parts=[promoKindLabel(kind),stationLabel(station)];
-    if(isPromoKindMerchan() && program) parts.push(program);
+    if((isPromoKindMerchan()||promoAV57SmartMode()) && (promoAV57SelectedPrograms().length||program)) parts.push((promoAV57SelectedPrograms().join(' + ')||program));
     if(!isPromoKindMerchan() && local) parts.push(local);
     meta.textContent=parts.join(' · ');
   }
@@ -12469,11 +12555,19 @@ function clearPromoForm(){
   if($('promoQtyPerDraw')) $('promoQtyPerDraw').value='1';
   if($('promoDistributionId')) $('promoDistributionId').value='';
   if($('promoSegmentKey')) $('promoSegmentKey').value='';
+  if($('promoScheduleMode')) $('promoScheduleMode').value='fixed';
+  if($('promoFrequencyScope')) $('promoFrequencyScope').value='hour';
+  if($('promoFrequencyCount')) $('promoFrequencyCount').value='1';
+  if($('promoPeriodTotal')) $('promoPeriodTotal').value='1';
+  if($('promoReadDateMode')) $('promoReadDateMode').value='range';
+  promoAV57SpecificDates=[]; promoAV57ExcludedDates=[]; promoAV57SetWeekdays([1,2,3,4,5]); promoAV57RenderDateTokens();
   populatePromoLocalSelect();
   populatePromoDistributionSelect();
   populateProgramSelects();
   updatePromoKindMode();
+  promoAV57SetProgramConfigs([]);
   setPromoReadControls({readMode:'all',readHours:[]});
+  promoAV57UpdateScheduleUI();
   setPromoStyleControls('promoTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('promoDesc',defaultPromoTextStyle('desc'),'desc');
   $('promoDrawerTitle').textContent='NOVA PROMOÇÃO';
@@ -12518,6 +12612,7 @@ function consolidatedPromoById(idValue){
     if(p.readAtLabel) merged.readAtLabel=p.readAtLabel;
   });
   merged.readLog=mergePromoReadLogs(ordered);
+  const missedSeen=new Set();merged.missedLog=ordered.flatMap(row=>Array.isArray(row.p?.missedLog)?row.p.missedLog:[]).filter(log=>{const key=log?.id||`${log?.date||''}|${log?.slot||''}|${log?.occurrenceIndex||''}|${log?.markedAt||''}`;if(!key||missedSeen.has(key))return false;missedSeen.add(key);return true;});
   delete merged.__months;
   return merged;
 }
@@ -12566,10 +12661,19 @@ function editPromo(pid){
   if($('promoSegmentKey')) $('promoSegmentKey').value=p.segmentKey||'';
   if($('promoKind')) $('promoKind').value=p.kind||p.promoKind||p.type||'promo';
   if($('promoStation')) $('promoStation').value=p.station||'JP1017';
+  if($('promoScheduleMode')) $('promoScheduleMode').value=(p.promoScheduleMode||p.scheduleMode||'fixed')==='rotation'?'smart':(p.promoScheduleMode||p.scheduleMode||'fixed');
+  if($('promoFrequencyScope')) $('promoFrequencyScope').value=p.promoFrequencyScope||((p.promoScheduleMode||'fixed')==='fixed'?'hour':'day');
+  if($('promoFrequencyCount')) $('promoFrequencyCount').value=Math.max(1,num(p.promoFrequencyCount)||1);
+  if($('promoPeriodTotal')) $('promoPeriodTotal').value=Math.max(1,num(p.promoPeriodTotal)||1);
+  if($('promoReadDateMode')) $('promoReadDateMode').value=p.promoReadDateMode||'range';
+  promoAV57SpecificDates=[...(p.promoReadSpecificDates||[])]; promoAV57ExcludedDates=[...(p.promoReadExcludedDates||[])]; promoAV57SetWeekdays(p.promoReadWeekdays||[1,2,3,4,5]); promoAV57RenderDateTokens();
   $('promoLocal').value=p.local||'';
   if($('promoProgram')) $('promoProgram').value=p.program||p.programName||'';
   updatePromoKindMode();
+  const configs=(Array.isArray(p.opecPrograms)&&p.opecPrograms.length)?p.opecPrograms:[{program:p.program||p.programName||'',hours:Array.isArray(p.readHours)?p.readHours:[]}].filter(c=>c.program);
+  promoAV57SetProgramConfigs(configs);
   setPromoReadControls(p);
+  promoAV57UpdateScheduleUI();
   $('promoName').value=p.name||p.title||'';
   $('promoDescription').value=p.description||'';
   setPromoStyleControls('promoTitle',p.titleStyle,'title');
@@ -12612,7 +12716,19 @@ bind('promoProgram','change',()=>{applyProgramHoursToPromo(); updatePromoPreview
 bind('promoProgram','input',updatePromoPreview);
 bind('promoKind','change',()=>{ updatePromoKindMode(); renderPromoOccurrencesEditor(false); updatePromoSegmentBalance(); });
 bind('promoReadAll','change',updatePromoReadScheduleState);
-document.addEventListener('change',e=>{ if(e.target.closest('#promoReadHours')) updatePromoReadScheduleState(); });
+bind('promoScheduleMode','change',()=>{promoAV57UpdateScheduleUI();updatePromoKindMode();updatePromoPreview();});
+bind('promoFrequencyScope','change',()=>{promoAV57UpdateScheduleUI();updatePromoPreview();});
+['promoFrequencyCount','promoPeriodTotal'].forEach(id=>bind(id,'input',updatePromoPreview));
+bind('promoReadDateMode','change',()=>{promoAV57UpdateScheduleUI();updatePromoPreview();});
+bind('promoAddSpecificDate','click',()=>promoAV57AddDate('specific'));
+bind('promoAddExcludedDate','click',()=>promoAV57AddDate('excluded'));
+document.addEventListener('click',e=>{const b=e.target.closest('.av57DateToken button');if(!b)return;const arr=b.dataset.target==='promoSpecificDates'?promoAV57SpecificDates:promoAV57ExcludedDates;const i=arr.indexOf(b.dataset.date);if(i>=0)arr.splice(i,1);promoAV57RenderDateTokens();updatePromoPreview();});
+document.addEventListener('change',e=>{
+  if(e.target.closest('#promoReadHours')) updatePromoReadScheduleState();
+  if(e.target.closest('#promoReadWeekdays')) updatePromoPreview();
+  if(e.target.closest('#promoProgramChoices')){const prior=promoAV57ProgramConfigsFromForm();promoAV57RenderProgramHours(prior);applyProgramHoursToPromo();updatePromoPreview();}
+  if(e.target.closest('#promoProgramHours')){applyProgramHoursToPromo();updatePromoPreview();}
+});
 ['itemTitleFont','itemTitleSize','itemTitleColor','itemDescFont','itemDescSize','itemDescColor','distTitleFont','distTitleSize','distTitleColor','distDescFont','distDescSize','distDescColor'].forEach(id=>bind(id,'input',()=>{}));
 
 function populatePromoDistributionSelect(){
@@ -12814,17 +12930,34 @@ $('promoForm').addEventListener('submit',e=>{
     local:$('promoKind')?.value==='merchan' ? 'MERCHAN' : norm($('promoLocal').value),
     program:$('promoProgram') ? norm($('promoProgram').value) : '',
     station:$('promoStation')?.value || 'JP1017',
+    promoScheduleMode:promoAV57SmartMode()?'smart':'fixed',
+    promoFrequencyScope:promoAV57SmartMode()?($('promoFrequencyScope')?.value||'day'):'hour',
+    promoFrequencyCount:Math.max(1,num($('promoFrequencyCount')?.value)||1),
+    promoPeriodTotal:Math.max(1,num($('promoPeriodTotal')?.value)||1),
+    promoReadDateMode:$('promoReadDateMode')?.value||'range',
+    promoReadWeekdays:promoAV57SelectedWeekdays(),
+    promoReadSpecificDates:[...promoAV57SpecificDates].sort(),
+    promoReadExcludedDates:[...promoAV57ExcludedDates].sort(),
+    opecPrograms:promoAV57ProgramConfigsFromForm(),
+    plannerVersion:'AV57_SMART_BALANCE_V1',
+    reportVersion:57,
     name:norm($('promoName').value),
     title:norm($('promoName').value),
     description:textNorm($('promoDescription').value),
     titleStyle:promoStyleFromForm('promoTitle','title'),
     descriptionStyle:promoStyleFromForm('promoDesc','desc'),
-    readMode:$('promoReadAll')?.checked ? 'all' : 'selected',
-    readHours:$('promoReadAll')?.checked ? [] : getPromoReadHoursFromForm(),
+    readMode:(!promoAV57SmartMode()&&$('promoReadAll')?.checked) ? 'all' : 'selected',
+    readHours:promoAV57SmartMode()?[...new Set(promoAV57ProgramConfigsFromForm().flatMap(c=>c.hours))].sort():( $('promoReadAll')?.checked ? [] : getPromoReadHoursFromForm()),
     imageData:$('promoImageData').value||existing.imageData||'',
     createdAt:existing.createdAt||new Date().toISOString(),
     updatedAt:new Date().toISOString()
   };
+  const av57Now=new Date().toISOString();
+  const priorHistory=Array.isArray(existing.opecHistory)?existing.opecHistory:[];
+  p.opecHistory=[...priorHistory,{at:av57Now,action:existing.id?'ALTERAÇÃO DE REGRA/PAUTA':'CADASTRO',operator:'PAINEL PRINCIPAL',scheduleMode:p.promoScheduleMode,frequencyScope:p.promoFrequencyScope,frequencyCount:p.promoFrequencyCount,periodTotal:p.promoPeriodTotal,programs:clone(p.opecPrograms),dateMode:p.promoReadDateMode,weekdays:[...p.promoReadWeekdays],specificDates:[...p.promoReadSpecificDates],excludedDates:[...p.promoReadExcludedDates],version:'AV-57'}].slice(-200);
+  if(promoAV57SmartMode() && !p.opecPrograms.length){ alert('NO RODÍZIO INTELIGENTE, SELECIONE PELO MENOS UM PROGRAMA E UMA FAIXA DE HORÁRIO.'); return; }
+  if(p.promoReadDateMode==='specific' && !p.promoReadSpecificDates.length){ alert('SELECIONE PELO MENOS UMA DATA ESPECÍFICA PARA A LEITURA.'); return; }
+  if(!promoAV57SmartMode() && p.readMode==='selected' && !p.readHours.length){ alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.'); return; }
   p.occurrences=promoOccurrencesFromForm(p,existing);
   if(p.kind==='promo'&&!p.occurrences.length){ alert('NÃO FOI POSSÍVEL GERAR A AGENDA DE SORTEIOS. CONFIRA AS DATAS.'); return; }
   if(p.occurrences.some(o=>o.date<p.startDate||o.date>p.endDate)){ alert('EXISTE SORTEIO FORA DO PERÍODO DA PROMOÇÃO.'); return; }
