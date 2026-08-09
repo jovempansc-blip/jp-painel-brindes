@@ -3414,6 +3414,11 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 #promoDrawer .av57SmartHint b{color:#34475a}
 #promoDrawer .av57Hidden{display:none!important}
 @media(max-width:720px){#promoDrawer .av57ScheduleGrid{grid-template-columns:1fr}#promoDrawer .av57ProgramChoices{grid-template-columns:1fr}}
+
+/* AV-57.2 · LISTAGEM PROMO/MERCHAN E PAUTA DIÁRIA MAIS LEGÍVEIS */
+.promoCampaignTable{table-layout:fixed!important;min-width:1080px!important}
+.promoCampaignTable col.pctType{width:9%}.promoCampaignTable col.pctCampaign{width:22%}.promoCampaignTable col.pctStation{width:9%}.promoCampaignTable col.pctPeriod{width:13%}.promoCampaignTable col.pctProgram{width:21%}.promoCampaignTable col.pctExecution{width:13%}.promoCampaignTable col.pctStatus{width:7%}.promoCampaignTable col.pctActions{width:6%}
+.promoCampaignTable th:first-child{width:auto!important}.promoCampaignTable th{font-size:9px!important;letter-spacing:.045em!important;color:#617086!important;padding:9px 8px!important}.promoCampaignTable td{padding:11px 8px!important;font-size:10px!important;background:#fff!important;border-bottom:1px solid #edf0f4!important}.promoCampaignTable tr.merchanRow td{background:#fcfffd!important}.promoCampaignTable tr.promoRow td{background:#fffefa!important}.promoCampaignTable td:first-child{text-align:center!important;padding-left:8px!important}.promoCampaignTable .campaignIdentity{text-align:left!important}.campaignIdentity strong{display:block;color:#151b25;font-size:11px;line-height:1.18;font-weight:1000}.campaignIdentity span{display:block;margin-top:4px;color:#6f7b8a;font-size:9px;line-height:1.2;font-weight:850}.campaignStation,.campaignPeriod{font-weight:950;color:#465467}.campaignPrograms{text-align:left!important}.campaignProgramLine{display:grid;gap:5px;margin:2px 0 6px}.campaignProgramLine:last-child{margin-bottom:0}.campaignProgramLine strong,.campaignProgramName{display:block;color:#263243;font-size:9.5px;font-weight:1000}.campaignHourChips{display:flex;gap:4px;flex-wrap:wrap}.campaignHourChips i{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:20px;border:1px solid #dce4ed;border-radius:999px;background:#f6f8fb;color:#56667b;padding:0 6px;font-size:7.5px;font-style:normal;font-weight:1000}.campaignExecution{display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border:1px solid #dce3eb;border-radius:999px;background:#f7f9fb;color:#647083;font-size:7.5px;font-weight:1000;line-height:1.1}.campaignExecution.smart{border-color:#cfe0ee;background:#f1f7fb;color:#3d6685}.studioPromoPlanLine{margin:-1px 14px 8px;padding:5px 10px;border:1px solid #e8edf3;border-radius:999px;background:#f8fafc;color:#68768a;font-size:8px;font-weight:1000;letter-spacing:.04em;width:max-content;max-width:calc(100% - 28px)}
 </style>
 </head>
 <body>
@@ -3527,7 +3532,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
             <div class="field"><label>STATUS</label><select class="control" id="promoStatusFilter"><option value="">TODOS</option><option value="active">ATIVAS</option><option value="paused">PAUSADAS</option><option value="ended">ENCERRADAS</option></select></div>
             <div class="field"><label>ORDENAR</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div>
           </div>
-          <div class="tableWrap"><table class="promoMainTable"><thead><tr><th>TIPO</th><th>RÁDIO</th><th>NOME</th><th>PERÍODO / SORTEIO</th><th>HORÁRIOS</th><th>LOCAL / PROGRAMA</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div>
+          <div class="tableWrap"><table class="promoMainTable promoCampaignTable"><colgroup><col class="pctType"><col class="pctCampaign"><col class="pctStation"><col class="pctPeriod"><col class="pctProgram"><col class="pctExecution"><col class="pctStatus"><col class="pctActions"></colgroup><thead><tr><th>TIPO</th><th>CLIENTE / CAMPANHA</th><th>RÁDIO</th><th>VEICULAÇÃO</th><th>PROGRAMA / HORÁRIOS</th><th>EXECUÇÃO</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -10174,7 +10179,7 @@ function promoStatusData(p){
 }
 function promoReadHoursLabel(p){
   if((p.readMode||'all')==='selected'){
-    const hours=Array.isArray(p.readHours)?p.readHours.map(h=>`${String(h).padStart(2,'0')}H`):[];
+    const hours=Array.isArray(p.readHours)?p.readHours.map(h=>adminAV572HourSlot(h)).filter(Boolean):[];
     return hours.length ? hours.join(', ') : 'SEM HORÁRIO';
   }
   return 'TODOS OS HORÁRIOS';
@@ -10191,6 +10196,45 @@ function renderPromoSummary(){
     ['AVISOS',count('aviso')]
   ].map(([label,total])=>`<div class="promoSummaryCard"><span>${label}</span><strong>${total}</strong></div>`).join('');
 }
+function promoClientCampaignData(p){
+  const raw=norm(p.name||p.title||'');
+  let client=norm(p.opecClientName||p.clientName||'');
+  let campaign=raw;
+  if(!client && promoTypeKey(p)==='merchan'){
+    const parts=raw.split(/\s+-\s+/).map(norm).filter(Boolean);
+    if(parts.length>1){client=parts.shift();campaign=parts.join(' - ');}
+  }
+  if(client){
+    const re=new RegExp(`^${client.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\s*[-–—:]?\\s*`,'i');
+    campaign=norm(raw.replace(re,''))||raw;
+  }
+  if(!client){client=raw||promoTypeDisplay(p);campaign=promoTypeDisplay(p);}
+  if(!campaign||campaign===client)campaign=promoTypeDisplay(p);
+  return{client,campaign};
+}
+function promoProgramConfigsDisplay(p){
+  const configs=(Array.isArray(p.opecPrograms)&&p.opecPrograms.length)?p.opecPrograms:[];
+  if(configs.length)return configs.map(c=>({program:norm(c.program||''),hours:(c.hours||[]).map(adminAV572HourSlot).filter(Boolean)})).filter(c=>c.program);
+  const program=norm(p.program||p.programName||'');
+  const hours=(p.readHours||[]).map(adminAV572HourSlot).filter(Boolean);
+  return program?[{program,hours}]:[];
+}
+function promoProgramHoursMarkup(p){
+  const configs=promoProgramConfigsDisplay(p);
+  if(!configs.length)return `<span class="campaignProgramName">${esc(norm(p.local||'SEM PROGRAMA'))}</span>`;
+  return configs.map(c=>`<div class="campaignProgramLine"><strong>${esc(c.program)}</strong><span class="campaignHourChips">${c.hours.length?c.hours.map(h=>`<i>${esc(h)}</i>`).join(''):'<i>GRADE</i>'}</span></div>`).join('');
+}
+function promoStationDisplay(p){return stationCanonical(p?.station||'JP1017')==='ALL'?'AMBAS':stationLabel(p?.station||'JP1017');}
+function promoFrequencyDisplay(p){
+  const mode=String(p.promoScheduleMode||p.merchanScheduleMode||p.scheduleMode||'fixed').toLowerCase();
+  const smart=mode==='smart'||mode==='rotation';
+  if(!smart)return (p.readMode||'all')==='all'?'HORÁRIOS FIXOS · TODOS':'HORÁRIO FIXO';
+  const scope=String(p.promoFrequencyScope||p.opecFrequencyScope||'day').toLowerCase();
+  const count=Math.max(1,Number(p.promoFrequencyCount||p.opecFrequencyCount||1)||1);
+  const labels={day:'DIA',program:'PROGRAMA',hour:'HORA',period:'PERÍODO'};
+  if(scope==='period')return `${Math.max(1,Number(p.promoPeriodTotal||p.opecPeriodTotal||1)||1)}X / PERÍODO · RODÍZIO`;
+  return `${count}X / ${labels[scope]||'DIA'} · RODÍZIO`;
+}
 function renderPromos(){
   renderPromoSummary();
   const order=$('promoOrderFilter')?.value || 'created';
@@ -10205,14 +10249,9 @@ function renderPromos(){
   const tb=$('promoTable');
   if(!rows.length){ tb.innerHTML=`<tr><td colspan="8"><div class="empty">NENHUMA PAUTA CADASTRADA PARA ESSE FILTRO.</div></td></tr>`; return; }
   tb.innerHTML = rows.map(p=>{
-    const st = promoStatusData(p);
-    const typeLabel=promoTypeDisplay(p);
-    const typeClass=promoTypeClass(p);
-    const isM=promoTypeKey(p)==='merchan';
-    const localProgram=isM ? norm(p.program||p.programName||'') : norm(p.local||'');
-    const endOrDraw = p.drawDate || p.endDate || '';
-    const period = `${formatBR(p.startDate || '')}${endOrDraw ? ' A '+formatBR(endOrDraw) : ''}`;
-    return `<tr class="${typeClass}Row"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td>${esc(stationLabel(p.station||'JP1017'))}</td><td>${esc(p.name || p.title || '')}</td><td>${esc(period)}</td><td class="promoHoursCell">${esc(promoReadHoursLabel(p))}</td><td>${esc(localProgram)}</td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
+    const st=promoStatusData(p),typeLabel=promoTypeDisplay(p),typeClass=promoTypeClass(p),cc=promoClientCampaignData(p);
+    const endOrDraw=p.drawDate||p.endDate||'',period=`${formatBR(p.startDate||'')}${endOrDraw?' → '+formatBR(endOrDraw):''}`;
+    return `<tr class="${typeClass}Row campaignRow"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td class="campaignIdentity"><strong>${esc(cc.client)}</strong><span>${esc(cc.campaign)}</span></td><td><span class="campaignStation">${esc(promoStationDisplay(p))}</span></td><td><span class="campaignPeriod">${esc(period)}</span></td><td class="campaignPrograms">${promoProgramHoursMarkup(p)}</td><td><span class="campaignExecution ${String(p.promoScheduleMode||p.merchanScheduleMode||'').toLowerCase().match(/smart|rotation/)?'smart':''}">${esc(promoFrequencyDisplay(p))}</span></td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
   }).join('');
 }
 function formatStudioTime(slot){
@@ -10285,17 +10324,48 @@ function filteredStudioPrizeEntries(){
     (station==='ALL' || itemStation(i)===station)
   );
 }
+/* AV-57.2 · PLANEJAMENTO DA PAUTA DE ESTÚDIO NO PAINEL PRINCIPAL */
+function adminAV572Hash(value){let h=2166136261;for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+function adminAV572HourSlot(value){const raw=String(value||'').trim();const m=raw.match(/(\d{1,2})/);return m?`${String(Math.max(0,Math.min(23,Number(m[1])))).padStart(2,'0')}H`:'';}
+function adminAV572DateRange(start,end){const out=[];let d=new Date(`${start}T12:00:00`),limit=new Date(`${end}T12:00:00`);while(d<=limit){out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);d.setDate(d.getDate()+1);}return out;}
+function adminAV572Mode(p){const raw=String(p?.merchanScheduleMode||p?.promoScheduleMode||p?.scheduleMode||'fixed').toLowerCase();return raw==='rotation'||raw==='smart'?'rotation':'fixed';}
+function adminAV572Scope(p){return String(p?.opecFrequencyScope||p?.promoFrequencyScope||'').toLowerCase()||'legacy';}
+function adminAV572Count(p){return Math.max(1,Number(p?.opecFrequencyCount||p?.promoFrequencyCount||1)||1);}
+function adminAV572Published(p){return String(p?.opecPublicationStatus||'published').toLowerCase()!=='draft';}
+function adminAV572Visible(p){const status=norm(p?.status||'PENDENTE');return !!p&&!p.opecArchived&&!p.opecForceEnded&&adminAV572Published(p)&&status!=='CANCELADO'&&status!=='CANCELADA';}
+function adminAV572DateAllowed(p,date){const start=p?.startDate||p?.date||p?.drawDate||'',end=p?.endDate||p?.drawDate||p?.resultDate||start;if(start&&date<start)return false;if(end&&date>end)return false;const excluded=new Set([...(p?.opecExcludedDates||[]),...(p?.promoReadExcludedDates||[])]);if(excluded.has(date))return false;const specific=[...(p?.opecSpecificDates||[]),...(p?.promoReadSpecificDates||[])];const mode=String(p?.opecDateMode||p?.promoReadDateMode||'range').toLowerCase();if(mode==='specific')return specific.includes(date);if(specific.includes(date))return true;const weekdays=(p?.opecWeekdays||p?.promoReadWeekdays||[]).map(Number);if(!weekdays.length)return true;const [y,m,d]=String(date).split('-').map(Number);return weekdays.includes(new Date(y,m-1,d).getDay());}
+function adminAV572PauseBlocks(p,date,slot){const periods=Array.isArray(p?.opecPausePeriods)?p.opecPausePeriods:[];if(!periods.length)return !!p?.opecPaused;const hh=adminAV572HourSlot(slot).replace('H',':00'),scheduled=new Date(`${date}T${hh}:00`).getTime();return periods.some(period=>{const a=Date.parse(period?.startAt||''),b=period?.endAt?Date.parse(period.endAt):Infinity;return Number.isFinite(a)&&scheduled>=a&&scheduled<=b;});}
+function adminAV572ProgramHours(program,date,station){const set=new Set();programSchedules().filter(r=>sameStation(r.station,station)&&norm(scheduleName(r))===norm(program)&&dayMatchesRule(date,scheduleDays(r))).forEach(r=>{for(let minute=Math.ceil(scheduleStartMinutes(r)/60)*60;minute<scheduleEndMinutes(r);minute+=60){if(minute>=0&&minute<24*60)set.add(`${String(Math.floor(minute/60)).padStart(2,'0')}H`);}});return [...set].sort();}
+function adminAV572RecordPrograms(p,date,station){if(Array.isArray(p?.opecPrograms)&&p.opecPrograms.length)return p.opecPrograms.filter(c=>!c.station||sameStation(c.station,station)).map(c=>({program:norm(c.program),hours:(c.hours||[]).map(adminAV572HourSlot).filter(Boolean)})).filter(c=>c.program);const program=norm(p?.program||p?.programName||'');if(!program)return[];let hours=(p?.readHours||[]).map(adminAV572HourSlot).filter(Boolean);if(!hours.length)hours=adminAV572ProgramHours(program,date,station);return[{program,hours}];}
+function adminAV572RawCandidates(p,date,station){if(!adminAV572Visible(p)||!sameStation(p?.station||'JP1017',station)||!adminAV572DateAllowed(p,date))return[];const out=[];adminAV572RecordPrograms(p,date,station).forEach(config=>{const official=adminAV572ProgramHours(config.program,date,station);if(!official.length)return;const hours=config.hours.length?config.hours:official;hours.forEach(slot=>{const h=adminAV572HourSlot(slot);if(official.includes(h)&&!adminAV572PauseBlocks(p,date,h))out.push({program:config.program,slot:h,station});});});return out.filter((v,i,a)=>a.findIndex(x=>x.program===v.program&&x.slot===v.slot&&x.station===v.station)===i);}
+function adminAV572ClientId(p){return norm(p?.opecClientId||p?.clientId||'');}
+function adminAV572TextPriority(p){const type=String(p?.opecTextType||p?.textType||'').toLowerCase();return type==='promotional'?30:type==='institutional'?20:10;}
+function adminAV572TextVersion(p){return Math.max(1,Number(p?.opecTextVersion)||1);}
+function adminAV572EffectiveMerchan(p,date,program,slot,station){const client=adminAV572ClientId(p);if(!client||promoTypeKey(p)!=='merchan')return p;const candidates=(monthData().promos||[]).filter(row=>promoTypeKey(row)==='merchan'&&adminAV572ClientId(row)===client&&adminAV572RawCandidates(row,date,station).some(c=>norm(c.program)===norm(program)&&c.slot===adminAV572HourSlot(slot)));if(!candidates.length)return null;return candidates.sort((a,b)=>adminAV572TextPriority(b)-adminAV572TextPriority(a)||adminAV572TextVersion(b)-adminAV572TextVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0];}
+function adminAV572Candidates(p,date,station){return adminAV572RawCandidates(p,date,station).filter(c=>{const chosen=adminAV572EffectiveMerchan(p,date,c.program,c.slot,station);return !chosen||chosen.id===p.id;});}
+function adminAV572HistoryCount(p,program,slot,beforeDate,station){return (p?.readLog||[]).filter(log=>sameStation(log.station||p.station||'JP1017',station)&&(log.date||'')<beforeDate&&norm(log.program||'')===norm(program)&&adminAV572HourSlot(log.slot||log.scheduledHour||'')===adminAV572HourSlot(slot)&&!!(log.confirmedAt||log.readAt||log.at)).length;}
+function adminAV572LastCandidate(p,beforeDate,station){const logs=(p?.readLog||[]).filter(log=>sameStation(log.station||p.station||'JP1017',station)&&(log.date||'')<beforeDate&&!!(log.confirmedAt||log.readAt||log.at)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.confirmedAt||b.readAt||b.at||'').localeCompare(String(a.confirmedAt||a.readAt||a.at||'')));const log=logs[0];return log?`${norm(log.program||'')}|${adminAV572HourSlot(log.slot||log.scheduledHour||'')}`:'';}
+function adminAV572PeriodDue(p,date,station){const total=Math.max(1,Number(p?.opecPeriodTotal||p?.promoPeriodTotal||p?.periodTotal||1)||1),start=p?.startDate||date,end=p?.endDate||p?.drawDate||start;const eligible=adminAV572DateRange(start,end).filter(d=>adminAV572Candidates(p,d,station).length);if(!eligible.length)return 0;const index=eligible.indexOf(date);if(index<0)return 0;const base=Math.floor(total/eligible.length),extra=total%eligible.length,offset=adminAV572Hash(`${p.id}|${start}|${end}|${station}`)%eligible.length;let count=base;for(let i=0;i<extra;i++)if((offset+i)%eligible.length===index)count++;return count;}
+function adminAV572Tokens(p,date,station){const candidates=adminAV572Candidates(p,date,station);if(!candidates.length)return[];const scope=adminAV572Scope(p),n=adminAV572Count(p),out=[];if(scope==='hour'){candidates.forEach(c=>{for(let i=0;i<n;i++)out.push({p,candidates:[c],ordinal:i});});}else if(scope==='program'){[...new Set(candidates.map(c=>c.program))].forEach(program=>{const pool=candidates.filter(c=>c.program===program);for(let i=0;i<n;i++)out.push({p,candidates:pool,ordinal:i,program});});}else{let daily=n;if(scope==='period')daily=adminAV572PeriodDue(p,date,station);if(scope==='legacy')daily=1;for(let i=0;i<daily;i++)out.push({p,candidates,ordinal:i});}return out.map((token,index)=>({...token,sequence:index+1}));}
+function adminAV572FixedLoad(date,station){const load=new Map();(monthData().promos||[]).filter(p=>adminAV572Visible(p)&&adminAV572Mode(p)==='fixed'&&sameStation(p?.station||'JP1017',station)).forEach(p=>{const candidates=adminAV572Candidates(p,date,station),scope=adminAV572Scope(p),count=scope==='hour'?adminAV572Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
+function adminAV572OverrideFor(p,date,sequence){const rows=(Array.isArray(p?.opecOverrides)?p.opecOverrides:[]).filter(o=>!o?.disabled&&o?.date===date&&Number(o?.occurrence||o?.sequence||1)===Number(sequence));if(!rows.length)return null;const row=rows[rows.length-1];return{program:norm(row.program||''),slot:adminAV572HourSlot(row.slot||''),reason:String(row.reason||'')};}
+function adminAV572SmartPlan(date,station){const records=(monthData().promos||[]).filter(p=>adminAV572Visible(p)&&adminAV572Mode(p)==='rotation'&&sameStation(p?.station||'JP1017',station)),load=adminAV572FixedLoad(date,station),out=new Map(),tokens=[];records.forEach(p=>adminAV572Tokens(p,date,station).forEach(t=>tokens.push(t)));tokens.sort((a,b)=>a.candidates.length-b.candidates.length||String(a.p.endDate||a.p.drawDate||'9999').localeCompare(String(b.p.endDate||b.p.drawDate||'9999'))||((adminAV572Hash(`${date}|${station}|${a.p.id}|${a.ordinal}`)%997)-(adminAV572Hash(`${date}|${station}|${b.p.id}|${b.ordinal}`)%997)));tokens.forEach(token=>{const own=out.get(token.p.id)||[],last=adminAV572LastCandidate(token.p,date,station),override=adminAV572OverrideFor(token.p,date,token.sequence);let best=null,bestScore=Infinity;const forced=override?token.candidates.find(c=>norm(c.program)===norm(override.program)&&c.slot===override.slot):null;if(forced)best=forced;else token.candidates.forEach(c=>{const key=`${c.program}|${c.slot}`,loadScore=load.get(key)||0,hist=adminAV572HistoryCount(token.p,c.program,c.slot,date,station),repeat=own.filter(x=>x.program===c.program&&x.slot===c.slot).length,lastPenalty=last===key?32:0,score=loadScore*100+hist*13+repeat*48+lastPenalty+(adminAV572Hash(`${date}|${station}|${token.p.id}|${key}|${token.ordinal}`)%31)/100;if(score<bestScore){bestScore=score;best=c;}});if(best){const key=`${best.program}|${best.slot}`;load.set(key,(load.get(key)||0)+1);own.push({...best,override:!!forced,overrideReason:override?.reason||''});out.set(token.p.id,own);}});return out;}
+function adminAV572Assignments(p,date,station){if(!adminAV572DateAllowed(p,date)||!adminAV572Visible(p)||!sameStation(p?.station||'JP1017',station))return[];if(adminAV572Mode(p)==='rotation')return adminAV572SmartPlan(date,station).get(p.id)||[];let candidates=adminAV572Candidates(p,date,station);if(!candidates.length){let hours=(p?.readHours||[]).map(adminAV572HourSlot).filter(Boolean);if((p?.readMode||'all')==='all'&&!hours.length){const set=new Set();programSchedules().filter(r=>sameStation(r.station,station)&&dayMatchesRule(date,scheduleDays(r))).forEach(r=>{for(let minute=Math.ceil(scheduleStartMinutes(r)/60)*60;minute<scheduleEndMinutes(r);minute+=60)set.add(`${String(Math.floor(minute/60)).padStart(2,'0')}H`);});hours=[...set].sort();}const wantedProgram=norm(p?.program||p?.programName||'');candidates=hours.map(slot=>({program:norm(programFromSchedule(date,slot,station)||wantedProgram||'PROGRAMA'),slot,station})).filter(c=>c.program&&(!wantedProgram||norm(c.program)===wantedProgram)&&!adminAV572PauseBlocks(p,date,c.slot));}const scope=adminAV572Scope(p),count=scope==='hour'?adminAV572Count(p):1;return candidates.flatMap(c=>Array.from({length:count},()=>({...c})));}
+function adminAV572StationsForView(p,filter){if(filter&&filter!=='ALL')return sameStation(p?.station||'JP1017',filter)?[filter]:[];const own=stationCanonical(p?.station||'JP1017');return own==='ALL'?['JP1017','JPNEWS983']:[own];}
+function adminAV572StudioMeta(p,date,stationFilter){const assignments=[];adminAV572StationsForView(p,stationFilter).forEach(st=>adminAV572Assignments(p,date,st).forEach(a=>assignments.push(a)));return assignments;}
+function adminAV572StudioHoursLabel(p){const rows=p?.__av572Assignments||[];const hours=[...new Set(rows.map(r=>r.slot).filter(Boolean))].sort();return hours.length?hours.join(', '):'SEM LEITURA';}
+function adminAV572StudioProgramsLabel(p){const rows=p?.__av572Assignments||[];return [...new Set(rows.map(r=>r.program).filter(Boolean))].join(' · ')||norm(p.program||p.local||'PROGRAMA');}
+function adminAV572StudioStationLabel(p){const rows=p?.__av572Assignments||[];const stations=[...new Set(rows.map(r=>r.station).filter(Boolean))];return stations.length?stations.map(stationLabel).join(' / '):stationLabel(p.station||'JP1017');}
 function filteredStudioPromoEntries(){
   ensureStudioDateFilter();
   const date=$('studioDateFilter')?.value || resolveStudioDefaultDate();
   const station=$('studioStationFilter')?.value || 'ALL';
-  return studioPromoEntries().filter(p=>{
-    const start=p.startDate || p.drawDate || '';
-    const end=p.endDate || p.drawDate || start;
-    const promoStation=p.station || 'JP1017';
-    const stationOk=station==='ALL' || promoStation==='ALL' || promoStation===station;
-    return stationOk && (!start || date>=start) && (!end || date<=end);
-  });
+  return studioPromoEntries().map(p=>{
+    if(!adminAV572DateAllowed(p,date)||!adminAV572Visible(p))return null;
+    const assignments=adminAV572StudioMeta(p,date,station);
+    if(!assignments.length)return null;
+    return {...p,__av572Assignments:assignments};
+  }).filter(Boolean);
 }
 function studioPeriod(slot){
   const hhmm = timeToHHMM(slot);
@@ -10363,7 +10433,8 @@ function renderStudioPauta(){
     const img = p.imageData ? `<img src="${p.imageData}" alt="IMAGEM DA PROMOÇÃO">` : 'IMAGEM 1600 X 400';
     return `<article class="studioPromoCard">
       <div class="studioPromoBanner">${img}</div>
-      <div class="studioPromoHead"><span class="studioPromoLocal">${esc(stationLabel(p.station||'JP1017'))} · ${esc(p.local || 'LOCAL')} · ${esc(promoReadHoursLabel(p))}</span><div class="studioPromoStatus">${`<span class="badge ${st.cls}">${st.label}</span>`}</div></div>
+      <div class="studioPromoHead"><span class="studioPromoLocal">${esc(adminAV572StudioStationLabel(p))} · ${esc(promoTypeDisplay(p))} · ${esc(adminAV572StudioHoursLabel(p))}</span><div class="studioPromoStatus">${`<span class="badge ${st.cls}">${st.label}</span>`}</div></div>
+      <div class="studioPromoPlanLine">${esc(adminAV572StudioProgramsLabel(p))} · ${adminAV572Mode(p)==='rotation'?'RODÍZIO INTELIGENTE':'HORÁRIO FIXO'}</div>
       <div class="studioCardBody">
         <div class="studioTitle" style="${promoInlineStyle(p.titleStyle,'title')}">${esc(p.name || p.title || 'PROMOÇÃO')}</div>
         <div class="studioDesc" style="${promoInlineStyle(p.descriptionStyle,'desc')}">${esc(p.description || 'SEM DESCRIÇÃO CADASTRADA.')}</div>
@@ -12939,8 +13010,8 @@ $('promoForm').addEventListener('submit',e=>{
     promoReadSpecificDates:[...promoAV57SpecificDates].sort(),
     promoReadExcludedDates:[...promoAV57ExcludedDates].sort(),
     opecPrograms:promoAV57ProgramConfigsFromForm(),
-    plannerVersion:'AV57_SMART_BALANCE_V1',
-    reportVersion:57,
+    plannerVersion:'AV57_2_SMART_BALANCE_V2',
+    reportVersion:57.2,
     name:norm($('promoName').value),
     title:norm($('promoName').value),
     description:textNorm($('promoDescription').value),
@@ -12954,7 +13025,7 @@ $('promoForm').addEventListener('submit',e=>{
   };
   const av57Now=new Date().toISOString();
   const priorHistory=Array.isArray(existing.opecHistory)?existing.opecHistory:[];
-  p.opecHistory=[...priorHistory,{at:av57Now,action:existing.id?'ALTERAÇÃO DE REGRA/PAUTA':'CADASTRO',operator:'PAINEL PRINCIPAL',scheduleMode:p.promoScheduleMode,frequencyScope:p.promoFrequencyScope,frequencyCount:p.promoFrequencyCount,periodTotal:p.promoPeriodTotal,programs:clone(p.opecPrograms),dateMode:p.promoReadDateMode,weekdays:[...p.promoReadWeekdays],specificDates:[...p.promoReadSpecificDates],excludedDates:[...p.promoReadExcludedDates],version:'AV-57'}].slice(-200);
+  p.opecHistory=[...priorHistory,{at:av57Now,action:existing.id?'ALTERAÇÃO DE REGRA/PAUTA':'CADASTRO',operator:'PAINEL PRINCIPAL',scheduleMode:p.promoScheduleMode,frequencyScope:p.promoFrequencyScope,frequencyCount:p.promoFrequencyCount,periodTotal:p.promoPeriodTotal,programs:clone(p.opecPrograms),dateMode:p.promoReadDateMode,weekdays:[...p.promoReadWeekdays],specificDates:[...p.promoReadSpecificDates],excludedDates:[...p.promoReadExcludedDates],version:'AV-57.2'}].slice(-200);
   if(promoAV57SmartMode() && !p.opecPrograms.length){ alert('NO RODÍZIO INTELIGENTE, SELECIONE PELO MENOS UM PROGRAMA E UMA FAIXA DE HORÁRIO.'); return; }
   if(p.promoReadDateMode==='specific' && !p.promoReadSpecificDates.length){ alert('SELECIONE PELO MENOS UMA DATA ESPECÍFICA PARA A LEITURA.'); return; }
   if(!promoAV57SmartMode() && p.readMode==='selected' && !p.readHours.length){ alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.'); return; }

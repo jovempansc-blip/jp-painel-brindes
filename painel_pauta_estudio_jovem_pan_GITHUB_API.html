@@ -1826,11 +1826,40 @@ body{
 .rotationInfo.av57{background:#f4f8fb;border-color:#d8e3ec;color:#557086}.promoFooterList{gap:7px!important}.promoPill{max-width:260px!important;min-height:27px!important;padding:4px 10px!important}
 
 
-/* AV-57.1 · SINO DE PENDÊNCIAS + ESTADOS OPERACIONAIS */
+/* AV-57.2 · SINO DE PENDÊNCIAS + ESTADOS OPERACIONAIS */
 @keyframes av571BellPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(173,23,40,.22)}50%{transform:scale(1.04);box-shadow:0 0 0 7px rgba(173,23,40,0)}}
 .studioPendingBell{position:relative;min-width:48px;height:45px;border:1px solid #d8dee7;border-radius:12px;background:#f6f8fa;color:#77808e;display:grid;grid-template-columns:20px 18px;grid-template-rows:24px 11px;align-items:center;justify-content:center;gap:0 2px;cursor:pointer;font:900 9px/1 "Segoe UI",Arial,sans-serif}.studioBellIcon{font-size:17px}.studioBellCount{display:grid;place-items:center;min-width:19px;height:19px;border-radius:10px;background:#e7ebf0;color:#687383;font-size:9px}.studioPendingBell small{grid-column:1/-1;font-size:6.5px;letter-spacing:.05em}.studioPendingBell.hasPending{background:#fff1f3;border-color:#efb4bd;color:#991d31;animation:av571BellPulse 1.55s ease-in-out infinite}.studioPendingBell.hasPending .studioBellCount{background:#ad1728;color:#fff}.studioPendingBell.hasLate{background:#ffe9ec;border-color:#e4929f;color:#861426}.studioPendingBackdrop{position:fixed;inset:0;z-index:12000;background:rgba(14,19,27,.52);display:grid;place-items:center;padding:16px;backdrop-filter:blur(4px)}.studioPendingBackdrop[hidden]{display:none!important}.studioPendingDialog{width:min(760px,96vw);max-height:88vh;overflow:auto;border-radius:20px;background:#fff;box-shadow:0 28px 90px rgba(0,0,0,.28);border:1px solid #e0e5ec}.studioPendingModalHead{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #e4e8ee;background:rgba(255,255,255,.97)}.studioPendingModalHead strong{display:block;font-size:13px}.studioPendingModalHead span{display:block;margin-top:3px;font-size:8px;color:#7c8591}.studioPendingClose{width:34px;height:34px;border:0;border-radius:50%;background:#f0f3f6;font-size:20px;cursor:pointer}.studioPendingModalBody{padding:12px;display:grid;gap:10px}.studioPendingGroup{border:1px solid #e1e6ed;border-radius:15px;background:#fafbfd;padding:9px}.studioPendingGroupTitle{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}.studioPendingGroupTitle strong{font-size:9px;letter-spacing:.08em}.studioPendingGroupTitle span{min-width:24px;height:20px;border-radius:10px;background:#edf1f5;display:grid;place-items:center;font-size:8px;font-weight:1000}.studioPendingRow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px;border:1px solid #e3e8ef;border-radius:11px;background:#fff;margin-top:6px}.studioPendingRow.late{border-color:#f0c2c9;background:#fff7f8}.studioPendingRow strong{display:block;font-size:9px}.studioPendingRow span{display:block;margin-top:3px;font-size:7.5px;color:#707b89}.studioPendingActions{display:flex;gap:5px}.studioPendingActions button{border:1px solid #d7dde5;border-radius:9px;background:#fff;padding:7px 9px;font:900 7px/1 "Segoe UI",Arial;cursor:pointer}.studioPendingActions button.danger{border-color:#efb4bd;background:#fff0f2;color:#9d1b2f}.studioPendingEmpty{padding:10px;text-align:center;color:#88919d;font-size:8px}.studioMissedReasonBody{padding:16px}.studioMissedReasonBody label{display:block;font-size:8px;font-weight:1000;margin-bottom:6px}.studioMissedReasonBody textarea{width:100%;min-height:100px;resize:vertical;border:1px solid #d9dfe7;border-radius:12px;padding:10px;font:700 10px/1.4 "Segoe UI",Arial}.studioMissedReasonActions{display:flex;justify-content:flex-end;gap:7px;margin-top:10px}.studioMissedReasonActions button{border:1px solid #d9dfe7;border-radius:10px;background:#fff;padding:9px 12px;font:900 8px/1 "Segoe UI",Arial;cursor:pointer}.studioMissedReasonActions button.primary{background:#ad1728;border-color:#ad1728;color:#fff}.promoPill.missed{background:#f4f1f2!important;border-color:#dfc8cd!important;color:#7f4953!important;animation:none!important}.promoListItem.missed{background:#faf3f4!important;color:#8d3344!important}
 @media(max-width:700px){.studioPendingRow{grid-template-columns:1fr}.studioPendingActions{justify-content:flex-start}.studioPendingBell{min-width:44px}}
 
+
+/* AV-57.2 · NOTIFICAÇÃO DE PENDÊNCIAS NO PADRÃO P / M / H */
+.headNav .promoListBtn{
+  width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important;
+  padding:0!important;border-radius:50%!important;
+}
+.studioPendingBell.promoListBtn{
+  position:relative!important;overflow:visible!important;display:inline-grid!important;place-items:center!important;
+  background:#f4f6fa!important;border:1px solid #dfe6ef!important;color:#7c8695!important;
+  box-shadow:0 6px 16px rgba(17,23,34,.055)!important;animation:none!important;
+}
+.studioPendingBell.promoListBtn:hover{background:#fff!important;border-color:#cfd8e4!important;color:#667181!important}
+.studioBellIcon{display:grid!important;place-items:center!important;width:20px!important;height:20px!important;line-height:1!important}
+.studioBellIcon svg{display:block;width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.studioPendingBell .studioBellCount{
+  position:absolute!important;top:-6px!important;right:-7px!important;z-index:3!important;display:none!important;
+  place-items:center!important;min-width:19px!important;height:19px!important;padding:0 5px!important;border-radius:999px!important;
+  border:2px solid #fff!important;background:#bd3348!important;color:#fff!important;
+  box-shadow:0 2px 8px rgba(151,31,50,.22)!important;font:1000 8px/1 "Segoe UI",Arial,sans-serif!important;
+}
+.studioPendingBell.hasPending{background:#f4f6fa!important;border-color:#dfe6ef!important;color:#7c8695!important}
+.studioPendingBell.hasPending .studioBellCount{display:grid!important;animation:av572NotificationPulse 1.45s ease-in-out infinite!important}
+.studioPendingBell.hasLate .studioBellCount{background:#ad243a!important}
+.studioPendingBell small{display:none!important}
+@keyframes av572NotificationPulse{
+  0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(189,51,72,.20),0 2px 8px rgba(151,31,50,.22)}
+  50%{transform:scale(1.08);box-shadow:0 0 0 6px rgba(189,51,72,0),0 3px 10px rgba(151,31,50,.26)}
+}
+@media(max-width:700px){.headNav .promoListBtn{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important}}
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2999,16 +3028,7 @@ function buildStudioContext(item,promo){
   return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span>${programInfo}${manualInfo}</div>`;
 }
 function studioPrizePending(item){return !!(item&&!item.__virtual&&item.sourceType!=='promo-result'&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
-function buildStudioPendingStrip(item){
-  const pending=allPautasForItemHour(item,false),all=allPautasForItemHour(item,true);
-  const mer=pending.filter(isMerchan),pro=pending.filter(p=>!isMerchan(p)); const prize=studioPrizePending(item);
-  const tags=[]; if(prize)tags.push('<span class="opTag urgent">SORTEIO / RESULTADO PENDENTE</span>'); if(mer.length)tags.push(`<span class="opTag urgent">${mer.length} MERCHAN${mer.length>1?'S':''} PENDENTE${mer.length>1?'S':''}</span>`); if(pro.length)tags.push(`<span class="opTag">${pro.length} PROMO / PAUTA PENDENTE${pro.length>1?'S':''}</span>`);
-  if(tags.length)return `<div class="studioOpsStrip"><strong>AGORA · O QUE PRECISA SER FEITO</strong><div>${tags.join('')}</div></div>`;
-  const hadAny=(!item?.__virtual)||all.length;
-  return `<div class="studioOpsStrip done"><strong>${hadAny?'OPERAÇÃO CONCLUÍDA ✓':'NENHUMA AÇÃO PROGRAMADA'}</strong></div>`;
-}
-
-/* ================= AV-57.1 · MOTOR GLOBAL DE LEITURAS ================= */
+/* ================= AV-57.2 · MOTOR GLOBAL DE LEITURAS ================= */
 function studioAV57Hash(value){let h=2166136261;for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 function studioAV57DateRange(start,end){const rows=[];let d=new Date(`${start}T12:00:00`),limit=new Date(`${end}T12:00:00`);while(d<=limit){rows.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`);d.setDate(d.getDate()+1);}return rows;}
 function studioAV57HourSlot(value){const hh=timeToHHMM(value).slice(0,2);return hh&&hh!=='00'?`${hh}H`:'';}
@@ -3099,7 +3119,7 @@ function studioPendingBellRows(){
   return out.sort((a,b)=>(a.state==='LATE'?0:1)-(b.state==='LATE'?0:1)||minutesOf(a.slot)-minutesOf(b.slot)||a.label.localeCompare(b.label));
 }
 function studioPendingBellCount(){return studioPendingBellRows().reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0);}
-function studioPendingBellMarkup(){const rows=studioPendingBellRows(),count=rows.reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0),late=rows.some(r=>r.state==='LATE');return `<button class="studioPendingBell ${count?'hasPending':''} ${late?'hasLate':''}" id="studioPendingBellBtn" type="button" onclick="openStudioPendingModal(event)" title="${count?`${count} PENDÊNCIA(S) DO LOCUTOR`:'SEM PENDÊNCIAS'}" aria-label="PENDÊNCIAS DO LOCUTOR"><span class="studioBellIcon">🔔</span><span class="studioBellCount">${count}</span><small>PEND.</small></button>`;}
+function studioPendingBellMarkup(){const rows=studioPendingBellRows(),count=rows.reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0),late=rows.some(r=>r.state==='LATE');return `<button class="promoListBtn history studioPendingBell ${count?'hasPending':''} ${late?'hasLate':''}" id="studioPendingBellBtn" type="button" onclick="openStudioPendingModal(event)" title="${count?`${count} PENDÊNCIA(S) DO LOCUTOR`:'SEM PENDÊNCIAS'}" aria-label="PENDÊNCIAS DO LOCUTOR${count?` · ${count}`:''}"><span class="studioBellIcon" aria-hidden="true"><svg viewBox="0 0 24 24" role="img"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span><span class="studioBellCount" aria-hidden="true">${count}</span></button>`;}
 function renderStudioPendingModal(){const host=$('studioPendingModalBody');if(!host)return;const rows=studioPendingBellRows(),nowRows=rows.filter(r=>r.state==='NOW'),lateRows=rows.filter(r=>r.state==='LATE');const renderGroup=(title,list,late)=>`<section class="studioPendingGroup"><div class="studioPendingGroupTitle"><strong>${title}</strong><span>${list.reduce((s,r)=>s+(r.remaining||1),0)}</span></div>${list.length?list.map(r=>`<div class="studioPendingRow ${late?'late':''}"><div><strong>${esc(r.label)}</strong><span>${esc(r.program||'PROGRAMA')} · ${esc(r.slot)}${r.required>1?` · FALTA(M) ${r.remaining}/${r.required}`:''}</span></div><div class="studioPendingActions"><button type="button" onclick="openStudioPendingFromBell('${esc(r.date)}','${esc(r.slot)}','${esc(r.promoId)}')">ABRIR</button>${late&&r.kind==='read'?`<button class="danger" type="button" onclick="requestStudioMissedReason('${esc(r.promoId)}','${esc(r.date)}','${esc(r.slot)}','${esc(r.program)}')">NÃO REALIZADA</button>`:''}</div></div>`).join(''):'<div class="studioPendingEmpty">NENHUMA.</div>'}</section>`;host.innerHTML=`${renderGroup('AGORA',nowRows,false)}${renderGroup('ATRASADAS',lateRows,true)}`;}
 function openStudioPendingModal(event){event?.preventDefault?.();event?.stopPropagation?.();renderStudioPendingModal();const modal=$('studioPendingModal');if(modal)modal.hidden=false;}
 function closeStudioPendingModal(){const modal=$('studioPendingModal');if(modal)modal.hidden=true;}
@@ -3566,9 +3586,9 @@ async function markPromoReadMissed(promoId,date,slot,program,reason){
   const item={date,slot,program:upper(program||programFromSchedule(date,slot,STUDIO_STATION)||'PROGRAMA')},progress=studioAV57Progress(p,item);if(progress.remaining<1)return;
   const operator=studioOperatorIdentity(true),now=new Date(),iso=now.toISOString(),monthKey=studioOutcomeMonthKey(date),missId=`MISS-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;let found=false,changed=false,savedOccurrence=progress.done+progress.missed+1;
   await ensureStudioFirebaseOnline();
-  const result=await studioRetry(async()=>{const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===promoId);if(index<0)return;found=true;const row=rows[index],required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return rows;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_1_PENDING_BELL'});row.updatedAt=iso;rows[index]=row;changed=true;return rows;},undefined,false);if(!tx?.committed){const error=new Error(found?'A OCORRÊNCIA NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
+  const result=await studioRetry(async()=>{const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===promoId);if(index<0)return;found=true;const row=rows[index],required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return rows;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_2_NOTIFICATION_BELL'});row.updatedAt=iso;rows[index]=row;changed=true;return rows;},undefined,false);if(!tx?.committed){const error=new Error(found?'A OCORRÊNCIA NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
   const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
-  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_1_PENDING_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
+  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_2_NOTIFICATION_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));selectedPromoId=null;render();return changed;
 }
 window.markPromoReadMissed=markPromoReadMissed;
@@ -3596,7 +3616,7 @@ async function confirmPromoReadV56(event){
         if(existingResolved>=required){alreadyComplete=true;return rows;}
         savedOccurrence=existingResolved+1;
         row.readByHour={...(row.readByHour||{}),[key]:iso};row.readLog=Array.isArray(row.readLog)?row.readLog:[];
-        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(item.program||programFromSchedule(item.date,item.slot,STUDIO_STATION)||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,plannerVersion:'AV57_SMART_BALANCE_V1',opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textSnapshot:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
+        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(item.program||programFromSchedule(item.date,item.slot,STUDIO_STATION)||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,plannerVersion:'AV57_2_SMART_BALANCE_V2',opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textSnapshot:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
         row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(item.program||programFromSchedule(item.date,item.slot,STUDIO_STATION)||'PROGRAMA');row.updatedAt=iso;rows[index]=row;changed=true;return rows;
       },undefined,false);
       if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;
@@ -3869,7 +3889,6 @@ function render(){
       </div>
     </div>
     ${buildStudioContext(item,promo)}
-    ${buildStudioPendingStrip(item)}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
     ${buildPromoFooter(item)}`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
