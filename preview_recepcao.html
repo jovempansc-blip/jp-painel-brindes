@@ -813,6 +813,12 @@ function distributionById(id){return (monthData().distributions||[]).find(d=>d.i
 function itemTitle(i){const d=distributionById(i.distributionId);return upper(i.title||d.title||i.prize||'SEM TÍTULO');}
 function itemDesc(i){const d=distributionById(i.distributionId);return i.notes||d.description||'';}
 function channelName(i){return upper(i.channel||'RÁDIO');}
+function receptionStationCode(value){const v=upper(value||'');if(v.includes('NEWS')||v.includes('98'))return'JPNEWS983';if(v==='ALL'||v==='AMBAS'||v==='TODAS')return'ALL';return'JP1017';}
+function receptionMinutes(value){const raw=String(value||'').trim().toUpperCase();const h=raw.match(/(\d{1,2})H(?:(\d{2}))?/);if(h)return Number(h[1])*60+Number(h[2]||0);const m=raw.match(/(\d{1,2}):?(\d{2})?/);return m?Number(m[1])*60+Number(m[2]||0):0;}
+function receptionDayValues(rule){if(Array.isArray(rule)){const out=rule.map(Number).filter(v=>Number.isInteger(v)&&v>=0&&v<=6);return out.length?[...new Set(out)]:[1,2,3,4,5];}const raw=upper(rule||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');if(raw.includes('TODOS')||raw==='ALL')return[0,1,2,3,4,5,6];if(raw.includes('SEG A SAB'))return[1,2,3,4,5,6];if(raw.includes('SEG A SEX')||!raw)return[1,2,3,4,5];const names={DOM:0,SEG:1,TER:2,QUA:3,QUI:4,SEX:5,SAB:6};const out=[];raw.split(/[,;|/ ]+/).forEach(x=>{const k=Object.keys(names).find(n=>x.startsWith(n));if(k)out.push(names[k]);else if(/^\d$/.test(x))out.push(Number(x));});return out.length?[...new Set(out)]:[1,2,3,4,5];}
+function receptionScheduleName(row){return upper(row?.name||row?.program||row?.programa||row?.title||row?.titulo||row?.nome||'');}
+function receptionGenericProgram(value){const p=upper(value||'');return !p||['PROGRAMAÇÃO NORMAL','PROGRAMACAO NORMAL','PROGRAMA NORMAL','GRADE NORMAL'].includes(p);}
+function receptionProgramFromSchedule(date,slot,station='JP1017'){const minute=receptionMinutes(slot),day=new Date(`${date}T12:00:00`).getDay(),wanted=receptionStationCode(station);const rows=(state.programSchedules||[]).filter(row=>{const st=receptionStationCode(row?.station||'JP1017'),days=receptionDayValues(row?.days??row?.dias??row?.weekdays??row?.dayRule??'');const start=receptionMinutes(row?.startTime||row?.start||row?.inicio||row?.horaInicio||''),end=Math.max(receptionMinutes(row?.endTime||row?.end||row?.fim||row?.horaFim||''),start+60);return (st==='ALL'||st===wanted)&&days.includes(day)&&minute>=start&&minute<end;});if(!rows.length)return'';rows.sort((a,b)=>Number(receptionGenericProgram(receptionScheduleName(a)))-Number(receptionGenericProgram(receptionScheduleName(b)))||(receptionMinutes(a?.endTime||a?.end||'')-receptionMinutes(a?.startTime||a?.start||''))-(receptionMinutes(b?.endTime||b?.end||'')-receptionMinutes(b?.startTime||b?.start||'')));return receptionScheduleName(rows[0]);}
 function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
 function promoPrizeTitle(p){const d=distributionById(p?.distributionId);return upper(p?.prizeTitle||d.title||d.show||p?.title||p?.name||d.prize||'PROMOÇÃO');}
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -974,7 +980,7 @@ function resultRowsForDate(date){
           time:formatTime(i.slot),
           sort:`${date}T${timeToHHMM(i.slot)}`,
           title:itemTitle(i),
-          sub:`${upper(i.program||'')} · ${channelName(i)}`,
+          sub:`${receptionProgramFromSchedule(i.date,i.slot,i.station||'JP1017')||upper(i.program||'GRADE NÃO CADASTRADA')} · ${channelName(i)}`,
           result:name,
           deliveredAt,
           deliveredAtLabel,

@@ -3415,7 +3415,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 #promoDrawer .av57Hidden{display:none!important}
 @media(max-width:720px){#promoDrawer .av57ScheduleGrid{grid-template-columns:1fr}#promoDrawer .av57ProgramChoices{grid-template-columns:1fr}}
 
-/* AV-57.2 · LISTAGEM PROMO/MERCHAN E PAUTA DIÁRIA MAIS LEGÍVEIS */
+/* AV-57.3 · LISTAGEM PROMO/MERCHAN E PAUTA DIÁRIA MAIS LEGÍVEIS */
 .promoCampaignTable{table-layout:fixed!important;min-width:1080px!important}
 .promoCampaignTable col.pctType{width:9%}.promoCampaignTable col.pctCampaign{width:22%}.promoCampaignTable col.pctStation{width:9%}.promoCampaignTable col.pctPeriod{width:13%}.promoCampaignTable col.pctProgram{width:21%}.promoCampaignTable col.pctExecution{width:13%}.promoCampaignTable col.pctStatus{width:7%}.promoCampaignTable col.pctActions{width:6%}
 .promoCampaignTable th:first-child{width:auto!important}.promoCampaignTable th{font-size:9px!important;letter-spacing:.045em!important;color:#617086!important;padding:9px 8px!important}.promoCampaignTable td{padding:11px 8px!important;font-size:10px!important;background:#fff!important;border-bottom:1px solid #edf0f4!important}.promoCampaignTable tr.merchanRow td{background:#fcfffd!important}.promoCampaignTable tr.promoRow td{background:#fffefa!important}.promoCampaignTable td:first-child{text-align:center!important;padding-left:8px!important}.promoCampaignTable .campaignIdentity{text-align:left!important}.campaignIdentity strong{display:block;color:#151b25;font-size:11px;line-height:1.18;font-weight:1000}.campaignIdentity span{display:block;margin-top:4px;color:#6f7b8a;font-size:9px;line-height:1.2;font-weight:850}.campaignStation,.campaignPeriod{font-weight:950;color:#465467}.campaignPrograms{text-align:left!important}.campaignProgramLine{display:grid;gap:5px;margin:2px 0 6px}.campaignProgramLine:last-child{margin-bottom:0}.campaignProgramLine strong,.campaignProgramName{display:block;color:#263243;font-size:9.5px;font-weight:1000}.campaignHourChips{display:flex;gap:4px;flex-wrap:wrap}.campaignHourChips i{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:20px;border:1px solid #dce4ed;border-radius:999px;background:#f6f8fb;color:#56667b;padding:0 6px;font-size:7.5px;font-style:normal;font-weight:1000}.campaignExecution{display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border:1px solid #dce3eb;border-radius:999px;background:#f7f9fb;color:#647083;font-size:7.5px;font-weight:1000;line-height:1.1}.campaignExecution.smart{border-color:#cfe0ee;background:#f1f7fb;color:#3d6685}.studioPromoPlanLine{margin:-1px 14px 8px;padding:5px 10px;border:1px solid #e8edf3;border-radius:999px;background:#f8fafc;color:#68768a;font-size:8px;font-weight:1000;letter-spacing:.04em;width:max-content;max-width:calc(100% - 28px)}
@@ -9390,11 +9390,14 @@ function hourInProgram(date,slot,program,station='JP1017'){
   if(!Number.isFinite(min)) return false;
   return programSchedules().some(p=> sameStation(p.station,station) && dayMatchesRule(date,scheduleDays(p)) && norm(scheduleName(p))===norm(program) && min>=scheduleStartMinutes(p) && min<scheduleEndMinutes(p));
 }
+function genericScheduleProgramName(value){const p=norm(value||'');return !p||['TODOS','TODAS','SELECIONE','PROGRAMAÇÃO NORMAL','PROGRAMACAO NORMAL','PROGRAMA NORMAL','GRADE NORMAL'].includes(p);}
 function programFromSchedule(date,slot,station='JP1017'){
   const min=slotToMinutes(slot);
   if(!Number.isFinite(min)) return '';
-  const found=programSchedules().find(p=> sameStation(p.station,station) && dayMatchesRule(date,scheduleDays(p)) && min>=scheduleStartMinutes(p) && min<scheduleEndMinutes(p));
-  return found ? scheduleName(found) : '';
+  const rows=programSchedules().filter(p=> sameStation(p.station,station) && dayMatchesRule(date,scheduleDays(p)) && min>=scheduleStartMinutes(p) && min<scheduleEndMinutes(p));
+  if(!rows.length) return '';
+  rows.sort((a,b)=>Number(genericScheduleProgramName(scheduleName(a)))-Number(genericScheduleProgramName(scheduleName(b)))||(scheduleEndMinutes(a)-scheduleStartMinutes(a))-(scheduleEndMinutes(b)-scheduleStartMinutes(b))||scheduleStartMinutes(b)-scheduleStartMinutes(a)||scheduleName(a).localeCompare(scheduleName(b)));
+  return scheduleName(rows[0]);
 }
 
 let activeProgramStationFilter = localStorage.getItem('jp_program_station_filter') || 'JP1017';
@@ -9825,8 +9828,9 @@ function periodIcon(key){
 }
 function renderProgramCard(i){
   const d=distributionById(i.distributionId);
-  const cardTitle = i.prize || i.title || i.program || '';
-  const cardSubtitle = i.title ? `${i.title}${i.program ? ' · ' + i.program : ''}` : (i.program || '');
+  const resolvedProgram=programFromSchedule(i.date,i.slot,itemStation(i))||norm(i.program||'');
+  const cardTitle = i.prize || i.title || resolvedProgram || '';
+  const cardSubtitle = i.title ? `${i.title}${resolvedProgram ? ' · ' + resolvedProgram : ''}` : resolvedProgram;
   const winnerInfo = norm(i.winnerName || '') ? `<span class="winnerInfo" title="GANHADOR: ${esc(i.winnerName)}">I</span>` : '';
   const promoResultBadge = i.sourceType==='promo-result' ? `<span class="badge blue" title="RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR">RESULTADO</span>` : '';
   const radioConflict = normalizeChannel(i.channel)==='RÁDIO' ? radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)) : [];
@@ -10324,7 +10328,7 @@ function filteredStudioPrizeEntries(){
     (station==='ALL' || itemStation(i)===station)
   );
 }
-/* AV-57.2 · PLANEJAMENTO DA PAUTA DE ESTÚDIO NO PAINEL PRINCIPAL */
+/* AV-57.3 · PLANEJAMENTO DA PAUTA DE ESTÚDIO NO PAINEL PRINCIPAL */
 function adminAV572Hash(value){let h=2166136261;for(const ch of String(value||'')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
 function adminAV572HourSlot(value){const raw=String(value||'').trim();const m=raw.match(/(\d{1,2})/);return m?`${String(Math.max(0,Math.min(23,Number(m[1])))).padStart(2,'0')}H`:'';}
 function adminAV572DateRange(start,end){const out=[];let d=new Date(`${start}T12:00:00`),limit=new Date(`${end}T12:00:00`);while(d<=limit){out.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);d.setDate(d.getDate()+1);}return out;}
@@ -10384,7 +10388,7 @@ function renderStudioPrizeCard(i){
   return `<article class="studioPrizeCard studioSummaryPrizeCard">
     <div class="studioPrizeHead">
       <div class="studioPrizeTime">${esc(formatStudioTime(i.slot || 'SEM HORA'))}</div>
-      <div class="studioPrizeProgram">${esc(i.program || 'PROGRAMA')} · ${esc(stationLabel(itemStation(i)))}</div>
+      <div class="studioPrizeProgram">${esc(programFromSchedule(i.date,i.slot,itemStation(i)) || i.program || 'GRADE NÃO CADASTRADA')} · ${esc(stationLabel(itemStation(i)))}</div>
       <div class="studioPrizeDate">${esc(formatBR(i.date || ''))}</div>
     </div>
     <div class="studioCardBody studioSummaryBody">
@@ -10469,7 +10473,7 @@ function renderResumo(){
   $('alertList').innerHTML = alerts.length ? alerts.map(a=>`<div class="alert">${esc(a)}</div>`).join('') : `<div class="alert" style="background:#effaf4;border-color:#ccefdc;color:#0f7a46">SEM ALERTAS CRÍTICOS NESTE MÊS.</div>`;
 }
 function populateDatalists(){
-  const programs=[...new Set([...monthData().items.map(i=>norm(i.program)),...programSchedules().map(p=>norm(p.name))].filter(Boolean))].sort();
+  const programs=[...new Set([...monthData().items.map(i=>norm(i.program)),...programSchedules().map(p=>scheduleName(p))].filter(Boolean))].sort();
   $('programDatalist').innerHTML=programs.map(p=>`<option value="${esc(p)}"></option>`).join('');
   populatePrizeCatalogDatalist();
 }
@@ -10997,8 +11001,10 @@ function programFallbackForSlot(date,slot,station='JP1017'){
 }
 function programForSlot(date,slot,station='JP1017'){
   const ns=normalizeSlot(slot);
-  const found=monthData().items.find(i=>i.date===date && (i.station||'JP1017')===station && normalizeSlot(i.slot)===ns && norm(i.program));
-  return found ? found.program : programFallbackForSlot(date,ns,station);
+  const official=programFallbackForSlot(date,ns,station);
+  if(official) return official;
+  const found=monthData().items.find(i=>i.date===date && sameStation(i.station||'JP1017',station) && normalizeSlot(i.slot)===ns && norm(i.program));
+  return found ? found.program : '';
 }
 function isAutoGeneratedRadioItem(item){
   if(!item) return false;
@@ -13010,8 +13016,8 @@ $('promoForm').addEventListener('submit',e=>{
     promoReadSpecificDates:[...promoAV57SpecificDates].sort(),
     promoReadExcludedDates:[...promoAV57ExcludedDates].sort(),
     opecPrograms:promoAV57ProgramConfigsFromForm(),
-    plannerVersion:'AV57_2_SMART_BALANCE_V2',
-    reportVersion:57.2,
+    plannerVersion:'AV57_3_SMART_BALANCE_V3',
+    reportVersion:57.3,
     name:norm($('promoName').value),
     title:norm($('promoName').value),
     description:textNorm($('promoDescription').value),
@@ -13025,7 +13031,7 @@ $('promoForm').addEventListener('submit',e=>{
   };
   const av57Now=new Date().toISOString();
   const priorHistory=Array.isArray(existing.opecHistory)?existing.opecHistory:[];
-  p.opecHistory=[...priorHistory,{at:av57Now,action:existing.id?'ALTERAÇÃO DE REGRA/PAUTA':'CADASTRO',operator:'PAINEL PRINCIPAL',scheduleMode:p.promoScheduleMode,frequencyScope:p.promoFrequencyScope,frequencyCount:p.promoFrequencyCount,periodTotal:p.promoPeriodTotal,programs:clone(p.opecPrograms),dateMode:p.promoReadDateMode,weekdays:[...p.promoReadWeekdays],specificDates:[...p.promoReadSpecificDates],excludedDates:[...p.promoReadExcludedDates],version:'AV-57.2'}].slice(-200);
+  p.opecHistory=[...priorHistory,{at:av57Now,action:existing.id?'ALTERAÇÃO DE REGRA/PAUTA':'CADASTRO',operator:'PAINEL PRINCIPAL',scheduleMode:p.promoScheduleMode,frequencyScope:p.promoFrequencyScope,frequencyCount:p.promoFrequencyCount,periodTotal:p.promoPeriodTotal,programs:clone(p.opecPrograms),dateMode:p.promoReadDateMode,weekdays:[...p.promoReadWeekdays],specificDates:[...p.promoReadSpecificDates],excludedDates:[...p.promoReadExcludedDates],version:'AV-57.3'}].slice(-200);
   if(promoAV57SmartMode() && !p.opecPrograms.length){ alert('NO RODÍZIO INTELIGENTE, SELECIONE PELO MENOS UM PROGRAMA E UMA FAIXA DE HORÁRIO.'); return; }
   if(p.promoReadDateMode==='specific' && !p.promoReadSpecificDates.length){ alert('SELECIONE PELO MENOS UMA DATA ESPECÍFICA PARA A LEITURA.'); return; }
   if(!promoAV57SmartMode() && p.readMode==='selected' && !p.readHours.length){ alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.'); return; }
