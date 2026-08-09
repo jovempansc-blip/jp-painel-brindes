@@ -1988,6 +1988,85 @@ tbody tr:focus-within td{background:#fff8fa}
 .studioOpsStrip{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-bottom:1px solid #e5e9ef;background:#fff8eb}.studioOpsStrip strong{font-size:8px;color:#815000;letter-spacing:.05em}.studioOpsStrip>div{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}.studioOpsStrip.done{background:#f5faf7}.studioOpsStrip.done strong{color:#26704a}.opTag{display:inline-flex;align-items:center;min-height:23px;padding:0 8px;border-radius:999px;border:1px solid #e1d2a9;background:#fff;color:#7c5b15;font-size:7.5px;font-weight:1000}.opTag.urgent{border-color:#f2b7c1;background:#fff4f6;color:#a41e37}
 .rotationInfo{display:block;margin-top:6px;color:#7b5b17;font-size:8px;font-weight:950;letter-spacing:.04em}
 @media(max-width:760px){.studioOpsStrip{align-items:flex-start;flex-direction:column}.studioOpsStrip>div{justify-content:flex-start}.returnNowBtn{width:100%}}
+
+
+/* AV-57.4 · ALINHAMENTO DEFINITIVO DO SINO COM P / M / H */
+.headNav{
+  align-items:center!important;
+}
+.headNav .promoListWrap{
+  width:38px!important;
+  min-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  flex:0 0 38px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  padding:0!important;
+}
+.headNav .promoListBtn,
+.headNav .studioPendingBell.promoListBtn{
+  width:38px!important;
+  min-width:38px!important;
+  max-width:38px!important;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  flex:0 0 38px!important;
+  margin:0!important;
+  padding:0!important;
+  border-radius:50%!important;
+  vertical-align:middle!important;
+}
+.headNav .studioPendingBell.promoListBtn{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  grid-template-columns:none!important;
+  grid-template-rows:none!important;
+  gap:0!important;
+  line-height:0!important;
+  transform:none!important;
+}
+.headNav .studioPendingBell .studioBellIcon{
+  position:static!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:20px!important;
+  height:20px!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:0!important;
+  transform:none!important;
+}
+.headNav .studioPendingBell .studioBellIcon svg{
+  display:block!important;
+  width:19px!important;
+  height:19px!important;
+  margin:0!important;
+  transform:none!important;
+}
+.headNav .studioPendingBell .studioBellCount{
+  top:-5px!important;
+  right:-5px!important;
+  margin:0!important;
+}
+#prevItem{margin-left:10px!important}
+@media(max-width:700px){
+  .headNav .promoListWrap,
+  .headNav .promoListBtn,
+  .headNav .studioPendingBell.promoListBtn{
+    width:36px!important;min-width:36px!important;max-width:36px!important;
+    height:36px!important;min-height:36px!important;max-height:36px!important;
+    flex-basis:36px!important;
+  }
+  #prevItem{margin-left:7px!important}
+}
+
 </style>
 </head>
 <body>
