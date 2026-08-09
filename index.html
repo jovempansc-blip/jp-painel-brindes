@@ -7616,7 +7616,7 @@ function renderWinnerImportPreview(){
     </div>
     <div class="winnerImportFile">PLANILHA: ${esc(data.sheetName)} · CABEÇALHO NA LINHA ${data.headerRow+1} · ${data.totalRows} LINHA(S) COM CONTEÚDO.</div>
     ${similarityReviews}
-    ${issues.length?`<div class="winnerImportIssues">${issues.slice(0,40).map(issue=>`<div class="winnerImportIssue">${esc(issue)}</div>`).join('')}${issues.length>40?`<div class="winnerImportIssue">MAIS ${issues.length-40} OCORRÊNCIA(S) NÃO EXIBIDA(S).</div>`:''}</div>`:unresolved.length?'':'<div class="winnerBankState online">TODAS AS LINHAS VÁLIDAS FORAM RECONHECIDAS E REVISADAS.</div>'}`;
+    ${issues.length?`<div class="winnerImportIssues">${issues.slice(0,40).map(issue=>`<div class="winnerImportIssue">${esc(issue)}</div>`).join('')}${issues.length>40?`<div class="winnerImportIssue">MAIS ${issues.length-40} ITEM(NS) NÃO EXIBIDO(S).</div>`:''}</div>`:unresolved.length?'':'<div class="winnerBankState online">TODAS AS LINHAS VÁLIDAS FORAM RECONHECIDAS E REVISADAS.</div>'}`;
 }
 async function parseWinnerImportFile(file){
   if(!file) return;
@@ -12765,7 +12765,7 @@ function deletePromo(pid){
   const p=consolidatedPromoById(pid)||copies[0].data;
   const future=(p.occurrences||[]).some(o=>o.date>=todayISO()&&!['REALIZADO','CANCELADO'].includes(normalizeStatus(o.status)));
   const winners=promoAllWinnerObjects(p).filter(w=>w.name&&!w.deliveredAt);
-  if(future||winners.length){ alert(`ESTA PROMOÇÃO POSSUI VÍNCULOS ATIVOS E NÃO PODE SER EXCLUÍDA.\n\nSORTEIOS FUTUROS: ${future?'SIM':'NÃO'}\nRETIRADAS PENDENTES: ${winners.length}\n\nENCERRE/CANCELE AS OCORRÊNCIAS E RESOLVA AS RETIRADAS ANTES.`); return; }
+  if(future||winners.length){ alert(`ESTA PROMOÇÃO POSSUI VÍNCULOS ATIVOS E NÃO PODE SER EXCLUÍDA.\n\nSORTEIOS FUTUROS: ${future?'SIM':'NÃO'}\nRETIRADAS PENDENTES: ${winners.length}\n\nENCERRE/CANCELE AS INSERÇÕES E RESOLVA AS RETIRADAS ANTES.`); return; }
   if(!confirm('REMOVER ESTA PROMOÇÃO EM TODOS OS MESES? ELA FICARÁ DISPONÍVEL PARA RESTAURAÇÃO.')) return;
   trashRecord('PROMOÇÃO',p.name||p.title||'PROMOÇÃO',{id:pid,copies},{sourceId:pid,monthKey:state.currentMonth});
   Object.values(state.months||{}).forEach(m=>{ m.promos=(m.promos||[]).filter(row=>row.id!==pid); });
