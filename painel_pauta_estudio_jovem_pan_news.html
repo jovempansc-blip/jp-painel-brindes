@@ -2097,6 +2097,69 @@ tbody tr:focus-within td{background:#fff8fa}
   .studioPendingBell.hasPending::before,.studioPendingBell.hasLate::before{animation:none;opacity:1;background:rgba(185,13,47,.13);border-color:rgba(185,13,47,.66);box-shadow:0 0 0 3px rgba(185,13,47,.07)}
 }
 </style>
+
+<style id="av5744-bus-ticker-fix">
+/* AV-57.4.4 · letreiro compacto, contínuo e imediato */
+.promoFooter .promoPill.read{
+  width:190px!important;
+  min-width:190px!important;
+  max-width:190px!important;
+  height:27px!important;
+  min-height:27px!important;
+  padding:0 8px!important;
+  overflow:hidden!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+}
+.promoPill.read .av57Marquee{display:none!important}
+.promoPill.read .busTickerViewport{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  line-height:25px!important;
+}
+.promoPill.read .busTickerTrack{
+  display:flex!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  white-space:nowrap!important;
+  will-change:transform;
+  animation:av5744BusTicker 4.6s linear infinite!important;
+}
+.promoPill.read .busTickerSeq{
+  display:inline-flex!important;
+  flex:none!important;
+  align-items:center!important;
+  gap:10px!important;
+  padding-right:38px!important;
+  white-space:nowrap!important;
+  font-size:8.8px!important;
+  font-weight:1000!important;
+  letter-spacing:.055em!important;
+}
+.promoPill.read .busTickerSeq b,
+.promoPill.read .busTickerSeq em{
+  font:inherit!important;
+  font-style:normal!important;
+  white-space:nowrap!important;
+}
+.promoPill.read:hover .busTickerTrack{animation-play-state:paused!important}
+@keyframes av5744BusTicker{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+@media(max-width:760px){
+  .promoFooter .promoPill.read{width:168px!important;min-width:168px!important;max-width:168px!important}
+  .promoPill.read .busTickerTrack{animation-duration:4.2s!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .promoPill.read .busTickerTrack{animation:none!important;transform:none!important}
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -2704,7 +2767,7 @@ function isPromoResolvedForHour(p,item){const required=studioRequiredReadsForHou
 function studioMissedReasonForHour(p,item){const rows=studioAV57MissedLogs(p,item);return rows.map(r=>r.reason).filter(Boolean).join(' · ');}
 function studioAV57Progress(p,item){const required=studioRequiredReadsForHour(p,item),done=Math.min(required,studioReadCountForHour(p,item)),missed=Math.min(Math.max(0,required-done),studioMissedCountForHour(p,item));return{required,done,missed,remaining:Math.max(0,required-done-missed),label:required>1?`${done}/${required}`:(done?'OK':missed?'NÃO REALIZADA':'PENDENTE')};}
 function studioOpecContextLabel(p){if(!isMerchan(p)||studioOpecTextType(p)==='legacy')return studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE · DISTRIBUIÇÃO BALANCEADA':'';const base=studioOpecTextType(p)==='promotional'?`PROMOCIONAL ATÉ ${formatBR(p.endDate||p.drawDate||'')} · RETORNO INSTITUCIONAL AUTOMÁTICO`:`INSTITUCIONAL · VERSÃO ${studioOpecVersion(p)}`;return `${base} · ${studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE':'HORÁRIO FIXO'}`;}
-function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),clientLabel=upper(p.opecClientName||p.clientName||p.client||p.advertiser||''),tickerLabel=isMerchan(p)?(clientLabel||name):name,typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');const ticker=`${tickerLabel} · LIDO: ${time}${progress.required>1?` · ${progress.done}/${progress.required}`:''}`;return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(ticker)}"><span class="av57Marquee"><span>${esc(ticker)}</span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(tickerLabel)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+tickerLabel)}"><span>${esc(tickerLabel)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
+function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),clientLabel=upper(p.opecClientName||p.clientName||p.client||p.advertiser||''),tickerLabel=isMerchan(p)?(clientLabel||name):name,typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');const register=`LIDO: ${time}${progress.required>1?` · ${progress.done}/${progress.required}`:''}`,ticker=`${tickerLabel} · ${register}`;return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(ticker)}"><span class="busTickerViewport"><span class="busTickerTrack"><span class="busTickerSeq"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span><span class="busTickerSeq" aria-hidden="true"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span></span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(tickerLabel)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+tickerLabel)}"><span>${esc(tickerLabel)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
 function buildPautaList(item,kind){const pautas=pautasForItemHour(item,true,kind),emptyLabel=kind==='merchan'?'SEM MERCHAN PROGRAMADO PARA ESTE HORÁRIO':'SEM PROMO / PAUTA PROGRAMADA PARA ESTE HORÁRIO';if(!pautas.length)return `<button class="promoListItem" type="button">${emptyLabel}</button>`;return pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;}).join('');}
 function buildPromoList(item){return buildPautaList(item,'promo');}
 function studioProgramMerchanRows(item){
