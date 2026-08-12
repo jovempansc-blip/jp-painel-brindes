@@ -746,6 +746,13 @@ tbody tr:focus-within td{background:#fff8fa}
 .resultCard{cursor:pointer}.resultCard:focus{outline:3px solid rgba(173,23,40,.12);outline-offset:2px}.receptionModal{position:fixed;inset:0;z-index:9999;background:rgba(17,22,30,.46);display:grid;place-items:center;padding:16px}.receptionModal[hidden],.receptionToast[hidden]{display:none!important}.receptionModalCard{position:relative;width:min(560px,96vw);max-height:88vh;overflow:auto;background:#fff;border-radius:20px;padding:24px;box-shadow:0 28px 80px rgba(0,0,0,.22)}.receptionModalClose{position:absolute;right:12px;top:10px;width:32px;height:32px;border:0;border-radius:50%;background:#f1f3f6;font-size:22px;cursor:pointer}.pickupSheetName{font-size:20px;font-weight:1000;margin:0 38px 18px 0}.pickupSheetGrid{display:grid;gap:10px}.pickupSheetField{border:1px solid #e4e8ee;background:#fafbfd;border-radius:12px;padding:10px 12px}.pickupSheetField span{display:block;color:#737d8b;font-size:8px;font-weight:1000;letter-spacing:.08em;margin-bottom:4px}.pickupSheetField strong{font-size:12px;line-height:1.35}.pickupSheetStatus{margin-top:12px;padding:10px 12px;border-radius:12px;font-size:10px;font-weight:1000}.pickupSheetStatus.pending{background:#fff7e8;color:#9b5c00}.pickupSheetStatus.today,.pickupSheetStatus.expired{background:#fff0f2;color:#ad1728}.pickupSheetStatus.done{background:#edf9f2;color:#08733d}.pickupSheetAction{width:100%;margin-top:14px;min-height:42px;border:0;border-radius:12px;background:#ad1728;color:#fff;font-weight:1000;cursor:pointer}.pickupSheetAction:disabled{opacity:.55;cursor:wait}.receptionToast{position:fixed;z-index:10000;left:50%;bottom:24px;transform:translateX(-50%);min-width:min(520px,92vw);padding:14px 18px;border-radius:14px;background:#0b7b42;color:#fff;text-align:center;font-size:11px;font-weight:1000;box-shadow:0 14px 40px rgba(0,0,0,.2)}.receptionToast.error{background:#ad1728}.deadlinePriority{font-weight:1000}.deadlinePriority.today{color:#ad1728}.deadlinePriority.tomorrow{color:#c46f00}.deadlinePriority.expired{color:#ad1728}@media(max-width:640px){.receptionModalCard{padding:20px 14px}}
 
 </style>
+
+<style id="av5745-reception-expired-confirm">
+/* AV-57.4.5 · RETIRADA FORA DO PRAZO CONTINUA CONFIRMÁVEL */
+.pickupWrap .expiredStamp + .pickupBtn.expiredPickup{margin-top:2px!important;min-width:190px!important;background:#fff!important;border:1px solid #e3a7b1!important;color:#a62035!important;box-shadow:none!important}
+.pickupWrap .expiredStamp + .pickupBtn.expiredPickup:hover{background:#fff3f5!important;border-color:#cf6475!important}
+.pickupSheetStatus.expired + .pickupSheetAction{background:#ad1728!important}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -1019,7 +1026,7 @@ function pickupPendingCount(rows){
   return rows.reduce((n,row)=>n+(isPickupPending(row)?1:0),0);
 }
 function pickupButton(row){
-  if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">NÃO RETIRADO NO PRAZO<br>PRÊMIO VOLTOU À CIRCULAÇÃO</div></div>`;
+  if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">NÃO RETIRADO NO PRAZO<br>PRÊMIO VOLTOU À CIRCULAÇÃO</div><button class="pickupBtn expiredPickup" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
   const done=!!row.deliveredAt;
   if(done){
     return `<div class="pickupWrap"><span class="pickupStatus done">RETIRADO ${esc(row.deliveredAtLabel||'')}</span><button class="undoPickupBtn" type="button" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CANCELAR RETIRADA</button></div>`;
@@ -1048,7 +1055,9 @@ function setPickup(row,undo=false){
       item.winnerDeliveries[idx]={
         deliveredAt:now.toISOString(),
         deliveredAtLabel:now.toLocaleString('pt-BR'),
-        deliveredBy:'RECEPCAO'
+        deliveredBy:'RECEPCAO',
+        deliveredLate:!!row.expired,
+        deliveryDeadline:row.deadline?row.deadline.toISOString():''
       };
     }
     if(names.length===1){
@@ -1062,10 +1071,10 @@ function setPickup(row,undo=false){
     const sourcePromo=(monthData().promos||[]).find(p=>p.id===row.id);if(!sourcePromo)return;const promo=JSON.parse(JSON.stringify(sourcePromo));const idx=Number(row.winnerIndex);
     if(row.occurrenceKey){
       const winners=normalizeWinnerList(promo.resultWinnersByHour?.[row.occurrenceKey]||[]);if(!winners[idx])return;
-      winners[idx]={...winners[idx],deliveredAt:undo?'':now.toISOString(),deliveredAtLabel:undo?'':now.toLocaleString('pt-BR'),deliveredBy:undo?'':'RECEPCAO'};
+      winners[idx]={...winners[idx],deliveredAt:undo?'':now.toISOString(),deliveredAtLabel:undo?'':now.toLocaleString('pt-BR'),deliveredBy:undo?'':'RECEPCAO',deliveredLate:undo?false:!!row.expired,deliveryDeadline:undo?'':(row.deadline?row.deadline.toISOString():'')};
       promo.resultWinnersByHour||={};promo.resultWinnersByHour[row.occurrenceKey]=winners;promo.resultByHour||={};promo.resultByHour[row.occurrenceKey]=winners.map(w=>w.name).join(', ');
     }else{
-      let winners=normalizeWinnerList(promo.resultWinners||[]);if(!winners[idx])return;winners[idx]={...winners[idx],deliveredAt:undo?'':now.toISOString(),deliveredAtLabel:undo?'':now.toLocaleString('pt-BR'),deliveredBy:undo?'':'RECEPCAO'};promo.resultWinners=winners;promo.resultName=winners.map(w=>w.name).join(', ');
+      let winners=normalizeWinnerList(promo.resultWinners||[]);if(!winners[idx])return;winners[idx]={...winners[idx],deliveredAt:undo?'':now.toISOString(),deliveredAtLabel:undo?'':now.toLocaleString('pt-BR'),deliveredBy:undo?'':'RECEPCAO',deliveredLate:undo?false:!!row.expired,deliveryDeadline:undo?'':(row.deadline?row.deadline.toISOString():'')};promo.resultWinners=winners;promo.resultName=winners.map(w=>w.name).join(', ');
     }
     changedRecord=promo;
   }
@@ -1117,7 +1126,7 @@ function deadlineStatusText(row){if(row.deliveredAt)return `RETIRADO · ${row.de
 function openReceptionSheet(row){
   activeReceptionRow={source:row.source,id:row.id,winnerIndex:row.winnerIndex,occurrenceKey:row.occurrenceKey||'',date:row.date||''};
   const status=rowStatus(row), statusClass=status==='RETIRADO'?'done':status==='VENCIDO'?'expired':status==='VENCE_HOJE'?'today':'pending';
-  const action=row.deliveredAt?`<button class="pickupSheetAction" type="button" disabled>RETIRADA JÁ REGISTRADA</button>`:row.expired?'':`<button class="pickupSheetAction" id="sheetConfirmPickup" type="button">CONFIRMAR RETIRADA</button>`;
+  const action=row.deliveredAt?`<button class="pickupSheetAction" type="button" disabled>RETIRADA JÁ REGISTRADA</button>`:`<button class="pickupSheetAction" id="sheetConfirmPickup" type="button">CONFIRMAR RETIRADA</button>`;
   $('receptionModalBody').innerHTML=`<h3 class="pickupSheetName" id="receptionModalName">${esc(row.result)}</h3><div class="pickupSheetGrid"><div class="pickupSheetField"><span>PRÊMIO</span><strong>${esc(row.title)}</strong></div><div class="pickupSheetField"><span>GANHOU EM</span><strong>${esc(formatBR(row.date))} · ${esc(row.time)} · ${esc(row.sub)}</strong></div><div class="pickupSheetField"><span>PRAZO PARA RETIRADA</span><strong>${esc(row.deadlineLabel||'--')}</strong></div></div><div class="pickupSheetStatus ${statusClass}">${esc(deadlineStatusText(row))}</div>${action}`;
   $('receptionModal').hidden=false;
 }

@@ -2138,65 +2138,49 @@ tbody tr:focus-within td{background:#fff8fa}
 }
 </style>
 
-<style id="av5744-bus-ticker-fix">
-/* AV-57.4.4 · letreiro compacto, contínuo e imediato */
+<style id="av5745-bus-ticker-fix">
+/* AV-57.4.5 · LETREIRO TIPO PAINEL DE ÔNIBUS — CONTÍNUO, RÁPIDO E SEM PAUSA */
 .promoFooter .promoPill.read{
-  width:190px!important;
-  min-width:190px!important;
-  max-width:190px!important;
-  height:27px!important;
-  min-height:27px!important;
-  padding:0 8px!important;
-  overflow:hidden!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-start!important;
+  width:190px!important;min-width:190px!important;max-width:190px!important;
+  height:27px!important;min-height:27px!important;padding:0 7px!important;
+  overflow:hidden!important;display:flex!important;align-items:center!important;
+  justify-content:flex-start!important;position:relative!important;
 }
 .promoPill.read .av57Marquee{display:none!important}
 .promoPill.read .busTickerViewport{
-  display:block!important;
-  width:100%!important;
-  min-width:0!important;
-  overflow:hidden!important;
-  white-space:nowrap!important;
-  line-height:25px!important;
+  display:block!important;width:100%!important;min-width:0!important;
+  overflow:hidden!important;white-space:nowrap!important;line-height:25px!important;
+  position:relative!important;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 5%,#000 95%,transparent 100%);
+  mask-image:linear-gradient(90deg,transparent 0,#000 5%,#000 95%,transparent 100%);
 }
 .promoPill.read .busTickerTrack{
-  display:flex!important;
-  width:max-content!important;
-  min-width:max-content!important;
-  white-space:nowrap!important;
-  will-change:transform;
-  animation:av5744BusTicker 4.6s linear infinite!important;
+  display:inline-flex!important;align-items:center!important;width:max-content!important;
+  min-width:max-content!important;white-space:nowrap!important;will-change:transform!important;
+  animation:av5745BusTicker 4.1s linear infinite!important;
 }
 .promoPill.read .busTickerSeq{
-  display:inline-flex!important;
-  flex:none!important;
-  align-items:center!important;
-  gap:10px!important;
-  padding-right:38px!important;
-  white-space:nowrap!important;
-  font-size:8.8px!important;
-  font-weight:1000!important;
-  letter-spacing:.055em!important;
+  display:inline-flex!important;flex:none!important;align-items:center!important;gap:13px!important;
+  padding-right:34px!important;white-space:nowrap!important;font-size:8.9px!important;
+  font-family:"Arial Narrow","Segoe UI Variable","Segoe UI",Arial,sans-serif!important;
+  font-weight:1000!important;letter-spacing:.085em!important;
 }
-.promoPill.read .busTickerSeq b,
-.promoPill.read .busTickerSeq em{
-  font:inherit!important;
-  font-style:normal!important;
-  white-space:nowrap!important;
+.promoPill.read .busTickerSeq b,.promoPill.read .busTickerSeq em{
+  font:inherit!important;font-style:normal!important;white-space:nowrap!important;
 }
-.promoPill.read:hover .busTickerTrack{animation-play-state:paused!important}
-@keyframes av5744BusTicker{
-  from{transform:translateX(0)}
-  to{transform:translateX(-50%)}
+.promoPill.read .busTickerSeq b{font-weight:1000!important}
+.promoPill.read .busTickerSeq em{font-weight:1000!important;opacity:.92}
+.promoPill.read:hover .busTickerTrack{animation-play-state:running!important}
+@keyframes av5745BusTicker{
+  0%{transform:translate3d(0,0,0)}
+  100%{transform:translate3d(-50%,0,0)}
 }
 @media(max-width:760px){
   .promoFooter .promoPill.read{width:168px!important;min-width:168px!important;max-width:168px!important}
-  .promoPill.read .busTickerTrack{animation-duration:4.2s!important}
+  .promoPill.read .busTickerTrack{animation-duration:3.8s!important}
 }
 @media(prefers-reduced-motion:reduce){
-  .promoPill.read .busTickerTrack{animation:none!important;transform:none!important}
+  .promoPill.read .busTickerTrack{animation-duration:9s!important}
 }
 </style>
 
