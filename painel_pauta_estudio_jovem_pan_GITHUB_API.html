@@ -1862,6 +1862,88 @@ body{
 #prevItem{margin-left:8px!important}
 .headNav .iconNav{width:22px!important;min-width:22px!important;text-align:center!important}
 @media(max-width:700px){.headNav .promoListBtn{width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important}#prevItem{margin-left:5px!important}}
+
+/* === AV-57.4.6 FORÇA ATUALIZAÇÃO + LETREIRO ÔNIBUS + ALERTA FORTE === */
+.promoPill.pending,.promoPill.pending.promo,.promoPill.pending.merchan{
+  background:#fff1f3!important;
+  border-color:#e7a9b5!important;
+  color:#9b1731!important;
+  animation:av5746AlertPulse .92s ease-in-out infinite!important;
+  box-shadow:0 0 0 rgba(194,24,54,0)!important;
+}
+@keyframes av5746AlertPulse{
+  0%,100%{background:#fff1f3;color:#9b1731;border-color:#e7a9b5;box-shadow:0 0 0 0 rgba(194,24,54,0),0 0 0 0 rgba(194,24,54,0)}
+  50%{background:#cb1f3d;color:#fff;border-color:#cb1f3d;box-shadow:0 0 0 4px rgba(203,31,61,.18),0 0 18px rgba(203,31,61,.24)}
+}
+.promoFooter .promoPill.read{
+  width:160px!important;
+  min-width:160px!important;
+  max-width:160px!important;
+  min-height:27px!important;
+  padding:0 8px!important;
+  overflow:hidden!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+}
+.promoPill.read .av57Marquee{display:none!important}
+.promoPill.read .busTickerViewport{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  white-space:nowrap!important;
+  line-height:25px!important;
+}
+.promoPill.read .busTickerTrack{
+  display:inline-flex!important;
+  align-items:center!important;
+  width:max-content!important;
+  min-width:max-content!important;
+  white-space:nowrap!important;
+  will-change:transform;
+  animation:av5746BusTicker 3.8s linear infinite!important;
+}
+.promoPill.read .busTickerSeq{
+  display:inline-flex!important;
+  flex:none!important;
+  align-items:center!important;
+  gap:12px!important;
+  padding-right:32px!important;
+  white-space:nowrap!important;
+  font-size:8.7px!important;
+  font-weight:1000!important;
+  letter-spacing:.06em!important;
+}
+.promoPill.read .busTickerSeq b,
+.promoPill.read .busTickerSeq em{
+  font:inherit!important;
+  font-style:normal!important;
+  white-space:nowrap!important;
+}
+.promoPill.read:hover .busTickerTrack{animation-play-state:paused!important}
+@keyframes av5746BusTicker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.studioPendingBell.hasPending::before,.studioPendingBell.hasLate::before{
+  animation:av5746BellHalo .85s ease-in-out infinite!important;
+  opacity:1!important;
+  background:rgba(203,31,61,.18)!important;
+  border-color:rgba(203,31,61,.82)!important;
+  box-shadow:0 0 0 4px rgba(203,31,61,.10)!important;
+}
+.studioPendingBell.hasPending .studioBellCount,.studioPendingBell.hasLate .studioBellCount{
+  animation:av5746BadgePulse .92s ease-in-out infinite!important;
+}
+@keyframes av5746BellHalo{
+  0%,100%{transform:scale(1);opacity:1;box-shadow:0 0 0 0 rgba(203,31,61,.08)}
+  50%{transform:scale(1.08);opacity:1;box-shadow:0 0 0 6px rgba(203,31,61,.10)}
+}
+@keyframes av5746BadgePulse{
+  0%,100%{transform:scale(1);box-shadow:0 2px 7px rgba(173,23,40,.18)}
+  50%{transform:scale(1.15);box-shadow:0 0 0 5px rgba(203,31,61,.18),0 0 18px rgba(203,31,61,.26)}
+}
+@media(max-width:760px){.promoFooter .promoPill.read{width:150px!important;min-width:150px!important;max-width:150px!important}.promoPill.read .busTickerTrack{animation-duration:3.5s!important}}
+@media(prefers-reduced-motion:reduce){.promoPill.pending,.promoPill.pending.promo,.promoPill.pending.merchan,.studioPendingBell.hasPending::before,.studioPendingBell.hasLate::before,.studioPendingBell.hasPending .studioBellCount,.studioPendingBell.hasLate .studioBellCount,.promoPill.read .busTickerTrack{animation:none!important;transform:none!important}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -3260,7 +3342,7 @@ function isPromoResolvedForHour(p,item){const required=studioRequiredReadsForHou
 function studioMissedReasonForHour(p,item){const rows=studioAV57MissedLogs(p,item);return rows.map(r=>r.reason).filter(Boolean).join(' · ');}
 function studioAV57Progress(p,item){const required=studioRequiredReadsForHour(p,item),done=Math.min(required,studioReadCountForHour(p,item)),missed=Math.min(Math.max(0,required-done),studioMissedCountForHour(p,item));return{required,done,missed,remaining:Math.max(0,required-done-missed),label:required>1?`${done}/${required}`:(done?'OK':missed?'NÃO REALIZADA':'PENDENTE')};}
 function studioOpecContextLabel(p){if(!isMerchan(p)||studioOpecTextType(p)==='legacy')return studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE · DISTRIBUIÇÃO BALANCEADA':'';const base=studioOpecTextType(p)==='promotional'?`PROMOCIONAL ATÉ ${formatBR(p.endDate||p.drawDate||'')} · RETORNO INSTITUCIONAL AUTOMÁTICO`:`INSTITUCIONAL · VERSÃO ${studioOpecVersion(p)}`;return `${base} · ${studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE':'HORÁRIO FIXO'}`;}
-function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),clientLabel=upper(p.opecClientName||p.clientName||p.client||p.advertiser||''),tickerLabel=isMerchan(p)?(clientLabel||name):name,typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');const register=`LIDO: ${time}${progress.required>1?` · ${progress.done}/${progress.required}`:''}`,ticker=`${tickerLabel} · ${register}`;return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(ticker)}"><span class="busTickerViewport"><span class="busTickerTrack"><span class="busTickerSeq"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span><span class="busTickerSeq" aria-hidden="true"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span></span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(tickerLabel)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+tickerLabel)}"><span>${esc(tickerLabel)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
+function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),clientLabel=upper(p.opecClientName||p.clientName||p.client||p.advertiser||''),tickerLabel=isMerchan(p)?(clientLabel||name):name,typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');const register=`LIDO: ${time}${progress.required>1?` · ${progress.done}/${progress.required}`:''}`;return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(tickerLabel+' · '+register)}"><span class="busTickerViewport"><span class="busTickerTrack"><span class="busTickerSeq"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span><span class="busTickerSeq" aria-hidden="true"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span></span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(tickerLabel)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+tickerLabel)}"><span>${esc(tickerLabel)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
 function buildPautaList(item,kind){const pautas=pautasForItemHour(item,true,kind),emptyLabel=kind==='merchan'?'SEM MERCHAN PROGRAMADO PARA ESTE HORÁRIO':'SEM PROMO / PAUTA PROGRAMADA PARA ESTE HORÁRIO';if(!pautas.length)return `<button class="promoListItem" type="button">${emptyLabel}</button>`;return pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;}).join('');}
 function buildPromoList(item){return buildPautaList(item,'promo');}
 function studioProgramMerchanRows(item){
