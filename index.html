@@ -7381,7 +7381,9 @@ function openWinnerRecord(recordId='',personKey=''){
   $('winnerRecordDate').value=record?.date||todayISO();
   $('winnerRecordProgram').value=record?.program||'';
   $('winnerRecordPrize').value=record?winnerResolvedPrize(record):'';
-  $('winnerRecordDrawerTitle').textContent=record?'EDITAR REGISTRO DE PREMIAÇÃO':'NOVO REGISTRO DE PREMIAÇÃO';
+  const linked=!!record?.sourceRef;
+  $('winnerRecordDate').disabled=linked;$('winnerRecordProgram').disabled=linked;$('winnerRecordPrize').disabled=linked;
+  $('winnerRecordDrawerTitle').textContent=record?(linked?'CORRIGIR GANHADOR VINCULADO':'EDITAR REGISTRO DE PREMIAÇÃO'):'NOVO REGISTRO DE PREMIAÇÃO';
   renderWinnerRecordSimilarity();
   openDrawer('winnerRecordDrawer');
   setTimeout(()=>$(record||person?'winnerRecordProgram':'winnerRecordName')?.focus(),30);
@@ -7438,6 +7440,79 @@ function resolveWinnerRecordSimilarity(action,candidateId,candidateName=''){
   renderWinnerRecordSimilarity();
   input.focus();
 }
+
+function winnerStateRootRef(){
+  if(!firebaseRef) return null;
+  return firebaseUsesWrappedState===true ? firebaseRef.child('state') : firebaseRef;
+}
+function winnerLinkedSourceDescriptor(sourceRef){
+  const ref=String(sourceRef||'');
+  if(ref.startsWith('ITEM:')) return {type:'item',itemId:ref.slice(5)};
+  const match=ref.match(/^PROMO:(.+):(\d{4}-\d{2}-\d{2}):(.+)$/);
+  if(match) return {type:'promo',promoId:match[1],date:match[2],slot:match[3]};
+  return null;
+}
+function winnerSourceNames(records,sourceRef){
+  const seen=new Set();
+  return (records||[]).filter(row=>String(row?.sourceRef||'')===String(sourceRef||''))
+    .map(row=>winnerUpper(row.name)).filter(name=>name&&!seen.has(name)&&seen.add(name));
+}
+function winnerPromoMapKeys(date,slot){
+  const raw=String(slot||'').trim().toUpperCase();
+  const match=raw.match(/(\d{1,2})(?:H|:)?(\d{2})?/);
+  const hour=String(Number(match?.[1]||0)).padStart(2,'0'),minute=String(match?.[2]||'00').padStart(2,'0');
+  return minute==='30'?[`${date}-${hour}30`]:[`${date}-${hour}00`,`${date}-${hour}`];
+}
+async function syncWinnerLinkedSource(sourceRef,{reason='CORREÇÃO DE GANHADOR',operatorName='PAINEL PRINCIPAL'}={}){
+  const descriptor=winnerLinkedSourceDescriptor(sourceRef);
+  const stateRoot=winnerStateRootRef();
+  if(!descriptor||!stateRoot||!winnerBankRef) return false;
+  const latest=(await winnerBankRef.child('records').get()).val()||{};
+  const records=winnerRecordList(latest);
+  const linkedRecords=records.filter(row=>String(row?.sourceRef||'')===String(sourceRef||''));
+  const names=winnerSourceNames(records,sourceRef);
+  const now=new Date(),iso=now.toISOString(),label=now.toLocaleString('pt-BR');
+  if(descriptor.type==='item'){
+    let monthKey='';
+    for(const [key,m] of Object.entries(state?.months||{})){
+      if((m?.items||[]).some(row=>String(row?.id||'')===descriptor.itemId)){monthKey=key;break;}
+    }
+    if(!monthKey) monthKey=String(linkedRecords[0]?.date||'').slice(0,7);
+    if(!monthKey) return false;
+    const result=await stateRoot.child('months').child(monthKey).child('items').transaction(current=>{
+      const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+      const index=rows.findIndex(row=>String(row?.id||'')===descriptor.itemId);if(index<0)return;
+      const row=rows[index],previous=(Array.isArray(row.winnerNames)&&row.winnerNames.length?row.winnerNames:String(row.winnerName||'').split(',')).map(winnerUpper).filter(Boolean);
+      const changed=[...previous].sort().join('|')!==[...names].sort().join('|');
+      const deliveryMap=new Map();
+      (Array.isArray(row.winnerDeliveries)?row.winnerDeliveries:[]).forEach((delivery,i)=>{const n=previous[i];if(n)deliveryMap.set(n,delivery);});
+      const winnerDeliveries=names.map(name=>deliveryMap.get(name)||{});
+      rows[index]={...row,winnerNames:names,winnerName:names.join(', '),winnerCapacity:Math.max(Number(row.winnerCapacity)||1,names.length||1),status:names.length?'REALIZADO':'PENDENTE',winnerDeliveries,updatedAt:iso,winnerCorrectedAt:changed?iso:(row.winnerCorrectedAt||''),winnerCorrectedAtLabel:changed?label:(row.winnerCorrectedAtLabel||''),winnerCorrectionReason:changed?reason:(row.winnerCorrectionReason||''),winnerCorrectedBy:changed?operatorName:(row.winnerCorrectedBy||'')};
+      if(!names.length){rows[index].resultAt='';rows[index].resultAtLabel='';rows[index].deliveredAt='';rows[index].deliveredAtLabel='';rows[index].deliveredBy='';}
+      else if(changed && names.some(n=>!deliveryMap.has(n))){rows[index].deliveredAt='';rows[index].deliveredAtLabel='';rows[index].deliveredBy='';}
+      return rows;
+    },undefined,false);
+    if(result?.committed){const value=result.snapshot.val();state.months[monthKey] ||= {label:monthKey,items:[],promos:[],distributions:[]};state.months[monthKey].items=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true;}
+    return false;
+  }
+  if(descriptor.type==='promo'){
+    const monthKey=descriptor.date.slice(0,7),keys=winnerPromoMapKeys(descriptor.date,descriptor.slot);
+    const result=await stateRoot.child('months').child(monthKey).child('promos').transaction(current=>{
+      const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+      const index=rows.findIndex(row=>String(row?.id||'')===descriptor.promoId);if(index<0)return;
+      const row=rows[index],byHour={...(row.resultWinnersByHour||{})},byName={...(row.resultByHour||{})};
+      const existingKey=keys.find(key=>Object.prototype.hasOwnProperty.call(byHour,key)||Object.prototype.hasOwnProperty.call(byName,key))||keys[0];
+      keys.filter(key=>key!==existingKey).forEach(key=>{delete byHour[key];delete byName[key];});
+      if(names.length){byHour[existingKey]=linkedRecords.map(r=>({name:winnerUpper(r.name),registeredAt:r.confirmedAt||r.createdAt||'',registeredAtLabel:r.createdAtLabel||''}));byName[existingKey]=names.join(', ');}else{delete byHour[existingKey];delete byName[existingKey];}
+      const occurrences=(row.occurrences||[]).map(o=>{const od=String(o.date||o.drawDate||''),os=String(o.slot||o.time||o.drawTime||'').toUpperCase();const same=od===descriptor.date&&(os===String(descriptor.slot).toUpperCase()||winnerPromoMapKeys(descriptor.date,os).some(k=>keys.includes(k)));return same?{...o,status:names.length?'REALIZADO':'PENDENTE',actualQty:names.length,resultAt:names.length?(o.resultAt||iso):'',resultAtLabel:names.length?(o.resultAtLabel||label):''}:o;});
+      rows[index]={...row,resultWinnersByHour:byHour,resultByHour:byName,occurrences,updatedAt:iso,winnerCorrectionReason:reason,winnerCorrectedBy:operatorName,winnerCorrectedAt:iso};
+      return rows;
+    },undefined,false);
+    if(result?.committed){const value=result.snapshot.val();state.months[monthKey] ||= {label:monthKey,items:[],promos:[],distributions:[]};state.months[monthKey].promos=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true;}
+  }
+  return false;
+}
+
 async function saveWinnerRecord(event){
   event.preventDefault();
   const form=event.currentTarget;
@@ -7469,6 +7544,7 @@ async function saveWinnerRecord(event){
   try{
     await winnerBankRef.child(`records/${recordKey}`).set(record);
     await winnerBankRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'PAINEL_PRINCIPAL',schemaVersion:2});
+    if(record.sourceRef) await syncWinnerLinkedSource(record.sourceRef,{reason:previous?'CORREÇÃO DO NOME DO GANHADOR':'VINCULAÇÃO DO GANHADOR',operatorName:operator.name});
     auditEvent(previous?'ALTERAÇÃO DE GANHADOR':'CADASTRO MANUAL DE GANHADOR',name,{targetId:recordKey,before:previous||'',after:record});
     saveState(true);
     closeDrawer('winnerRecordDrawer');
@@ -7488,6 +7564,7 @@ async function deleteWinnerRecord(recordKey){
   try{
     trashRecord('GANHADOR',record.name,record,{sourceId:record.id,monthKey:String(record.date||state.currentMonth).slice(0,7)});
     await winnerBankRef.child(`records/${recordKey}`).remove();
+    if(record.sourceRef) await syncWinnerLinkedSource(record.sourceRef,{reason:'GANHADOR REMOVIDO DO REGISTRO',operatorName:promptOperatorIdentity().name});
     saveState(true);
     closeDrawer('winnerDetailDrawer');
     toast('REGISTRO REMOVIDO COM POSSIBILIDADE DE RESTAURAÇÃO.');
@@ -8223,7 +8300,7 @@ function restoreTrashRecord(trashId){
     if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL PARA RESTAURAÇÃO.'); return; }
     const restoreKey=winnerValidFirebaseKey(payload.firebaseKey)?payload.firebaseKey:winnerBankRef.child('records').push().key;
     delete payload.firebaseKey;
-    winnerBankRef.child(`records/${restoreKey}`).set(payload).catch(()=>alert('NÃO FOI POSSÍVEL RESTAURAR O GANHADOR NO FIREBASE.'));
+    winnerBankRef.child(`records/${restoreKey}`).set(payload).then(()=>payload.sourceRef?syncWinnerLinkedSource(payload.sourceRef,{reason:'RESTAURAÇÃO DE GANHADOR',operatorName:promptOperatorIdentity().name}):true).catch(()=>alert('NÃO FOI POSSÍVEL RESTAURAR O GANHADOR NO FIREBASE.'));
   }
   state.trash=state.trash.filter(x=>x.id!==trashId);
   auditEvent('RESTAURAÇÃO',row.label,{targetId:row.sourceId,after:payload});

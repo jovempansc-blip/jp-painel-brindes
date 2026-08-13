@@ -2266,6 +2266,14 @@ tbody tr:focus-within td{background:#fff8fa}
 }
 </style>
 
+
+<style id="winner-correction-tools-style">
+.winnerCorrectionTools{margin-top:10px;padding:10px;border:1px solid #ead2d8;border-radius:14px;background:#fff8f9}.winnerCorrectionTools[hidden],.winnerMovePanel[hidden]{display:none!important}.winnerCorrectionNotice{color:#8f2739;font-size:8.5px;font-weight:1000;line-height:1.4;margin-bottom:8px}.winnerCorrectionActions{display:flex;gap:7px;flex-wrap:wrap}.winnerCorrectionActions .modalBtn{min-height:34px}.winnerCorrectionActions .danger{background:#fff0f2!important;border-color:#efb2bd!important;color:#a51d34!important}.winnerMovePanel{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:end;margin-top:9px;padding-top:9px;border-top:1px solid #f0dce1}.winnerMovePanel label{grid-column:1/-1;font-size:8px;color:#6f7886;font-weight:1000}.winnerMovePanel select{min-height:36px;border:1px solid #d9dfe7;border-radius:10px;background:#fff;padding:0 9px;font:900 9px/1 "Segoe UI",Arial;text-transform:uppercase}.winnerMovePanel button{min-height:36px;border:0;border-radius:10px;background:#ad1728;color:#fff;padding:0 12px;font:1000 8px/1 "Segoe UI",Arial}@media(max-width:640px){.winnerMovePanel{grid-template-columns:1fr}.winnerMovePanel label{grid-column:auto}}
+</style>
+
+<style id="winner-inline-edit-style">
+.winnerBox{position:relative}.winnerInlineEdit{margin-left:auto;align-self:center;min-height:30px;border:1px solid #cdd8e5;border-radius:10px;background:#fff;color:#4d5b6b;padding:0 10px;font:1000 8px/1 "Segoe UI",Arial;cursor:pointer}.winnerInlineEdit:hover{background:#f3f6fa;color:#171c26}@media(max-width:640px){.winnerInlineEdit{width:100%;margin-top:7px}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -2283,6 +2291,11 @@ tbody tr:focus-within td{background:#fff8fa}
     <div class="winnerBankModalState" id="winnerBankModalState">CONECTANDO AO BANCO DE GANHADORES...</div>
     <div class="resultWinnersList" id="winnerInputsList"></div>
     <button class="resultAddBtn" type="button" id="addWinnerBtn" title="ADICIONAR OUTRO GANHADOR">+</button>
+    <div class="winnerCorrectionTools" id="winnerCorrectionTools" hidden>
+      <div class="winnerCorrectionNotice">REGISTRO JÁ CONFIRMADO. A CORREÇÃO ATUALIZA AUTOMATICAMENTE PROGRAMAÇÃO, ESTÚDIO, RECEPÇÃO E BANCO DE GANHADORES, PRESERVANDO O LOG.</div>
+      <div class="winnerCorrectionActions"><button class="modalBtn" type="button" id="moveWinnerBtn">MOVER PARA OUTRO PRÊMIO</button><button class="modalBtn danger" type="button" id="removeWinnerOutcomeBtn">REMOVER GANHADOR</button></div>
+      <div class="winnerMovePanel" id="winnerMovePanel" hidden><label for="winnerMoveTargetSelect">PRÊMIO CORRETO</label><select id="winnerMoveTargetSelect"></select><button type="button" id="confirmMoveWinnerBtn">CONFIRMAR MUDANÇA</button></div>
+    </div>
     <div class="modalActions">
       <button class="modalBtn" type="button" id="cancelWinnerBtn">CANCELAR</button>
       <button class="modalBtn primary" type="button" id="saveWinnerBtn">SALVAR GANHADOR(ES)</button>
@@ -3573,6 +3586,8 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
   let acquiredLocks=[];
   let insertedRecordKeys=[];
   let stateChanged=false;
+  let correctionMode=false;
+  let previousRecordBackup={};
   try{
     try{await ensureStudioFirebaseOnline();}catch(error){throw studioOutcomeError(error,'CONEXÃO');}
     initWinnerBank();
@@ -3592,37 +3607,27 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     const map=winnerRecordMap(bank.records||{});
     const previousEntries=Object.entries(map).filter(([,record])=>record?.source==='ESTUDIO_JP1017'&&record?.sourceRef===context.sourceRef);
     const requestedNames=[...cleanNames].sort();
-    let resultRecordKeys=[];
-    if(previousEntries.length){
-      const previousNames=previousEntries.map(([,record])=>upper(record.name)).sort();
-      if(previousNames.join('|')!==requestedNames.join('|')){
-        const error=new Error('ESTE SORTEIO JÁ FOI CONFIRMADO COM OUTRO(S) GANHADOR(ES).');
-        error.eligibility={title:'RESULTADO JÁ CONFIRMADO',reason:error.message};
-        error.retryable=false;
-        throw studioOutcomeError(error,'VALIDAÇÃO');
-      }
+    const previousNamesSorted=previousEntries.map(([,record])=>upper(record.name)).sort();
+    let resultRecordKeys=[];correctionMode=previousEntries.length>0&&previousNamesSorted.join('|')!==requestedNames.join('|');
+    previousRecordBackup={};previousEntries.forEach(([key,record])=>previousRecordBackup[key]=JSON.parse(JSON.stringify(record)));
+    if(previousEntries.length&&!correctionMode){
       resultRecordKeys=previousEntries.map(([key])=>key);
       const previousOperation=previousEntries.find(([,record])=>record?.operationId)?.[1]?.operationId;
       if(previousOperation) operationId=previousOperation;
     }else{
       const working=winnerRecordList(map).filter(record=>record.sourceRef!==context.sourceRef);
       const additions={};
+      if(correctionMode) previousEntries.forEach(([key])=>additions[key]=null);
       for(const name of cleanNames){
         const eligibility=winnerEvaluateAgainst(working,name,context.prize,context.date,bank.blocks||{});
         if(!eligibility.allowed){
-          const error=new Error(eligibility.reason||'O OUVINTE NÃO ESTÁ APTO.');
-          error.eligibility=eligibility;
-          error.retryable=false;
-          throw studioOutcomeError(error,'VALIDAÇÃO');
+          const error=new Error(eligibility.reason||'O OUVINTE NÃO ESTÁ APTO.');error.eligibility=eligibility;error.retryable=false;throw studioOutcomeError(error,'VALIDAÇÃO');
         }
         const id=winnerBankRef.child('records').push().key;
-        const record={id,name,date:context.date,program:context.program,prize:context.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(context.prize),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,operationId,operationStatus:'CONFIRMED',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),confirmedAt:now.toISOString(),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector};
-        additions[id]=record;
-        insertedRecordKeys.push(id);
-        resultRecordKeys.push(id);
-        working.push(record);
+        const record={id,name,date:context.date,program:context.program,prize:context.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(context.prize),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,operationId,operationStatus:'CONFIRMED',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),confirmedAt:now.toISOString(),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector,correctionOf:correctionMode?previousEntries.map(([key])=>key).join(','):''};
+        additions[id]=record;insertedRecordKeys.push(id);resultRecordKeys.push(id);working.push(record);
       }
-      try{await studioRetry(()=>winnerBankRef.child('records').update(additions));}catch(error){throw studioOutcomeError(error,'GRAVAÇÃO DO GANHADOR');}
+      try{await studioRetry(()=>winnerBankRef.child('records').update(additions));}catch(error){throw studioOutcomeError(error,correctionMode?'CORREÇÃO DO GANHADOR':'GRAVAÇÃO DO GANHADOR');}
     }
 
     let stateConflict='';
@@ -3640,10 +3645,11 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
         if(collection==='promos'&&occurrenceKey) previousNames=normalizeWinnerList(row.resultWinnersByHour?.[occurrenceKey]||[]).map(w=>w.name);
         if(previousNames.length){
           if([...previousNames].sort().join('|')===[...cleanNames].sort().join('|')) return rows;
-          stateConflict='ESTE RESULTADO JÁ FOI CONFIRMADO EM OUTRO COMPUTADOR.';
-          return;
+          if(!correctionMode){stateConflict='ESTE RESULTADO JÁ FOI CONFIRMADO EM OUTRO COMPUTADOR.';return;}
         }
-        rows[index]={...row,...JSON.parse(JSON.stringify(patch)),winnerOperationId:operationId,updatedAt:now.toISOString()};
+        const next={...row,...JSON.parse(JSON.stringify(patch)),winnerOperationId:operationId,updatedAt:now.toISOString()};
+        if(correctionMode){next.winnerCorrectedAt=now.toISOString();next.winnerCorrectedAtLabel=now.toLocaleString('pt-BR');next.winnerCorrectedBy=operator.name;next.winnerCorrectionReason='CORREÇÃO NO ESTÚDIO';if(collection==='items'){next.winnerDeliveries=[];next.deliveredAt='';next.deliveredAtLabel='';next.deliveredBy='';}}
+        rows[index]=next;
         stateChanged=true;
         return rows;
       },undefined,false);
@@ -3662,7 +3668,7 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
       firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JP1017',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_RESULT'})
     ]);
     if(stateChanged){
-      try{await appendStudioAudit({id:`LOG_${operationId}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});}catch(auditError){console.warn('AUDITORIA DO RESULTADO PENDENTE:',auditError);}
+      try{await appendStudioAudit({id:`LOG_${operationId}`,action:correctionMode?'CORREÇÃO DE GANHADOR':(collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO'),target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});}catch(auditError){console.warn('AUDITORIA DO RESULTADO PENDENTE:',auditError);}
     }
     const remoteRows=stateResult.snapshot.val();
     if(state.months?.[monthKey]) state.months[monthKey][collection]=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
@@ -3670,7 +3676,10 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     try{applyWinnerBankSnapshot((await winnerBankRef.get()).val()||{});}catch(refreshError){initWinnerBank(true);}
     return true;
   }catch(error){
-    if(insertedRecordKeys.length&&!stateChanged) await removeStudioWinnerRecords(insertedRecordKeys);
+    if(!stateChanged){
+      if(correctionMode&&Object.keys(previousRecordBackup||{}).length){const restore={};insertedRecordKeys.forEach(key=>restore[key]=null);Object.entries(previousRecordBackup).forEach(([key,record])=>restore[key]=record);try{await winnerBankRef.child('records').update(restore);}catch(rollbackError){console.warn('ROLLBACK DE CORREÇÃO PENDENTE',rollbackError);}}
+      else if(insertedRecordKeys.length) await removeStudioWinnerRecords(insertedRecordKeys);
+    }
     throw error;
   }finally{
     await releaseStudioWinnerLocks(acquiredLocks,lockOperationId);
@@ -3997,18 +4006,38 @@ function removeWinnerInput(index){
   values.splice(index,1);
   renderWinnerInputs(values);
 }
+function studioWinnerMoveCandidates(item){return (monthData().items||[]).filter(row=>row&&row.id!==item?.id&&row.date===item?.date&&row.sourceType!=='promo-result'&&!upper(row.winnerName||'')&&!(Array.isArray(row.winnerNames)&&row.winnerNames.length)).sort((a,b)=>minutesOf(a.slot)-minutesOf(b.slot)||upper(a.title||'').localeCompare(upper(b.title||'')));}
+function fillWinnerMoveTargets(item){const select=$('winnerMoveTargetSelect');if(!select)return;const rows=studioWinnerMoveCandidates(item);select.innerHTML=rows.length?rows.map(row=>`<option value="${esc(row.id)}">${esc(formatStudioTime(row.slot))} · ${esc(upper(row.title||row.prize||'PRÊMIO'))}</option>`).join(''):'<option value="">NENHUM OUTRO PRÊMIO DISPONÍVEL NESTE DIA</option>';$('confirmMoveWinnerBtn').disabled=!rows.length;}
 function openWinnerModal(){
-  const item=currentItemRecord();
-  if(!item) return;
-  initWinnerBank(true);
-  renderWinnerInputs(existingWinnerNames(item));
-  $('winnerModal').classList.add('show');
-  setTimeout(()=>document.querySelector('.winnerNameField')?.focus(),30);
+  const item=currentItemRecord();if(!item)return;initWinnerBank(true);const existing=existingWinnerNames(item),editing=existing.length>0;renderWinnerInputs(existing);$('winnerModalTitle').textContent=editing?'CORRIGIR GANHADOR(ES)':'INDICAR GANHADOR(ES)';$('winnerModalHint').textContent=editing?'CORRIJA O NOME, MOVA PARA O PRÊMIO CORRETO OU REMOVA O REGISTRO. TODAS AS TELAS SERÃO SINCRONIZADAS.':'DIGITE O NOME DO OUVINTE SORTEADO. USE O BOTÃO + QUANDO HOUVER MAIS DE UM GANHADOR PARA O MESMO HORÁRIO.';$('winnerCorrectionTools').hidden=!editing;$('winnerMovePanel').hidden=true;fillWinnerMoveTargets(item);$('saveWinnerBtn').textContent=editing?'SALVAR CORREÇÃO':'SALVAR GANHADOR(ES)';$('winnerModal').classList.add('show');setTimeout(()=>document.querySelector('.winnerNameField')?.focus(),30);
 }
-function closeWinnerModal(){
-  $('winnerModal').classList.remove('show');
-  winnerInputChecks=[];
+function closeWinnerModal(){$('winnerModal').classList.remove('show');winnerInputChecks=[];$('winnerMovePanel').hidden=true;}
+
+async function clearCurrentWinnerOutcome(){
+  const item=currentItemRecord();if(!item||!existingWinnerNames(item).length)return;
+  if(!confirm(`REMOVER O(S) GANHADOR(ES) DESTE PRÊMIO?\n\n${upper(item.title||item.prize||'PRÊMIO')}\n\nA PROGRAMAÇÃO VOLTARÁ PARA PENDENTE E O NOME SERÁ REMOVIDO DO ESTÚDIO, RECEPÇÃO E BANCO DE GANHADORES.`))return;
+  const context=winnerContextForItem(item),operator=studioOperatorIdentity(true),now=new Date(),monthKey=studioOutcomeMonthKey(context);
+  try{
+    initWinnerBank(true);const bank=(await studioRetry(()=>winnerBankRef.get())).val()||{},map=winnerRecordMap(bank.records||{}),entries=Object.entries(map).filter(([,record])=>record?.sourceRef===context.sourceRef),updates={};entries.forEach(([key])=>updates[key]=null);if(entries.length)await studioRetry(()=>winnerBankRef.child('records').update(updates));
+    const result=await studioRetry(()=>firebaseRef.child('months').child(monthKey).child('items').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const idx=rows.findIndex(row=>row?.id===item.id);if(idx<0)return;rows[idx]={...rows[idx],winnerNames:[],winnerName:'',winnerDeliveries:[],status:'PENDENTE',resultAt:'',resultAtLabel:'',deliveredAt:'',deliveredAtLabel:'',deliveredBy:'',winnerCorrectedAt:now.toISOString(),winnerCorrectedAtLabel:now.toLocaleString('pt-BR'),winnerCorrectedBy:operator.name,winnerCorrectionReason:'GANHADOR REMOVIDO NO ESTÚDIO',updatedAt:now.toISOString()};return rows;},undefined,false));
+    if(!result?.committed)throw new Error('O HORÁRIO NÃO FOI ATUALIZADO.');const remote=result.snapshot.val();state.months[monthKey].items=Array.isArray(remote)?remote:Object.values(remote||{}).filter(Boolean);await Promise.allSettled([appendStudioAudit({id:`LOG_CORR_${Date.now()}`,action:'GANHADOR REMOVIDO',target:context.prize,targetId:item.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:context.sourceRef,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')}),winnerBankRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,updatedAtISO:now.toISOString(),source:'ESTUDIO_JP1017_CORRECAO'})]);closeWinnerModal();initWinnerBank(true);render();
+  }catch(error){console.error(error);alert(`NÃO FOI POSSÍVEL REMOVER O GANHADOR.\n\n${error.message||''}`);}
 }
+async function moveCurrentWinnerOutcome(){
+  const source=currentItemRecord(),targetId=$('winnerMoveTargetSelect')?.value;if(!source||!targetId)return;const target=(monthData().items||[]).find(row=>row?.id===targetId);if(!target)return;
+  const names=existingWinnerNames(source);if(!names.length)return;if(upper(target.winnerName||'')||(Array.isArray(target.winnerNames)&&target.winnerNames.length)){alert('O PRÊMIO DE DESTINO JÁ POSSUI GANHADOR.');return;}
+  if(!confirm(`MOVER ${names.join(', ')} PARA:\n\n${formatStudioTime(target.slot)} · ${upper(target.title||target.prize||'PRÊMIO')}?`))return;
+  const sourceContext=winnerContextForItem(source),targetContext=winnerContextForItem(target),operator=studioOperatorIdentity(true),now=new Date(),monthKey=studioOutcomeMonthKey(sourceContext),backup={};
+  try{
+    initWinnerBank(true);const bank=(await studioRetry(()=>winnerBankRef.get())).val()||{},map=winnerRecordMap(bank.records||{}),oldEntries=Object.entries(map).filter(([,record])=>record?.sourceRef===sourceContext.sourceRef);oldEntries.forEach(([key,record])=>backup[key]=record);const working=winnerRecordList(map).filter(record=>record.sourceRef!==sourceContext.sourceRef&&record.sourceRef!==targetContext.sourceRef),updates={};oldEntries.forEach(([key])=>updates[key]=null);
+    for(const name of names){const eligibility=winnerEvaluateAgainst(working,name,targetContext.prize,targetContext.date,bank.blocks||{});if(!eligibility.allowed){const e=new Error(eligibility.reason||'O OUVINTE NÃO ESTÁ APTO PARA O PRÊMIO DE DESTINO.');e.eligibility=eligibility;throw e;}const id=winnerBankRef.child('records').push().key;const record={id,name,date:targetContext.date,program:targetContext.program,prize:targetContext.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(targetContext.prize),source:'ESTUDIO_JP1017',sourceRef:targetContext.sourceRef,operationId:`MOVE_${Date.now()}`,operationStatus:'CONFIRMED',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),confirmedAt:now.toISOString(),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector,movedFrom:sourceContext.sourceRef};updates[id]=record;working.push(record);}
+    await studioRetry(()=>winnerBankRef.child('records').update(updates));
+    const result=await studioRetry(()=>firebaseRef.child('months').child(monthKey).child('items').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const si=rows.findIndex(row=>row?.id===source.id),ti=rows.findIndex(row=>row?.id===target.id);if(si<0||ti<0)return;if(upper(rows[ti].winnerName||'')||(Array.isArray(rows[ti].winnerNames)&&rows[ti].winnerNames.length))return;rows[si]={...rows[si],winnerNames:[],winnerName:'',winnerDeliveries:[],status:'PENDENTE',resultAt:'',resultAtLabel:'',deliveredAt:'',deliveredAtLabel:'',deliveredBy:'',winnerCorrectedAt:now.toISOString(),winnerCorrectionReason:'GANHADOR MOVIDO PARA OUTRO PRÊMIO',updatedAt:now.toISOString()};rows[ti]={...rows[ti],winnerNames:names,winnerName:names.join(', '),winnerCapacity:Math.max(winnerCapacity(rows[ti]),names.length),winnerDeliveries:[],status:'REALIZADO',resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR'),deliveredAt:'',deliveredAtLabel:'',deliveredBy:'',winnerCorrectedAt:now.toISOString(),winnerCorrectionReason:`GANHADOR MOVIDO DE ${upper(source.title||source.prize||'OUTRO PRÊMIO')}`,updatedAt:now.toISOString()};return rows;},undefined,false));
+    if(!result?.committed){const rollback={};Object.keys(updates).forEach(key=>rollback[key]=null);Object.entries(backup).forEach(([key,record])=>rollback[key]=record);await winnerBankRef.child('records').update(rollback);throw new Error('A PROGRAMAÇÃO NÃO CONFIRMOU A MUDANÇA.');}
+    const remote=result.snapshot.val();state.months[monthKey].items=Array.isArray(remote)?remote:Object.values(remote||{}).filter(Boolean);await appendStudioAudit({id:`LOG_MOVE_${Date.now()}`,action:'GANHADOR MOVIDO PARA OUTRO PRÊMIO',target:targetContext.prize,targetId:target.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`DE ${sourceContext.prize} · ${names.join(', ')}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});closeWinnerModal();initWinnerBank(true);render();
+  }catch(error){console.error(error);alert(`${error?.eligibility?.title||'NÃO FOI POSSÍVEL MOVER O GANHADOR.'}\n\n${error.message||''}`);}
+}
+
 async function saveWinner(){
   const button=$('saveWinnerBtn'); if(button?.dataset.busy==='1') return;
   const item=currentItemRecord(); if(!item) return;
@@ -4023,7 +4052,7 @@ async function saveWinner(){
     await commitStudioOutcomeAtomic({collection:'items',recordId:item.id,patch,names,context});
     closeWinnerModal(); render();
   }catch(error){ console.error('ERRO AO SALVAR GANHADORES:',error); alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR OS GANHADORES.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`); initWinnerBank(true); validateAllWinnerInputs(); }
-  finally{ button.dataset.busy='0'; button.textContent='SALVAR GANHADOR(ES)'; updateWinnerSaveState(); }
+  finally{ button.dataset.busy='0'; button.textContent=existingWinnerNames(currentItemRecord()||{}).length?'SALVAR CORREÇÃO':'SALVAR GANHADOR(ES)'; updateWinnerSaveState(); }
 }
 function step(delta){
   const base = manualHourDateMs !== null
@@ -4108,7 +4137,7 @@ function render(){
   }
   const promo=currentPromoForRead();
   const isVirtual=!!item.__virtual;
-  const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
+  const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong><button class="winnerInlineEdit" type="button" onclick="openWinnerModal()">CORRIGIR</button></div>` : '';
   const promoBody = promo ? `
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
@@ -4206,6 +4235,9 @@ $('winnerInputsList').addEventListener('click',event=>{
   const input=candidate?.querySelector('.winnerNameField');
   resolveStudioWinnerSimilarity(input,similarity,validateAllWinnerInputs);
 });
+$('moveWinnerBtn')?.addEventListener('click',()=>{$('winnerMovePanel').hidden=!$('winnerMovePanel').hidden;});
+$('removeWinnerOutcomeBtn')?.addEventListener('click',clearCurrentWinnerOutcome);
+$('confirmMoveWinnerBtn')?.addEventListener('click',moveCurrentWinnerOutcome);
 $('winnerModal').addEventListener('click',e=>{ if(e.target.id==='winnerModal') closeWinnerModal(); });
 $('winnerModal').addEventListener('keydown',e=>{
   if(e.key==='Enter' && e.target.classList.contains('winnerNameField')){ e.preventDefault(); saveWinner(); }
