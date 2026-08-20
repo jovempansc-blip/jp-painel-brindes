@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="jp-direction-build" content="AV-57.6.6.6">
+<meta name="jp-direction-build" content="AV-57.6.6.8">
 
 <title>Direção · Painel de Operação e Programação — Jovem Pan Floripa</title>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
@@ -541,10 +541,14 @@ tbody tr:focus-within td{background:#fff8fa}
 #view-distribuicao .distMainTable th,#view-distribuicao .distMainTable td{text-align:center!important}#view-distribuicao .distMainTable td.distPrizeCell{text-align:left!important}#view-distribuicao .num{text-align:center!important;font-variant-numeric:tabular-nums}
 
 /* PROGRAMAÇÃO MENSAL · MESMO MODELO VISUAL DO POA */
-#view-programacao .weeklyHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 10px}
+#view-programacao .weeklyHeader{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:2px 0 10px}
 #view-programacao .weeklyHeader strong{display:block;font-size:16px;letter-spacing:-.03em}#view-programacao .weeklyHeader span{display:block;color:var(--muted);font-size:9px;margin-top:3px;letter-spacing:.04em}
+#view-programacao .programWeekSelect{display:grid;gap:5px;min-width:220px;flex:0 0 auto}
+#view-programacao .programWeekSelect label{font-size:7.5px;font-weight:1000;color:#7b8593;letter-spacing:.08em}
+#view-programacao .programWeekSelect .control{height:34px;min-height:34px;padding:0 34px 0 11px;border-radius:11px;background-color:#fff;font-size:9px;font-weight:900;color:#3e4857}
 #view-programacao .weeklyBoard{display:grid;gap:10px;padding-bottom:6px}
-#view-programacao .weekDayRow{display:grid;grid-template-columns:100px repeat(3,minmax(0,1fr));gap:0;background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 6px 18px rgba(17,19,26,.04)}
+#view-programacao .weekDayRow{display:grid;grid-template-columns:100px repeat(3,minmax(0,1fr));gap:0;background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 6px 18px rgba(17,19,26,.04);scroll-margin-top:128px}
+#view-programacao .weekDayRow.currentDay{border-color:#dfc0c7;box-shadow:0 8px 22px rgba(135,33,55,.08)}
 #view-programacao .dayCell{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:12px 10px;border-right:1px solid var(--line);background:linear-gradient(180deg,#f5f6f9,#eceff4)}
 #view-programacao .dayBadge{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;max-width:78px;padding:9px 7px 10px;border-radius:15px;background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(255,255,255,.50));border:1px solid rgba(201,0,43,.10);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 8px 18px rgba(17,19,26,.05)}
 #view-programacao .dayBadge::before{content:"";display:block;width:22px;height:3px;border-radius:999px;background:linear-gradient(90deg,#b90d2f,#f4b7c3);margin:0 auto 7px}
@@ -559,7 +563,7 @@ tbody tr:focus-within td{background:#fff8fa}
 #view-programacao .programInfo{min-width:0}#view-programacao .programInfo strong{display:block;font-size:11px;line-height:1.15;color:#1f2630;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#view-programacao .programInfo em{display:block;font-style:normal;font-size:9px;color:#4c5564;margin-top:4px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #view-programacao .programMeta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:5px}#view-programacao .programMeta .badge{font-size:6.8px!important;padding:4px 6px!important}#view-programacao .programQtyInline{display:inline-flex;align-items:center;gap:4px;font-size:7px;color:#6e7886;line-height:1;border:1px solid #e7eaf0;border-radius:999px;padding:4px 6px;background:#fafbfd}#view-programacao .programQtyInline strong{font-size:8px;color:#242b35;line-height:1}
 @media(max-width:1080px){#view-programacao .weekDayRow{grid-template-columns:88px 1fr}#view-programacao .dayCell{grid-row:1 / span 3}#view-programacao .periodCell{border-right:0;border-bottom:1px solid var(--line)}#view-programacao .periodCell:last-child{border-bottom:0}}
-@media(max-width:700px){#view-programacao .weekDayRow{grid-template-columns:1fr}#view-programacao .dayCell{grid-row:auto;border-right:0;border-bottom:1px solid var(--line)}#view-programacao .programCard{grid-template-columns:52px 1fr}}
+@media(max-width:700px){#view-programacao .weeklyHeader{align-items:stretch;flex-direction:column}#view-programacao .programWeekSelect{min-width:0;width:100%}#view-programacao .weekDayRow{grid-template-columns:1fr}#view-programacao .dayCell{grid-row:auto;border-right:0;border-bottom:1px solid var(--line)}#view-programacao .programCard{grid-template-columns:52px 1fr}}
 
 /* === AV-57.6.6.5 · INTERAÇÃO GARANTIDA / SEM CAMADAS BLOQUEANDO CLIQUES === */
 .executiveHeader,.tabs,main{position:relative}
@@ -570,7 +574,7 @@ tbody tr:focus-within td{background:#fff8fa}
 .syncBadge:focus-visible,.tab:focus-visible,main button:focus-visible{outline:2px solid rgba(185,13,47,.34);outline-offset:2px}
 
 </style>
-<meta name="direction-build-marker" content="AV-57.6.6.7-DIRECAO-MENSAL-LIMPO">
+<meta name="direction-build-marker" content="AV-57.6.6.8-DIRECAO-SELETOR-SEMANAL">
 </head>
 <body>
 <div class="wrap">
@@ -672,6 +676,9 @@ let reportTo="";
 let directionDrilldown=null;
 let returnContext=null;
 let directionPickupFilter="ALL";
+let directionProgramWeek="AUTO";
+let directionProgramWeekMonth="";
+let directionProgramScrollPending=false;
 const READ_GRACE_MINUTES=5;
 const RESULT_PENDING_GRACE_MINUTES=5;
 const RESULT_CRITICAL_GRACE_MINUTES=15;
@@ -985,11 +992,42 @@ function directionProgrammedCount(distId){return (monthData(currentMonth).items|
 function directionBalanceCell(d){const balance=distributionBalance(d),unit=directionDeliveryUnit(d);if(unit==='pair'){const pairs=Math.floor(balance/2);return `<div class="directionDistValue">${distributionStatusBadge(d)}<small>${pairs} PAR${Math.abs(pairs)===1?'':'ES'} · ${balance} UNID.</small></div>`;}return `<div class="directionDistValue">${distributionStatusBadge(d)}<small>${balance} UNID.</small></div>`;}
 function directionReturnCount(d){let total=0;Object.values(state.months||{}).forEach(m=>{(m.items||[]).forEach(i=>{if(i.distributionId===d.id&&i.reuseStatus)total++;});(m.promos||[]).forEach(p=>{if(p.distributionId!==d.id)return;(p.resultWinners||[]).forEach(w=>{if(w?.reuseStatus)total++;});});});return total;}
 function directionReturnCell(d){const count=directionReturnCount(d);return `<div class="directionDistValue"><b>${count}</b>${count?'<small>RETORNO(S)</small>':''}</div>`;}
-function directionViewDistSchedule(id,label){returnContext={date:$("dateFilter").value||liveTodayISO(),station:$("stationFilter").value||'ALL',month:currentMonth,tab:'distribuicao'};directionDrilldown={tab:'programacao',kind:'distribution',key:id,label:label||'DISTRIBUIÇÃO'};activeTab='programacao';render();setTimeout(()=>document.querySelector('.programCard.current,.programCard')?.scrollIntoView({behavior:'smooth',block:'center'}),40);}
+function directionViewDistSchedule(id,label){returnContext={date:$("dateFilter").value||liveTodayISO(),station:$("stationFilter").value||'ALL',month:currentMonth,tab:'distribuicao'};directionDrilldown={tab:'programacao',kind:'distribution',key:id,label:label||'DISTRIBUIÇÃO'};directionProgramWeek='AUTO';directionProgramWeekMonth='';directionProgramScrollPending=true;activeTab='programacao';render();}
 function directionDayName(iso){const d=new Date(`${iso}T12:00:00`);return Number.isNaN(d.getTime())?'':['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'][d.getDay()];}
 function directionWeekDates(iso){const d=new Date(`${iso}T12:00:00`);if(Number.isNaN(d.getTime()))return[];while(d.getDay()!==1)d.setDate(d.getDate()-1);const out=[];for(let n=0;n<6;n++){const x=new Date(d);x.setDate(x.getDate()+n);out.push(`${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`);}return out;}
 function directionWeekLabel(iso){const dates=directionWeekDates(iso);return dates.length?`${formatBR(dates[0]).slice(0,5)} A ${formatBR(dates.at(-1)).slice(0,5)}`:'';}
 function directionMonthDates(monthKey=currentMonth){const match=String(monthKey||'').match(/^(\d{4})-(\d{2})$/);if(!match)return[];const y=Number(match[1]),m=Number(match[2]);const last=new Date(y,m,0).getDate();return Array.from({length:last},(_,index)=>`${y}-${pad(m)}-${pad(index+1)}`);}
+function directionMonthWeeks(monthKey=currentMonth){
+  const match=String(monthKey||'').match(/^(\d{4})-(\d{2})$/);if(!match)return[];
+  const y=Number(match[1]),m=Number(match[2]),first=new Date(y,m-1,1,12),last=new Date(y,m,0,12),start=new Date(first),end=new Date(last);
+  while(start.getDay()!==1)start.setDate(start.getDate()-1);
+  while(end.getDay()!==6)end.setDate(end.getDate()+1);
+  const weeks=[];
+  for(let cursor=new Date(start);cursor<=end;cursor.setDate(cursor.getDate()+7)){
+    const weekStart=new Date(cursor),weekEnd=new Date(cursor);weekEnd.setDate(weekEnd.getDate()+5);
+    const dates=[];for(let d=new Date(weekStart);d<=weekEnd;d.setDate(d.getDate()+1))dates.push(`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`);
+    weeks.push({key:dates[0],dates,start:dates[0],end:dates[dates.length-1]});
+  }
+  return weeks;
+}
+function directionAutoProgramWeek(monthKey=currentMonth){
+  const weeks=directionMonthWeeks(monthKey);if(!weeks.length)return'ALL';
+  const today=liveTodayISO(),dateValue=$("dateFilter")?.value||today;
+  const reference=dateValue.slice(0,7)===monthKey?dateValue:(today.slice(0,7)===monthKey?today:`${monthKey}-01`);
+  const exact=weeks.find(week=>week.dates.includes(reference));if(exact)return exact.key;
+  const prior=[...weeks].reverse().find(week=>week.start<=reference);return(prior||weeks[0]).key;
+}
+function directionResolveProgramWeek(monthKey=currentMonth){
+  const weeks=directionMonthWeeks(monthKey);
+  if(directionProgramWeekMonth!==monthKey){directionProgramWeekMonth=monthKey;directionProgramWeek='AUTO';}
+  if(directionProgramWeek==='AUTO')directionProgramWeek=directionAutoProgramWeek(monthKey);
+  if(directionProgramWeek!=='ALL'&&!weeks.some(week=>week.key===directionProgramWeek))directionProgramWeek=directionAutoProgramWeek(monthKey);
+  return directionProgramWeek;
+}
+function directionProgramWeekLabel(week){return`${formatBR(week.start).slice(0,5)} A ${formatBR(week.end).slice(0,5)}`;}
+function setDirectionProgramWeek(value){
+  directionProgramWeek=value||'ALL';directionProgramScrollPending=true;renderProgramacao();
+}
 function directionPeriodKey(slot){const h=slotMinutes(slot)/60;if(h<12)return'manha';if(h<18)return'tarde';return'noite';}
 function directionPeriodLabel(key){return key==='manha'?'MANHÃ':key==='tarde'?'TARDE':'NOITE';}
 function directionPeriodIcon(key){return key==='manha'?'☀':key==='tarde'?'☼':'☾';}
@@ -1025,17 +1063,30 @@ function renderDistribuicao(){
 }
 function renderProgramacao(){
   const monthKey=currentMonth||String($("dateFilter").value||liveTodayISO()).slice(0,7);
-  const allDates=directionMonthDates(monthKey);
-  const monthRows=allDates.flatMap(directionWeekItems);
-  const counts=statusCounts(monthRows);
-  const programmedDates=allDates.filter(date=>directionWeekItems(date).length);
+  const allDates=directionMonthDates(monthKey),weeks=directionMonthWeeks(monthKey),selectedWeekKey=directionResolveProgramWeek(monthKey);
+  const selectedWeek=selectedWeekKey==='ALL'?null:weeks.find(week=>week.key===selectedWeekKey);
+  const visibleDates=(selectedWeek?selectedWeek.dates:allDates);
+  const visibleRows=visibleDates.flatMap(directionWeekItems),counts=statusCounts(visibleRows);
+  const programmedDates=visibleDates.filter(date=>directionWeekItems(date).length);
+  const today=liveTodayISO();
+  const weekOptions=[`<option value="ALL" ${selectedWeekKey==='ALL'?'selected':''}>MÊS TODO</option>`,...weeks.map(week=>{const isCurrent=today.slice(0,7)===monthKey&&(week.dates.includes(today)||(dayIndex(today)===0&&week.start<=today&&week.end<today&&dateAdd(week.end,1)===today));const label=`${isCurrent?'SEMANA ATUAL · ':''}${directionProgramWeekLabel(week)}`;return`<option value="${esc(week.key)}" ${selectedWeekKey===week.key?'selected':''}>${esc(label)}</option>`;})].join('');
   const board=programmedDates.map(date=>{
     const rows=directionWeekItems(date),by={manha:[],tarde:[],noite:[]};rows.forEach(i=>by[directionPeriodKey(i.slot)].push(i));
-    const card=i=>{const program=resolvedProgramForItem(i,date),title=itemTitle(i,date.slice(0,7)),current=date===liveTodayISO()&&Math.floor(slotMinutes(i.slot)/60)===liveNow().getHours(),promo=i.sourceType==='promo-result';return `<article class="programCard ${current?'current':''} ${promo?'promoResult':''}"><div class="programTime">${esc(formatTime(i.slot))}</div><div class="programInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="programMeta"><span class="badge dark">${esc(stationName(i.station))}</span>${statusBadge(i.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="programQtyInline">QTD <strong>${Math.max(1,num(i.qty)||1)}</strong></span></div></div></article>`;};
+    const card=i=>{const program=resolvedProgramForItem(i,date),title=itemTitle(i,date.slice(0,7)),current=date===today&&Math.floor(slotMinutes(i.slot)/60)===liveNow().getHours(),promo=i.sourceType==='promo-result';return `<article class="programCard ${current?'current':''} ${promo?'promoResult':''}"><div class="programTime">${esc(formatTime(i.slot))}</div><div class="programInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="programMeta"><span class="badge dark">${esc(stationName(i.station))}</span>${statusBadge(i.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="programQtyInline">QTD <strong>${Math.max(1,num(i.qty)||1)}</strong></span></div></div></article>`;};
     const period=key=>`<section class="periodCell ${key}"><div class="periodTitle"><span class="periodIcon">${directionPeriodIcon(key)}</span><strong>${directionPeriodLabel(key)}</strong></div><div class="periodItems">${by[key].length?by[key].map(card).join(''):'<div class="periodEmpty">SEM ITEM NESTE PERÍODO</div>'}</div></section>`;
-    return `<article class="weekDayRow"><div class="dayCell"><div class="dayBadge"><strong>${esc(formatBR(date).slice(0,5))}</strong><span>${esc(directionDayName(date))}</span><small>${rows.length} ${rows.length===1?'ITEM':'ITENS'}</small></div></div>${period('manha')}${period('tarde')}${period('noite')}</article>`;
+    return `<article class="weekDayRow ${date===today?'currentDay':''}" data-program-date="${esc(date)}"><div class="dayCell"><div class="dayBadge"><strong>${esc(formatBR(date).slice(0,5))}</strong><span>${esc(directionDayName(date))}</span><small>${rows.length} ${rows.length===1?'ITEM':'ITENS'}</small></div></div>${period('manha')}${period('tarde')}${period('noite')}</article>`;
   }).join('');
-  $("view-programacao").innerHTML=`${offlineNotice()}${drillContextBar('programacao')}<div class="statusSummary"><div class="statusBox"><span>NO AR</span><strong>${counts["NO AR"]||0}</strong></div><div class="statusBox"><span>PENDENTES</span><strong>${counts.PENDENTE||0}</strong></div><div class="statusBox"><span>REALIZADOS</span><strong>${counts.REALIZADO||0}</strong></div><div class="statusBox"><span>CANCELADOS</span><strong>${counts.CANCELADO||0}</strong></div></div><section class="panel"><div class="panelBody"><div class="weeklyHeader"><div><strong>PROGRAMAÇÃO MENSAL</strong><span>${esc(monthLabel(monthKey))} · ${monthRows.length} ${monthRows.length===1?'ITEM PROGRAMADO':'ITENS PROGRAMADOS'}</span></div></div><div class="weeklyBoard">${board||'<div class="empty">SEM PROGRAMAÇÃO PARA ESTE MÊS.</div>'}</div></div></section>`;
+  const title=selectedWeek?'PROGRAMAÇÃO SEMANAL':'PROGRAMAÇÃO MENSAL';
+  const range=selectedWeek?`${directionProgramWeekLabel(selectedWeek)} · ${visibleRows.length} ${visibleRows.length===1?'ITEM PROGRAMADO':'ITENS PROGRAMADOS'}`:`${monthLabel(monthKey)} · ${visibleRows.length} ${visibleRows.length===1?'ITEM PROGRAMADO':'ITENS PROGRAMADOS'}`;
+  $("view-programacao").innerHTML=`${offlineNotice()}${drillContextBar('programacao')}<div class="statusSummary"><div class="statusBox"><span>NO AR</span><strong>${counts["NO AR"]||0}</strong></div><div class="statusBox"><span>PENDENTES</span><strong>${counts.PENDENTE||0}</strong></div><div class="statusBox"><span>REALIZADOS</span><strong>${counts.REALIZADO||0}</strong></div><div class="statusBox"><span>CANCELADOS</span><strong>${counts.CANCELADO||0}</strong></div></div><section class="panel"><div class="panelBody"><div class="weeklyHeader"><div><strong>${title}</strong><span>${esc(range)}</span></div><div class="programWeekSelect"><label for="directionWeekFilter">SEMANA</label><select class="control" id="directionWeekFilter" onchange="setDirectionProgramWeek(this.value)">${weekOptions}</select></div></div><div class="weeklyBoard">${board||`<div class="empty">SEM PROGRAMAÇÃO ${selectedWeek?'NESTA SEMANA':'PARA ESTE MÊS'}.</div>`}</div></div></section>`;
+  if(directionProgramScrollPending){
+    directionProgramScrollPending=false;
+    requestAnimationFrame(()=>setTimeout(()=>{
+      const reference=monthKey===today.slice(0,7)?today:($("dateFilter")?.value||'');
+      const target=(reference?document.querySelector(`[data-program-date="${reference}"]`):null)||document.querySelector('#view-programacao .weekDayRow');
+      target?.scrollIntoView({behavior:'smooth',block:'start'});
+    },40));
+  }
 }
 
 function campaignDetails(promo,metrics){if(!metrics.rows.length)return'';const shown=metrics.rows.slice(0,60),rows=shown.map(r=>`<div class="campaignOccurrence"><span>${formatBR(r.date)}</span><strong>${formatTime(r.slot)}</strong><span>${r.state==='LIDO'?`LIDO ${r.confirmed}`:r.state}</span></div>`).join('');return `<details class="campaignDetails"><summary>VER PROGRAMAÇÃO · ${monthLabel(metrics.month)}</summary><div class="campaignOccurrences">${rows}</div>${metrics.rows.length>60?`<div class="helper">EXIBINDO AS PRIMEIRAS 60 INSERÇÕES DE ${metrics.rows.length} NESTE MÊS.</div>`:''}</details>`;}
@@ -1081,7 +1132,7 @@ function renderRelatorios(){
   $("view-relatorios").innerHTML=`${offlineNotice()}<div class="reportHeader"><strong>RELATÓRIO EXECUTIVO</strong><span>PERÍODO: ${formatBR(r.from)} A ${formatBR(r.to)} · EMISSORA: ${esc(stationLabel)}</span></div><div class="sectionToolbar"><div class="toolbarTitle"><h2>RELATÓRIOS CONSOLIDADOS</h2><p>VISÃO EXECUTIVA DO PERÍODO EXATO, INCLUSIVE ENTRE COMPETÊNCIAS</p></div><div class="toolbarStats"><button class="badge" type="button" onclick="window.print()">EXPORTAR PDF</button><button class="badge" type="button" onclick="window.print()">IMPRIMIR</button></div></div><section class="panel"><div class="panelBody"><div class="reportFilters"><div class="field"><label>DE</label><input class="control" type="date" id="reportFrom" value="${esc(r.from)}"></div><div class="field"><label>ATÉ</label><input class="control" type="date" id="reportTo" value="${esc(r.to)}"></div><div class="field"><label>ATALHOS</label><div class="reportShortcuts"><button class="badge" type="button" onclick="setReportRange('today')">HOJE</button><button class="badge" type="button" onclick="setReportRange('week')">SEMANA</button><button class="badge" type="button" onclick="setReportRange('month')">MÊS</button></div></div></div></div></section><div class="kpiGrid"><div class="kpi"><span>PRÊMIOS RECEBIDOS</span><strong>${totalReceived}</strong><small>ENTRADAS REGISTRADAS NO PERÍODO</small></div><div class="kpi"><span>MOVIMENTAÇÃO / CONSUMO</span><strong>${totalConsumed}</strong><small>SALDO ATUAL ${currentBalance}</small></div><div class="kpi"><span>PROGRAMAÇÃO</span><strong>${items.length}</strong><small>ITENS NO PERÍODO</small></div><div class="kpi"><span>MERCHAN</span><strong>${merchanConfirmed}/${merchanPlanned}</strong><small>${merchanUnconfirmed} NÃO CONFIRMADA(S)</small></div><div class="kpi"><span>GANHADORES</span><strong>${promoWins+itemWins}</strong><small>RESULTADOS CONFIRMADOS</small></div><div class="kpi"><span>RETIRADAS</span><strong>${delivered}</strong><small>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</small></div></div><section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>INDICADOR</th><th class="num">TOTAL</th><th>OBSERVAÇÃO</th></tr></thead><tbody><tr><td>PRÊMIOS RECEBIDOS</td><td class="num">${totalReceived}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>MOVIMENTAÇÃO / CONSUMO</td><td class="num">${totalConsumed}</td><td>SALDO ATUAL DA ÚLTIMA COMPETÊNCIA: ${currentBalance}</td></tr><tr><td>MERCHANS PREVISTOS</td><td class="num">${merchanPlanned}</td><td>${merchanConfirmed} CONFIRMADOS · ${merchanUnconfirmed} NÃO CONFIRMADOS</td></tr><tr><td>RESULTADOS / GANHADORES</td><td class="num">${promoWins+itemWins}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>RETIRADAS CONFIRMADAS</td><td class="num">${delivered}</td><td>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</td></tr></tbody></table></div></section>`;
   $("reportFrom")?.addEventListener("change",e=>{reportFrom=e.target.value;renderRelatorios();});$("reportTo")?.addEventListener("change",e=>{reportTo=e.target.value;renderRelatorios();});
 }
-window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.7';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
+window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.8';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
 function fillMonthFilter(){const months=availableMonths();$("monthFilter").innerHTML=(months.length?months:[liveTodayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");}
 function setMonthFromDate(date){const key=String(date||liveTodayISO()).slice(0,7);currentMonth=state.months?.[key]?key:(state.currentMonth||availableMonths().at(-1)||key);}
 function directionRenderError(tab,error){
@@ -1106,7 +1157,9 @@ function directionBindControls(){
     button.dataset.directionBound='1';
     button.addEventListener('click',event=>{
       event.preventDefault();
-      activeTab=button.dataset.tab||'distribuicao';
+      const nextTab=button.dataset.tab||'distribuicao';
+      if(nextTab==='programacao'&&activeTab!=='programacao'){directionProgramWeek='AUTO';directionProgramWeekMonth='';directionProgramScrollPending=true;}
+      activeTab=nextTab;
       directionResetNavigationContext();
       render();
     });
@@ -1116,7 +1169,7 @@ function directionBindControls(){
     dateControl.dataset.directionBound='1';
     dateControl.addEventListener('change',()=>{
       const date=dateControl.value||liveTodayISO();
-      setMonthFromDate(date);fillMonthFilter();directionResetNavigationContext();render();
+      setMonthFromDate(date);fillMonthFilter();directionProgramWeek='AUTO';directionProgramWeekMonth='';directionProgramScrollPending=activeTab==='programacao';directionResetNavigationContext();render();
     });
   }
   const monthControl=$('monthFilter');
@@ -1124,7 +1177,7 @@ function directionBindControls(){
     monthControl.dataset.directionBound='1';
     monthControl.addEventListener('change',()=>{
       currentMonth=monthControl.value||liveTodayISO().slice(0,7);
-      state.currentMonth=currentMonth;reportFrom='';reportTo='';directionPickupFilter='ALL';directionResetNavigationContext();
+      state.currentMonth=currentMonth;reportFrom='';reportTo='';directionPickupFilter='ALL';directionProgramWeek='AUTO';directionProgramWeekMonth='';directionProgramScrollPending=activeTab==='programacao';directionResetNavigationContext();
       const currentDate=$('dateFilter').value||liveTodayISO(),day=String(currentDate).slice(8,10)||'01',candidate=`${currentMonth}-${day}`,dt=new Date(`${candidate}T12:00:00`);
       $('dateFilter').value=Number.isNaN(dt.getTime())||String(dt.getMonth()+1).padStart(2,'0')!==currentMonth.slice(5,7)?`${currentMonth}-01`:candidate;
       render();
