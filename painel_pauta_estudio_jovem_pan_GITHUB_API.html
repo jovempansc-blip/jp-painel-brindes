@@ -2285,6 +2285,14 @@ tbody tr:focus-within td{background:#fff8fa}
 .winnerContextIcon{width:18px;text-align:center;font-size:12px}
 @media(max-width:640px){.winnerContextMenu{min-width:min(260px,calc(100vw - 20px))}}
 </style>
+
+<style>
+/* === AV-57.5.2 · ALERTA TEMPORAL DE PRÊMIO === */
+.studioPrizeMomentAlert{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:24px!important;border:1px solid #efb5c0!important;border-radius:999px!important;background:#fff1f3!important;color:#a51e35!important;padding:0 10px!important;font-size:8.5px!important;font-weight:1000!important;letter-spacing:.065em!important;animation:studioPrizeMomentPulse 1.15s ease-in-out infinite!important;box-shadow:0 0 0 rgba(185,13,47,0)!important}
+@keyframes studioPrizeMomentPulse{0%,100%{background:#fff1f3;color:#a51e35;border-color:#efb5c0;box-shadow:0 0 0 0 rgba(185,13,47,0)}50%{background:#d9445e;color:#fff;border-color:#d9445e;box-shadow:0 0 0 4px rgba(217,68,94,.12)}}
+@media(prefers-reduced-motion:reduce){.studioPrizeMomentAlert{animation:none!important;background:#fff1f3!important;color:#a51e35!important}}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -3291,13 +3299,26 @@ function studioStationLabel(){
 function studioFullStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS 98,3' : 'JOVEMPAN 101,7';
 }
+function studioPrizeMomentAlert(item,promo){
+  if(promo||!item||item.__virtual||item.sourceType==='promo-result'||!studioPrizePending(item)) return '';
+  const now=currentSlotDate(),date=todayISO();
+  if(item.date!==date) return '';
+  const parts=String(timeToHHMM(item.slot)||'').split(':').map(Number),hour=parts[0],minute=parts[1]||0;
+  if(!Number.isFinite(hour)) return '';
+  const sameHour=(monthData().items||[]).filter(i=>i&&i.id!==item.id&&i.date===item.date&&i.sourceType!=='promo-result'&&normalizeStationValue(i.station||STUDIO_STATION)===normalizeStationValue(STUDIO_STATION)&&upper(i.status||'PENDENTE')!=='CANCELADO'&&Number(String(timeToHHMM(i.slot)||'').slice(0,2))===hour);
+  const splitHour=minute===30||sameHour.some(i=>String(timeToHHMM(i.slot)||'').endsWith(':30'));
+  const nowHour=now.getHours(),nowMinute=now.getMinutes();
+  const inWindow=splitHour ? (nowHour===hour && (minute===30?nowMinute>=30:nowMinute<30)) : nowHour===hour;
+  if(!inWindow) return '';
+  return `<span class="studioPrizeMomentAlert">${splitHour?'PRÊMIO DESTA MEIA HORA':'PRÊMIO DA HORA'}</span>`;
+}
 function buildStudioContext(item,promo){
   const date=item?.date||todayISO();
   const program=programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'';
   const programInfo=program?`<span>${esc(upper(program))}</span>`:'';
   const now=currentSlotDate();
   const manualInfo=manual?`<span class="manualConsult">CONSULTANDO ${esc(formatStudioTime(item?.slot||''))} · AGORA ${esc(formatStudioTime(`${pad(now.getHours())}:${pad(now.getMinutes())}`))}</span><button class="returnNowBtn" type="button" onclick="returnStudioToNow()">VOLTAR PARA AGORA</button>`:'';
-  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span>${programInfo}${manualInfo}</div>`;
+  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span>${programInfo}${studioPrizeMomentAlert(item,promo)}${manualInfo}</div>`;
 }
 function studioPrizePending(item){return !!(item&&!item.__virtual&&item.sourceType!=='promo-result'&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
 /* ================= AV-57.3 · MOTOR GLOBAL DE LEITURAS ================= */
