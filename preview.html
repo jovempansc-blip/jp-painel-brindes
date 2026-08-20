@@ -9,6 +9,9 @@
 <meta name="jp-direction-build" content="AV-57.6.6.2">
 
 <title>Direção · Painel de Operação e Programação — Jovem Pan Floripa</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://jp-painel-brindes-default-rtdb.firebaseio.com" crossorigin>
+<link rel="dns-prefetch" href="//jp-painel-brindes-default-rtdb.firebaseio.com">
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 <style>
@@ -93,6 +96,11 @@ button{cursor:pointer}
 }
 .syncBadge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 0 4px rgba(19,121,71,.08)}
 .syncBadge.offline{border-color:#ffd7a8;background:var(--orange-soft);color:var(--orange)}
+
+.syncBadge.connecting{border-color:#d8e2ef!important;background:#f5f8fc!important;color:#5f7188!important}
+.syncBadge.connecting::before{animation:directionSyncPulse .9s ease-in-out infinite}
+.syncBadge.error{border-color:#f0b5bf!important;background:#fff2f4!important;color:#a61e35!important}
+@keyframes directionSyncPulse{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:1;transform:scale(1.18)}}
 .updated{color:var(--muted);font-size:8.5px;line-height:1.3;text-align:right}
 .tabs{
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;
@@ -554,6 +562,7 @@ tbody tr:focus-within td{background:#fff8fa}
 @media(max-width:700px){#view-programacao .weekDayRow{grid-template-columns:1fr}#view-programacao .dayCell{grid-row:auto;border-right:0;border-bottom:1px solid var(--line)}#view-programacao .programCard{grid-template-columns:52px 1fr}}
 
 </style>
+<meta name="direction-build-marker" content="AV-57.6.6.3-FIREBASE-AUTO">
 </head>
 <body>
 <div class="wrap">
@@ -637,6 +646,18 @@ let state={months:{}};
 let currentMonth="";
 let activeTab="resumo";
 let firebaseReady=false;
+let firebaseStarted=false;
+let firebaseConnected=false;
+let firebaseServerLoaded=false;
+let firebaseDatabase=null;
+let firebaseRef=null;
+let firebaseConnectionRef=null;
+let firebaseListenerAttached=false;
+let firebaseBootstrapInFlight=false;
+let firebaseRetryTimer=null;
+let firebaseRestInFlight=false;
+let firebaseLastServerActivity=0;
+let firebaseLastError='';
 let connectionMode="loading";
 let lastFirebaseSyncAt=localStorage.getItem('jp_direcao_last_firebase_sync')||"";
 let reportFrom="";
@@ -1042,24 +1063,226 @@ window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange
 function fillMonthFilter(){const months=availableMonths();$("monthFilter").innerHTML=(months.length?months:[liveTodayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");}
 function setMonthFromDate(date){const key=String(date||liveTodayISO()).slice(0,7);currentMonth=state.months?.[key]?key:(state.currentMonth||availableMonths().at(-1)||key);}
 function render(){fillMonthFilter();renderResumo();renderDistribuicao();renderProgramacao();renderPromocoes();renderEstudio();renderRetiradas();renderRelatorios();document.querySelectorAll(".view").forEach(view=>view.classList.toggle("active",view.id===`view-${activeTab}`));document.querySelectorAll(".tab").forEach(button=>button.classList.toggle("active",button.dataset.tab===activeTab));}
-function updateConnection(online,message){
-  const badge=$("syncBadge");connectionMode=online?'online':'local';firebaseReady=!!online;badge.classList.toggle("offline",!online);badge.textContent=online?"FIREBASE ONLINE":"DADOS LOCAIS — SEM CONEXÃO";
-  if(online){lastFirebaseSyncAt=new Date().toLocaleString("pt-BR");localStorage.setItem('jp_direcao_last_firebase_sync',lastFirebaseSyncAt);$("updated").textContent=`ATUALIZADO: ${lastFirebaseSyncAt}`;}else{$("updated").textContent=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO REAL: ${lastFirebaseSyncAt}`:(message||"SEM SINCRONIZAÇÃO FIREBASE CONFIRMADA");}
+function directionFirebaseConfigReady(){
+  return !!(window.firebase&&FIREBASE_CONFIG?.apiKey&&FIREBASE_CONFIG?.databaseURL);
 }
-function applyPayload(payload,source){const next=payload?.state||payload;if(!next||!next.months)throw new Error("BASE SEM ESTRUTURA DE MESES");state=next;state.programSchedules||=[];localStorage.setItem(STORAGE_KEY,JSON.stringify(state));const selectedDate=$("dateFilter").value||liveTodayISO();setMonthFromDate(selectedDate);fillMonthFilter();updateConnection(source==="firebase",source==="firebase"?"FIREBASE ONLINE":"DADOS LOCAIS");render();}
-function loadLocalFallback(){try{const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");if(local?.months){applyPayload(local,"local");return true;}}catch(error){}return false;}
+function updateConnection(online,message='',mode=''){
+  const badge=$("syncBadge");
+  firebaseConnected=!!online;
+  connectionMode=online?'online':(mode||'local');
+  if(!badge)return;
+  badge.classList.remove('offline','connecting','error');
+  if(online){
+    badge.textContent='FIREBASE ONLINE';
+    badge.title='CONECTADO AUTOMATICAMENTE AO FIREBASE';
+    lastFirebaseSyncAt=new Date().toLocaleString('pt-BR');
+    localStorage.setItem('jp_direcao_last_firebase_sync',lastFirebaseSyncAt);
+    $("updated").textContent=`ATUALIZADO: ${lastFirebaseSyncAt}`;
+    return;
+  }
+  if(connectionMode==='connecting'){
+    badge.classList.add('connecting');
+    badge.textContent='CONECTANDO AO FIREBASE';
+    badge.title=message||'CONEXÃO AUTOMÁTICA EM ANDAMENTO';
+    $("updated").textContent=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO: ${lastFirebaseSyncAt}`:'CONECTANDO AUTOMATICAMENTE...';
+    return;
+  }
+  if(connectionMode==='error'){
+    badge.classList.add('error');
+    badge.textContent='FIREBASE INDISPONÍVEL';
+    badge.title=message||firebaseLastError||'ERRO DE CONEXÃO';
+  }else{
+    badge.classList.add('offline');
+    badge.textContent='DADOS LOCAIS — RECONECTANDO';
+    badge.title=message||'AGUARDANDO RECONEXÃO AUTOMÁTICA';
+  }
+  $("updated").textContent=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO REAL: ${lastFirebaseSyncAt}`:(message||'AGUARDANDO FIREBASE');
+}
+function directionMarkFirebaseActivity(){
+  firebaseLastServerActivity=Date.now();
+  firebaseServerLoaded=true;
+  updateConnection(true,'FIREBASE ONLINE');
+}
+function applyPayload(payload,source){
+  const next=payload?.state||payload;
+  if(!next||!next.months)throw new Error('BASE SEM ESTRUTURA DE MESES');
+  state=next;state.programSchedules||=[];
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  const selectedDate=$("dateFilter").value||liveTodayISO();
+  setMonthFromDate(selectedDate);fillMonthFilter();
+  if(source==='firebase'||source==='rest') directionMarkFirebaseActivity();
+  render();
+}
+function loadLocalFallback(){
+  try{
+    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+    if(local?.months){
+      state=local;state.programSchedules||=[];
+      const selectedDate=$("dateFilter").value||liveTodayISO();
+      setMonthFromDate(selectedDate);fillMonthFilter();render();
+      if(!firebaseConnected)updateConnection(false,'USANDO CACHE LOCAL ENQUANTO O FIREBASE RECONECTA','local');
+      return true;
+    }
+  }catch(error){console.warn('DIRECTION LOCAL FALLBACK ERROR',error);}
+  return false;
+}
+function directionScheduleFirebaseRetry(delay=2200){
+  clearTimeout(firebaseRetryTimer);
+  if(navigator.onLine===false)return;
+  firebaseRetryTimer=setTimeout(()=>directionForceFirebaseConnect(true),delay);
+}
+async function directionFirebaseRestRead(){
+  if(firebaseRestInFlight||navigator.onLine===false)return false;
+  firebaseRestInFlight=true;
+  try{
+    const base=String(FIREBASE_CONFIG.databaseURL||'').replace(/\/$/,'');
+    const path=FIREBASE_ROOT_PATH.split('/').map(encodeURIComponent).join('/');
+    const response=await Promise.race([
+      fetch(`${base}/${path}.json?_=${Date.now()}`,{method:'GET',cache:'no-store',mode:'cors',credentials:'omit',headers:{'Accept':'application/json'}}),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT REST FIREBASE')),8000))
+    ]);
+    if(!response.ok)throw new Error(`REST FIREBASE HTTP ${response.status}`);
+    const payload=await response.json();
+    if(!payload)throw new Error('BASE FIREBASE VAZIA');
+    applyPayload(payload,'rest');
+    return true;
+  }catch(error){
+    firebaseLastError=String(error?.message||error||'ERRO REST');
+    console.warn('DIRECTION FIREBASE REST ERROR',error);
+    return false;
+  }finally{firebaseRestInFlight=false;}
+}
+async function directionFirebaseBootstrap(force=false){
+  if(!firebaseReady||!firebaseRef||firebaseBootstrapInFlight)return;
+  if(!force&&firebaseConnected&&firebaseServerLoaded)return;
+  firebaseBootstrapInFlight=true;
+  updateConnection(false,'CONEXÃO AUTOMÁTICA EM ANDAMENTO','connecting');
+  try{
+    if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
+    const snapshot=await Promise.race([
+      firebaseRef.get(),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT SDK FIREBASE')),8000))
+    ]);
+    const value=snapshot.val();
+    if(!value)throw new Error('BASE FIREBASE VAZIA');
+    applyPayload(value,'firebase');
+    clearTimeout(firebaseRetryTimer);
+  }catch(error){
+    firebaseLastError=String(error?.message||error||'ERRO DE CONEXÃO');
+    console.warn('DIRECTION FIREBASE BOOTSTRAP ERROR',error);
+    const restOk=await directionFirebaseRestRead();
+    if(!restOk){
+      if(!firebaseServerLoaded)loadLocalFallback();
+      updateConnection(false,navigator.onLine===false?'NAVEGADOR SEM INTERNET':firebaseLastError,navigator.onLine===false?'local':'connecting');
+      directionScheduleFirebaseRetry(2500);
+    }
+  }finally{firebaseBootstrapInFlight=false;}
+}
+function directionAttachFirebaseListeners(){
+  if(!firebaseReady||!firebaseRef||firebaseListenerAttached)return;
+  firebaseListenerAttached=true;
+  firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
+  firebaseConnectionRef.on('value',snapshot=>{
+    if(snapshot.val()===true){
+      firebaseConnected=true;
+      if(firebaseServerLoaded)updateConnection(true,'FIREBASE ONLINE');
+      else updateConnection(false,'CANAL FIREBASE CONECTADO · CARREGANDO DADOS','connecting');
+      if(!firebaseServerLoaded)directionFirebaseBootstrap(true);
+      return;
+    }
+    if(navigator.onLine===false){
+      firebaseConnected=false;
+      updateConnection(false,'NAVEGADOR SEM INTERNET','local');
+      return;
+    }
+    if(!firebaseLastServerActivity||Date.now()-firebaseLastServerActivity>12000){
+      firebaseConnected=false;
+      updateConnection(false,'RECONECTANDO AUTOMATICAMENTE','connecting');
+      directionScheduleFirebaseRetry(1600);
+    }
+  },error=>{
+    firebaseLastError=String(error?.message||error||'MONITOR DE CONEXÃO');
+    directionScheduleFirebaseRetry(1600);
+  });
+  firebaseRef.on('value',snapshot=>{
+    try{
+      const value=snapshot.val();
+      if(!value)throw new Error('BASE FIREBASE VAZIA');
+      applyPayload(value,'firebase');
+    }catch(error){
+      firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR FIREBASE');
+      console.warn('DIRECTION FIREBASE LISTENER APPLY ERROR',error);
+      directionScheduleFirebaseRetry(2000);
+    }
+  },error=>{
+    firebaseLastError=String(error?.message||error||'LISTENER FIREBASE');
+    console.warn('DIRECTION FIREBASE LISTENER ERROR',error);
+    updateConnection(false,'RECONECTANDO AUTOMATICAMENTE','connecting');
+    directionScheduleFirebaseRetry(1800);
+  });
+}
+function initDirectionFirebase(){
+  if(firebaseStarted){directionFirebaseBootstrap(false);return;}
+  if(!directionFirebaseConfigReady()){
+    updateConnection(false,'AGUARDANDO SDK DO FIREBASE','connecting');
+    let attempts=0;
+    const wait=()=>{
+      if(directionFirebaseConfigReady()){initDirectionFirebase();return;}
+      if(++attempts<24){setTimeout(wait,250);return;}
+      firebaseLastError='SDK DO FIREBASE NÃO CARREGOU';
+      updateConnection(false,firebaseLastError,'error');
+      directionScheduleFirebaseRetry(3500);
+    };
+    setTimeout(wait,120);return;
+  }
+  firebaseStarted=true;
+  try{
+    const app=window.firebase.apps&&window.firebase.apps.length?window.firebase.app():window.firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseDatabase=window.firebase.database(app);
+    if(typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
+    firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
+    firebaseReady=true;
+    updateConnection(false,'CONEXÃO AUTOMÁTICA EM ANDAMENTO','connecting');
+    directionAttachFirebaseListeners();
+    directionFirebaseBootstrap(true);
+    setTimeout(()=>{if(!firebaseServerLoaded)directionFirebaseRestRead();},900);
+  }catch(error){
+    firebaseStarted=false;firebaseReady=false;firebaseConnected=false;
+    firebaseLastError=String(error?.message||error||'ERRO AO INICIALIZAR FIREBASE');
+    console.warn('DIRECTION FIREBASE INIT ERROR',error);
+    updateConnection(false,firebaseLastError,'error');
+    directionScheduleFirebaseRetry(3000);
+  }
+}
+function directionForceFirebaseConnect(force=false){
+  if(navigator.onLine===false){updateConnection(false,'NAVEGADOR SEM INTERNET','local');return;}
+  if(!firebaseReady){firebaseStarted=false;initDirectionFirebase();return;}
+  try{if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();}catch(error){}
+  directionFirebaseBootstrap(force||!firebaseConnected||!firebaseServerLoaded);
+  if(!firebaseServerLoaded)setTimeout(()=>directionFirebaseRestRead(),700);
+}
+function startDirectionFirebaseAutoConnect(){
+  [0,250,700,1500,3000,6000,10000].forEach(delay=>setTimeout(()=>{
+    if(firebaseConnected&&firebaseServerLoaded)return;
+    directionForceFirebaseConnect(true);
+  },delay));
+}
 
-$("dateFilter").value=liveTodayISO();$("stationFilter").value="ALL";
-document.querySelectorAll(".tab").forEach(button=>button.addEventListener("click",()=>{activeTab=button.dataset.tab;directionDrilldown=null;returnContext=null;render();}));
-$("dateFilter").addEventListener("change",()=>{const date=$("dateFilter").value||liveTodayISO();setMonthFromDate(date);fillMonthFilter();directionDrilldown=null;returnContext=null;render();});
-$("monthFilter").addEventListener("change",()=>{currentMonth=$("monthFilter").value;state.currentMonth=currentMonth;reportFrom="";reportTo="";directionPickupFilter='ALL';directionDrilldown=null;returnContext=null;const currentDate=$("dateFilter").value||liveTodayISO(),day=String(currentDate).slice(8,10)||"01",candidate=`${currentMonth}-${day}`,dt=new Date(`${candidate}T12:00:00`);$("dateFilter").value=Number.isNaN(dt.getTime())||String(dt.getMonth()+1).padStart(2,"0")!==currentMonth.slice(5,7)?`${currentMonth}-01`:candidate;render();});
-$("stationFilter").addEventListener("change",()=>{directionDrilldown=null;returnContext=null;render();});
+initDirectionFirebase();
+startDirectionFirebaseAutoConnect();
+setTimeout(()=>{if(!firebaseServerLoaded)loadLocalFallback();},2600);
+setInterval(()=>{
+  if(navigator.onLine===false)return;
+  if(!firebaseConnected||!firebaseServerLoaded){directionForceFirebaseConnect(true);return;}
+  if(Date.now()-firebaseLastServerActivity>45000){
+    firebaseRef?.child('savedAt').get().then(()=>directionMarkFirebaseActivity()).catch(()=>directionForceFirebaseConnect(true));
+  }
+},12000);
+window.addEventListener('online',()=>{updateConnection(false,'INTERNET RESTABELECIDA · RECONECTANDO','connecting');directionForceFirebaseConnect(true);});
+window.addEventListener('offline',()=>updateConnection(false,'NAVEGADOR SEM INTERNET','local'));
+window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded)directionForceFirebaseConnect(true);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!firebaseConnected||!firebaseServerLoaded))directionForceFirebaseConnect(true);});
 
-try{
-  firebase.initializeApp(FIREBASE_CONFIG);
-  firebase.database().ref(FIREBASE_ROOT_PATH).on("value",snapshot=>{try{const value=snapshot.val();if(!value)throw new Error("BASE VAZIA");applyPayload(value,"firebase");}catch(error){firebaseReady=false;if(!loadLocalFallback())updateConnection(false,`FALHA AO PROCESSAR DADOS: ${error.message}`);}},error=>{firebaseReady=false;if(!loadLocalFallback())updateConnection(false,`FIREBASE INDISPONÍVEL: ${error.message||"ERRO DE CONEXÃO"}`);});
-}catch(error){firebaseReady=false;if(!loadLocalFallback())updateConnection(false,`FIREBASE NÃO INICIALIZADO: ${error.message}`);}
-setTimeout(()=>{if(!firebaseReady&&!state.months?.[currentMonth])loadLocalFallback();},2500);
 let lastLiveClockKey="",lastLiveDate=liveTodayISO();
 function refreshTimeDependentViews(force=false){
   const now=liveNow(),key=`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`,today=liveTodayISO();if(!force&&key===lastLiveClockKey)return;lastLiveClockKey=key;
