@@ -6,9 +6,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="jp-direction-build" content="AV-57.6.6.8">
+<meta name="jp-direction-build" content="AV-57.6.6.10">
 
-<!-- AV-57.6.6.9-DIRECAO-CALENDARIO-POA -->
+<!-- AV-57.6.6.10-DIRECAO-ESPELHO-REAL-POA-FIREBASE -->
 <title>Direção · Painel de Operação e Programação — Jovem Pan Floripa</title>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://jp-painel-brindes-default-rtdb.firebaseio.com" crossorigin>
@@ -575,7 +575,7 @@ tbody tr:focus-within td{background:#fff8fa}
 .syncBadge:focus-visible,.tab:focus-visible,main button:focus-visible{outline:2px solid rgba(185,13,47,.34);outline-offset:2px}
 
 </style>
-<meta name="direction-build-marker" content="AV-57.6.6.8-DIRECAO-SELETOR-SEMANAL">
+<meta name="direction-build-marker" content="AV-57.6.6.10-DIRECAO-ESPELHO-REAL-POA">
 </head>
 <body>
 <div class="wrap">
@@ -729,20 +729,53 @@ function businessStatusBadge(status){
   else if(["ATENÇÃO","PENDENTE","RESULTADO PENDENTE"].includes(value))cls="pendente";
   return `<span class="badge ${cls}">${esc(value)}</span>`;
 }
-function monthData(key=currentMonth){return state.months?.[key]||{items:[],promos:[],distributions:[]};}
-function availableMonths(){return Object.keys(state.months||{}).sort();}
-function distributionById(id,monthKey=currentMonth){return (monthData(monthKey).distributions||[]).find(row=>row.id===id)||{};}
+function directionList(value){
+  if(Array.isArray(value))return value.filter(Boolean);
+  if(value&&typeof value==='object')return Object.keys(value).sort((a,b)=>{const na=Number(a),nb=Number(b);if(Number.isFinite(na)&&Number.isFinite(nb))return na-nb;return String(a).localeCompare(String(b));}).map(key=>value[key]).filter(Boolean);
+  return [];
+}
+function directionNormalizeState(data){
+  if(!data||!data.months||typeof data.months!=='object')return data;
+  data.programSchedules=directionList(data.programSchedules);
+  data.schedules=directionList(data.schedules);
+  Object.entries(data.months).forEach(([key,month])=>{
+    if(!month||typeof month!=='object'){data.months[key]={label:key,items:[],promos:[],distributions:[]};return;}
+    month.items=directionList(month.items);
+    month.promos=directionList(month.promos);
+    month.distributions=directionList(month.distributions);
+    month.label=month.label||key;
+  });
+  return data;
+}
+function directionStateFromPayload(payload){
+  // Mesma prioridade usada pelo Painel Principal: a estrutura plana em /jp-painel-brindes/state é a oficial.
+  // O nó legado payload.state só é aceito quando a estrutura plana não existe.
+  if(payload?.months)return payload;
+  if(payload?.state?.months)return payload.state;
+  return null;
+}
+function monthData(key=currentMonth){const month=state.months?.[key];return month||{items:[],promos:[],distributions:[]};}
+function availableMonths(){return Object.keys(state.months||{}).filter(key=>/^\d{4}-\d{2}$/.test(key)).sort();}
+function distributionById(id,monthKey=currentMonth){return directionList(monthData(monthKey).distributions).find(row=>row.id===id)||{};}
 function itemMonthKey(item){return String(item?.date||currentMonth).slice(0,7)||currentMonth;}
 function itemTitle(item,monthKey=itemMonthKey(item)){const distribution=distributionById(item.distributionId,monthKey);return upper(item.title||distribution.title||item.prize||"SEM TÍTULO");}
 function itemDescription(item,monthKey=itemMonthKey(item)){const distribution=distributionById(item.distributionId,monthKey);return String(item.description||item.notes||distribution.description||"").trim();}
 function itemStation(item){return stationCode(item.station||"JP1017");}
-function itemChannel(item){return upper(item.channel||"RÁDIO");}
+function normalizeChannel(value){
+  const v=upper(value);
+  if(v==='AR'||v==='RADIO'||v==='RÁDIO')return 'RÁDIO';
+  if(v==='RS'||v==='REDE SOCIAL'||v==='REDES SOCIAIS'||v==='SOCIAL')return 'REDES SOCIAIS';
+  if(v==='RUA'||v==='EXTERNA'||v==='EXTERNO')return 'EXTERNA';
+  if(v==='CLIENTES'||v==='RESERVA'||v==='RESERVADO')return 'RESERVADO';
+  return v||'RÁDIO';
+}
+function itemChannel(item){return normalizeChannel(item?.channel||'RÁDIO');}
 function itemWinnerNames(item){const listed=Array.isArray(item?.winnerNames)?item.winnerNames.map(upper).filter(Boolean):[];return listed.length?listed:String(item?.winnerName||item?.resultName||"").split(',').map(upper).filter(Boolean);}
 function itemWinner(item){return itemWinnerNames(item).join(', ');}
-function isRadioItem(item){return itemChannel(item)==="RÁDIO";}
+function isRadioItem(item){return itemChannel(item)==='RÁDIO';}
 function itemsForDate(date,radioOnly=false){
   const key=String(date||currentMonth).slice(0,7);
-  return (monthData(key).items||[]).filter(item=>item.date===date).filter(item=>stationMatches(item.station||"JP1017")).filter(item=>!radioOnly||isRadioItem(item)).sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot)||itemTitle(a,key).localeCompare(itemTitle(b,key)));
+  return directionList(monthData(key).items).filter(item=>item.date===date).filter(item=>stationMatches(item.station||'JP1017')).filter(item=>!radioOnly||normalizeChannel(item.channel)==='RÁDIO').sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot)||upper(a.program||'').localeCompare(upper(b.program||''))||itemTitle(a,key).localeCompare(itemTitle(b,key)));
 }
 function stationItems(date){return itemsForDate(date,true);}
 function statusCounts(items){const base={"NO AR":0,"PENDENTE":0,"CANCELADO":0,"REALIZADO":0};items.forEach(item=>base[normalizeStatus(item.status)]++);return base;}
@@ -1037,8 +1070,8 @@ function setDirectionProgramWeek(value){
 function directionPeriodKey(slot){const h=slotMinutes(slot)/60;if(h<12)return'manha';if(h<18)return'tarde';return'noite';}
 function directionPeriodLabel(key){return key==='manha'?'MANHÃ':key==='tarde'?'TARDE':'NOITE';}
 function directionPeriodIcon(key){return key==='manha'?'☀':key==='tarde'?'☼':'☾';}
-function directionWeekItems(date){let rows=[...(monthData(date.slice(0,7)).items||[])].filter(i=>i.date===date&&isRadioItem(i)&&stationMatches(i.station));if(directionDrilldown?.tab==='programacao'&&directionDrilldown.kind==='distribution'&&directionDrilldown.key)rows=rows.filter(i=>i.distributionId===directionDrilldown.key);return rows.sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot)||upper(a.program||'').localeCompare(upper(b.program||'')));}
-function directionProgramCard(item,date){const program=resolvedProgramForItem(item,date),title=itemTitle(item,date.slice(0,7)),current=date===liveTodayISO()&&Math.floor(slotMinutes(item.slot)/60)===liveNow().getHours(),promo=item.sourceType==='promo-result';return `<article class="directionProgramCard ${current?'current':''} ${promo?'promoResult':''}"><div class="directionProgramTime">${esc(formatTime(item.slot))}</div><div class="directionProgramInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="directionProgramMeta"><span class="badge">${esc(stationName(item.station))}</span>${statusBadge(item.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="directionProgramQty">QTD <b>${Math.max(1,num(item.qty)||1)}</b></span></div></div></article>`;}
+function directionWeekItems(date){let rows=directionList(monthData(currentMonth).items).filter(i=>i.date===date&&normalizeChannel(i.channel)==='RÁDIO'&&stationMatches(i.station||'JP1017')).sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot)||upper(a.program||'').localeCompare(upper(b.program||'')));if(directionDrilldown?.tab==='programacao'&&directionDrilldown.kind==='distribution'&&directionDrilldown.key)rows=rows.filter(i=>i.distributionId===directionDrilldown.key);return rows;}
+function directionProgramCard(item,date){const program=resolvedProgramForItem(item,date),title=itemTitle(item,currentMonth),current=date===liveTodayISO()&&Math.floor(slotMinutes(item.slot)/60)===liveNow().getHours(),promo=item.sourceType==='promo-result';return `<article class="directionProgramCard ${current?'current':''} ${promo?'promoResult':''}"><div class="directionProgramTime">${esc(formatTime(item.slot))}</div><div class="directionProgramInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="directionProgramMeta"><span class="badge">${esc(stationName(item.station))}</span>${statusBadge(item.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="directionProgramQty">QTD <b>${Math.max(1,num(item.qty)||1)}</b></span></div></div></article>`;}
 
 function renderDistribuicao(){
   let rows=[...(monthData().distributions||[])].sort((a,b)=>directionDistLabel(a).localeCompare(directionDistLabel(b)));
@@ -1141,7 +1174,7 @@ function renderRelatorios(){
   $("view-relatorios").innerHTML=`${offlineNotice()}<div class="reportHeader"><strong>RELATÓRIO EXECUTIVO</strong><span>PERÍODO: ${formatBR(r.from)} A ${formatBR(r.to)} · EMISSORA: ${esc(stationLabel)}</span></div><div class="sectionToolbar"><div class="toolbarTitle"><h2>RELATÓRIOS CONSOLIDADOS</h2><p>VISÃO EXECUTIVA DO PERÍODO EXATO, INCLUSIVE ENTRE COMPETÊNCIAS</p></div><div class="toolbarStats"><button class="badge" type="button" onclick="window.print()">EXPORTAR PDF</button><button class="badge" type="button" onclick="window.print()">IMPRIMIR</button></div></div><section class="panel"><div class="panelBody"><div class="reportFilters"><div class="field"><label>DE</label><input class="control" type="date" id="reportFrom" value="${esc(r.from)}"></div><div class="field"><label>ATÉ</label><input class="control" type="date" id="reportTo" value="${esc(r.to)}"></div><div class="field"><label>ATALHOS</label><div class="reportShortcuts"><button class="badge" type="button" onclick="setReportRange('today')">HOJE</button><button class="badge" type="button" onclick="setReportRange('week')">SEMANA</button><button class="badge" type="button" onclick="setReportRange('month')">MÊS</button></div></div></div></div></section><div class="kpiGrid"><div class="kpi"><span>PRÊMIOS RECEBIDOS</span><strong>${totalReceived}</strong><small>ENTRADAS REGISTRADAS NO PERÍODO</small></div><div class="kpi"><span>MOVIMENTAÇÃO / CONSUMO</span><strong>${totalConsumed}</strong><small>SALDO ATUAL ${currentBalance}</small></div><div class="kpi"><span>PROGRAMAÇÃO</span><strong>${items.length}</strong><small>ITENS NO PERÍODO</small></div><div class="kpi"><span>MERCHAN</span><strong>${merchanConfirmed}/${merchanPlanned}</strong><small>${merchanUnconfirmed} NÃO CONFIRMADA(S)</small></div><div class="kpi"><span>GANHADORES</span><strong>${promoWins+itemWins}</strong><small>RESULTADOS CONFIRMADOS</small></div><div class="kpi"><span>RETIRADAS</span><strong>${delivered}</strong><small>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</small></div></div><section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>INDICADOR</th><th class="num">TOTAL</th><th>OBSERVAÇÃO</th></tr></thead><tbody><tr><td>PRÊMIOS RECEBIDOS</td><td class="num">${totalReceived}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>MOVIMENTAÇÃO / CONSUMO</td><td class="num">${totalConsumed}</td><td>SALDO ATUAL DA ÚLTIMA COMPETÊNCIA: ${currentBalance}</td></tr><tr><td>MERCHANS PREVISTOS</td><td class="num">${merchanPlanned}</td><td>${merchanConfirmed} CONFIRMADOS · ${merchanUnconfirmed} NÃO CONFIRMADOS</td></tr><tr><td>RESULTADOS / GANHADORES</td><td class="num">${promoWins+itemWins}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>RETIRADAS CONFIRMADAS</td><td class="num">${delivered}</td><td>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</td></tr></tbody></table></div></section>`;
   $("reportFrom")?.addEventListener("change",e=>{reportFrom=e.target.value;renderRelatorios();});$("reportTo")?.addEventListener("change",e=>{reportTo=e.target.value;renderRelatorios();});
 }
-window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.8';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
+window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.10';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),months:availableMonths(),currentMonth,programItems:directionList(monthData(currentMonth).items).filter(i=>normalizeChannel(i.channel)==='RÁDIO').length,firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
 function fillMonthFilter(){const months=availableMonths();$("monthFilter").innerHTML=(months.length?months:[liveTodayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");}
 function setMonthFromDate(date){const key=String(date||liveTodayISO()).slice(0,7);currentMonth=state.months?.[key]?key:(state.currentMonth||availableMonths().at(-1)||key);}
 function directionRenderError(tab,error){
@@ -1269,12 +1302,18 @@ function directionMarkFirebaseActivity(){
   updateConnection(true,'FIREBASE ONLINE');
 }
 function applyPayload(payload,source){
-  const next=payload?.state||payload;
+  const next=directionStateFromPayload(payload);
   if(!next||!next.months)throw new Error('BASE SEM ESTRUTURA DE MESES');
-  state=next;state.programSchedules||=[];
+  state=directionNormalizeState(next);
+  const requestedMonth=currentMonth||String($('dateFilter')?.value||liveTodayISO()).slice(0,7);
+  if(state.months?.[requestedMonth])currentMonth=requestedMonth;
+  else if(state.months?.[state.currentMonth])currentMonth=state.currentMonth;
+  else currentMonth=availableMonths().at(-1)||liveTodayISO().slice(0,7);
+  state.currentMonth=currentMonth;
+  const monthControl=$('monthFilter');if(monthControl)monthControl.value=currentMonth;
+  const dateControl=$('dateFilter');if(dateControl&&String(dateControl.value||'').slice(0,7)!==currentMonth)dateControl.value=`${currentMonth}-01`;
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-  const selectedDate=$('dateFilter').value||liveTodayISO();
-  setMonthFromDate(selectedDate);fillMonthFilter();
+  fillMonthFilter();
   if(source==='firebase'||source==='rest')directionMarkFirebaseActivity();
   render();
 }
@@ -1282,9 +1321,11 @@ function loadLocalFallback(){
   try{
     const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
     if(local?.months){
-      state=local;state.programSchedules||=[];
-      const selectedDate=$('dateFilter').value||liveTodayISO();
-      setMonthFromDate(selectedDate);fillMonthFilter();render();
+      state=directionNormalizeState(local);
+      const requestedMonth=currentMonth||String($('dateFilter')?.value||liveTodayISO()).slice(0,7);
+      currentMonth=state.months?.[requestedMonth]?requestedMonth:(state.months?.[state.currentMonth]?state.currentMonth:(availableMonths().at(-1)||liveTodayISO().slice(0,7)));
+      state.currentMonth=currentMonth;
+      fillMonthFilter();render();
       if(!directionHasRecentServerActivity())updateConnection(false,'USANDO CACHE LOCAL ENQUANTO O FIREBASE RECONECTA','local');
       return true;
     }
