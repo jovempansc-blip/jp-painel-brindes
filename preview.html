@@ -6,14 +6,14 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="jp-direction-build" content="AV-57.6.6.2">
+<meta name="jp-direction-build" content="AV-57.6.6.6">
 
 <title>Direção · Painel de Operação e Programação — Jovem Pan Floripa</title>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://jp-painel-brindes-default-rtdb.firebaseio.com" crossorigin>
 <link rel="dns-prefetch" href="//jp-painel-brindes-default-rtdb.firebaseio.com">
-<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 <style>
 :root{
   --ink:#171c26;
@@ -561,8 +561,16 @@ tbody tr:focus-within td{background:#fff8fa}
 @media(max-width:1080px){#view-programacao .weekDayRow{grid-template-columns:88px 1fr}#view-programacao .dayCell{grid-row:1 / span 3}#view-programacao .periodCell{border-right:0;border-bottom:1px solid var(--line)}#view-programacao .periodCell:last-child{border-bottom:0}}
 @media(max-width:700px){#view-programacao .weekDayRow{grid-template-columns:1fr}#view-programacao .dayCell{grid-row:auto;border-right:0;border-bottom:1px solid var(--line)}#view-programacao .programCard{grid-template-columns:52px 1fr}}
 
+/* === AV-57.6.6.5 · INTERAÇÃO GARANTIDA / SEM CAMADAS BLOQUEANDO CLIQUES === */
+.executiveHeader,.tabs,main{position:relative}
+.executiveHeader{z-index:3}.tabs{z-index:4}main{z-index:1}
+.tabs,.tab,.headerFilters,.control,.syncBlock,.syncBadge,main button{pointer-events:auto!important}
+.tab,.syncBadge,.kpiButton,.alertButton,.badge,.directionReadonlyAction{touch-action:manipulation}
+.syncBadge{appearance:none;cursor:pointer}
+.syncBadge:focus-visible,.tab:focus-visible,main button:focus-visible{outline:2px solid rgba(185,13,47,.34);outline-offset:2px}
+
 </style>
-<meta name="direction-build-marker" content="AV-57.6.6.3-FIREBASE-AUTO">
+<meta name="direction-build-marker" content="AV-57.6.6.6-DIRECAO-ROBUST">
 </head>
 <body>
 <div class="wrap">
@@ -593,19 +601,19 @@ tbody tr:focus-within td{background:#fff8fa}
       </div>
     </div>
     <div class="syncBlock">
-      <span class="syncBadge" id="syncBadge">FIREBASE ONLINE</span>
+      <button type="button" class="syncBadge connecting" id="syncBadge" title="STATUS DO FIREBASE · CLIQUE PARA RECONECTAR">CONECTANDO AO FIREBASE</button>
       <span class="updated" id="updated">CARREGANDO DADOS...</span>
     </div>
   </header>
 
   <nav class="tabs" aria-label="Seções do painel da direção">
-    <button class="tab active" data-tab="resumo">VISÃO GERAL</button>
-    <button class="tab" data-tab="distribuicao">DISTRIBUIÇÃO</button>
-    <button class="tab" data-tab="programacao">PROGRAMAÇÃO</button>
-    <button class="tab" data-tab="promocoes">PROMO / MERCHAN</button>
-    <button class="tab" data-tab="estudio">OPERAÇÃO DO ESTÚDIO</button>
-    <button class="tab" data-tab="retiradas">RETIRADAS</button>
-    <button class="tab" data-tab="relatorios">RELATÓRIOS</button>
+    <button type="button" class="tab active" data-tab="resumo">VISÃO GERAL</button>
+    <button type="button" class="tab" data-tab="distribuicao">DISTRIBUIÇÃO</button>
+    <button type="button" class="tab" data-tab="programacao">PROGRAMAÇÃO</button>
+    <button type="button" class="tab" data-tab="promocoes">PROMO / MERCHAN</button>
+    <button type="button" class="tab" data-tab="estudio">OPERAÇÃO DO ESTÚDIO</button>
+    <button type="button" class="tab" data-tab="retiradas">RETIRADAS</button>
+    <button type="button" class="tab" data-tab="relatorios">RELATÓRIOS</button>
   </nav>
 
   <main>
@@ -658,6 +666,9 @@ let firebaseRetryTimer=null;
 let firebaseRestInFlight=false;
 let firebaseLastServerActivity=0;
 let firebaseLastError='';
+let firebaseConnectionKnown=false;
+let firebaseRetryAttempt=0;
+let firebaseRestLastAttempt=0;
 let connectionMode="loading";
 let lastFirebaseSyncAt=localStorage.getItem('jp_direcao_last_firebase_sync')||"";
 let reportFrom="";
@@ -839,6 +850,17 @@ function expectedReadRowsForPromo(promo,start=promoStart(promo),end=promoEnd(pro
   dateRange(start,end).forEach(date=>{if(!directionAV57DateAllowed(promo,date))return;let assignments=[];if(promoReadMode(promo)==='rotation'){assignments=directionAV57Plan(date).get(promo.id)||[];}else{const candidates=directionAV57Candidates(promo,date),scope=directionAV57Scope(promo),n=directionAV57Count(promo);if(scope==='hour')candidates.forEach(c=>{for(let i=0;i<n;i++)assignments.push(c);});else if(scope==='program'){[...new Set(candidates.map(c=>c.program))].forEach(program=>assignments.push(...candidates.filter(c=>c.program===program).slice(0,n)));}else assignments=candidates.slice(0,n);}
     assignments.forEach((assignment,index)=>{const slot=assignment.slot,read=readInfo(promo,date,slot),stateName=read.timestamp?'LIDO':occurrenceState(date,slot),confirmed=read.timestamp?new Date(read.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):'';rows.push({promo,date,slot,program:assignment.program||promo.program||'',state:stateName,confirmed,timestamp:read.timestamp,key:`${promo.id||promoTitle(promo)}|${date}|${formatTime(slot)}|${index}`});});
   });return rows;
+}
+function campaignMetrics(promo,monthKey=currentMonth){
+  const month=monthKey||currentMonth||liveTodayISO().slice(0,7),monthStart=`${month}-01`,monthEnd=monthLastDay(month);
+  const start=promoStart(promo)||monthStart,end=promoEnd(promo)||monthEnd;
+  const from=start>monthStart?start:monthStart,to=end<monthEnd?end:monthEnd;
+  let rows=[];
+  if(from<=to&&isMerchan(promo)) rows=expectedReadRowsForPromo(promo,from,to);
+  const confirmed=rows.filter(row=>row.state==='LIDO').length;
+  const unconfirmed=rows.filter(row=>row.state==='NÃO CONFIRMADA').length;
+  const planned=rows.length;
+  return {month,rows,planned,confirmed,unconfirmed};
 }
 function readRowsForDate(date){return promosForMonth(date.slice(0,7)).flatMap(p=>expectedReadRowsForPromo(p,date,date)).filter(row=>promoStationMatches(row.promo));}
 function pendingReadRows(date){return readRowsForDate(date).filter(row=>row.state==='NÃO CONFIRMADA');}
@@ -1059,32 +1081,99 @@ function renderRelatorios(){
   $("view-relatorios").innerHTML=`${offlineNotice()}<div class="reportHeader"><strong>RELATÓRIO EXECUTIVO</strong><span>PERÍODO: ${formatBR(r.from)} A ${formatBR(r.to)} · EMISSORA: ${esc(stationLabel)}</span></div><div class="sectionToolbar"><div class="toolbarTitle"><h2>RELATÓRIOS CONSOLIDADOS</h2><p>VISÃO EXECUTIVA DO PERÍODO EXATO, INCLUSIVE ENTRE COMPETÊNCIAS</p></div><div class="toolbarStats"><button class="badge" type="button" onclick="window.print()">EXPORTAR PDF</button><button class="badge" type="button" onclick="window.print()">IMPRIMIR</button></div></div><section class="panel"><div class="panelBody"><div class="reportFilters"><div class="field"><label>DE</label><input class="control" type="date" id="reportFrom" value="${esc(r.from)}"></div><div class="field"><label>ATÉ</label><input class="control" type="date" id="reportTo" value="${esc(r.to)}"></div><div class="field"><label>ATALHOS</label><div class="reportShortcuts"><button class="badge" type="button" onclick="setReportRange('today')">HOJE</button><button class="badge" type="button" onclick="setReportRange('week')">SEMANA</button><button class="badge" type="button" onclick="setReportRange('month')">MÊS</button></div></div></div></div></section><div class="kpiGrid"><div class="kpi"><span>PRÊMIOS RECEBIDOS</span><strong>${totalReceived}</strong><small>ENTRADAS REGISTRADAS NO PERÍODO</small></div><div class="kpi"><span>MOVIMENTAÇÃO / CONSUMO</span><strong>${totalConsumed}</strong><small>SALDO ATUAL ${currentBalance}</small></div><div class="kpi"><span>PROGRAMAÇÃO</span><strong>${items.length}</strong><small>ITENS NO PERÍODO</small></div><div class="kpi"><span>MERCHAN</span><strong>${merchanConfirmed}/${merchanPlanned}</strong><small>${merchanUnconfirmed} NÃO CONFIRMADA(S)</small></div><div class="kpi"><span>GANHADORES</span><strong>${promoWins+itemWins}</strong><small>RESULTADOS CONFIRMADOS</small></div><div class="kpi"><span>RETIRADAS</span><strong>${delivered}</strong><small>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</small></div></div><section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>INDICADOR</th><th class="num">TOTAL</th><th>OBSERVAÇÃO</th></tr></thead><tbody><tr><td>PRÊMIOS RECEBIDOS</td><td class="num">${totalReceived}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>MOVIMENTAÇÃO / CONSUMO</td><td class="num">${totalConsumed}</td><td>SALDO ATUAL DA ÚLTIMA COMPETÊNCIA: ${currentBalance}</td></tr><tr><td>MERCHANS PREVISTOS</td><td class="num">${merchanPlanned}</td><td>${merchanConfirmed} CONFIRMADOS · ${merchanUnconfirmed} NÃO CONFIRMADOS</td></tr><tr><td>RESULTADOS / GANHADORES</td><td class="num">${promoWins+itemWins}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>RETIRADAS CONFIRMADAS</td><td class="num">${delivered}</td><td>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</td></tr></tbody></table></div></section>`;
   $("reportFrom")?.addEventListener("change",e=>{reportFrom=e.target.value;renderRelatorios();});$("reportTo")?.addEventListener("change",e=>{reportTo=e.target.value;renderRelatorios();});
 }
-window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;
+window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.6';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
 function fillMonthFilter(){const months=availableMonths();$("monthFilter").innerHTML=(months.length?months:[liveTodayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");}
 function setMonthFromDate(date){const key=String(date||liveTodayISO()).slice(0,7);currentMonth=state.months?.[key]?key:(state.currentMonth||availableMonths().at(-1)||key);}
-function render(){fillMonthFilter();renderResumo();renderDistribuicao();renderProgramacao();renderPromocoes();renderEstudio();renderRetiradas();renderRelatorios();document.querySelectorAll(".view").forEach(view=>view.classList.toggle("active",view.id===`view-${activeTab}`));document.querySelectorAll(".tab").forEach(button=>button.classList.toggle("active",button.dataset.tab===activeTab));}
+function directionRenderError(tab,error){
+  console.error(`DIRECTION RENDER ERROR [${tab}]`,error);
+  const view=$(`view-${tab}`);if(!view)return;
+  const message=esc(error?.message||String(error||'ERRO DESCONHECIDO'));
+  view.innerHTML=`<section class="panel"><div class="panelHead"><div><h2>PAINEL TEMPORARIAMENTE INDISPONÍVEL</h2><span>UM BLOCO DE DADOS NÃO PÔDE SER PROCESSADO.</span></div></div><div class="panelBody"><div class="empty">ERRO DE EXIBIÇÃO: ${message}<br><br>OS DEMAIS BOTÕES DO PAINEL CONTINUAM FUNCIONANDO.</div></div></section>`;
+}
+function render(){
+  fillMonthFilter();
+  document.querySelectorAll('.view').forEach(view=>view.classList.toggle('active',view.id===`view-${activeTab}`));
+  document.querySelectorAll('.tab').forEach(button=>button.classList.toggle('active',button.dataset.tab===activeTab));
+  const renderers={resumo:renderResumo,distribuicao:renderDistribuicao,programacao:renderProgramacao,promocoes:renderPromocoes,estudio:renderEstudio,retiradas:renderRetiradas,relatorios:renderRelatorios};
+  const renderer=renderers[activeTab]||renderResumo;
+  try{renderer();}catch(error){directionRenderError(activeTab,error);}
+}
+function directionResetNavigationContext(){directionDrilldown=null;returnContext=null;}
+function directionBindControls(){
+  document.querySelectorAll('.tab').forEach(button=>{
+    if(button.dataset.directionBound==='1')return;
+    button.dataset.directionBound='1';
+    button.addEventListener('click',event=>{
+      event.preventDefault();
+      activeTab=button.dataset.tab||'resumo';
+      directionResetNavigationContext();
+      render();
+    });
+  });
+  const dateControl=$('dateFilter');
+  if(dateControl&&dateControl.dataset.directionBound!=='1'){
+    dateControl.dataset.directionBound='1';
+    dateControl.addEventListener('change',()=>{
+      const date=dateControl.value||liveTodayISO();
+      setMonthFromDate(date);fillMonthFilter();directionResetNavigationContext();render();
+    });
+  }
+  const monthControl=$('monthFilter');
+  if(monthControl&&monthControl.dataset.directionBound!=='1'){
+    monthControl.dataset.directionBound='1';
+    monthControl.addEventListener('change',()=>{
+      currentMonth=monthControl.value||liveTodayISO().slice(0,7);
+      state.currentMonth=currentMonth;reportFrom='';reportTo='';directionPickupFilter='ALL';directionResetNavigationContext();
+      const currentDate=$('dateFilter').value||liveTodayISO(),day=String(currentDate).slice(8,10)||'01',candidate=`${currentMonth}-${day}`,dt=new Date(`${candidate}T12:00:00`);
+      $('dateFilter').value=Number.isNaN(dt.getTime())||String(dt.getMonth()+1).padStart(2,'0')!==currentMonth.slice(5,7)?`${currentMonth}-01`:candidate;
+      render();
+    });
+  }
+  const stationControl=$('stationFilter');
+  if(stationControl&&stationControl.dataset.directionBound!=='1'){
+    stationControl.dataset.directionBound='1';
+    stationControl.addEventListener('change',()=>{directionResetNavigationContext();render();});
+  }
+  const syncControl=$('syncBadge');
+  if(syncControl&&syncControl.dataset.directionBound!=='1'){
+    syncControl.dataset.directionBound='1';
+    syncControl.addEventListener('click',()=>directionForceFirebaseConnect(true));
+  }
+}
+function directionInitUI(){
+  const today=liveTodayISO();
+  currentMonth=today.slice(0,7);
+  $('dateFilter').value=today;
+  $('stationFilter').value='ALL';
+  fillMonthFilter();
+  directionBindControls();
+  render();
+}
 function directionFirebaseConfigReady(){
   return !!(window.firebase&&FIREBASE_CONFIG?.apiKey&&FIREBASE_CONFIG?.databaseURL);
 }
+function directionHasRecentServerActivity(maxAge=90000){
+  return !!firebaseLastServerActivity && Date.now()-firebaseLastServerActivity<=maxAge;
+}
 function updateConnection(online,message='',mode=''){
-  const badge=$("syncBadge");
-  firebaseConnected=!!online;
-  connectionMode=online?'online':(mode||'local');
+  const badge=$('syncBadge');
+  if(online){firebaseConnected=true;firebaseConnectionKnown=true;connectionMode='online';}
+  else connectionMode=mode||'local';
   if(!badge)return;
   badge.classList.remove('offline','connecting','error');
   if(online){
     badge.textContent='FIREBASE ONLINE';
-    badge.title='CONECTADO AUTOMATICAMENTE AO FIREBASE';
+    badge.title='CONECTADO AUTOMATICAMENTE AO FIREBASE · CLIQUE PARA TESTAR NOVAMENTE';
     lastFirebaseSyncAt=new Date().toLocaleString('pt-BR');
     localStorage.setItem('jp_direcao_last_firebase_sync',lastFirebaseSyncAt);
-    $("updated").textContent=`ATUALIZADO: ${lastFirebaseSyncAt}`;
+    $('updated').textContent=`ATUALIZADO: ${lastFirebaseSyncAt}`;
     return;
   }
   if(connectionMode==='connecting'){
     badge.classList.add('connecting');
     badge.textContent='CONECTANDO AO FIREBASE';
     badge.title=message||'CONEXÃO AUTOMÁTICA EM ANDAMENTO';
-    $("updated").textContent=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO: ${lastFirebaseSyncAt}`:'CONECTANDO AUTOMATICAMENTE...';
+    $('updated').textContent=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO: ${lastFirebaseSyncAt}`:'CONECTANDO AUTOMATICAMENTE...';
     return;
   }
   if(connectionMode==='error'){
@@ -1093,14 +1182,26 @@ function updateConnection(online,message='',mode=''){
     badge.title=message||firebaseLastError||'ERRO DE CONEXÃO';
   }else{
     badge.classList.add('offline');
-    badge.textContent='DADOS LOCAIS — RECONECTANDO';
+    badge.textContent='DADOS LOCAIS · RECONECTANDO';
     badge.title=message||'AGUARDANDO RECONEXÃO AUTOMÁTICA';
   }
-  $("updated").textContent=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO REAL: ${lastFirebaseSyncAt}`:(message||'AGUARDANDO FIREBASE');
+  $('updated').textContent=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO REAL: ${lastFirebaseSyncAt}`:(message||'AGUARDANDO FIREBASE');
+}
+function directionShowConnecting(message='CONECTANDO AUTOMATICAMENTE'){
+  if(directionHasRecentServerActivity()){
+    updateConnection(true,'FIREBASE ONLINE');
+    return;
+  }
+  firebaseConnected=false;
+  updateConnection(false,message,'connecting');
 }
 function directionMarkFirebaseActivity(){
   firebaseLastServerActivity=Date.now();
   firebaseServerLoaded=true;
+  firebaseConnected=true;
+  firebaseConnectionKnown=true;
+  firebaseRetryAttempt=0;
+  clearTimeout(firebaseRetryTimer);
   updateConnection(true,'FIREBASE ONLINE');
 }
 function applyPayload(payload,source){
@@ -1108,9 +1209,9 @@ function applyPayload(payload,source){
   if(!next||!next.months)throw new Error('BASE SEM ESTRUTURA DE MESES');
   state=next;state.programSchedules||=[];
   localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
-  const selectedDate=$("dateFilter").value||liveTodayISO();
+  const selectedDate=$('dateFilter').value||liveTodayISO();
   setMonthFromDate(selectedDate);fillMonthFilter();
-  if(source==='firebase'||source==='rest') directionMarkFirebaseActivity();
+  if(source==='firebase'||source==='rest')directionMarkFirebaseActivity();
   render();
 }
 function loadLocalFallback(){
@@ -1118,28 +1219,32 @@ function loadLocalFallback(){
     const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
     if(local?.months){
       state=local;state.programSchedules||=[];
-      const selectedDate=$("dateFilter").value||liveTodayISO();
+      const selectedDate=$('dateFilter').value||liveTodayISO();
       setMonthFromDate(selectedDate);fillMonthFilter();render();
-      if(!firebaseConnected)updateConnection(false,'USANDO CACHE LOCAL ENQUANTO O FIREBASE RECONECTA','local');
+      if(!directionHasRecentServerActivity())updateConnection(false,'USANDO CACHE LOCAL ENQUANTO O FIREBASE RECONECTA','local');
       return true;
     }
   }catch(error){console.warn('DIRECTION LOCAL FALLBACK ERROR',error);}
   return false;
 }
-function directionScheduleFirebaseRetry(delay=2200){
+function directionScheduleFirebaseRetry(baseDelay=1800){
   clearTimeout(firebaseRetryTimer);
   if(navigator.onLine===false)return;
+  const multiplier=Math.min(8,Math.max(1,2**Math.min(firebaseRetryAttempt,3)));
+  const delay=Math.min(30000,baseDelay*multiplier);
+  firebaseRetryAttempt+=1;
   firebaseRetryTimer=setTimeout(()=>directionForceFirebaseConnect(true),delay);
 }
-async function directionFirebaseRestRead(){
+async function directionFirebaseRestRead(force=false){
   if(firebaseRestInFlight||navigator.onLine===false)return false;
-  firebaseRestInFlight=true;
+  if(!force&&Date.now()-firebaseRestLastAttempt<15000)return false;
+  firebaseRestLastAttempt=Date.now();firebaseRestInFlight=true;
   try{
     const base=String(FIREBASE_CONFIG.databaseURL||'').replace(/\/$/,'');
     const path=FIREBASE_ROOT_PATH.split('/').map(encodeURIComponent).join('/');
     const response=await Promise.race([
-      fetch(`${base}/${path}.json?_=${Date.now()}`,{method:'GET',cache:'no-store',mode:'cors',credentials:'omit',headers:{'Accept':'application/json'}}),
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT REST FIREBASE')),8000))
+      fetch(`${base}/${path}.json?_=${Date.now()}`,{method:'GET',cache:'no-store',mode:'cors',credentials:'omit',headers:{Accept:'application/json'}}),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT REST FIREBASE')),9000))
     ]);
     if(!response.ok)throw new Error(`REST FIREBASE HTTP ${response.status}`);
     const payload=await response.json();
@@ -1153,29 +1258,31 @@ async function directionFirebaseRestRead(){
   }finally{firebaseRestInFlight=false;}
 }
 async function directionFirebaseBootstrap(force=false){
-  if(!firebaseReady||!firebaseRef||firebaseBootstrapInFlight)return;
-  if(!force&&firebaseConnected&&firebaseServerLoaded)return;
+  if(!firebaseReady||!firebaseRef||firebaseBootstrapInFlight)return false;
+  if(!force&&firebaseConnected&&firebaseServerLoaded&&directionHasRecentServerActivity())return true;
   firebaseBootstrapInFlight=true;
-  updateConnection(false,'CONEXÃO AUTOMÁTICA EM ANDAMENTO','connecting');
+  if(!directionHasRecentServerActivity())directionShowConnecting('CONECTANDO AUTOMATICAMENTE');
   try{
     if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
     const snapshot=await Promise.race([
       firebaseRef.get(),
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT SDK FIREBASE')),8000))
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT SDK FIREBASE')),9000))
     ]);
     const value=snapshot.val();
     if(!value)throw new Error('BASE FIREBASE VAZIA');
     applyPayload(value,'firebase');
-    clearTimeout(firebaseRetryTimer);
+    return true;
   }catch(error){
     firebaseLastError=String(error?.message||error||'ERRO DE CONEXÃO');
     console.warn('DIRECTION FIREBASE BOOTSTRAP ERROR',error);
-    const restOk=await directionFirebaseRestRead();
-    if(!restOk){
+    const restOk=await directionFirebaseRestRead(true);
+    if(!restOk&&!directionHasRecentServerActivity()){
+      firebaseConnected=false;
       if(!firebaseServerLoaded)loadLocalFallback();
-      updateConnection(false,navigator.onLine===false?'NAVEGADOR SEM INTERNET':firebaseLastError,navigator.onLine===false?'local':'connecting');
-      directionScheduleFirebaseRetry(2500);
+      updateConnection(false,navigator.onLine===false?'NAVEGADOR SEM INTERNET':'RECONECTANDO AUTOMATICAMENTE',navigator.onLine===false?'local':'connecting');
+      directionScheduleFirebaseRetry(1800);
     }
+    return restOk;
   }finally{firebaseBootstrapInFlight=false;}
 }
 function directionAttachFirebaseListeners(){
@@ -1183,69 +1290,83 @@ function directionAttachFirebaseListeners(){
   firebaseListenerAttached=true;
   firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
   firebaseConnectionRef.on('value',snapshot=>{
+    firebaseConnectionKnown=true;
     if(snapshot.val()===true){
       firebaseConnected=true;
       if(firebaseServerLoaded)updateConnection(true,'FIREBASE ONLINE');
-      else updateConnection(false,'CANAL FIREBASE CONECTADO · CARREGANDO DADOS','connecting');
+      else directionShowConnecting('FIREBASE CONECTADO · CARREGANDO DADOS');
       if(!firebaseServerLoaded)directionFirebaseBootstrap(true);
       return;
     }
     if(navigator.onLine===false){
-      firebaseConnected=false;
-      updateConnection(false,'NAVEGADOR SEM INTERNET','local');
-      return;
+      firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','local');return;
     }
-    if(!firebaseLastServerActivity||Date.now()-firebaseLastServerActivity>12000){
-      firebaseConnected=false;
-      updateConnection(false,'RECONECTANDO AUTOMATICAMENTE','connecting');
-      directionScheduleFirebaseRetry(1600);
-    }
+    // .info/connected pode oscilar em redes/proxies. Uma leitura recente vale mais que esse sinal.
+    if(directionHasRecentServerActivity(90000)){updateConnection(true,'FIREBASE ONLINE');setTimeout(()=>directionFirebaseHealthCheck(),250);return;}
+    firebaseConnected=false;directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');directionScheduleFirebaseRetry(1600);
   },error=>{
     firebaseLastError=String(error?.message||error||'MONITOR DE CONEXÃO');
-    directionScheduleFirebaseRetry(1600);
+    if(!directionHasRecentServerActivity())directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');
+    directionScheduleFirebaseRetry(1800);
   });
   firebaseRef.on('value',snapshot=>{
     try{
-      const value=snapshot.val();
-      if(!value)throw new Error('BASE FIREBASE VAZIA');
+      const value=snapshot.val();if(!value)throw new Error('BASE FIREBASE VAZIA');
       applyPayload(value,'firebase');
     }catch(error){
       firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR FIREBASE');
       console.warn('DIRECTION FIREBASE LISTENER APPLY ERROR',error);
-      directionScheduleFirebaseRetry(2000);
+      if(!directionHasRecentServerActivity())directionScheduleFirebaseRetry(2200);
     }
   },error=>{
     firebaseLastError=String(error?.message||error||'LISTENER FIREBASE');
     console.warn('DIRECTION FIREBASE LISTENER ERROR',error);
-    updateConnection(false,'RECONECTANDO AUTOMATICAMENTE','connecting');
-    directionScheduleFirebaseRetry(1800);
+    if(!directionHasRecentServerActivity())directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');
+    directionScheduleFirebaseRetry(2000);
   });
 }
+async function directionFirebaseHealthCheck(){
+  if(navigator.onLine===false)return false;
+  try{
+    if(firebaseReady&&firebaseRef){
+      if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
+      await Promise.race([firebaseRef.child('savedAt').get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT HEALTH SDK')),5000))]);
+      directionMarkFirebaseActivity();return true;
+    }
+  }catch(error){firebaseLastError=String(error?.message||error||'HEALTH SDK');}
+  try{
+    const base=String(FIREBASE_CONFIG.databaseURL||'').replace(/\/$/,''),path=FIREBASE_ROOT_PATH.split('/').map(encodeURIComponent).join('/');
+    const response=await Promise.race([fetch(`${base}/${path}/savedAt.json?_=${Date.now()}`,{method:'GET',cache:'no-store',mode:'cors',credentials:'omit'}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT HEALTH REST')),5000))]);
+    if(!response.ok)throw new Error(`HEALTH REST HTTP ${response.status}`);
+    directionMarkFirebaseActivity();return true;
+  }catch(error){firebaseLastError=String(error?.message||error||'HEALTH REST');return false;}
+}
 function initDirectionFirebase(){
-  if(firebaseStarted){directionFirebaseBootstrap(false);return;}
+  if(firebaseReady){directionFirebaseBootstrap(false);return;}
+  if(firebaseStarted)return;
+  firebaseStarted=true;
   if(!directionFirebaseConfigReady()){
-    updateConnection(false,'AGUARDANDO SDK DO FIREBASE','connecting');
+    directionShowConnecting('CARREGANDO FIREBASE');
     let attempts=0;
     const wait=()=>{
-      if(directionFirebaseConfigReady()){initDirectionFirebase();return;}
-      if(++attempts<24){setTimeout(wait,250);return;}
+      if(directionFirebaseConfigReady()){firebaseStarted=false;initDirectionFirebase();return;}
+      if(++attempts<30){setTimeout(wait,250);return;}
+      firebaseStarted=false;
       firebaseLastError='SDK DO FIREBASE NÃO CARREGOU';
-      updateConnection(false,firebaseLastError,'error');
+      if(!directionHasRecentServerActivity())updateConnection(false,firebaseLastError,'error');
       directionScheduleFirebaseRetry(3500);
     };
     setTimeout(wait,120);return;
   }
-  firebaseStarted=true;
   try{
     const app=window.firebase.apps&&window.firebase.apps.length?window.firebase.app():window.firebase.initializeApp(FIREBASE_CONFIG);
     firebaseDatabase=window.firebase.database(app);
-    if(typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
+    if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
     firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
     firebaseReady=true;
-    updateConnection(false,'CONEXÃO AUTOMÁTICA EM ANDAMENTO','connecting');
+    directionShowConnecting('CONECTANDO AUTOMATICAMENTE');
     directionAttachFirebaseListeners();
     directionFirebaseBootstrap(true);
-    setTimeout(()=>{if(!firebaseServerLoaded)directionFirebaseRestRead();},900);
   }catch(error){
     firebaseStarted=false;firebaseReady=false;firebaseConnected=false;
     firebaseLastError=String(error?.message||error||'ERRO AO INICIALIZAR FIREBASE');
@@ -1255,33 +1376,34 @@ function initDirectionFirebase(){
   }
 }
 function directionForceFirebaseConnect(force=false){
-  if(navigator.onLine===false){updateConnection(false,'NAVEGADOR SEM INTERNET','local');return;}
-  if(!firebaseReady){firebaseStarted=false;initDirectionFirebase();return;}
-  try{if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();}catch(error){}
-  directionFirebaseBootstrap(force||!firebaseConnected||!firebaseServerLoaded);
-  if(!firebaseServerLoaded)setTimeout(()=>directionFirebaseRestRead(),700);
+  if(navigator.onLine===false){firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','local');return;}
+  if(!firebaseReady){initDirectionFirebase();directionFirebaseRestRead(force);return;}
+  try{if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();}catch(error){console.warn('DIRECTION FIREBASE GOONLINE ERROR',error);}
+  directionFirebaseBootstrap(force||!firebaseConnected||!firebaseServerLoaded||!directionHasRecentServerActivity());
 }
 function startDirectionFirebaseAutoConnect(){
-  [0,250,700,1500,3000,6000,10000].forEach(delay=>setTimeout(()=>{
-    if(firebaseConnected&&firebaseServerLoaded)return;
+  [0,600,1800,4500].forEach(delay=>setTimeout(()=>{
+    if(firebaseConnected&&firebaseServerLoaded&&directionHasRecentServerActivity())return;
     directionForceFirebaseConnect(true);
   },delay));
 }
 
-initDirectionFirebase();
+directionInitUI();
+// O painel fica operacional antes do SDK. A primeira leitura REST não depende do CDN do Firebase.
+directionShowConnecting('CONECTANDO AUTOMATICAMENTE');
+directionFirebaseRestRead(true).finally(()=>initDirectionFirebase());
 startDirectionFirebaseAutoConnect();
-setTimeout(()=>{if(!firebaseServerLoaded)loadLocalFallback();},2600);
-setInterval(()=>{
+setTimeout(()=>{if(!firebaseServerLoaded)loadLocalFallback();},3000);
+setInterval(async()=>{
   if(navigator.onLine===false)return;
-  if(!firebaseConnected||!firebaseServerLoaded){directionForceFirebaseConnect(true);return;}
-  if(Date.now()-firebaseLastServerActivity>45000){
-    firebaseRef?.child('savedAt').get().then(()=>directionMarkFirebaseActivity()).catch(()=>directionForceFirebaseConnect(true));
-  }
-},12000);
-window.addEventListener('online',()=>{updateConnection(false,'INTERNET RESTABELECIDA · RECONECTANDO','connecting');directionForceFirebaseConnect(true);});
-window.addEventListener('offline',()=>updateConnection(false,'NAVEGADOR SEM INTERNET','local'));
-window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded)directionForceFirebaseConnect(true);});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!firebaseConnected||!firebaseServerLoaded))directionForceFirebaseConnect(true);});
+  if(directionHasRecentServerActivity(90000))return;
+  const healthy=await directionFirebaseHealthCheck();
+  if(!healthy)directionForceFirebaseConnect(true);
+},30000);
+window.addEventListener('online',()=>{if(!directionHasRecentServerActivity())directionShowConnecting('INTERNET RESTABELECIDA · RECONECTANDO');directionForceFirebaseConnect(true);});
+window.addEventListener('offline',()=>{firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','local');});
+window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded||!directionHasRecentServerActivity(60000))directionForceFirebaseConnect(true);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!firebaseConnected||!firebaseServerLoaded||!directionHasRecentServerActivity(60000)))directionForceFirebaseConnect(true);});
 
 let lastLiveClockKey="",lastLiveDate=liveTodayISO();
 function refreshTimeDependentViews(force=false){
