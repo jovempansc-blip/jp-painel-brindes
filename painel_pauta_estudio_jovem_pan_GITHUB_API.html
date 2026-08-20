@@ -2328,6 +2328,32 @@ tbody tr:focus-within td{background:#fff8fa}
 @media(prefers-reduced-motion:reduce){.studioPromoResultDayAlert{animation:none!important}}
 </style>
 
+
+<style>
+/* AV-57.6.5 · CONTAGEM REGRESSIVA LIMPA PARA RESULTADO */
+.resultCountdownBox{
+  width:min(520px,92%)!important;
+  min-height:82px!important;
+  margin:14px auto 0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  padding:12px 22px!important;
+  border-radius:18px!important;
+  grid-template-columns:none!important;
+}
+.resultCountdownBox::before{width:4px!important}
+.resultCountdownBox .resultCountdownIcon,.resultCountdownBox .resultCountdownTarget{display:none!important}
+.resultCountdownCopy{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;width:100%!important}
+.resultCountdownCopy span{font-size:9px!important;font-weight:1000!important;letter-spacing:.11em!important;color:#8d5963!important}
+.resultCountdownCopy strong{font-size:23px!important;font-weight:1000!important;letter-spacing:.025em!important;white-space:nowrap!important;color:#8d1730!important;line-height:1.08!important}
+.resultCountdownBox.urgent .resultCountdownCopy span,.resultCountdownBox.urgent .resultCountdownCopy strong,
+.resultCountdownBox.now .resultCountdownCopy span,.resultCountdownBox.now .resultCountdownCopy strong,
+.resultCountdownBox.late .resultCountdownCopy span,.resultCountdownBox.late .resultCountdownCopy strong{color:#fff!important}
+@media(max-width:700px){.resultCountdownBox{width:min(440px,94%)!important;min-height:72px!important}.resultCountdownCopy strong{font-size:19px!important}}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -3370,16 +3396,27 @@ function studioResultCountdownBox(item){
   if(!studioResultPending(item))return'';
   const today=todayISO(),date=item?.date||'',slot=formatStudioTime(item?.slot||'');
   if(!date||!slot)return'';
-  const program=upper(item?.program||programFromSchedule(date,item?.slot||'',STUDIO_STATION)||'PROGRAMA');
-  const type=item?.sourceType==='promo-result'?'RESULTADO DA PROMOÇÃO':'RESULTADO DO PRÊMIO';
-  if(date!==today){return `<div class="resultCountdownBox"><div class="resultCountdownIcon">◷</div><div class="resultCountdownCopy"><span>${esc(type)}</span><strong>${date>today?'PROGRAMADO':'RESULTADO PENDENTE'}</strong></div><div class="resultCountdownTarget">${esc(formatBR(date))} · ${esc(slot)} · ${esc(program)}</div></div>`;}
-  const now=currentSlotDate(),parts=timeToHHMM(item.slot).split(':').map(Number),target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),parts[0]||0,parts[1]||0,0,0),delta=(target-now)/60000;
-  let cls='',headline='';
-  if(delta>10){cls=delta<=30?'soon':'';headline=`RESULTADO DAQUI ${studioCountdownDuration(delta)}`;}
-  else if(delta>0){cls='urgent';headline=`RESULTADO DAQUI ${studioCountdownDuration(delta)}`;}
-  else if(delta>-1){cls='now';headline='RESULTADO AGORA';}
-  else{cls='late';headline=`RESULTADO ATRASADO · ${studioCountdownDuration(delta)}`;}
-  return `<div class="resultCountdownBox ${cls}"><div class="resultCountdownIcon">◷</div><div class="resultCountdownCopy"><span>${esc(type)}</span><strong>${esc(headline)}</strong></div><div class="resultCountdownTarget">SORTEIO ÀS ${esc(slot)} · ${esc(program)}</div></div>`;
+  if(date!==today){
+    return `<div class="resultCountdownBox"><div class="resultCountdownCopy"><span>RESULTADO PROGRAMADO</span><strong>${esc(formatBR(date))}</strong></div></div>`;
+  }
+  const now=currentSlotDate();
+  const [hourRaw,minuteRaw]=timeToHHMM(item.slot).split(':').map(Number);
+  const startHour=Number(hourRaw)||0, startMinute=Number(minuteRaw)||0;
+  // Regra operacional: hora cheia encerra no fim da hora (+60 min);
+  // meia-hora encerra no fim da meia-hora (+30 min).
+  const windowMinutes=startMinute===30?30:60;
+  const target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),startHour,startMinute+windowMinutes,0,0);
+  const delta=(target-now)/60000;
+  let cls='',label='RESULTADO EM',timeLabel='';
+  if(delta>0){
+    if(delta<=10) cls='urgent'; else if(delta<=30) cls='soon';
+    timeLabel=studioCountdownDuration(delta);
+  }else if(delta>-1){
+    cls='now'; label='RESULTADO AGORA'; timeLabel='';
+  }else{
+    cls='late'; label='RESULTADO ATRASADO'; timeLabel=studioCountdownDuration(delta);
+  }
+  return `<div class="resultCountdownBox ${cls}"><div class="resultCountdownCopy"><span>${esc(label)}</span>${timeLabel?`<strong>${esc(timeLabel)}</strong>`:''}</div></div>`;
 }
 function studioPrizePending(item){return !!(item&&!item.__virtual&&item.sourceType!=='promo-result'&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
 /* ================= AV-57.3 · MOTOR GLOBAL DE LEITURAS ================= */

@@ -4150,8 +4150,8 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
       <button class="promoStartClose" type="button" id="promoStartCloseBtn" aria-label="FECHAR">×</button>
     </header>
     <div class="promoStartChoices">
-      <button class="promoStartChoice promo" type="button" data-promo-start-kind="promo"><b>PROMOÇÃO</b><small>PRÊMIO VINCULADO À DISTRIBUIÇÃO, SORTEIO, GANHADORES, DATA/HORA DO RESULTADO E PRAZO DE RETIRADA.</small><em>CONTINUAR COMO PROMOÇÃO</em></button>
-      <button class="promoStartChoice pauta" type="button" data-promo-start-kind="pauta"><b>PAUTA</b><small>LEITURA OPERACIONAL COM PROGRAMA, HORÁRIOS, DIAS, FREQUÊNCIA E RODÍZIO INTELIGENTE, SEM MECÂNICA DE SORTEIO.</small><em>CONTINUAR COMO PAUTA</em></button>
+      <button class="promoStartChoice promo" type="button" data-promo-start-kind="promo" onclick="startPromoRegistration('promo')"><b>PROMOÇÃO</b><small>PRÊMIO VINCULADO À DISTRIBUIÇÃO, SORTEIO, GANHADORES, DATA/HORA DO RESULTADO E PRAZO DE RETIRADA.</small><em>CONTINUAR COMO PROMOÇÃO</em></button>
+      <button class="promoStartChoice pauta" type="button" data-promo-start-kind="pauta" onclick="startPromoRegistration('pauta')"><b>PAUTA</b><small>LEITURA OPERACIONAL COM PROGRAMA, HORÁRIOS, DIAS, FREQUÊNCIA E RODÍZIO INTELIGENTE, SEM MECÂNICA DE SORTEIO.</small><em>CONTINUAR COMO PAUTA</em></button>
     </div>
   </section>
 </div>
@@ -7048,6 +7048,20 @@ function syncStateFromApi(force=false){
       scheduleFirebaseRetry(1800);
     }
   });
+}
+function forceFirebaseAutoConnect(){
+  if(navigator.onLine===false) return;
+  try{
+    if(firebaseDatabase && typeof firebaseDatabase.goOnline==='function') firebaseDatabase.goOnline();
+  }catch(error){console.warn('FIREBASE GOONLINE',error);}
+  syncStateFromApi(true);
+}
+function startFirebaseAutoConnectSequence(){
+  const delays=[0,250,700,1500,3000,6000,10000];
+  delays.forEach(delay=>setTimeout(()=>{
+    if(firebaseConnected && firebaseServerLoaded) return;
+    forceFirebaseAutoConnect();
+  },delay));
 }
 function handleBrowserConnectionChange(){
   if(navigator.onLine===false){
@@ -13079,19 +13093,30 @@ function closePromoStartModal(){
 }
 function startPromoRegistration(kind){
   const selected=kind==='pauta'?'pauta':'promo';
-  clearPromoForm();
+  try{
+    clearPromoForm();
+  }catch(error){
+    console.error('ERRO AO PREPARAR NOVO CADASTRO PROMO/PAUTA',error);
+    try{$('promoForm')?.reset();}catch(_){ }
+    if($('promoId')) $('promoId').value='';
+  }
   promoSetKindChoice(selected);
   if($('promoKind')) $('promoKind').value=selected;
-  updatePromoKindMode();
   if(selected==='pauta'){
     if($('promoScheduleMode')) $('promoScheduleMode').value='smart';
     if($('promoFrequencyScope')) $('promoFrequencyScope').value='program';
     if($('promoFrequencyCount')) $('promoFrequencyCount').value='1';
-    promoAV57UpdateScheduleUI();
-    updatePromoKindMode();
+    if($('promoReadAll')) $('promoReadAll').checked=false;
   }
+  try{ updatePromoKindMode(); }catch(error){ console.warn('AJUSTE VISUAL DO TIPO DE CADASTRO',error); }
+  try{ promoAV57UpdateScheduleUI(); }catch(error){ console.warn('AJUSTE DO PLANEJAMENTO DA PAUTA',error); }
+  try{ updatePromoPreview(); }catch(error){ console.warn('ATUALIZAÇÃO DO PREVIEW',error); }
   closePromoStartModal();
   openDrawer('promoDrawer');
+  setTimeout(()=>{
+    const first=selected==='pauta'?$('promoName'):$('promoDistributionId');
+    first?.focus?.();
+  },40);
 }
 window.openPromoStartModal=openPromoStartModal;
 window.closePromoStartModal=closePromoStartModal;
@@ -13540,7 +13565,6 @@ bind('deleteProgramWeekBtn','click',()=>clearProgramScope('week'));
 bind('deleteProgramMonthBtn','click',()=>clearProgramScope('month'));
 bind('addPromoBtn','click',openPromoStartModal);
 bind('promoStartCloseBtn','click',closePromoStartModal);
-document.querySelectorAll('[data-promo-start-kind]').forEach(btn=>btn.addEventListener('click',()=>startPromoRegistration(btn.dataset.promoStartKind)));
 bind('promoStartModal','click',event=>{if(event.target===event.currentTarget)closePromoStartModal();});
 bind('clearDistFiltersBtn','click',()=>{ $('distSearchInput').value=''; $('distStatusFilter').value=''; renderDistribuicao(); });
 ['weekFilter','programStationFilter','statusFilter'].forEach(id=>bind(id,'input',()=>{ renderProgramacao(); renderClearProgramDrawer(); }));
@@ -13675,12 +13699,20 @@ window.addEventListener('storage',()=>{
   render();
 });
 window.addEventListener('online',handleBrowserConnectionChange);
+document.addEventListener('DOMContentLoaded',()=>{
+  if(!firebaseConnected||!firebaseServerLoaded) startFirebaseAutoConnectSequence();
+},{once:true});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&(!firebaseConnected||!firebaseServerLoaded)) forceFirebaseAutoConnect();
+});
+
 window.addEventListener('offline',handleBrowserConnectionChange);
 populatePromoReadHours();
 updatePromoReadScheduleState();
 setOfficialCalendarMonth(true);
 console.info('PAINEL JP — MÊS OFICIAL:', currentCalendarMonth(), 'MÊS ABERTO:', state.currentMonth);
 initFirebaseSync();
+startFirebaseAutoConnectSequence();
 initWinnerBank(false);
 try{
   render();
