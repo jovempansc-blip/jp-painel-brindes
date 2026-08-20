@@ -3494,6 +3494,23 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 </style>
 
 <style>/* AV-57.6.3 · FIREBASE FAST SYNC */</style>
+
+<style>
+/* AV-57.6.4 · LANÇADOR PROMO / PAUTA */
+.promoStartBackdrop{position:fixed;inset:0;z-index:18000;display:grid;place-items:center;padding:18px;background:rgba(17,23,34,.58);backdrop-filter:blur(5px)}
+.promoStartBackdrop[hidden]{display:none!important}
+.promoStartDialog{width:min(610px,96vw);border:1px solid #dfe4ec;border-radius:24px;background:#fff;box-shadow:0 28px 90px rgba(17,23,34,.28);overflow:hidden}
+.promoStartHead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:18px 20px 14px;border-bottom:1px solid #e5e9ef;background:linear-gradient(180deg,#fff,#fbfcfe)}
+.promoStartHead strong{display:block;font-size:17px;letter-spacing:-.025em;color:#171c26}.promoStartHead span{display:block;margin-top:4px;color:#6d7888;font-size:8.5px;font-weight:900;letter-spacing:.055em}
+.promoStartClose{width:34px;min-width:34px;height:34px;border:1px solid #dfe4ec;border-radius:11px;background:#f4f6f9;color:#687383;font-size:18px;font-weight:900;cursor:pointer}
+.promoStartChoices{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 18px 20px}
+.promoStartChoice{min-height:128px;border:1px solid #dfe5ed;border-radius:18px;background:#fafbfd;padding:16px;text-align:left;cursor:pointer;transition:.14s ease;box-shadow:0 6px 16px rgba(17,23,34,.035)}
+.promoStartChoice:hover,.promoStartChoice:focus-visible{outline:none;transform:translateY(-1px);border-color:#c9d5e4;background:#fff;box-shadow:0 12px 24px rgba(17,23,34,.08)}
+.promoStartChoice.promo{border-top:3px solid #b90d2f}.promoStartChoice.pauta{border-top:3px solid #4775a6}
+.promoStartChoice b{display:block;font-size:15px;color:#171c26}.promoStartChoice small{display:block;margin-top:7px;color:#697586;font-size:8.5px;line-height:1.45;font-weight:850}.promoStartChoice em{display:inline-flex;margin-top:12px;border-radius:999px;padding:5px 8px;background:#eef2f6;color:#536172;font-style:normal;font-size:7.5px;font-weight:1000}
+@media(max-width:620px){.promoStartChoices{grid-template-columns:1fr}.promoStartChoice{min-height:105px}}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -3596,7 +3613,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
       <div class="panel">
         <div class="panelHead">
           <div><h2>PROMO / MERCHAN</h2><p>CONTROLE DAS PROMOÇÕES, MERCHANS, SORTEIOS E PAUTAS PROMOCIONAIS PARA O LOCUTOR.</p></div>
-          <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" title="NOVA PROMOÇÃO / PAUTA" aria-label="NOVA PROMOÇÃO / PAUTA" data-tip="NOVO CADASTRO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
+          <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" type="button" title="NOVA PROMOÇÃO / PAUTA" aria-label="NOVA PROMOÇÃO / PAUTA" data-tip="NOVO CADASTRO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
         </div>
         <div class="panelBody">
           <div class="promoSummaryGrid" id="promoSummaryGrid"></div>
@@ -4123,6 +4140,20 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
       <div class="formActions"><button class="btn red" type="button" id="saveReserveNoteBtn">SALVAR RESERVA</button><button class="btn" type="button" data-close="reserveDrawer">CANCELAR</button></div>
     </div>
   </div>
+</div>
+
+
+<div class="promoStartBackdrop" id="promoStartModal" hidden role="dialog" aria-modal="true" aria-labelledby="promoStartTitle">
+  <section class="promoStartDialog">
+    <header class="promoStartHead">
+      <div><strong id="promoStartTitle">NOVO CADASTRO</strong><span>ESCOLHA O TIPO PARA CONTINUAR</span></div>
+      <button class="promoStartClose" type="button" id="promoStartCloseBtn" aria-label="FECHAR">×</button>
+    </header>
+    <div class="promoStartChoices">
+      <button class="promoStartChoice promo" type="button" data-promo-start-kind="promo"><b>PROMOÇÃO</b><small>PRÊMIO VINCULADO À DISTRIBUIÇÃO, SORTEIO, GANHADORES, DATA/HORA DO RESULTADO E PRAZO DE RETIRADA.</small><em>CONTINUAR COMO PROMOÇÃO</em></button>
+      <button class="promoStartChoice pauta" type="button" data-promo-start-kind="pauta"><b>PAUTA</b><small>LEITURA OPERACIONAL COM PROGRAMA, HORÁRIOS, DIAS, FREQUÊNCIA E RODÍZIO INTELIGENTE, SEM MECÂNICA DE SORTEIO.</small><em>CONTINUAR COMO PAUTA</em></button>
+    </div>
+  </section>
 </div>
 
 <div class="drawer" id="promoDrawer" aria-hidden="true">
@@ -6482,6 +6513,10 @@ let firebasePendingSave = false;
 let firebaseInitialSnapshotSeen = false;
 let firebaseServerLoaded = false;
 let firebaseBaselineState = null;
+let firebaseDatabase = null;
+let firebaseBootstrapInFlight = false;
+let firebaseRetryTimer = null;
+let firebaseLastServerActivity = 0;
 let winnerBankRef = null;
 let winnerBankStarted = false;
 let winnerBankReady = false;
@@ -6843,70 +6878,176 @@ async function handleEmptyFirebase(){
   updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
   renderBackup();
 }
+function firebaseMarkServerActivity(label='FIREBASE ONLINE'){
+  firebaseLastServerActivity=Date.now();
+  firebaseConnectionKnown=true;
+  firebaseConnected=true;
+  updateSyncStatus(firebaseServerLoaded?'online':'saving',firebaseServerLoaded?label:'FIREBASE CONECTADO');
+}
+function firebaseApplySnapshot(snapshot,source='listener'){
+  firebaseInitialSnapshotSeen=true;
+  firebaseMarkServerActivity();
+  const payload=snapshot?.val ? snapshot.val() : null;
+  const remoteState=firebaseStateFromPayload(payload);
+  firebaseUsesWrappedState=firebasePayloadUsesWrappedState(payload);
+  if(!remoteState){
+    handleEmptyFirebase();
+    return;
+  }
+  firebaseBaseEmpty=false;
+  if(firebasePendingSave && firebaseServerLoaded) return;
+  if(firebaseServerLoaded && firebaseBaselineState && sameValue(remoteState,firebaseBaselineState)){
+    updateSyncStatus('online','FIREBASE ONLINE');
+    return;
+  }
+  applyRemoteFirebaseState(remoteState);
+  firebasePendingSave=false;
+  updateSyncStatus('online','FIREBASE ONLINE');
+}
+function scheduleFirebaseRetry(delay=3000){
+  clearTimeout(firebaseRetryTimer);
+  if(navigator.onLine===false) return;
+  firebaseRetryTimer=setTimeout(()=>{
+    if(!firebaseConnected || !firebaseServerLoaded) firebaseBootstrapRead(true);
+  },delay);
+}
+async function firebaseBootstrapRead(force=false){
+  if(!firebaseReady || !firebaseRef || firebaseBootstrapInFlight) return;
+  if(!force && firebaseConnected && firebaseServerLoaded) return;
+  firebaseBootstrapInFlight=true;
+  updateSyncStatus('saving',firebaseServerLoaded?'RECONECTANDO':'CONECTANDO');
+  try{
+    if(firebaseDatabase && typeof firebaseDatabase.goOnline==='function') firebaseDatabase.goOnline();
+    const snapshot=await Promise.race([
+      firebaseRef.get(),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONECTAR AO FIREBASE.')),9000))
+    ]);
+    firebaseApplySnapshot(snapshot,'bootstrap');
+    clearTimeout(firebaseRetryTimer);
+    if(firebasePendingSave && firebaseServerLoaded) queueApiSave(100);
+  }catch(error){
+    console.warn('FIREBASE BOOTSTRAP ERROR',error);
+    if(navigator.onLine===false){
+      firebaseConnected=false;
+      firebaseConnectionKnown=true;
+      updateSyncStatus('local','MODO LOCAL');
+    }else{
+      firebaseConnected=false;
+      updateSyncStatus('saving','RECONECTANDO');
+      scheduleFirebaseRetry(2500);
+    }
+  }finally{
+    firebaseBootstrapInFlight=false;
+  }
+}
 function initFirebaseSync(){
   if(firebaseStarted) return;
   if(!firebaseConfigReady()){
-    console.warn('Firebase ainda não configurado. Substitua FIREBASE_CONFIG nos arquivos HTML.');
-    updateSyncStatus('error','ERRO FIREBASE');
+    // Em cache lento o SDK pode ainda não ter terminado de carregar. Tenta novamente
+    // antes de declarar erro definitivo.
+    updateSyncStatus('saving','CARREGANDO FIREBASE');
+    let attempts=0;
+    const waitSdk=()=>{
+      if(firebaseConfigReady()){ firebaseStarted=false; initFirebaseSync(); return; }
+      attempts+=1;
+      if(attempts<20){ setTimeout(waitSdk,250); return; }
+      console.warn('Firebase SDK não disponível após as tentativas de inicialização.');
+      updateSyncStatus('error','ERRO FIREBASE');
+    };
+    setTimeout(waitSdk,120);
     return;
   }
-  firebaseStarted = true;
+  firebaseStarted=true;
   try{
-    const app = window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
-    const database = window.firebase.database(app);
-    firebaseRef = database.ref(FIREBASE_ROOT_PATH);
-    firebaseConnectionRef = database.ref('.info/connected');
-    firebaseReady = true;
+    const app=window.firebase.apps&&window.firebase.apps.length?window.firebase.app():window.firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseDatabase=window.firebase.database(app);
+    if(firebaseDatabase && typeof firebaseDatabase.goOnline==='function') firebaseDatabase.goOnline();
+    firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
+    firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
+    firebaseReady=true;
     updateSyncStatus('saving','CONECTANDO');
+
+    // A leitura de dados é a confirmação principal de conexão. O .info/connected
+    // serve apenas como sinal complementar, porque alguns proxies/rede corporativa
+    // podem atrasar esse nó mesmo quando GET/listener já funcionam.
     firebaseConnectionRef.on('value',snapshot=>{
       firebaseConnectionKnown=true;
-      firebaseConnected=snapshot.val()===true;
-      if(firebaseConnected){
-        updateSyncStatus(firebaseServerLoaded?'online':'saving',firebaseServerLoaded?'FIREBASE ONLINE':'FIREBASE CONECTADO');
-        if(firebasePendingSave && firebaseServerLoaded) queueApiSave(80);
-      }else{
-        updateSyncStatus(navigator.onLine===false?'local':'saving',navigator.onLine===false?'MODO LOCAL':'RECONECTANDO');
-      }
-    },error=>console.warn('FIREBASE CONNECTION MONITOR ERROR',error));
-    firebaseRef.on('value', async snapshot=>{
-      firebaseInitialSnapshotSeen = true;
-      const payload = snapshot.val();
-      const remoteState = firebaseStateFromPayload(payload);
-      firebaseUsesWrappedState = firebasePayloadUsesWrappedState(payload);
-      if(!remoteState){
-        await handleEmptyFirebase();
+      if(snapshot.val()===true){
+        firebaseConnected=true;
+        if(firebaseServerLoaded) updateSyncStatus('online','FIREBASE ONLINE');
+        else updateSyncStatus('saving','FIREBASE CONECTADO');
+        if(firebasePendingSave && firebaseServerLoaded) queueApiSave(100);
         return;
       }
-      firebaseBaseEmpty = false;
-      if(firebasePendingSave && firebaseServerLoaded) return;
-      applyRemoteFirebaseState(remoteState);
-      firebasePendingSave = false;
-      if(firebaseConnected) updateSyncStatus('online','FIREBASE ONLINE');
-    }, err=>{
-      console.warn('FIREBASE LOAD ERROR', err);
-      updateSyncStatus(firebaseConnected?'saving':'error',firebaseConnected?'CARREGANDO BASE':'ERRO FIREBASE');
+      if(navigator.onLine===false){
+        firebaseConnected=false;
+        updateSyncStatus('local','MODO LOCAL');
+        return;
+      }
+      // Não derruba uma conexão que acabou de receber dados do servidor.
+      if(!firebaseLastServerActivity || Date.now()-firebaseLastServerActivity>12000){
+        firebaseConnected=false;
+        updateSyncStatus('saving','RECONECTANDO');
+        scheduleFirebaseRetry(1800);
+      }
+    },error=>{
+      console.warn('FIREBASE CONNECTION MONITOR ERROR',error);
+      scheduleFirebaseRetry(1800);
     });
+
+    firebaseRef.on('value',snapshot=>{
+      try{ firebaseApplySnapshot(snapshot,'listener'); }
+      catch(err){
+        console.warn('FIREBASE SNAPSHOT APPLY ERROR',err);
+        updateSyncStatus('error','ERRO AO CARREGAR');
+      }
+    },err=>{
+      console.warn('FIREBASE LOAD ERROR',err);
+      if(navigator.onLine===false){
+        firebaseConnected=false;
+        updateSyncStatus('local','MODO LOCAL');
+      }else{
+        firebaseConnected=false;
+        updateSyncStatus('saving','RECONECTANDO');
+        scheduleFirebaseRetry(2200);
+      }
+    });
+
+    // Leitura explícita única na abertura: não depende do primeiro evento do listener
+    // e evita o painel ficar indefinidamente em "conectando".
+    firebaseBootstrapRead(true);
   }catch(err){
-    firebaseStarted = false;
-    firebaseReady = false;
-    firebaseConnected = false;
-    console.warn('FIREBASE INIT ERROR', err);
+    firebaseStarted=false;
+    firebaseReady=false;
+    firebaseConnected=false;
+    console.warn('FIREBASE INIT ERROR',err);
     updateSyncStatus('error','ERRO FIREBASE');
+    scheduleFirebaseRetry(3000);
   }
 }
 function syncStateFromApi(force=false){
   initFirebaseSync();
   if(!firebaseReady || !firebaseRef) return;
-  // O listener em tempo real já mantém os dados atualizados. O probe abaixo é
-  // pequeno (somente savedAt) e evita baixar a base inteira novamente.
-  if(force || !firebaseConnectionKnown){
-    firebaseRef.child('savedAt').get().then(()=>{
-      if(firebaseConnected) updateSyncStatus(firebaseServerLoaded?'online':'saving',firebaseServerLoaded?'FIREBASE ONLINE':'FIREBASE CONECTADO');
-    }).catch(err=>{
-      console.warn('FIREBASE CONNECTION PROBE ERROR',err);
-      if(navigator.onLine===false) updateSyncStatus('local','MODO LOCAL');
-    });
+  // Se não estiver efetivamente online, força nova leitura. A versão anterior
+  // parava de tentar quando connectionKnown=true e connected=false.
+  if(force || !firebaseConnectionKnown || !firebaseConnected || !firebaseServerLoaded){
+    firebaseBootstrapRead(true);
+    return;
   }
+  // Conexão ativa: um probe pequeno confirma que o canal continua saudável.
+  firebaseRef.child('savedAt').get().then(()=>{
+    firebaseMarkServerActivity('FIREBASE ONLINE');
+  }).catch(err=>{
+    console.warn('FIREBASE CONNECTION PROBE ERROR',err);
+    if(navigator.onLine===false){
+      firebaseConnected=false;
+      updateSyncStatus('local','MODO LOCAL');
+    }else{
+      firebaseConnected=false;
+      updateSyncStatus('saving','RECONECTANDO');
+      scheduleFirebaseRetry(1800);
+    }
+  });
 }
 function handleBrowserConnectionChange(){
   if(navigator.onLine===false){
@@ -6915,15 +7056,14 @@ function handleBrowserConnectionChange(){
     updateSyncStatus('local','MODO LOCAL');
     return;
   }
+  updateSyncStatus('saving','CONECTANDO');
   if(!firebaseReady){
     firebaseStarted=false;
     initFirebaseSync();
     return;
   }
-  if(!firebaseConnected){
-    updateSyncStatus('saving','CONECTANDO');
-    syncStateFromApi(true);
-  }
+  if(firebaseDatabase && typeof firebaseDatabase.goOnline==='function') firebaseDatabase.goOnline();
+  firebaseBootstrapRead(true);
 }
 function queueApiSave(delay=80){
   clearTimeout(firebaseSaveTimer);
@@ -12926,6 +13066,36 @@ function clearPromoForm(){
   updatePromoPreview();
   renderPromoOccurrencesEditor(false);
 }
+
+function openPromoStartModal(){
+  const modal=$('promoStartModal');if(!modal)return;
+  modal.hidden=false;
+  document.body.style.overflow='hidden';
+  setTimeout(()=>modal.querySelector('[data-promo-start-kind="promo"]')?.focus(),20);
+}
+function closePromoStartModal(){
+  const modal=$('promoStartModal');if(modal)modal.hidden=true;
+  if(!document.querySelector('.drawer.open')) document.body.style.overflow='';
+}
+function startPromoRegistration(kind){
+  const selected=kind==='pauta'?'pauta':'promo';
+  clearPromoForm();
+  promoSetKindChoice(selected);
+  if($('promoKind')) $('promoKind').value=selected;
+  updatePromoKindMode();
+  if(selected==='pauta'){
+    if($('promoScheduleMode')) $('promoScheduleMode').value='smart';
+    if($('promoFrequencyScope')) $('promoFrequencyScope').value='program';
+    if($('promoFrequencyCount')) $('promoFrequencyCount').value='1';
+    promoAV57UpdateScheduleUI();
+    updatePromoKindMode();
+  }
+  closePromoStartModal();
+  openDrawer('promoDrawer');
+}
+window.openPromoStartModal=openPromoStartModal;
+window.closePromoStartModal=closePromoStartModal;
+window.startPromoRegistration=startPromoRegistration;
 function promoCopiesById(idValue){
   const rows=[];
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
@@ -13368,7 +13538,10 @@ bind('addProgramBtn','click',openProgramItemDrawer);
 bind('clearProgramBtn','click',openClearProgramDrawer);
 bind('deleteProgramWeekBtn','click',()=>clearProgramScope('week'));
 bind('deleteProgramMonthBtn','click',()=>clearProgramScope('month'));
-bind('addPromoBtn','click',()=>{ clearPromoForm(); openDrawer('promoDrawer'); });
+bind('addPromoBtn','click',openPromoStartModal);
+bind('promoStartCloseBtn','click',closePromoStartModal);
+document.querySelectorAll('[data-promo-start-kind]').forEach(btn=>btn.addEventListener('click',()=>startPromoRegistration(btn.dataset.promoStartKind)));
+bind('promoStartModal','click',event=>{if(event.target===event.currentTarget)closePromoStartModal();});
 bind('clearDistFiltersBtn','click',()=>{ $('distSearchInput').value=''; $('distStatusFilter').value=''; renderDistribuicao(); });
 ['weekFilter','programStationFilter','statusFilter'].forEach(id=>bind(id,'input',()=>{ renderProgramacao(); renderClearProgramDrawer(); }));
 ['distSearchInput','distStatusFilter','distOrderFilter'].forEach(id=>bind(id,'input',renderDistribuicao));
@@ -13379,6 +13552,7 @@ bind('studioStationFilter','input',renderStudioPauta);
 bind('studioPrevDayBtn','click',()=>changeStudioDay(-1));
 bind('studioNextDayBtn','click',()=>changeStudioDay(1));
 bind('exportPdfBtn','click',()=>window.print());
+bind('syncStatusBtn','click',()=>syncStateFromApi(true));
 bind('scheduleForm','submit',saveSchedule);
 bind('clearScheduleFormBtn','click',clearScheduleForm);
 bind('scheduleType','change',()=>{ const t=normalizeScheduleType($('scheduleType')?.value||''); if(t==='PRÊMIO FUTURO') $('scheduleDestination').value='DISTRIBUIÇÃO GERAL'; else if($('scheduleDestination')?.value==='DISTRIBUIÇÃO GERAL') $('scheduleDestination').value='PROMO / MERCHAN'; });
@@ -13515,7 +13689,8 @@ try{
 }
 window.addEventListener('beforeunload',()=>{ normalizePanelState(state); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); });
 setInterval(()=>{ syncCalendarMonthIfChanged(); },60000);
-setInterval(()=>syncStateFromApi(false),30000);
+setInterval(()=>syncStateFromApi(false),15000);
+window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded)syncStateFromApi(true);});
 </script>
 
 <script>
