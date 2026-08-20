@@ -520,8 +520,8 @@ tbody tr:focus-within td{background:#fff8fa}
 
 /* mesma tabela de DISTRIBUIÇÃO do POA */
 #view-distribuicao .tableWrap{width:100%;max-height:64vh;overflow:auto;border:1px solid var(--line);border-radius:20px;background:#fff;scrollbar-gutter:stable}
-#view-distribuicao .distMainTable{table-layout:fixed!important;width:100%!important;min-width:1220px!important;border-collapse:separate;border-spacing:0}
-#view-distribuicao .distPrizeCol{width:270px!important}#view-distribuicao .distTinyCol{width:50px!important}#view-distribuicao .distSmallCol{width:58px!important}#view-distribuicao .distMidCol{width:65px!important}#view-distribuicao .distWideCol{width:76px!important}#view-distribuicao .distGenerateCol{width:72px!important}#view-distribuicao .distActionCol{width:88px!important}
+#view-distribuicao .distMainTable{table-layout:fixed!important;width:100%!important;min-width:1148px!important;border-collapse:separate;border-spacing:0}
+#view-distribuicao .distPrizeCol{width:270px!important}#view-distribuicao .distTinyCol{width:52px!important}#view-distribuicao .distSmallCol{width:62px!important}#view-distribuicao .distMidCol{width:68px!important}#view-distribuicao .distWideCol{width:80px!important}#view-distribuicao .distActionCol{width:76px!important}
 #view-distribuicao .distMainTable th,#view-distribuicao .distMainTable td{padding:7px 8px!important;overflow:hidden;border-bottom:1px solid var(--line);vertical-align:middle;font-size:10px;line-height:1.2}
 #view-distribuicao .distMainTable th{position:sticky;top:0;z-index:4;height:34px;background:#f8f9fc;color:#5e6573;font-size:8.5px;letter-spacing:.05em;white-space:normal}
 #view-distribuicao .distMainTable th:first-child,#view-distribuicao .distMainTable td.distPrizeCell{position:sticky;left:0;z-index:3}
@@ -538,9 +538,9 @@ tbody tr:focus-within td{background:#fff8fa}
 #view-distribuicao .directionDistValue{display:flex;min-height:42px;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-align:center}
 #view-distribuicao .directionDistValue b{font-size:10px;color:#242b35}#view-distribuicao .directionDistValue small{font-size:6.8px;color:#7b8593;white-space:nowrap}
 #view-distribuicao .directionReadonlyAction{width:30px;height:30px;border:1px solid #dce2eb;border-radius:10px;background:#f1f4f8;color:#3f4a59;font-weight:1000;cursor:pointer}#view-distribuicao .directionReadonlyAction:hover{background:#fff;color:#171c26}
-#view-distribuicao .num{text-align:right;font-variant-numeric:tabular-nums}
+#view-distribuicao .distMainTable th,#view-distribuicao .distMainTable td{text-align:center!important}#view-distribuicao .distMainTable td.distPrizeCell{text-align:left!important}#view-distribuicao .num{text-align:center!important;font-variant-numeric:tabular-nums}
 
-/* mesma PROGRAMAÇÃO SEMANAL do POA */
+/* PROGRAMAÇÃO MENSAL · MESMO MODELO VISUAL DO POA */
 #view-programacao .weeklyHeader{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 10px}
 #view-programacao .weeklyHeader strong{display:block;font-size:16px;letter-spacing:-.03em}#view-programacao .weeklyHeader span{display:block;color:var(--muted);font-size:9px;margin-top:3px;letter-spacing:.04em}
 #view-programacao .weeklyBoard{display:grid;gap:10px;padding-bottom:6px}
@@ -570,7 +570,7 @@ tbody tr:focus-within td{background:#fff8fa}
 .syncBadge:focus-visible,.tab:focus-visible,main button:focus-visible{outline:2px solid rgba(185,13,47,.34);outline-offset:2px}
 
 </style>
-<meta name="direction-build-marker" content="AV-57.6.6.6-DIRECAO-ROBUST">
+<meta name="direction-build-marker" content="AV-57.6.6.7-DIRECAO-MENSAL-LIMPO">
 </head>
 <body>
 <div class="wrap">
@@ -607,21 +607,17 @@ tbody tr:focus-within td{background:#fff8fa}
   </header>
 
   <nav class="tabs" aria-label="Seções do painel da direção">
-    <button type="button" class="tab active" data-tab="resumo">VISÃO GERAL</button>
-    <button type="button" class="tab" data-tab="distribuicao">DISTRIBUIÇÃO</button>
+    <button type="button" class="tab active" data-tab="distribuicao">DISTRIBUIÇÃO</button>
     <button type="button" class="tab" data-tab="programacao">PROGRAMAÇÃO</button>
     <button type="button" class="tab" data-tab="promocoes">PROMO / MERCHAN</button>
-    <button type="button" class="tab" data-tab="estudio">OPERAÇÃO DO ESTÚDIO</button>
     <button type="button" class="tab" data-tab="retiradas">RETIRADAS</button>
     <button type="button" class="tab" data-tab="relatorios">RELATÓRIOS</button>
   </nav>
 
   <main>
-    <section class="view active" id="view-resumo"></section>
-    <section class="view" id="view-distribuicao"></section>
+    <section class="view active" id="view-distribuicao"></section>
     <section class="view" id="view-programacao"></section>
     <section class="view" id="view-promocoes"></section>
-    <section class="view" id="view-estudio"></section>
     <section class="view" id="view-retiradas"></section>
     <section class="view" id="view-relatorios"></section>
   </main>
@@ -652,7 +648,7 @@ const dateAdd=(iso,days)=>{const [y,m,d]=String(iso).split("-").map(Number);cons
 
 let state={months:{}};
 let currentMonth="";
-let activeTab="resumo";
+let activeTab="distribuicao";
 let firebaseReady=false;
 let firebaseStarted=false;
 let firebaseConnected=false;
@@ -934,7 +930,7 @@ function pickupDeliveredLabel(row){if(row?.deliveredAtLabel)return upper(row.del
 function resultCountForDate(date){const itemResults=itemsForDate(date).filter(item=>normalizeStatus(item.status)==="REALIZADO"||itemWinner(item)).length;const promoResults=promosForMonth(date.slice(0,7)).filter(promo=>promoStationMatches(promo)).reduce((sum,promo)=>sum+promoWinnerOccurrences(promo).filter(w=>w.occurrenceDate===date).length,0);return itemResults+promoResults;}
 
 function offlineNotice(){if(connectionMode==='online')return'';const last=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO REAL: ${esc(lastFirebaseSyncAt)}`:'SEM SINCRONIZAÇÃO FIREBASE CONFIRMADA NESTA SESSÃO';return `<div class="offlineNotice"><strong>DADOS TEMPORARIAMENTE DESATUALIZADOS</strong><span>AGUARDANDO FIREBASE · ${last}</span></div>`;}
-function drillContextBar(tab){if(!directionDrilldown||directionDrilldown.tab!==tab)return'';return `<div class="drillContext"><span>FILTRO DE AUDITORIA: <strong>${esc(directionDrilldown.label||'ORIGEM SELECIONADA')}</strong></span><button class="badge" type="button" onclick="returnToExecutiveContext()">VOLTAR À VISÃO GERAL</button></div>`;}
+function drillContextBar(tab){if(!directionDrilldown||directionDrilldown.tab!==tab)return'';return `<div class="drillContext"><span>FILTRO DE AUDITORIA: <strong>${esc(directionDrilldown.label||'ORIGEM SELECIONADA')}</strong></span><button class="badge" type="button" onclick="returnToExecutiveContext()">VOLTAR</button></div>`;}
 function encodeNav(value){return encodeURIComponent(String(value??''));}
 function alertButton(alert){return `<button class="alertItem alertButton" type="button" data-nav-tab="${esc(alert.tab||'resumo')}" data-nav-kind="${esc(alert.kind||'')}" data-nav-key="${esc(encodeNav(alert.key||''))}" data-nav-date="${esc(alert.date||'')}" data-nav-station="${esc(alert.station||'')}" data-nav-label="${esc(encodeNav(alert.title||''))}" onclick="directionNavigateFromElement(this)"><span class="alertDot ${alert.level==='critical'?'red':''}"></span><span class="alertCopy"><strong>${esc(alert.title)}</strong><span>${esc(alert.detail)}</span></span><span class="badge ${alert.level==='critical'?'cancelado':'pendente'}">${alert.level==='critical'?'CRÍTICO':'ATENÇÃO'}</span></button>`;}
 function directionNavigateFromElement(el){directionNavigate(el.dataset.navTab,el.dataset.navKind,decodeURIComponent(el.dataset.navKey||''),el.dataset.navDate||'',el.dataset.navStation||'',decodeURIComponent(el.dataset.navLabel||''));}
@@ -943,7 +939,7 @@ function directionNavigate(tab,kind,key,date='',station='',label=''){
   if(date){$("dateFilter").value=date;setMonthFromDate(date);}if(station&&stationCode(station)!=='ALL')$("stationFilter").value=stationCode(station);
   directionDrilldown={tab,kind,key,label};activeTab=tab;render();setTimeout(()=>document.querySelector('.drillTarget')?.scrollIntoView({behavior:'smooth',block:'center'}),50);
 }
-function returnToExecutiveContext(){if(returnContext){$("dateFilter").value=returnContext.date||liveTodayISO();$("stationFilter").value=returnContext.station||'ALL';currentMonth=returnContext.month||String($("dateFilter").value).slice(0,7);}directionDrilldown=null;returnContext=null;activeTab='resumo';render();window.scrollTo({top:0,behavior:'smooth'});}
+function returnToExecutiveContext(){let target='distribuicao';if(returnContext){$("dateFilter").value=returnContext.date||liveTodayISO();$("stationFilter").value=returnContext.station||'ALL';currentMonth=returnContext.month||String($("dateFilter").value).slice(0,7);target=returnContext.tab||target;}directionDrilldown=null;returnContext=null;activeTab=target;render();window.scrollTo({top:0,behavior:'smooth'});}
 function drillMatches(tab,kind,key,row){if(!directionDrilldown||directionDrilldown.tab!==tab)return true;if(directionDrilldown.kind!==kind&&directionDrilldown.kind!=='all')return false;if(!directionDrilldown.key)return true;return String(key)===String(directionDrilldown.key);}
 function clickableKpi(label,value,small,tab,kind,key='',className=''){return `<button class="kpi kpiButton ${className}" type="button" data-nav-tab="${tab}" data-nav-kind="${kind}" data-nav-key="${encodeNav(key)}" data-nav-label="${encodeNav(label)}" onclick="directionNavigateFromElement(this)"><span>${label}</span><strong>${value}</strong><small>${small}</small></button>`;}
 
@@ -989,15 +985,16 @@ function directionProgrammedCount(distId){return (monthData(currentMonth).items|
 function directionBalanceCell(d){const balance=distributionBalance(d),unit=directionDeliveryUnit(d);if(unit==='pair'){const pairs=Math.floor(balance/2);return `<div class="directionDistValue">${distributionStatusBadge(d)}<small>${pairs} PAR${Math.abs(pairs)===1?'':'ES'} · ${balance} UNID.</small></div>`;}return `<div class="directionDistValue">${distributionStatusBadge(d)}<small>${balance} UNID.</small></div>`;}
 function directionReturnCount(d){let total=0;Object.values(state.months||{}).forEach(m=>{(m.items||[]).forEach(i=>{if(i.distributionId===d.id&&i.reuseStatus)total++;});(m.promos||[]).forEach(p=>{if(p.distributionId!==d.id)return;(p.resultWinners||[]).forEach(w=>{if(w?.reuseStatus)total++;});});});return total;}
 function directionReturnCell(d){const count=directionReturnCount(d);return `<div class="directionDistValue"><b>${count}</b>${count?'<small>RETORNO(S)</small>':''}</div>`;}
-function directionViewDistSchedule(id,label){directionDrilldown={tab:'programacao',kind:'distribution',key:id,label:label||'DISTRIBUIÇÃO'};activeTab='programacao';render();setTimeout(()=>document.querySelector('.directionProgramCard.current,.directionProgramCard')?.scrollIntoView({behavior:'smooth',block:'center'}),40);}
+function directionViewDistSchedule(id,label){returnContext={date:$("dateFilter").value||liveTodayISO(),station:$("stationFilter").value||'ALL',month:currentMonth,tab:'distribuicao'};directionDrilldown={tab:'programacao',kind:'distribution',key:id,label:label||'DISTRIBUIÇÃO'};activeTab='programacao';render();setTimeout(()=>document.querySelector('.programCard.current,.programCard')?.scrollIntoView({behavior:'smooth',block:'center'}),40);}
 function directionDayName(iso){const d=new Date(`${iso}T12:00:00`);return Number.isNaN(d.getTime())?'':['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'][d.getDay()];}
 function directionWeekDates(iso){const d=new Date(`${iso}T12:00:00`);if(Number.isNaN(d.getTime()))return[];while(d.getDay()!==1)d.setDate(d.getDate()-1);const out=[];for(let n=0;n<6;n++){const x=new Date(d);x.setDate(x.getDate()+n);out.push(`${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`);}return out;}
 function directionWeekLabel(iso){const dates=directionWeekDates(iso);return dates.length?`${formatBR(dates[0]).slice(0,5)} A ${formatBR(dates.at(-1)).slice(0,5)}`:'';}
+function directionMonthDates(monthKey=currentMonth){const match=String(monthKey||'').match(/^(\d{4})-(\d{2})$/);if(!match)return[];const y=Number(match[1]),m=Number(match[2]);const last=new Date(y,m,0).getDate();return Array.from({length:last},(_,index)=>`${y}-${pad(m)}-${pad(index+1)}`);}
 function directionPeriodKey(slot){const h=slotMinutes(slot)/60;if(h<12)return'manha';if(h<18)return'tarde';return'noite';}
 function directionPeriodLabel(key){return key==='manha'?'MANHÃ':key==='tarde'?'TARDE':'NOITE';}
 function directionPeriodIcon(key){return key==='manha'?'☀':key==='tarde'?'☼':'☾';}
 function directionWeekItems(date){let rows=[...(monthData(date.slice(0,7)).items||[])].filter(i=>i.date===date&&isRadioItem(i)&&stationMatches(i.station));if(directionDrilldown?.tab==='programacao'&&directionDrilldown.kind==='distribution'&&directionDrilldown.key)rows=rows.filter(i=>i.distributionId===directionDrilldown.key);return rows.sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot)||upper(a.program||'').localeCompare(upper(b.program||'')));}
-function directionProgramCard(item,date){const program=resolvedProgramForItem(item,date),title=itemTitle(item,date.slice(0,7)),desc=itemDescription(item,date.slice(0,7)),winner=itemWinner(item),current=date===liveTodayISO()&&Math.floor(slotMinutes(item.slot)/60)===liveNow().getHours(),promo=item.sourceType==='promo-result';return `<article class="directionProgramCard ${current?'current':''} ${promo?'promoResult':''}"><div class="directionProgramTime">${esc(formatTime(item.slot))}</div><div class="directionProgramInfo"><strong>${esc(title)}</strong><em>${esc(program)}${desc?` · ${esc(desc)}`:''}</em><div class="directionProgramMeta"><span class="badge">${esc(stationName(item.station))}</span>${statusBadge(item.status,winner)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="directionProgramQty">QTD <b>${Math.max(1,num(item.qty)||1)}</b></span>${winner?`<span class="badge noar" title="GANHADOR">${esc(winner)}</span>`:''}</div></div></article>`;}
+function directionProgramCard(item,date){const program=resolvedProgramForItem(item,date),title=itemTitle(item,date.slice(0,7)),current=date===liveTodayISO()&&Math.floor(slotMinutes(item.slot)/60)===liveNow().getHours(),promo=item.sourceType==='promo-result';return `<article class="directionProgramCard ${current?'current':''} ${promo?'promoResult':''}"><div class="directionProgramTime">${esc(formatTime(item.slot))}</div><div class="directionProgramInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="directionProgramMeta"><span class="badge">${esc(stationName(item.station))}</span>${statusBadge(item.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="directionProgramQty">QTD <b>${Math.max(1,num(item.qty)||1)}</b></span></div></div></article>`;}
 
 function renderDistribuicao(){
   let rows=[...(monthData().distributions||[])].sort((a,b)=>directionDistLabel(a).localeCompare(directionDistLabel(b)));
@@ -1021,21 +1018,24 @@ function renderDistribuicao(){
       <td class="num"><div class="directionDistValue"><b>${prog}</b></div></td>
       <td class="num">${directionBalanceCell(d)}</td>
       <td class="num">${directionReturnCell(d)}</td>
-      <td class="num"><div class="directionDistValue">${prog?'<span class="badge noar">GERADO</span>':'<span class="badge">—</span>'}</div></td>
       <td><button class="directionReadonlyAction" type="button" title="VER GRADE" aria-label="VER GRADE" onclick="directionViewDistSchedule('${esc(d.id)}','${esc(directionDistLabel(d))}')">▦</button></td>
     </tr>`;
-  }).join(''):`<tr><td colspan="15"><div class="empty">SEM DISTRIBUIÇÕES PARA O FILTRO ATUAL.</div></td></tr>`;
-  $("view-distribuicao").innerHTML=`${offlineNotice()}${drillContextBar('distribuicao')}<section class="panel"><div class="panelHead"><div><h2>DISTRIBUIÇÃO GERAL</h2><p>CONTROLE MASTER DO MÊS COM AS MESMAS COLUNAS DO POA · VISUALIZAÇÃO DA DIREÇÃO.</p></div></div><div class="panelBody"><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
+  }).join(''):`<tr><td colspan="14"><div class="empty">SEM DISTRIBUIÇÕES PARA O FILTRO ATUAL.</div></td></tr>`;
+  $("view-distribuicao").innerHTML=`${offlineNotice()}${drillContextBar('distribuicao')}<section class="panel"><div class="panelHead"><div><h2>DISTRIBUIÇÃO GERAL</h2><p>CONTROLE MASTER DO MÊS · VISUALIZAÇÃO DA DIREÇÃO.</p></div></div><div class="panelBody"><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th>AÇÕES</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
 }
 function renderProgramacao(){
-  const selectedDate=$("dateFilter").value||liveTodayISO(),dates=directionWeekDates(selectedDate),weekRows=dates.flatMap(directionWeekItems),counts=statusCounts(weekRows);
-  const board=dates.map(date=>{
+  const monthKey=currentMonth||String($("dateFilter").value||liveTodayISO()).slice(0,7);
+  const allDates=directionMonthDates(monthKey);
+  const monthRows=allDates.flatMap(directionWeekItems);
+  const counts=statusCounts(monthRows);
+  const programmedDates=allDates.filter(date=>directionWeekItems(date).length);
+  const board=programmedDates.map(date=>{
     const rows=directionWeekItems(date),by={manha:[],tarde:[],noite:[]};rows.forEach(i=>by[directionPeriodKey(i.slot)].push(i));
-    const card=i=>{const program=resolvedProgramForItem(i,date),title=itemTitle(i,date.slice(0,7)),desc=itemDescription(i,date.slice(0,7)),winner=itemWinner(i),current=date===liveTodayISO()&&Math.floor(slotMinutes(i.slot)/60)===liveNow().getHours(),promo=i.sourceType==='promo-result';return `<article class="programCard ${current?'current':''} ${promo?'promoResult':''}"><div class="programTime">${esc(formatTime(i.slot))}</div><div class="programInfo"><strong>${esc(title)}</strong><em>${esc(program)}${desc?` · ${esc(desc)}`:''}</em><div class="programMeta"><span class="badge dark">${esc(stationName(i.station))}</span>${statusBadge(i.status,winner)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="programQtyInline">QTD <strong>${Math.max(1,num(i.qty)||1)}</strong></span>${winner?`<span class="badge noar" title="GANHADOR">${esc(winner)}</span>`:''}</div></div></article>`;};
+    const card=i=>{const program=resolvedProgramForItem(i,date),title=itemTitle(i,date.slice(0,7)),current=date===liveTodayISO()&&Math.floor(slotMinutes(i.slot)/60)===liveNow().getHours(),promo=i.sourceType==='promo-result';return `<article class="programCard ${current?'current':''} ${promo?'promoResult':''}"><div class="programTime">${esc(formatTime(i.slot))}</div><div class="programInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="programMeta"><span class="badge dark">${esc(stationName(i.station))}</span>${statusBadge(i.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="programQtyInline">QTD <strong>${Math.max(1,num(i.qty)||1)}</strong></span></div></div></article>`;};
     const period=key=>`<section class="periodCell ${key}"><div class="periodTitle"><span class="periodIcon">${directionPeriodIcon(key)}</span><strong>${directionPeriodLabel(key)}</strong></div><div class="periodItems">${by[key].length?by[key].map(card).join(''):'<div class="periodEmpty">SEM ITEM NESTE PERÍODO</div>'}</div></section>`;
-    return `<article class="weekDayRow"><div class="dayCell"><div class="dayBadge"><strong>${esc(formatBR(date).slice(0,5))}</strong><span>${esc(directionDayName(date))}</span><small>${rows.length} ITEM${rows.length===1?'':'S'}</small></div></div>${period('manha')}${period('tarde')}${period('noite')}</article>`;
+    return `<article class="weekDayRow"><div class="dayCell"><div class="dayBadge"><strong>${esc(formatBR(date).slice(0,5))}</strong><span>${esc(directionDayName(date))}</span><small>${rows.length} ${rows.length===1?'ITEM':'ITENS'}</small></div></div>${period('manha')}${period('tarde')}${period('noite')}</article>`;
   }).join('');
-  $("view-programacao").innerHTML=`${offlineNotice()}${drillContextBar('programacao')}<div class="statusSummary"><div class="statusBox"><span>NO AR</span><strong>${counts["NO AR"]||0}</strong></div><div class="statusBox"><span>PENDENTES</span><strong>${counts.PENDENTE||0}</strong></div><div class="statusBox"><span>REALIZADOS</span><strong>${counts.REALIZADO||0}</strong></div><div class="statusBox"><span>CANCELADOS</span><strong>${counts.CANCELADO||0}</strong></div></div><section class="panel"><div class="panelBody"><div class="weeklyHeader"><div><strong>PROGRAMAÇÃO SEMANAL</strong><span>${esc(directionWeekLabel(selectedDate))} · MESMO MODELO DO PAINEL PRINCIPAL</span></div></div><div class="weeklyBoard">${board||'<div class="empty">SEM PROGRAMAÇÃO PARA ESTA SEMANA.</div>'}</div></div></section>`;
+  $("view-programacao").innerHTML=`${offlineNotice()}${drillContextBar('programacao')}<div class="statusSummary"><div class="statusBox"><span>NO AR</span><strong>${counts["NO AR"]||0}</strong></div><div class="statusBox"><span>PENDENTES</span><strong>${counts.PENDENTE||0}</strong></div><div class="statusBox"><span>REALIZADOS</span><strong>${counts.REALIZADO||0}</strong></div><div class="statusBox"><span>CANCELADOS</span><strong>${counts.CANCELADO||0}</strong></div></div><section class="panel"><div class="panelBody"><div class="weeklyHeader"><div><strong>PROGRAMAÇÃO MENSAL</strong><span>${esc(monthLabel(monthKey))} · ${monthRows.length} ${monthRows.length===1?'ITEM PROGRAMADO':'ITENS PROGRAMADOS'}</span></div></div><div class="weeklyBoard">${board||'<div class="empty">SEM PROGRAMAÇÃO PARA ESTE MÊS.</div>'}</div></div></section>`;
 }
 
 function campaignDetails(promo,metrics){if(!metrics.rows.length)return'';const shown=metrics.rows.slice(0,60),rows=shown.map(r=>`<div class="campaignOccurrence"><span>${formatBR(r.date)}</span><strong>${formatTime(r.slot)}</strong><span>${r.state==='LIDO'?`LIDO ${r.confirmed}`:r.state}</span></div>`).join('');return `<details class="campaignDetails"><summary>VER PROGRAMAÇÃO · ${monthLabel(metrics.month)}</summary><div class="campaignOccurrences">${rows}</div>${metrics.rows.length>60?`<div class="helper">EXIBINDO AS PRIMEIRAS 60 INSERÇÕES DE ${metrics.rows.length} NESTE MÊS.</div>`:''}</details>`;}
@@ -1081,7 +1081,7 @@ function renderRelatorios(){
   $("view-relatorios").innerHTML=`${offlineNotice()}<div class="reportHeader"><strong>RELATÓRIO EXECUTIVO</strong><span>PERÍODO: ${formatBR(r.from)} A ${formatBR(r.to)} · EMISSORA: ${esc(stationLabel)}</span></div><div class="sectionToolbar"><div class="toolbarTitle"><h2>RELATÓRIOS CONSOLIDADOS</h2><p>VISÃO EXECUTIVA DO PERÍODO EXATO, INCLUSIVE ENTRE COMPETÊNCIAS</p></div><div class="toolbarStats"><button class="badge" type="button" onclick="window.print()">EXPORTAR PDF</button><button class="badge" type="button" onclick="window.print()">IMPRIMIR</button></div></div><section class="panel"><div class="panelBody"><div class="reportFilters"><div class="field"><label>DE</label><input class="control" type="date" id="reportFrom" value="${esc(r.from)}"></div><div class="field"><label>ATÉ</label><input class="control" type="date" id="reportTo" value="${esc(r.to)}"></div><div class="field"><label>ATALHOS</label><div class="reportShortcuts"><button class="badge" type="button" onclick="setReportRange('today')">HOJE</button><button class="badge" type="button" onclick="setReportRange('week')">SEMANA</button><button class="badge" type="button" onclick="setReportRange('month')">MÊS</button></div></div></div></div></section><div class="kpiGrid"><div class="kpi"><span>PRÊMIOS RECEBIDOS</span><strong>${totalReceived}</strong><small>ENTRADAS REGISTRADAS NO PERÍODO</small></div><div class="kpi"><span>MOVIMENTAÇÃO / CONSUMO</span><strong>${totalConsumed}</strong><small>SALDO ATUAL ${currentBalance}</small></div><div class="kpi"><span>PROGRAMAÇÃO</span><strong>${items.length}</strong><small>ITENS NO PERÍODO</small></div><div class="kpi"><span>MERCHAN</span><strong>${merchanConfirmed}/${merchanPlanned}</strong><small>${merchanUnconfirmed} NÃO CONFIRMADA(S)</small></div><div class="kpi"><span>GANHADORES</span><strong>${promoWins+itemWins}</strong><small>RESULTADOS CONFIRMADOS</small></div><div class="kpi"><span>RETIRADAS</span><strong>${delivered}</strong><small>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</small></div></div><section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>INDICADOR</th><th class="num">TOTAL</th><th>OBSERVAÇÃO</th></tr></thead><tbody><tr><td>PRÊMIOS RECEBIDOS</td><td class="num">${totalReceived}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>MOVIMENTAÇÃO / CONSUMO</td><td class="num">${totalConsumed}</td><td>SALDO ATUAL DA ÚLTIMA COMPETÊNCIA: ${currentBalance}</td></tr><tr><td>MERCHANS PREVISTOS</td><td class="num">${merchanPlanned}</td><td>${merchanConfirmed} CONFIRMADOS · ${merchanUnconfirmed} NÃO CONFIRMADOS</td></tr><tr><td>RESULTADOS / GANHADORES</td><td class="num">${promoWins+itemWins}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>RETIRADAS CONFIRMADAS</td><td class="num">${delivered}</td><td>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</td></tr></tbody></table></div></section>`;
   $("reportFrom")?.addEventListener("change",e=>{reportFrom=e.target.value;renderRelatorios();});$("reportTo")?.addEventListener("change",e=>{reportTo=e.target.value;renderRelatorios();});
 }
-window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.6';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
+window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.7';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
 function fillMonthFilter(){const months=availableMonths();$("monthFilter").innerHTML=(months.length?months:[liveTodayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");}
 function setMonthFromDate(date){const key=String(date||liveTodayISO()).slice(0,7);currentMonth=state.months?.[key]?key:(state.currentMonth||availableMonths().at(-1)||key);}
 function directionRenderError(tab,error){
@@ -1094,8 +1094,9 @@ function render(){
   fillMonthFilter();
   document.querySelectorAll('.view').forEach(view=>view.classList.toggle('active',view.id===`view-${activeTab}`));
   document.querySelectorAll('.tab').forEach(button=>button.classList.toggle('active',button.dataset.tab===activeTab));
-  const renderers={resumo:renderResumo,distribuicao:renderDistribuicao,programacao:renderProgramacao,promocoes:renderPromocoes,estudio:renderEstudio,retiradas:renderRetiradas,relatorios:renderRelatorios};
-  const renderer=renderers[activeTab]||renderResumo;
+  const renderers={distribuicao:renderDistribuicao,programacao:renderProgramacao,promocoes:renderPromocoes,retiradas:renderRetiradas,relatorios:renderRelatorios};
+  if(!renderers[activeTab])activeTab='distribuicao';
+  const renderer=renderers[activeTab];
   try{renderer();}catch(error){directionRenderError(activeTab,error);}
 }
 function directionResetNavigationContext(){directionDrilldown=null;returnContext=null;}
@@ -1105,7 +1106,7 @@ function directionBindControls(){
     button.dataset.directionBound='1';
     button.addEventListener('click',event=>{
       event.preventDefault();
-      activeTab=button.dataset.tab||'resumo';
+      activeTab=button.dataset.tab||'distribuicao';
       directionResetNavigationContext();
       render();
     });
@@ -1409,7 +1410,7 @@ let lastLiveClockKey="",lastLiveDate=liveTodayISO();
 function refreshTimeDependentViews(force=false){
   const now=liveNow(),key=`${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}`,today=liveTodayISO();if(!force&&key===lastLiveClockKey)return;lastLiveClockKey=key;
   if(today!==lastLiveDate){const selected=$("dateFilter")?.value||lastLiveDate;if(selected===lastLiveDate){$("dateFilter").value=today;setMonthFromDate(today);}lastLiveDate=today;}
-  if(activeTab==='resumo')renderResumo();else if(activeTab==='promocoes')renderPromocoes();else if(activeTab==='estudio')renderEstudio();else if(activeTab==='retiradas')renderRetiradas();else if(activeTab==='relatorios')renderRelatorios();
+  if(activeTab==='programacao')renderProgramacao();else if(activeTab==='promocoes')renderPromocoes();else if(activeTab==='retiradas')renderRetiradas();else if(activeTab==='relatorios')renderRelatorios();
 }
 setInterval(()=>refreshTimeDependentViews(false),1000);window.addEventListener("focus",()=>refreshTimeDependentViews(true));document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshTimeDependentViews(true);});
 </script>
