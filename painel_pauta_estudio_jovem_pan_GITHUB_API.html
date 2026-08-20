@@ -2291,6 +2291,37 @@ tbody tr:focus-within td{background:#fff8fa}
 .studioPrizeMomentAlert{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:24px!important;border:1px solid #efb5c0!important;border-radius:999px!important;background:#fff1f3!important;color:#a51e35!important;padding:0 10px!important;font-size:8.5px!important;font-weight:1000!important;letter-spacing:.065em!important;animation:studioPrizeMomentPulse 1.15s ease-in-out infinite!important;box-shadow:0 0 0 rgba(185,13,47,0)!important}
 @keyframes studioPrizeMomentPulse{0%,100%{background:#fff1f3;color:#a51e35;border-color:#efb5c0;box-shadow:0 0 0 0 rgba(185,13,47,0)}50%{background:#d9445e;color:#fff;border-color:#d9445e;box-shadow:0 0 0 4px rgba(217,68,94,.12)}}
 @media(prefers-reduced-motion:reduce){.studioPrizeMomentAlert{animation:none!important;background:#fff1f3!important;color:#a51e35!important}}
+
+/* === AV-57.6.1 · CONTAGEM REGRESSIVA DO RESULTADO === */
+.resultCountdownBox{
+  width:min(520px,100%);min-height:66px;margin:2px auto 0;border:1px solid #e4c7cc;border-radius:16px;
+  background:linear-gradient(180deg,#fff8f9,#fff3f5);color:#8c2437;display:grid;grid-template-columns:auto 1fr auto;
+  align-items:center;gap:11px;padding:10px 14px;box-shadow:0 7px 18px rgba(119,35,52,.055);overflow:hidden;position:relative
+}
+.resultCountdownBox::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#c8314c;opacity:.72}
+.resultCountdownIcon{width:34px;height:34px;border:1px solid #edc2ca;border-radius:50%;display:grid;place-items:center;background:#fff;color:#a9243b;font-size:16px}
+.resultCountdownCopy{min-width:0;display:grid;gap:2px}.resultCountdownCopy span{font-size:7px;font-weight:1000;letter-spacing:.10em;color:#8d5963}.resultCountdownCopy strong{font-size:15px;font-weight:1000;letter-spacing:.015em;white-space:nowrap}.resultCountdownTarget{font-size:8px;font-weight:1000;letter-spacing:.06em;color:#7a5960;white-space:nowrap;text-align:right}
+.resultCountdownBox.soon{border-color:#e6a9b4;background:linear-gradient(180deg,#fff6f7,#ffedef)}
+.resultCountdownBox.urgent{background:linear-gradient(180deg,#cf2744,#b91836);border-color:#b91836;color:#fff;animation:resultCountdownPulse .88s ease-in-out infinite;box-shadow:0 0 0 4px rgba(185,24,54,.08),0 9px 24px rgba(185,24,54,.16)}
+.resultCountdownBox.urgent::before{background:#fff;opacity:.9}.resultCountdownBox.urgent .resultCountdownIcon{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.42);color:#fff}.resultCountdownBox.urgent .resultCountdownCopy span,.resultCountdownBox.urgent .resultCountdownTarget{color:rgba(255,255,255,.82)}
+.resultCountdownBox.now{background:#b90d2f;border-color:#b90d2f;color:#fff;animation:resultCountdownPulse .62s ease-in-out infinite;box-shadow:0 0 0 5px rgba(185,13,47,.10),0 0 24px rgba(185,13,47,.20)}
+.resultCountdownBox.now::before{background:#fff}.resultCountdownBox.now .resultCountdownIcon{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.4);color:#fff}.resultCountdownBox.now .resultCountdownCopy span,.resultCountdownBox.now .resultCountdownTarget{color:rgba(255,255,255,.84)}
+.resultCountdownBox.late{background:#8f1730;border-color:#8f1730;color:#fff}.resultCountdownBox.late::before{background:#fff}.resultCountdownBox.late .resultCountdownIcon{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);color:#fff}.resultCountdownBox.late .resultCountdownCopy span,.resultCountdownBox.late .resultCountdownTarget{color:rgba(255,255,255,.82)}
+@keyframes resultCountdownPulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.008);filter:brightness(1.10)}}
+@media(max-width:700px){.resultCountdownBox{grid-template-columns:auto 1fr;padding:9px 11px}.resultCountdownTarget{grid-column:2;text-align:left}.resultCountdownCopy strong{font-size:13px}}
+@media(prefers-reduced-motion:reduce){.resultCountdownBox.urgent,.resultCountdownBox.now{animation:none!important}}
+</style>
+
+
+<style>
+/* AV-57.6 · ALERTA FIXO DE RESULTADO DE PROMOÇÃO */
+.studioPromoResultDayAlert{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:26px!important;border:1px solid #d64258!important;border-radius:999px!important;background:#c91e3b!important;color:#fff!important;padding:0 11px!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.06em!important;box-shadow:0 4px 13px rgba(185,13,47,.18)!important;white-space:nowrap!important}
+.studioPromoResultDayAlert.soon{animation:studioPromoResultPulse 1.25s ease-in-out infinite!important}
+.studioPromoResultDayAlert.now,.studioPromoResultDayAlert.late{background:#ad102d!important;border-color:#ad102d!important;animation:studioPromoResultPulse .78s ease-in-out infinite!important;box-shadow:0 0 0 4px rgba(185,13,47,.10),0 0 20px rgba(185,13,47,.22)!important}
+.studioPromoResultDayAlert.done{background:#eaf7ef!important;border-color:#b9dfc8!important;color:#28724b!important;animation:none!important;box-shadow:none!important}
+@keyframes studioPromoResultPulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.035);filter:brightness(1.16)}}
+@media(max-width:760px){.studioPromoResultDayAlert{white-space:normal!important;text-align:center;line-height:1.25;padding:5px 8px!important}}
+@media(prefers-reduced-motion:reduce){.studioPromoResultDayAlert{animation:none!important}}
 </style>
 
 </head>
@@ -3299,18 +3330,24 @@ function studioStationLabel(){
 function studioFullStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS 98,3' : 'JOVEMPAN 101,7';
 }
-function studioPrizeMomentAlert(item,promo){
-  if(promo||!item||item.__virtual||item.sourceType==='promo-result'||!studioPrizePending(item)) return '';
-  const now=currentSlotDate(),date=todayISO();
-  if(item.date!==date) return '';
-  const parts=String(timeToHHMM(item.slot)||'').split(':').map(Number),hour=parts[0],minute=parts[1]||0;
-  if(!Number.isFinite(hour)) return '';
-  const sameHour=(monthData().items||[]).filter(i=>i&&i.id!==item.id&&i.date===item.date&&i.sourceType!=='promo-result'&&normalizeStationValue(i.station||STUDIO_STATION)===normalizeStationValue(STUDIO_STATION)&&upper(i.status||'PENDENTE')!=='CANCELADO'&&Number(String(timeToHHMM(i.slot)||'').slice(0,2))===hour);
-  const splitHour=minute===30||sameHour.some(i=>String(timeToHHMM(i.slot)||'').endsWith(':30'));
-  const nowHour=now.getHours(),nowMinute=now.getMinutes();
-  const inWindow=splitHour ? (nowHour===hour && (minute===30?nowMinute>=30:nowMinute<30)) : nowHour===hour;
-  if(!inWindow) return '';
-  return `<span class="studioPrizeMomentAlert">${splitHour?'PRÊMIO DESTA MEIA HORA':'PRÊMIO DA HORA'}</span>`;
+function studioPrizeMomentAlert(item,promo){return '';}
+function studioTodayPromoResultRows(){
+  const date=todayISO(),seen=new Map(),source=[...(monthData().items||[]),...promoResultVirtualRows()];
+  source.filter(r=>r&&r.sourceType==='promo-result'&&r.date===date&&normalizeStationValue(r.station||STUDIO_STATION)===normalizeStationValue(STUDIO_STATION)).forEach(r=>{const key=r.occurrenceId||`${r.promoId}|${r.date}|${formatStudioTime(r.slot)}`;const current=seen.get(key);if(!current||(!current.winnerName&&r.winnerName))seen.set(key,r);});
+  return [...seen.values()].sort((a,b)=>minutesOf(a.slot)-minutesOf(b.slot));
+}
+function studioPromoResultDayAlert(){
+  const rows=studioTodayPromoResultRows();if(!rows.length)return'';
+  const now=currentSlotDate(),nowMinutes=now.getHours()*60+now.getMinutes();
+  const pending=rows.filter(r=>upper(r.status||'PENDENTE')!=='REALIZADO'&&!upper(r.winnerName||''));
+  if(!pending.length){const last=rows.at(-1);return `<span class="studioPromoResultDayAlert done">RESULTADO REALIZADO · ${esc(formatStudioTime(last.slot))}</span>`;}
+  let target=pending.find(r=>minutesOf(r.slot)>=nowMinutes)||pending[0],targetMin=minutesOf(target.slot),diff=targetMin-nowMinutes,cls='',prefix='RESULTADO DE PROMOÇÃO HOJE';
+  if(diff>0&&diff<=30){cls='soon';prefix=`RESULTADO EM ${diff} MIN`;}
+  else if(diff<=0&&diff>-60){cls='now';prefix='RESULTADO DA PROMOÇÃO AGORA';}
+  else if(diff<=-60){cls='late';prefix='RESULTADO ATRASADO';}
+  const program=upper(target.program||programFromSchedule(target.date,target.slot,STUDIO_STATION)||'PROGRAMA');
+  const extra=pending.length>1?` · +${pending.length-1}`:'';
+  return `<span class="studioPromoResultDayAlert ${cls}">${esc(prefix)} · ${esc(formatStudioTime(target.slot))} · ${esc(program)}${extra}</span>`;
 }
 function buildStudioContext(item,promo){
   const date=item?.date||todayISO();
@@ -3318,7 +3355,29 @@ function buildStudioContext(item,promo){
   const programInfo=program?`<span>${esc(upper(program))}</span>`:'';
   const now=currentSlotDate();
   const manualInfo=manual?`<span class="manualConsult">CONSULTANDO ${esc(formatStudioTime(item?.slot||''))} · AGORA ${esc(formatStudioTime(`${pad(now.getHours())}:${pad(now.getMinutes())}`))}</span><button class="returnNowBtn" type="button" onclick="returnStudioToNow()">VOLTAR PARA AGORA</button>`:'';
-  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span>${programInfo}${studioPrizeMomentAlert(item,promo)}${manualInfo}</div>`;
+  return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span>${programInfo}${studioPromoResultDayAlert()}${manualInfo}</div>`;
+}
+function studioResultPending(item){return !!(item&&!item.__virtual&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
+function studioCountdownDuration(totalMinutes){
+  const mins=Math.max(0,Math.ceil(Math.abs(totalMinutes)));
+  if(mins<60)return `${mins} MIN`;
+  const h=Math.floor(mins/60),m=mins%60;
+  return `${h}H${m?` ${pad(m)}MIN`:''}`;
+}
+function studioResultCountdownBox(item){
+  if(!studioResultPending(item))return'';
+  const today=todayISO(),date=item?.date||'',slot=formatStudioTime(item?.slot||'');
+  if(!date||!slot)return'';
+  const program=upper(item?.program||programFromSchedule(date,item?.slot||'',STUDIO_STATION)||'PROGRAMA');
+  const type=item?.sourceType==='promo-result'?'RESULTADO DA PROMOÇÃO':'RESULTADO DO PRÊMIO';
+  if(date!==today){return `<div class="resultCountdownBox"><div class="resultCountdownIcon">◷</div><div class="resultCountdownCopy"><span>${esc(type)}</span><strong>${date>today?'PROGRAMADO':'RESULTADO PENDENTE'}</strong></div><div class="resultCountdownTarget">${esc(formatBR(date))} · ${esc(slot)} · ${esc(program)}</div></div>`;}
+  const now=currentSlotDate(),parts=timeToHHMM(item.slot).split(':').map(Number),target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),parts[0]||0,parts[1]||0,0,0),delta=(target-now)/60000;
+  let cls='',headline='';
+  if(delta>10){cls=delta<=30?'soon':'';headline=`RESULTADO DAQUI ${studioCountdownDuration(delta)}`;}
+  else if(delta>0){cls='urgent';headline=`RESULTADO DAQUI ${studioCountdownDuration(delta)}`;}
+  else if(delta>-1){cls='now';headline='RESULTADO AGORA';}
+  else{cls='late';headline=`RESULTADO ATRASADO · ${studioCountdownDuration(delta)}`;}
+  return `<div class="resultCountdownBox ${cls}"><div class="resultCountdownIcon">◷</div><div class="resultCountdownCopy"><span>${esc(type)}</span><strong>${esc(headline)}</strong></div><div class="resultCountdownTarget">SORTEIO ÀS ${esc(slot)} · ${esc(program)}</div></div>`;
 }
 function studioPrizePending(item){return !!(item&&!item.__virtual&&item.sourceType!=='promo-result'&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
 /* ================= AV-57.3 · MOTOR GLOBAL DE LEITURAS ================= */
@@ -4213,7 +4272,7 @@ function render(){
     ` : `
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(itemTitleStyle(item),'title')}">${esc(itemTitle(item))}</h1></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(itemDescStyle(item),'desc')}">${esc(itemDesc(item))}</p></div>
-      ${winnerBlock}
+      ${winnerBlock || studioResultCountdownBox(item)}
       <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'GANHADOR REGISTRADO' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'GANHADOR REGISTRADO · BOTÃO DIREITO NO NOME PARA CORRIGIR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
     `;
   $('pautaPanel').innerHTML=`

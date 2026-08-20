@@ -2226,6 +2226,18 @@ tbody tr:focus-within td{background:#fff8fa}
 }
 </style>
 
+
+<style>
+/* AV-57.6 · ALERTA FIXO DE RESULTADO DE PROMOÇÃO */
+.studioPromoResultDayAlert{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:26px!important;border:1px solid #d64258!important;border-radius:999px!important;background:#c91e3b!important;color:#fff!important;padding:0 11px!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.06em!important;box-shadow:0 4px 13px rgba(185,13,47,.18)!important;white-space:nowrap!important}
+.studioPromoResultDayAlert.soon{animation:studioPromoResultPulse 1.25s ease-in-out infinite!important}
+.studioPromoResultDayAlert.now,.studioPromoResultDayAlert.late{background:#ad102d!important;border-color:#ad102d!important;animation:studioPromoResultPulse .78s ease-in-out infinite!important;box-shadow:0 0 0 4px rgba(185,13,47,.10),0 0 20px rgba(185,13,47,.22)!important}
+.studioPromoResultDayAlert.done{background:#eaf7ef!important;border-color:#b9dfc8!important;color:#28724b!important;animation:none!important;box-shadow:none!important}
+@keyframes studioPromoResultPulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.035);filter:brightness(1.16)}}
+@media(max-width:760px){.studioPromoResultDayAlert{white-space:normal!important;text-align:center;line-height:1.25;padding:5px 8px!important}}
+@media(prefers-reduced-motion:reduce){.studioPromoResultDayAlert{animation:none!important}}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -2750,6 +2762,24 @@ function studioStationLabel(){
 }
 function studioFullStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS 98,3' : 'JOVEMPAN 101,7';
+}
+function studioTodayPromoResultRows(){
+  const date=todayISO(),seen=new Map(),source=[...(monthData().items||[]),...promoResultVirtualRows()];
+  source.filter(r=>r&&r.sourceType==='promo-result'&&r.date===date&&normalizeStationValue(r.station||STUDIO_STATION)===normalizeStationValue(STUDIO_STATION)).forEach(r=>{const key=r.occurrenceId||`${r.promoId}|${r.date}|${formatStudioTime(r.slot)}`;const current=seen.get(key);if(!current||(!current.winnerName&&r.winnerName))seen.set(key,r);});
+  return [...seen.values()].sort((a,b)=>minutesOf(a.slot)-minutesOf(b.slot));
+}
+function studioPromoResultDayAlert(){
+  const rows=studioTodayPromoResultRows();if(!rows.length)return'';
+  const now=currentSlotDate(),nowMinutes=now.getHours()*60+now.getMinutes();
+  const pending=rows.filter(r=>upper(r.status||'PENDENTE')!=='REALIZADO'&&!upper(r.winnerName||''));
+  if(!pending.length){const last=rows.at(-1);return `<span class="studioPromoResultDayAlert done">RESULTADO REALIZADO · ${esc(formatStudioTime(last.slot))}</span>`;}
+  let target=pending.find(r=>minutesOf(r.slot)>=nowMinutes)||pending[0],targetMin=minutesOf(target.slot),diff=targetMin-nowMinutes,cls='',prefix='RESULTADO DE PROMOÇÃO HOJE';
+  if(diff>0&&diff<=30){cls='soon';prefix=`RESULTADO EM ${diff} MIN`;}
+  else if(diff<=0&&diff>-60){cls='now';prefix='RESULTADO DA PROMOÇÃO AGORA';}
+  else if(diff<=-60){cls='late';prefix='RESULTADO ATRASADO';}
+  const program=upper(target.program||programFromSchedule(target.date,target.slot,STUDIO_STATION)||'PROGRAMA');
+  const extra=pending.length>1?` · +${pending.length-1}`:'';
+  return `<span class="studioPromoResultDayAlert ${cls}">${esc(prefix)} · ${esc(formatStudioTime(target.slot))} · ${esc(program)}${extra}</span>`;
 }
 function buildStudioContext(item,promo){
   const date=item?.date||todayISO();

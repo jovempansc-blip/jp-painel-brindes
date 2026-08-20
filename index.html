@@ -3452,6 +3452,47 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 @media(max-width:820px){.returnReuseHero{grid-template-columns:1fr 1fr}.returnReuseHeroBox.main{grid-column:1/-1}.returnReuseSuggestion{grid-template-columns:30px 1fr}.returnReuseSuggestionActions{grid-column:1/-1;justify-content:flex-start}.returnReuseSequenceRow{grid-template-columns:72px 52px 1fr}.returnReuseSequenceRow>*:last-child{grid-column:3}}
 </style>
 
+
+<style>
+/* === AV-57.6 · PROMO / PAUTA SIMPLIFICADO E VINCULADO À DISTRIBUIÇÃO === */
+#promoDrawer .drawerCard{width:min(1040px,96vw)!important}
+#promoDrawer .promoFormLayout{grid-template-columns:minmax(0,1fr) 310px!important;gap:14px!important}
+.promoTypeChoice{border:1px solid #dfe5ed;border-radius:16px;background:#f8fafc;padding:11px 12px;margin-bottom:10px}
+.promoTypeChoice>span{display:block;font-size:8px;color:#6c7787;letter-spacing:.075em;margin-bottom:7px;font-weight:1000}
+.promoTypeButtons{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.promoTypeButtons label{position:relative}.promoTypeButtons input{position:absolute;opacity:0;pointer-events:none}
+.promoTypeButtons span{display:flex;align-items:center;justify-content:center;min-height:36px;border:1px solid #dce3eb;border-radius:11px;background:#fff;color:#617083;font-size:9px;font-weight:1000;cursor:pointer}
+.promoTypeButtons input:checked+span{background:#b90d2f;border-color:#b90d2f;color:#fff;box-shadow:0 7px 16px rgba(185,13,47,.14)}
+.promoFormSection{border:1px solid #e2e7ee;border-radius:16px;background:rgba(249,250,252,.88);padding:11px;margin-bottom:10px}
+.promoFormSectionTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px;color:#687486;font-size:8px;letter-spacing:.065em}.promoFormSectionTitle strong{color:#252d39;font-size:10.5px}.promoFormSectionTitle span{text-align:right}
+.promoMechanicsSummary{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;border:1px solid #cce0d5;border-radius:13px;background:#f5fcf8;padding:9px}
+.promoMechanicsBox{border:1px solid #dbe9e1;border-radius:10px;background:#fff;padding:7px 8px}.promoMechanicsBox span{display:block;color:#778294;font-size:7px}.promoMechanicsBox strong{display:block;margin-top:3px;color:#1d6e48;font-size:11px}
+.promoResultProgram{background:#f2f7fc!important;color:#365d7d!important;border-color:#d6e3ef!important}
+.promoResultProgram.missing{background:#fff2f3!important;color:#a2263a!important;border-color:#efbec7!important}
+.promoDistributionGuide{grid-column:1/-1;border:1px solid #d7e5f0;border-radius:11px;background:#f4f9fd;padding:8px 10px;color:#536c80;font-size:8.5px;line-height:1.4}
+.promoDistributionGuide strong{color:#253a4c}
+.promoAdvanced{grid-column:1/-1;border:1px solid #e3e7ed;border-radius:12px;background:#fff;overflow:hidden}.promoAdvanced summary{cursor:pointer;padding:9px 10px;color:#687486;font-size:8.5px;font-weight:1000;letter-spacing:.06em}.promoAdvancedBody{padding:0 10px 10px;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#promoDrawer .textStyleEditor{display:none!important}
+#promoDrawer .promoPreviewBox{top:10px}
+#promoDrawer[data-kind="pauta"] [data-promo-only="1"]{display:none!important}
+#promoDrawer[data-kind="pauta"] .promoPreviewImage{display:none!important}
+#promoDrawer[data-kind="pauta"] .promoPreviewCard{padding-top:0}
+#promoDrawer[data-kind="promo"] [data-pauta-only="1"]{display:none!important}
+.promoFormActionsBar{position:sticky;bottom:0;z-index:4;background:linear-gradient(180deg,rgba(255,255,255,.82),#fff 26%);padding-top:8px}
+@media(max-width:900px){#promoDrawer .promoFormLayout{grid-template-columns:1fr!important}.promoMechanicsSummary{grid-template-columns:1fr}.promoAdvancedBody{grid-template-columns:1fr}.promoTypeButtons{grid-template-columns:1fr 1fr}}
+
+/* === AV-57.6.1 · HIERARQUIA PROMO/PAUTA === */
+#promoDrawer .promoTypeChoice{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);padding:10px 0 12px;margin-bottom:10px;border-bottom:1px solid #e7ebf1}
+#promoDrawer .promoFormSection{background:#fbfcfe;border:1px solid #e2e7ee;border-radius:16px;padding:12px 13px;margin-bottom:11px}
+#promoDrawer .promoFormSectionTitle{margin-bottom:10px}
+#promoDrawer .promoDistributionGuide{background:#f4f8fb;border-color:#d7e3ed;color:#50687b}
+#promoDrawer .promoMechanicsSummary{margin-top:3px}
+#promoDrawer[data-kind="pauta"] .promoFormSection:nth-of-type(2){display:none!important}
+#promoDrawer[data-kind="pauta"] .promoFormSection:nth-of-type(3) .promoFormSectionTitle span::after{content:' · MESMA REGRA DO OMR'}
+#promoDrawer #promoResultProgram:not(.missing){background:#eff8f3;border-color:#c7e5d3;color:#247047}
+#promoDrawer #promoResultProgram.missing{background:#fff5f6;border-color:#efc3ca;color:#9c3143}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -3554,7 +3595,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
       <div class="panel">
         <div class="panelHead">
           <div><h2>PROMO / MERCHAN</h2><p>CONTROLE DAS PROMOÇÕES, MERCHANS, SORTEIOS E PAUTAS PROMOCIONAIS PARA O LOCUTOR.</p></div>
-          <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" title="NOVA PROMOÇÃO" aria-label="NOVA PROMOÇÃO" data-tip="NOVA PROMOÇÃO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
+          <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" title="NOVA PROMOÇÃO / PAUTA" aria-label="NOVA PROMOÇÃO / PAUTA" data-tip="NOVO CADASTRO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
         </div>
         <div class="panelBody">
           <div class="promoSummaryGrid" id="promoSummaryGrid"></div>
@@ -4092,63 +4133,94 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
         <input type="hidden" id="promoImageData">
         <div class="promoFormLayout">
           <div>
-            <div class="formGrid">
-              <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
-              <div class="field" id="promoDrawDateField"><label id="promoDrawDateLabel">DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate" required></div>
-              <div class="field" id="promoDrawTimeField"><label id="promoDrawTimeLabel">HORA DO SORTEIO</label><input class="control" type="time" id="promoDrawTime" step="3600" required></div>
-              <div class="field"><label>ENCERRAMENTO</label><input class="control" type="date" id="promoEndDate" required></div>
-              <div class="field"><label>PRAZO DE RETIRADA</label><select class="control" id="promoPickupDays"><option value="5">PADRÃO · 5 DIAS ÚTEIS</option><option value="4">4 DIAS ÚTEIS</option><option value="3">3 DIAS ÚTEIS</option><option value="2">2 DIAS ÚTEIS</option><option value="1">1 DIA ÚTIL</option></select></div>
-              <div class="field"><label>RECORRÊNCIA DO SORTEIO</label><select class="control" id="promoRecurrence"><option value="single">SORTEIO ÚNICO</option><option value="weekly">SEMANAL ATÉ O ENCERRAMENTO</option></select></div>
-              <div class="field"><label>QTD POR SORTEIO</label><input class="control" type="number" min="1" step="1" id="promoQtyPerDraw" value="1"></div>
-              <div class="field wide"><label>VINCULAR À DISTRIBUIÇÃO (OPCIONAL)</label><select class="control" id="promoDistributionId"><option value="">SEM VÍNCULO</option></select></div>
-              <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
-              <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SEM VÍNCULO"></div>
-              <div class="field full" id="promoOccurrencesField"><label>AGENDA DE SORTEIOS</label><div class="promoOccurrencesEditor" id="promoOccurrencesEditor"><div class="promoOccurrenceEmpty">A AGENDA SERÁ GERADA A PARTIR DAS DATAS ACIMA.</div></div></div>
-              <div class="field"><label>TIPO DE CONTEÚDO</label><select class="control" id="promoKind"><option value="promo">PROMOÇÃO</option><option value="merchan">MERCHAN</option><option value="pauta">PAUTA ESPECIAL</option><option value="aviso">AVISO / COMUNICADO</option></select></div>
-              <div class="field"><label>RÁDIO DA PAUTA</label><select class="control" id="promoStation"><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option><option value="ALL">AMBAS</option></select></div>
-              <div class="field promoLocalField" id="promoLocalField"><label id="promoLocalLabel">CANAL DA PROMOÇÃO</label><select class="control" id="promoLocal"></select></div>
-              <div class="field full">
-                <label>REGRA DE VEICULAÇÃO · AV-57</label>
-                <div class="av57ScheduleGrid">
-                  <label class="miniField"><span>MODO</span><select class="control" id="promoScheduleMode"><option value="fixed">HORÁRIO FIXO / SELECIONADO</option><option value="smart">RODÍZIO INTELIGENTE</option></select></label>
-                  <label class="miniField"><span>FREQUÊNCIA</span><select class="control" id="promoFrequencyScope"><option value="day">POR DIA</option><option value="program">POR PROGRAMA</option><option value="hour">POR HORA</option><option value="period">TOTAL NO PERÍODO</option></select></label>
-                  <label class="miniField" id="promoFrequencyCountField"><span>QUANTIDADE</span><input class="control" type="number" min="1" step="1" id="promoFrequencyCount" value="1"></label>
-                  <label class="miniField av57Hidden" id="promoPeriodTotalField"><span>TOTAL NO PERÍODO</span><input class="control" type="number" min="1" step="1" id="promoPeriodTotal" value="1"></label>
-                  <label class="miniField"><span>DIAS DE LEITURA</span><select class="control" id="promoReadDateMode"><option value="range">PERÍODO + DIAS DA SEMANA</option><option value="specific">SOMENTE DATAS ESPECÍFICAS</option></select></label>
-                  <div class="av57SmartHint" id="promoSmartHint"><b>HORÁRIO FIXO:</b> as horas marcadas são obrigações exatas. No rodízio inteligente, o sistema cruza programas, horas, carga e histórico confirmado para distribuir as leituras.</div>
-                </div>
+            <div class="promoTypeChoice">
+              <span>O QUE SERÁ CADASTRADO?</span>
+              <div class="promoTypeButtons">
+                <label><input type="radio" name="promoKindChoice" value="promo" checked><span>PROMOÇÃO</span></label>
+                <label><input type="radio" name="promoKindChoice" value="pauta"><span>PAUTA</span></label>
               </div>
-              <div class="field full" id="promoWeekdaysField"><label>DIAS DA SEMANA PERMITIDOS</label><div class="av57Weekdays" id="promoReadWeekdays"></div></div>
-              <div class="field"><label>ADICIONAR DATA ESPECÍFICA</label><div class="av57DateTool"><input class="control" type="date" id="promoSpecificDateInput"><button class="btn small" type="button" id="promoAddSpecificDate">+</button></div><div class="av57DateTokens" id="promoSpecificDates"></div></div>
-              <div class="field"><label>EXCLUIR DATA</label><div class="av57DateTool"><input class="control" type="date" id="promoExcludedDateInput"><button class="btn small" type="button" id="promoAddExcludedDate">+</button></div><div class="av57DateTokens" id="promoExcludedDates"></div></div>
-              <div class="field full merchanProgramField hidden" id="promoProgramField"><label id="promoProgramLabel">PROGRAMA(S) / FAIXAS PERMITIDAS</label><select class="control av57Hidden" id="promoProgram"></select><div class="av57ProgramChoices" id="promoProgramChoices"></div><div class="av57ProgramHours" id="promoProgramHours"></div></div>
-              <div class="field full">
-                <label>HORÁRIOS DE LEITURA DA PAUTA</label>
-                <div class="promoReadSchedule" id="promoReadScheduleBox">
-                  <div class="promoReadScheduleTop">
-                    <strong id="promoReadScheduleTitle">ONDE ESSA PAUTA APARECE NO ESTÚDIO</strong>
-                    <label class="promoReadAll"><input type="checkbox" id="promoReadAll" checked> TODOS OS HORÁRIOS</label>
-                  </div>
-                  <div class="promoReadHours" id="promoReadHours"></div>
-                </div>
-              </div>
-              <div class="field wide"><label>NOME / TÍTULO PARA O LOCUTOR</label><input class="control" id="promoName" required>
-                <div class="textStyleEditor" aria-label="EDITOR DO TÍTULO DA PROMOÇÃO">
-                  <label class="miniField"><span>FONTE DO TÍTULO</span><select id="promoTitleFont"></select></label>
-                  <label class="miniField"><span>TAMANHO</span><input id="promoTitleSize" type="number" min="10" max="42" step="1"></label>
-                  <label class="miniField"><span>COR</span><input id="promoTitleColor" type="color"></label>
-                </div>
-              </div>
-              <div class="field full"><label>TEXTO PARA O LOCUTOR</label><textarea class="control" id="promoDescription" required></textarea>
-                <div class="textStyleEditor" aria-label="EDITOR DA DESCRIÇÃO DA PROMOÇÃO">
-                  <label class="miniField"><span>FONTE DA DESCRIÇÃO</span><select id="promoDescFont"></select></label>
-                  <label class="miniField"><span>TAMANHO</span><input id="promoDescSize" type="number" min="9" max="32" step="1"></label>
-                  <label class="miniField"><span>COR</span><input id="promoDescColor" type="color"></label>
-                </div>
-              </div>
-              <div class="field full"><label>IMAGEM 1600 X 400 — 4:1</label><input class="control" type="file" id="promoImage" accept="image/*"><div class="uploadHint">FORMATO IDEAL: 1600 PX DE LARGURA POR 400 PX DE ALTURA.</div></div>
+              <select class="control hidden" id="promoKind" aria-hidden="true" tabindex="-1"><option value="promo">PROMOÇÃO</option><option value="pauta">PAUTA</option></select>
             </div>
-            <div class="formActions"><button class="btn red" type="submit">SALVAR PROMO / MERCHAN</button><button class="btn" type="button" data-close="promoDrawer">CANCELAR</button></div>
+
+            <section class="promoFormSection">
+              <div class="promoFormSectionTitle"><strong>1. IDENTIFICAÇÃO E VIGÊNCIA</strong><span>PERÍODO, EMISSORA E IDENTIFICAÇÃO</span></div>
+              <div class="formGrid">
+                <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
+                <div class="field"><label>ENCERRAMENTO</label><input class="control" type="date" id="promoEndDate" required></div>
+                <div class="field"><label>RÁDIO</label><select class="control" id="promoStation"><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option><option value="ALL">AMBAS</option></select></div>
+                <div class="field" id="promoLocalField" data-promo-only="1"><label id="promoLocalLabel">CANAL DA PROMOÇÃO</label><select class="control" id="promoLocal"></select></div>
+              </div>
+            </section>
+
+            <section class="promoFormSection" data-promo-only="1">
+              <div class="promoFormSectionTitle"><strong>2. PRÊMIO E SORTEIO</strong><span>VÍNCULO DIRETO COM A DISTRIBUIÇÃO</span></div>
+              <div class="formGrid">
+                <div class="field wide"><label>PRÊMIO VINCULADO À DISTRIBUIÇÃO</label><select class="control" id="promoDistributionId" required><option value="">SELECIONE O PRÊMIO DISTRIBUÍDO</option></select></div>
+                <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
+                <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SELECIONE O PRÊMIO"></div>
+                <div class="promoDistributionGuide"><strong>REGRA:</strong> A PROMOÇÃO RESERVA O PRÊMIO DIRETAMENTE DA DISTRIBUIÇÃO. O SALDO NÃO É DUPLICADO E O SISTEMA BLOQUEIA QUANDO A QUANTIDADE NECESSÁRIA FOR MAIOR QUE A DISPONÍVEL.</div>
+
+                <div class="field"><label>NÚMERO DE GANHADORES</label><input class="control" type="number" min="1" step="1" id="promoQtyPerDraw" value="1"></div>
+                <div class="field"><label>BRINDES / INGRESSOS POR GANHADOR</label><input class="control" type="number" min="1" step="1" id="promoUnitsPerWinner" value="1"></div>
+                <div class="field"><label>TOTAL RESERVADO POR SORTEIO</label><input class="control" id="promoConsumptionTotal" readonly value="1 UNIDADE"></div>
+                <div class="field"><label>PRAZO DE RETIRADA</label><select class="control" id="promoPickupDays"><option value="5">PADRÃO · 5 DIAS ÚTEIS</option><option value="4">4 DIAS ÚTEIS</option><option value="3">3 DIAS ÚTEIS</option><option value="2">2 DIAS ÚTEIS</option><option value="1">1 DIA ÚTIL</option></select></div>
+
+                <div class="field" id="promoDrawDateField"><label id="promoDrawDateLabel">DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate"></div>
+                <div class="field" id="promoDrawTimeField"><label id="promoDrawTimeLabel">HORA DO SORTEIO</label><input class="control" type="time" id="promoDrawTime" step="1800"></div>
+                <div class="field wide"><label>PROGRAMA DO RESULTADO · IDENTIFICADO PELA GRADE</label><input class="control promoResultProgram" id="promoResultProgram" readonly value="SELECIONE DATA E HORA"></div>
+                <div class="field"><label>RECORRÊNCIA DO SORTEIO</label><select class="control" id="promoRecurrence"><option value="single">SORTEIO ÚNICO</option><option value="weekly">SEMANAL ATÉ O ENCERRAMENTO</option></select></div>
+
+                <div class="field full" id="promoOccurrencesField"><label>AGENDA DE SORTEIOS</label><div class="promoOccurrencesEditor" id="promoOccurrencesEditor"><div class="promoOccurrenceEmpty">A AGENDA SERÁ GERADA A PARTIR DAS DATAS ACIMA.</div></div></div>
+                <div class="promoMechanicsSummary">
+                  <div class="promoMechanicsBox"><span>GANHADORES / SORTEIO</span><strong id="promoSummaryWinners">1</strong></div>
+                  <div class="promoMechanicsBox"><span>UNIDADES / GANHADOR</span><strong id="promoSummaryUnits">1</strong></div>
+                  <div class="promoMechanicsBox"><span>CONSUMO / SORTEIO</span><strong id="promoSummaryConsumption">1</strong></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="promoFormSection">
+              <div class="promoFormSectionTitle"><strong>3. PROGRAMAÇÃO DA PAUTA</strong><span>MESMO MOTOR DE VEICULAÇÃO DO OMR</span></div>
+              <div class="formGrid">
+                <div class="field full merchanProgramField" id="promoProgramField"><label id="promoProgramLabel">PROGRAMA(S) / FAIXAS PERMITIDAS</label><select class="control av57Hidden" id="promoProgram"></select><div class="av57ProgramChoices" id="promoProgramChoices"></div><div class="av57ProgramHours" id="promoProgramHours"></div></div>
+                <div class="field full">
+                  <label>REGRA DE VEICULAÇÃO</label>
+                  <div class="av57ScheduleGrid">
+                    <label class="miniField"><span>MODO</span><select class="control" id="promoScheduleMode"><option value="fixed">HORÁRIO FIXO / SELECIONADO</option><option value="smart">RODÍZIO INTELIGENTE</option></select></label>
+                    <label class="miniField"><span>FREQUÊNCIA</span><select class="control" id="promoFrequencyScope"><option value="day">POR DIA</option><option value="program">POR PROGRAMA</option><option value="hour">POR HORA</option><option value="period">TOTAL NO PERÍODO</option></select></label>
+                    <label class="miniField" id="promoFrequencyCountField"><span>QUANTIDADE</span><input class="control" type="number" min="1" step="1" id="promoFrequencyCount" value="1"></label>
+                    <label class="miniField av57Hidden" id="promoPeriodTotalField"><span>TOTAL NO PERÍODO</span><input class="control" type="number" min="1" step="1" id="promoPeriodTotal" value="1"></label>
+                    <label class="miniField"><span>DIAS DE LEITURA</span><select class="control" id="promoReadDateMode"><option value="range">PERÍODO + DIAS DA SEMANA</option><option value="specific">SOMENTE DATAS ESPECÍFICAS</option></select></label>
+                    <div class="av57SmartHint" id="promoSmartHint"><b>HORÁRIO FIXO:</b> as horas marcadas são obrigações exatas.</div>
+                  </div>
+                </div>
+                <div class="field full" id="promoWeekdaysField"><label>DIAS DA SEMANA PERMITIDOS</label><div class="av57Weekdays" id="promoReadWeekdays"></div></div>
+                <details class="promoAdvanced">
+                  <summary>OPÇÕES AVANÇADAS · DATAS ESPECÍFICAS / EXCLUSÕES</summary>
+                  <div class="promoAdvancedBody">
+                    <div class="field"><label>ADICIONAR DATA ESPECÍFICA</label><div class="av57DateTool"><input class="control" type="date" id="promoSpecificDateInput"><button class="btn small" type="button" id="promoAddSpecificDate">+</button></div><div class="av57DateTokens" id="promoSpecificDates"></div></div>
+                    <div class="field"><label>EXCLUIR DATA</label><div class="av57DateTool"><input class="control" type="date" id="promoExcludedDateInput"><button class="btn small" type="button" id="promoAddExcludedDate">+</button></div><div class="av57DateTokens" id="promoExcludedDates"></div></div>
+                  </div>
+                </details>
+                <div class="field full" style="display:none">
+                  <label>HORÁRIOS DE LEITURA</label>
+                  <div class="promoReadSchedule" id="promoReadScheduleBox"><div class="promoReadScheduleTop"><strong id="promoReadScheduleTitle">ONDE ESSA PAUTA APARECE NO ESTÚDIO</strong><label class="promoReadAll"><input type="checkbox" id="promoReadAll"> TODOS OS HORÁRIOS</label></div><div class="promoReadHours" id="promoReadHours"></div></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="promoFormSection">
+              <div class="promoFormSectionTitle"><strong>4. TEXTO PARA O LOCUTOR</strong><span>TÍTULO, TEXTO E PREVIEW</span></div>
+              <div class="formGrid">
+                <div class="field wide"><label>NOME / TÍTULO PARA O LOCUTOR</label><input class="control" id="promoName" required></div>
+                <div class="field full"><label>TEXTO PARA O LOCUTOR</label><textarea class="control" id="promoDescription" required></textarea></div>
+                <div class="field full" data-promo-only="1"><label>IMAGEM 1600 X 400 — 4:1</label><input class="control" type="file" id="promoImage" accept="image/*"><div class="uploadHint">OPCIONAL · FORMATO IDEAL: 1600 X 400.</div></div>
+                <input type="hidden" id="promoTitleFont"><input type="hidden" id="promoTitleSize"><input type="hidden" id="promoTitleColor">
+                <input type="hidden" id="promoDescFont"><input type="hidden" id="promoDescSize"><input type="hidden" id="promoDescColor">
+              </div>
+            </section>
+
+            <div class="formActions promoFormActionsBar"><button class="btn red" type="submit" id="promoSaveBtn">SALVAR PROMOÇÃO</button><button class="btn" type="button" data-close="promoDrawer">CANCELAR</button></div>
           </div>
           <aside class="promoPreviewBox">
             <div class="promoPreviewLabel">PREVIEW DA PAUTA PARA O LOCUTOR</div>
@@ -9741,11 +9813,7 @@ function rotationAllowedSlots(d){
   return [...new Set(selected)].filter(slot=>allowed.has(slot)).sort((a,b)=>slotOrder(a)-slotOrder(b));
 }
 function promoKindLabel(value){
-  const k=String(value||'promo').toLowerCase();
-  if(k==='merchan') return 'MERCHAN';
-  if(k==='pauta') return 'PAUTA ESPECIAL';
-  if(k==='aviso') return 'AVISO / COMUNICADO';
-  return 'PROMOÇÃO';
+  return String(value||'promo').toLowerCase()==='pauta'?'PAUTA':'PROMOÇÃO';
 }
 function isMerchanMain(p){
   const k=norm(p.kind||p.promoKind||p.type||'');
@@ -9755,28 +9823,52 @@ function isPromoKindMerchan(){
   return $('promoKind')?.value==='merchan';
 }
 function promoAV57SmartMode(){ return ($('promoScheduleMode')?.value||'fixed')==='smart'; }
-function updatePromoKindMode(){
-  const kind=$('promoKind')?.value || 'promo';
-  const isM=kind==='merchan';
-  const isPromo=kind==='promo';
-  const smart=promoAV57SmartMode();
-  const lf=$('promoLocalField'), pf=$('promoProgramField');
-  if(lf) lf.classList.toggle('hidden',isM);
-  if(pf) pf.classList.remove('hidden');
-  if($('promoLocal')) $('promoLocal').required=!isM;
-  if($('promoProgram')) $('promoProgram').required=false;
-
-  if($('promoLocalLabel')) $('promoLocalLabel').textContent = isPromo ? 'CANAL DA PROMOÇÃO' : 'CANAL / DESTINO DA PAUTA';
-  if($('promoProgramLabel')) $('promoProgramLabel').textContent=smart?'PROGRAMA(S) / FAIXAS PERMITIDAS':'PROGRAMA / FAIXA';
-  if($('promoDrawDateLabel')) $('promoDrawDateLabel').textContent = isM ? 'TÉRMINO' : (isPromo ? 'DATA DE SORTEIO' : 'DATA DE EXIBIÇÃO');
-  if($('promoDrawTimeLabel')) $('promoDrawTimeLabel').textContent = isPromo ? 'HORA DO SORTEIO' : 'HORÁRIO';
-  if($('promoDrawerTitle')) $('promoDrawerTitle').textContent = $('promoId')?.value ? `EDITAR ${promoKindLabel(kind)}` : `NOVA ${promoKindLabel(kind)}`;
-  populatePromoLocalSelect();
-  populateProgramSelects();
-  promoAV57UpdateScheduleUI();
-  updatePromoPreview();
+function promoSetKindChoice(kind){
+  const value=kind==='pauta'?'pauta':'promo';
+  if($('promoKind')) $('promoKind').value=value;
+  document.querySelectorAll('input[name="promoKindChoice"]').forEach(i=>i.checked=i.value===value);
+  const drawer=$('promoDrawer');if(drawer)drawer.dataset.kind=value;
 }
-
+function promoUpdateResultProgram(){
+  const out=$('promoResultProgram');if(!out)return'';
+  const kind=$('promoKind')?.value||'promo';
+  if(kind!=='promo'){out.value='NÃO SE APLICA';out.classList.remove('missing');return'';}
+  const date=$('promoDrawDate')?.value||'',time=$('promoDrawTime')?.value||'',station=$('promoStation')?.value||'JP1017';
+  if(!date||!time){out.value='SELECIONE DATA E HORA';out.classList.add('missing');return'';}
+  const slot=normalizeSlot(time)||time;
+  let label='';
+  if(station==='ALL'){
+    const a=programForSlot(date,slot,'JP1017'),b=programForSlot(date,slot,'JPNEWS983');
+    label=[a?`101,7: ${a}`:'',b?`98,3: ${b}`:''].filter(Boolean).join(' · ');
+  }else label=programForSlot(date,slot,station)||'';
+  out.value=label||'PROGRAMA NÃO IDENTIFICADO NA GRADE';
+  out.classList.toggle('missing',!label);
+  return label;
+}
+function promoUpdateMechanics(){
+  const winners=Math.max(1,num($('promoQtyPerDraw')?.value)||1),units=Math.max(1,num($('promoUnitsPerWinner')?.value)||1),total=winners*units;
+  if($('promoConsumptionTotal')) $('promoConsumptionTotal').value=`${total} UNIDADE${total===1?'':'S'}`;
+  if($('promoSummaryWinners')) $('promoSummaryWinners').textContent=String(winners);
+  if($('promoSummaryUnits')) $('promoSummaryUnits').textContent=String(units);
+  if($('promoSummaryConsumption')) $('promoSummaryConsumption').textContent=String(total);
+  promoUpdateResultProgram();
+  return{winners,units,total};
+}
+function updatePromoKindMode(){
+  const kind=$('promoKind')?.value || 'promo',isPromo=kind==='promo',smart=promoAV57SmartMode();
+  promoSetKindChoice(kind);
+  if($('promoLocal')) $('promoLocal').required=isPromo;
+  if($('promoDistributionId')) $('promoDistributionId').required=isPromo;
+  if($('promoSegmentKey')) $('promoSegmentKey').required=isPromo;
+  if($('promoDrawDate')) $('promoDrawDate').required=isPromo;
+  if($('promoDrawTime')) $('promoDrawTime').required=isPromo;
+  if($('promoProgram')) $('promoProgram').required=false;
+  if($('promoLocalLabel')) $('promoLocalLabel').textContent='CANAL DA PROMOÇÃO';
+  if($('promoProgramLabel')) $('promoProgramLabel').textContent=smart?'PROGRAMA(S) / FAIXAS PERMITIDAS':'PROGRAMA(S) / HORÁRIOS';
+  if($('promoDrawerTitle')) $('promoDrawerTitle').textContent = $('promoId')?.value ? `EDITAR ${promoKindLabel(kind)}` : `NOVA ${promoKindLabel(kind)}`;
+  if($('promoSaveBtn')) $('promoSaveBtn').textContent=isPromo?'SALVAR PROMOÇÃO':'SALVAR PAUTA';
+  populatePromoLocalSelect();populateProgramSelects();promoAV57UpdateScheduleUI();promoUpdateMechanics();updatePromoPreview();
+}
 
 function selectedWeekDatesForClear(){
   const week=$('weekFilter')?.value || '';
@@ -12777,7 +12869,7 @@ function updatePromoPreview(){
   const descBox = $('promoPreviewDesc');
   if(descBox){ descBox.textContent = desc || 'TEXTO PARA O LOCUTOR LER NO AR.'; applyPromoTextStyle(descBox,descStyle,'desc'); }
   const schedule=$('promoPreviewSchedule');
-  if(schedule) schedule.textContent = promoReadScheduleText();
+  if(schedule){const base=promoReadScheduleText();if(kind==='promo'){const m=promoUpdateMechanics(),rp=$('promoResultProgram')?.value||'';schedule.textContent=`${m.winners} GANHADOR(ES) · ${m.units} UNID. CADA · SORTEIO ${formatBR($('promoDrawDate')?.value||'')} ${$('promoDrawTime')?.value||''} · ${rp} · ${base}`;}else schedule.textContent=base;}
 }
 function populatePromoLocalSelect(){
   const sel=$('promoLocal');
@@ -12820,14 +12912,14 @@ function clearPromoForm(){
   $('promoForm').reset();
   $('promoId').value='';
   $('promoImageData').value='';
-  if($('promoKind')) $('promoKind').value='promo';
+  if($('promoKind')) $('promoKind').value='promo'; promoSetKindChoice('promo');
   if($('promoStation')) $('promoStation').value='JP1017';
   if($('promoStartDate')) $('promoStartDate').value=todayISO();
   if($('promoDrawDate')) $('promoDrawDate').value=todayISO();
   if($('promoEndDate')) $('promoEndDate').value=todayISO();
   if($('promoPickupDays')) $('promoPickupDays').value='5';
   if($('promoRecurrence')) $('promoRecurrence').value='single';
-  if($('promoQtyPerDraw')) $('promoQtyPerDraw').value='1';
+  if($('promoQtyPerDraw')) $('promoQtyPerDraw').value='1'; if($('promoUnitsPerWinner')) $('promoUnitsPerWinner').value='1';
   if($('promoDistributionId')) $('promoDistributionId').value='';
   if($('promoSegmentKey')) $('promoSegmentKey').value='';
   if($('promoScheduleMode')) $('promoScheduleMode').value='fixed';
@@ -12846,6 +12938,7 @@ function clearPromoForm(){
   setPromoStyleControls('promoTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('promoDesc',defaultPromoTextStyle('desc'),'desc');
   $('promoDrawerTitle').textContent='NOVA PROMOÇÃO';
+  promoUpdateMechanics();
   updatePromoPreview();
   renderPromoOccurrencesEditor(false);
 }
@@ -12930,11 +13023,11 @@ function editPromo(pid){
   if($('promoEndDate')) $('promoEndDate').value=p.endDate||p.drawDate||'';
   if($('promoPickupDays')) $('promoPickupDays').value=String(Math.max(1,Math.min(5,num(p.pickupBusinessDays)||5)));
   if($('promoRecurrence')) $('promoRecurrence').value=p.recurrenceMode||'single';
-  if($('promoQtyPerDraw')) $('promoQtyPerDraw').value=Math.max(1,num(p.qtyPerDraw)||1);
+  if($('promoQtyPerDraw')) $('promoQtyPerDraw').value=Math.max(1,num(p.winnersPerDraw||p.qtyPerDraw)||1); if($('promoUnitsPerWinner')) $('promoUnitsPerWinner').value=Math.max(1,num(p.unitsPerWinner)||1);
   populatePromoDistributionSelect();
   if($('promoDistributionId')) $('promoDistributionId').value=p.distributionId||'';
   if($('promoSegmentKey')) $('promoSegmentKey').value=p.segmentKey||'';
-  if($('promoKind')) $('promoKind').value=p.kind||p.promoKind||p.type||'promo';
+  if($('promoKind')) $('promoKind').value=(p.kind||p.promoKind||p.type||'promo')==='pauta'?'pauta':'promo'; promoSetKindChoice($('promoKind').value);
   if($('promoStation')) $('promoStation').value=p.station||'JP1017';
   if($('promoScheduleMode')) $('promoScheduleMode').value=(p.promoScheduleMode||p.scheduleMode||'fixed')==='rotation'?'smart':(p.promoScheduleMode||p.scheduleMode||'fixed');
   if($('promoFrequencyScope')) $('promoFrequencyScope').value=p.promoFrequencyScope||((p.promoScheduleMode||'fixed')==='fixed'?'hour':'day');
@@ -12954,6 +13047,7 @@ function editPromo(pid){
   setPromoStyleControls('promoTitle',p.titleStyle,'title');
   setPromoStyleControls('promoDesc',p.descriptionStyle,'desc');
   $('promoImageData').value=p.imageData||'';
+  promoUpdateMechanics();
   updatePromoPreview();
   renderPromoOccurrencesEditor(false);
   openDrawer('promoDrawer');
@@ -12986,10 +13080,10 @@ $('promoImage').addEventListener('change',e=>{
   reader.readAsDataURL(file);
 });
 ['promoName','promoDescription','promoTitleFont','promoTitleSize','promoTitleColor','promoDescFont','promoDescSize','promoDescColor','promoLocal','promoPickupDays','promoDistributionId','promoSegmentKey'].forEach(id=>bind(id,'input',()=>{updatePromoPreview();updatePromoSegmentBalance();}));
-['promoStartDate','promoDrawDate','promoDrawTime','promoEndDate','promoRecurrence','promoQtyPerDraw'].forEach(id=>{ bind(id,'input',()=>{updatePromoPreview();renderPromoOccurrencesEditor(false);updatePromoSegmentBalance();}); bind(id,'change',()=>{renderPromoOccurrencesEditor(false);updatePromoSegmentBalance();}); });
+['promoStartDate','promoDrawDate','promoDrawTime','promoEndDate','promoRecurrence','promoQtyPerDraw','promoUnitsPerWinner'].forEach(id=>{ bind(id,'input',()=>{promoUpdateMechanics();updatePromoPreview();renderPromoOccurrencesEditor(false);updatePromoSegmentBalance();}); bind(id,'change',()=>{promoUpdateMechanics();renderPromoOccurrencesEditor(false);updatePromoSegmentBalance();}); });
 bind('promoProgram','change',()=>{applyProgramHoursToPromo(); updatePromoPreview();});
 bind('promoProgram','input',updatePromoPreview);
-bind('promoKind','change',()=>{ updatePromoKindMode(); renderPromoOccurrencesEditor(false); updatePromoSegmentBalance(); });
+bind('promoKind','change',()=>{ updatePromoKindMode(); renderPromoOccurrencesEditor(false); updatePromoSegmentBalance(); }); document.querySelectorAll('input[name="promoKindChoice"]').forEach(i=>i.addEventListener('change',()=>{if(!i.checked)return;$('promoKind').value=i.value;updatePromoKindMode();renderPromoOccurrencesEditor(false);updatePromoSegmentBalance();})); bind('promoStation','change',()=>{populateProgramSelects();promoUpdateResultProgram();updatePromoPreview();});
 bind('promoReadAll','change',updatePromoReadScheduleState);
 bind('promoScheduleMode','change',()=>{promoAV57UpdateScheduleUI();updatePromoKindMode();updatePromoPreview();});
 bind('promoFrequencyScope','change',()=>{promoAV57UpdateScheduleUI();updatePromoPreview();});
@@ -13010,7 +13104,7 @@ function populatePromoDistributionSelect(){
   const sel=$('promoDistributionId'); if(!sel) return;
   const current=sel.value; const seen=new Map();
   Object.values(state.months||{}).forEach(m=>(m.distributions||[]).forEach(d=>{ if(!seen.has(d.id)) seen.set(d.id,d); }));
-  sel.innerHTML='<option value="">SEM VÍNCULO</option>'+[...seen.values()].sort((a,b)=>norm(distributionLabel(a)).localeCompare(norm(distributionLabel(b)))).map(d=>`<option value="${esc(d.id)}">${esc(distributionLabel(d))}</option>`).join('');
+  sel.innerHTML='<option value="">SELECIONE O PRÊMIO DISTRIBUÍDO</option>'+[...seen.values()].sort((a,b)=>norm(distributionLabel(a)).localeCompare(norm(distributionLabel(b)))).map(d=>`<option value="${esc(d.id)}">${esc(distributionLabel(d))}</option>`).join('');
   if([...seen.keys()].includes(current)) sel.value=current;
 }
 function promoOccurrenceKey(p,date,time){ return `${p?.id||'PROMO'}|${date}|${timeToHHMM(time||p?.drawTime||'00:00')}`; }
@@ -13026,7 +13120,7 @@ function generatePromoOccurrences(p,existing={}){
   }else dates.push(first);
   return dates.map(date=>{
     const old=oldMap.get(`${date}|${timeToHHMM(time)}`)||{};
-    return {...old,id:old.id||promoOccurrenceKey(p,date,time),date,time,qtyPlanned:Math.max(1,num(p.qtyPerDraw)||1),actualQty:num(old.actualQty)||0,status:old.status||'AGENDADO',updatedAt:new Date().toISOString()};
+    const winners=Math.max(1,num(p.winnersPerDraw||p.qtyPerDraw)||1),units=Math.max(1,num(p.unitsPerWinner)||1); return {...old,id:old.id||promoOccurrenceKey(p,date,time),date,time,qtyPlanned:winners,unitsPerWinner:units,unitsPlanned:winners*units,actualQty:num(old.actualQty)||0,status:old.status||'AGENDADO',updatedAt:new Date().toISOString()};
   });
 }
 function promoDraftFromForm(){
@@ -13040,7 +13134,9 @@ function promoDraftFromForm(){
     endDate:$('promoEndDate')?.value||$('promoDrawDate')?.value||todayISO(),
     drawTime:$('promoDrawTime')?.value||'00:00',
     recurrenceMode:$('promoRecurrence')?.value||'single',
-    qtyPerDraw:Math.max(1,num($('promoQtyPerDraw')?.value)||1)
+    qtyPerDraw:Math.max(1,num($('promoQtyPerDraw')?.value)||1),
+    winnersPerDraw:Math.max(1,num($('promoQtyPerDraw')?.value)||1),
+    unitsPerWinner:Math.max(1,num($('promoUnitsPerWinner')?.value)||1)
   };
 }
 function promoOccurrenceEditsFromForm(){
@@ -13066,11 +13162,13 @@ function renderPromoOccurrencesEditor(preserveEdits=true){
   const host=$('promoOccurrencesEditor'), field=$('promoOccurrencesField');
   if(!host) return;
   const draft=promoDraftFromForm();
-  if(field) field.classList.toggle('hidden',draft.kind!=='promo');
-  if(draft.kind!=='promo'){ host.innerHTML='<div class="promoOccurrenceEmpty">NÃO SE APLICA A ESTE TIPO DE CONTEÚDO.</div>'; return; }
+  if(draft.kind!=='promo'){ if(field) field.classList.add('hidden'); host.innerHTML='<div class="promoOccurrenceEmpty">NÃO SE APLICA A ESTE TIPO DE CONTEÚDO.</div>'; return; }
   const existing=consolidatedPromoById(draft.id)||{};
   const generated=generatePromoOccurrences(draft,existing);
+  const showAgenda=(draft.recurrenceMode||'single')!=='single' || generated.length>1;
+  if(field) field.classList.toggle('hidden',!showAgenda);
   if(!generated.length){ host.innerHTML='<div class="promoOccurrenceEmpty">CONFIRA INÍCIO, PRIMEIRO SORTEIO E ENCERRAMENTO.</div>'; return; }
+  if(!showAgenda){ host.innerHTML=''; return; }
   const currentEdits=preserveEdits?promoOccurrenceEditsFromForm():new Map();
   host.innerHTML=generated.map(o=>{
     const key=`${o.date}|${timeToHHMM(o.time)}`;
@@ -13087,16 +13185,12 @@ document.addEventListener('input',event=>{
 document.addEventListener('change',event=>{
   if(event.target.closest('#promoOccurrencesEditor')) updatePromoSegmentBalance();
 });
-function promoForecastQty(p){ return (p?.occurrences||[]).filter(o=>normalizeStatus(o.status)!=='CANCELADO').reduce((sum,o)=>sum+(normalizeStatus(o.status)==='REALIZADO'?(num(o.actualQty)||num(o.qtyPlanned)):num(o.qtyPlanned)),0); }
-function promoUsedQty(p){ return (p?.occurrences||[]).filter(o=>normalizeStatus(o.status)==='REALIZADO').reduce((sum,o)=>sum+(num(o.actualQty)||num(o.qtyPlanned)),0); }
+function promoOccurrenceStockUnits(o,p={}){const winners=Math.max(1,num(o?.qtyPlanned)||num(p?.winnersPerDraw)||num(p?.qtyPerDraw)||1),units=Math.max(1,num(o?.unitsPerWinner)||num(p?.unitsPerWinner)||1);return Math.max(1,num(o?.unitsPlanned)||winners*units);}
+function promoForecastQty(p){ return (p?.occurrences||[]).filter(o=>normalizeStatus(o.status)!=='CANCELADO').reduce((sum,o)=>sum+promoOccurrenceStockUnits(o,p),0); }
+function promoUsedQty(p){ return (p?.occurrences||[]).filter(o=>normalizeStatus(o.status)==='REALIZADO').reduce((sum,o)=>sum+promoOccurrenceStockUnits(o,p),0); }
 function promoCommitmentQty(p,referenceDate=todayISO()){
   const ended=!!(p?.endDate||p?.drawDate) && String(p.endDate||p.drawDate)<String(referenceDate);
-  return (p?.occurrences||[]).reduce((sum,o)=>{
-    const status=normalizeStatus(o.status);
-    if(status==='CANCELADO') return sum;
-    if(status==='REALIZADO') return sum+(num(o.actualQty)||num(o.qtyPlanned));
-    return ended?sum:sum+num(o.qtyPlanned);
-  },0);
+  return (p?.occurrences||[]).reduce((sum,o)=>{const status=normalizeStatus(o.status);if(status==='CANCELADO')return sum;if(status==='REALIZADO')return sum+promoOccurrenceStockUnits(o,p);return ended?sum:sum+promoOccurrenceStockUnits(o,p);},0);
 }
 function uniqueConsolidatedPromos(){
   const ids=new Set(); Object.values(state.months||{}).forEach(m=>(m.promos||[]).forEach(p=>p?.id&&ids.add(p.id)));
@@ -13129,7 +13223,7 @@ function updatePromoSegmentBalance(){
   const draft=promoDraftFromForm();
   draft.distributionId=distId; draft.segmentKey=segmentKey;
   draft.occurrences=promoOccurrencesFromForm(draft,consolidatedPromoById(draft.id)||{});
-  const st=promoSegmentStatus(draft); out.value=st?`${st.available} DISP. · ${st.commitment} COMP. · ${Math.max(0,st.remaining)} LIVRE`:'SEM VÍNCULO';
+  const st=promoSegmentStatus(draft); out.value=st?`${st.available} DISP. · ${st.commitment} RESERV. · ${Math.max(0,st.remaining)} LIVRE`:'SELECIONE O PRÊMIO'; promoUpdateMechanics();
 }
 function promoAllWinnerObjects(p){
   const rows=[];
@@ -13171,7 +13265,7 @@ function syncPromoResultToProgram(p){
       const winners=Array.isArray(p.resultWinnersByHour?.[mapKey])?p.resultWinnersByHour[mapKey]:[];
       const winner=norm(winners.map(w=>typeof w==='string'?w:w?.name).filter(Boolean).join(', ')||p.resultByHour?.[mapKey]||previous.winnerName||'');
       const status=previous.status==='CANCELADO'?'CANCELADO':(winner?'REALIZADO':normalizeStatus(previous.status||o.status||'PENDENTE'));
-      targetMonth.items.push({id:previous.id||id('BR'),date:o.date,day:dayName(o.date),week:weekLabel(o.date),slot,station,program:promoResultProgramTitle(p,station,slot,o.date),distributionId:p.distributionId||'',prize:norm(p.name||p.title||'PROMOÇÃO'),title:`RESULTADO: ${norm(p.name||p.title||'PROMOÇÃO')}`,qty:Math.max(1,num(o.qtyPlanned)||1),channel:'RÁDIO',status,winnerName:winner,notes:`RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR. ORIGEM: ${promoTypeDisplay(p)} · ${norm(p.local||'PROMOÇÃO')}.`,titleStyle:p.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:p.descriptionStyle||defaultPromoTextStyle('desc'),sourceType:'promo-result',promoId:p.id,occurrenceId,promoKind:p.kind||'promo',createdAt:previous.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()});
+      targetMonth.items.push({id:previous.id||id('BR'),date:o.date,day:dayName(o.date),week:weekLabel(o.date),slot,station,program:promoResultProgramTitle(p,station,slot,o.date),distributionId:p.distributionId||'',prize:norm(p.name||p.title||'PROMOÇÃO'),title:`RESULTADO: ${norm(p.name||p.title||'PROMOÇÃO')}`,qty:Math.max(1,num(o.qtyPlanned)||1),unitsPerWinner:Math.max(1,num(o.unitsPerWinner)||num(p.unitsPerWinner)||1),stockUnits:promoOccurrenceStockUnits(o,p),channel:'RÁDIO',status,winnerName:winner,notes:`RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR. ORIGEM: ${promoTypeDisplay(p)} · ${norm(p.local||'PROMOÇÃO')}.`,titleStyle:p.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:p.descriptionStyle||defaultPromoTextStyle('desc'),sourceType:'promo-result',promoId:p.id,occurrenceId,promoKind:p.kind||'promo',createdAt:previous.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()});
     });
   });
 }
@@ -13188,21 +13282,24 @@ $('promoForm').addEventListener('submit',e=>{
   const drawDate=$('promoDrawDate').value;
   const endDate=$('promoEndDate')?.value||drawDate;
   if(endDate<startDate){ alert('A DATA DE ENCERRAMENTO NÃO PODE SER ANTERIOR AO INÍCIO.'); return; }
-  if(drawDate<startDate||drawDate>endDate){ alert('A DATA DO PRIMEIRO SORTEIO PRECISA ESTAR DENTRO DO PERÍODO DA PROMOÇÃO.'); return; }
+  const kind=$('promoKind')?.value||'promo',isPromo=kind==='promo'; if(isPromo&&(drawDate<startDate||drawDate>endDate)){ alert('A DATA DO PRIMEIRO SORTEIO PRECISA ESTAR DENTRO DO PERÍODO DA PROMOÇÃO.'); return; }
   const p={
     ...clone(existing),
     id:idVal,
     startDate,
-    drawDate,
+    drawDate:isPromo?drawDate:startDate,
     endDate,
-    drawTime:fullHourTimeValue($('promoDrawTime').value),
+    drawTime:isPromo?timeToHHMM($('promoDrawTime').value):'00:00',
     pickupBusinessDays:Math.max(1,Math.min(5,num($('promoPickupDays')?.value)||5)),
     recurrenceMode:$('promoRecurrence')?.value||'single',
     qtyPerDraw:Math.max(1,num($('promoQtyPerDraw')?.value)||1),
+    winnersPerDraw:Math.max(1,num($('promoQtyPerDraw')?.value)||1),
+    unitsPerWinner:Math.max(1,num($('promoUnitsPerWinner')?.value)||1),
+    resultProgram:isPromo?promoUpdateResultProgram():'',
     distributionId:$('promoDistributionId')?.value||'',
     segmentKey:$('promoSegmentKey')?.value||'',
-    kind:$('promoKind')?.value || 'promo',
-    local:$('promoKind')?.value==='merchan' ? 'MERCHAN' : norm($('promoLocal').value),
+    kind,
+    local:isPromo?norm($('promoLocal').value):'PAUTA',
     program:$('promoProgram') ? norm($('promoProgram').value) : '',
     station:$('promoStation')?.value || 'JP1017',
     promoScheduleMode:promoAV57SmartMode()?'smart':'fixed',
@@ -13233,20 +13330,20 @@ $('promoForm').addEventListener('submit',e=>{
   if(promoAV57SmartMode() && !p.opecPrograms.length){ alert('NO RODÍZIO INTELIGENTE, SELECIONE PELO MENOS UM PROGRAMA E UMA FAIXA DE HORÁRIO.'); return; }
   if(p.promoReadDateMode==='specific' && !p.promoReadSpecificDates.length){ alert('SELECIONE PELO MENOS UMA DATA ESPECÍFICA PARA A LEITURA.'); return; }
   if(!promoAV57SmartMode() && p.readMode==='selected' && !p.readHours.length){ alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.'); return; }
-  p.occurrences=promoOccurrencesFromForm(p,existing);
-  if(p.kind==='promo'&&!p.occurrences.length){ alert('NÃO FOI POSSÍVEL GERAR A AGENDA DE SORTEIOS. CONFIRA AS DATAS.'); return; }
-  if(p.occurrences.some(o=>o.date<p.startDate||o.date>p.endDate)){ alert('EXISTE SORTEIO FORA DO PERÍODO DA PROMOÇÃO.'); return; }
-  if((p.distributionId&&!p.segmentKey)||(!p.distributionId&&p.segmentKey)){ alert('PARA VINCULAR A PROMOÇÃO, SELECIONE A DISTRIBUIÇÃO E O SEGMENTO.'); return; }
-  if(p.distributionId){
+  p.occurrences=isPromo?promoOccurrencesFromForm(p,existing):[];
+  if(isPromo&&!p.occurrences.length){ alert('NÃO FOI POSSÍVEL GERAR A AGENDA DE SORTEIOS. CONFIRA AS DATAS.'); return; }
+  if(isPromo&&p.occurrences.some(o=>o.date<p.startDate||o.date>p.endDate)){ alert('EXISTE SORTEIO FORA DO PERÍODO DA PROMOÇÃO.'); return; }
+  if(isPromo&&(!p.distributionId||!p.segmentKey)){alert('A PROMOÇÃO PRECISA SER VINCULADA AO PRÊMIO DA DISTRIBUIÇÃO E AO SEGMENTO CORRESPONDENTE.');return;} if(!isPromo){p.distributionId='';p.segmentKey='';} if(isPromo&&!promoUpdateResultProgram()){alert('NÃO FOI POSSÍVEL IDENTIFICAR O PROGRAMA DO SORTEIO NA GRADE OFICIAL. CONFIRA DATA, HORA, EMISSORA E A ABA PROGRAMAÇÃO.');return;}
+  if(isPromo&&p.distributionId){
     if(!distributionCampaignCopies(p.distributionId).length){ alert('A DISTRIBUIÇÃO VINCULADA NÃO FOI ENCONTRADA.'); return; }
     const seg=promoSegmentStatus(p);
     if(seg&&seg.commitment>seg.available){ alert(`SALDO INSUFICIENTE NO SEGMENTO ${seg.label}.\n\nDISPONÍVEL PARA ESTA PROMOÇÃO: ${seg.available}\nCOMPROMETIDO PELOS SORTEIOS: ${seg.commitment}\n\nAUMENTE A QUANTIDADE NA ABA DISTRIBUIÇÃO.`); return; }
   }
   delete p.__months;
-  syncPromoResultToProgram(p);
+  if(isPromo)syncPromoResultToProgram(p);else removePromoResultFromProgram(p.id);
   storePromoAcrossMonths(p);
-  auditEvent(existing.id?'ALTERAÇÃO DE PROMOÇÃO':'CADASTRO DE PROMOÇÃO',p.name||p.title||'PROMOÇÃO',{targetId:p.id,before:existing.id?existing:'',after:p});
-  saveState(true); closeDrawer('promoDrawer'); render(); toast('PROMOÇÃO ALTERADA · SINCRONIZANDO TODO O PERÍODO COM FIREBASE...');
+  auditEvent(existing.id?`ALTERAÇÃO DE ${promoKindLabel(kind)}`:`CADASTRO DE ${promoKindLabel(kind)}`,p.name||p.title||promoKindLabel(kind),{targetId:p.id,before:existing.id?existing:'',after:p});
+  saveState(true); closeDrawer('promoDrawer'); render(); toast(`${promoKindLabel(kind)} SALVA · SINCRONIZANDO TODO O PERÍODO COM FIREBASE...`);
 });
 
 function bind(id,event,handler){ const el=$(id); if(el) el.addEventListener(event,handler); }
