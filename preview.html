@@ -8,6 +8,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="jp-direction-build" content="AV-57.6.6.8">
 
+<!-- AV-57.6.6.9-DIRECAO-CALENDARIO-POA -->
 <title>Direção · Painel de Operação e Programação — Jovem Pan Floripa</title>
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://jp-painel-brindes-default-rtdb.firebaseio.com" crossorigin>
@@ -1011,11 +1012,16 @@ function directionMonthWeeks(monthKey=currentMonth){
   return weeks;
 }
 function directionAutoProgramWeek(monthKey=currentMonth){
+  // Mesma regra do Painel Principal: no mês vigente, abre a semana atual;
+  // em qualquer outro mês, abre sempre a PRIMEIRA semana do calendário.
+  // Não usa o dia previamente selecionado no campo DATA para escolher a semana.
   const weeks=directionMonthWeeks(monthKey);if(!weeks.length)return'ALL';
-  const today=liveTodayISO(),dateValue=$("dateFilter")?.value||today;
-  const reference=dateValue.slice(0,7)===monthKey?dateValue:(today.slice(0,7)===monthKey?today:`${monthKey}-01`);
-  const exact=weeks.find(week=>week.dates.includes(reference));if(exact)return exact.key;
-  const prior=[...weeks].reverse().find(week=>week.start<=reference);return(prior||weeks[0]).key;
+  const today=liveTodayISO();
+  if(today.slice(0,7)===monthKey){
+    const current=weeks.find(week=>week.dates.includes(today));
+    if(current)return current.key;
+  }
+  return weeks[0].key;
 }
 function directionResolveProgramWeek(monthKey=currentMonth){
   const weeks=directionMonthWeeks(monthKey);
@@ -1067,10 +1073,13 @@ function renderProgramacao(){
   const selectedWeek=selectedWeekKey==='ALL'?null:weeks.find(week=>week.key===selectedWeekKey);
   const visibleDates=(selectedWeek?selectedWeek.dates:allDates);
   const visibleRows=visibleDates.flatMap(directionWeekItems),counts=statusCounts(visibleRows);
-  const programmedDates=visibleDates.filter(date=>directionWeekItems(date).length);
+  // Mantém o calendário fiel ao POA: todos os dias da semana selecionada
+  // são exibidos mesmo quando ainda não há item programado naquele dia.
+  // Isso garante, por exemplo, que 01/09 apareça automaticamente ao selecionar setembro.
+  const calendarDates=[...visibleDates];
   const today=liveTodayISO();
   const weekOptions=[`<option value="ALL" ${selectedWeekKey==='ALL'?'selected':''}>MÊS TODO</option>`,...weeks.map(week=>{const isCurrent=today.slice(0,7)===monthKey&&(week.dates.includes(today)||(dayIndex(today)===0&&week.start<=today&&week.end<today&&dateAdd(week.end,1)===today));const label=`${isCurrent?'SEMANA ATUAL · ':''}${directionProgramWeekLabel(week)}`;return`<option value="${esc(week.key)}" ${selectedWeekKey===week.key?'selected':''}>${esc(label)}</option>`;})].join('');
-  const board=programmedDates.map(date=>{
+  const board=calendarDates.map(date=>{
     const rows=directionWeekItems(date),by={manha:[],tarde:[],noite:[]};rows.forEach(i=>by[directionPeriodKey(i.slot)].push(i));
     const card=i=>{const program=resolvedProgramForItem(i,date),title=itemTitle(i,date.slice(0,7)),current=date===today&&Math.floor(slotMinutes(i.slot)/60)===liveNow().getHours(),promo=i.sourceType==='promo-result';return `<article class="programCard ${current?'current':''} ${promo?'promoResult':''}"><div class="programTime">${esc(formatTime(i.slot))}</div><div class="programInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="programMeta"><span class="badge dark">${esc(stationName(i.station))}</span>${statusBadge(i.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="programQtyInline">QTD <strong>${Math.max(1,num(i.qty)||1)}</strong></span></div></div></article>`;};
     const period=key=>`<section class="periodCell ${key}"><div class="periodTitle"><span class="periodIcon">${directionPeriodIcon(key)}</span><strong>${directionPeriodLabel(key)}</strong></div><div class="periodItems">${by[key].length?by[key].map(card).join(''):'<div class="periodEmpty">SEM ITEM NESTE PERÍODO</div>'}</div></section>`;
@@ -1178,8 +1187,9 @@ function directionBindControls(){
     monthControl.addEventListener('change',()=>{
       currentMonth=monthControl.value||liveTodayISO().slice(0,7);
       state.currentMonth=currentMonth;reportFrom='';reportTo='';directionPickupFilter='ALL';directionProgramWeek='AUTO';directionProgramWeekMonth='';directionProgramScrollPending=activeTab==='programacao';directionResetNavigationContext();
-      const currentDate=$('dateFilter').value||liveTodayISO(),day=String(currentDate).slice(8,10)||'01',candidate=`${currentMonth}-${day}`,dt=new Date(`${candidate}T12:00:00`);
-      $('dateFilter').value=Number.isNaN(dt.getTime())||String(dt.getMonth()+1).padStart(2,'0')!==currentMonth.slice(5,7)?`${currentMonth}-01`:candidate;
+      // Ao trocar o mês, a referência acompanha o calendário do POA e volta ao dia 01.
+      // Assim setembro, por exemplo, abre na semana 31/08–05/09 e exibe 01/09 automaticamente.
+      $('dateFilter').value=`${currentMonth}-01`;
       render();
     });
   }
