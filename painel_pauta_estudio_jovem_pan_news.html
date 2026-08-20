@@ -6,6 +6,10 @@
 <meta http-equiv="Expires" content="0">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="//www.gstatic.com">
+<link rel="preconnect" href="https://jp-painel-brindes-default-rtdb.firebaseio.com" crossorigin>
+<link rel="dns-prefetch" href="//jp-painel-brindes-default-rtdb.firebaseio.com">
 <title>Pauta de Estúdio — Jovem Pan News Floripa</title>
 <style>
 :root{
@@ -2451,11 +2455,9 @@ function initFirebaseSync(){
 function syncStateFromApi(force=false){
   initFirebaseSync();
   if(force && firebaseReady && firebaseRef){
-    firebaseRef.get().then(snapshot=>{
-      const payload=snapshot.val();
-      const remoteState=payload?.months?payload:(payload?.state?.months?payload.state:null);
-      if(remoteState) applyRemoteFirebaseState(remoteState);
-    }).catch(err=>console.warn('FIREBASE FORCE LOAD ERROR',err));
+    // O listener .on('value') já entrega alterações em tempo real. Em foco/retorno
+    // fazemos somente um probe leve, sem baixar novamente toda a base.
+    firebaseRef.child('savedAt').get().catch(err=>console.warn('FIREBASE CONNECTION PROBE ERROR',err));
   }
 }
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
@@ -3546,9 +3548,7 @@ setInterval(()=>{
 selectStudioMonth();
 if($('historyDateInput')) $('historyDateInput').value=todayISO();
 render();
-syncStateFromApi(true);
-setTimeout(()=>syncStateFromApi(true),1800);
-setTimeout(()=>syncStateFromApi(true),6000);
+initFirebaseSync();
 </script>
 </body>
 </html>
