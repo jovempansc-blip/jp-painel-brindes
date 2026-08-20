@@ -171,7 +171,7 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
 }
 
 
-/* === V29: RECEPÇÃO OPERACIONAL — FILTROS, STATUS E GANHADOR EM DESTAQUE === */
+/* === AV-57.6.2: RECEPÇÃO OPERACIONAL — BUSCA + INDICADORES DO MÊS VIGENTE === */
 .receptionHero{
   gap:8px!important;
   margin-bottom:10px!important;
@@ -184,7 +184,7 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
 }
 .receptionToolbar{
   display:grid;
-  grid-template-columns:minmax(260px,1fr) 190px minmax(320px,auto);
+  grid-template-columns:minmax(320px,1fr) minmax(500px,auto);
   gap:10px;
   align-items:end;
   margin:0 0 12px;
@@ -229,8 +229,7 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   white-space:nowrap;
 }
 .statChip strong{font-size:11px;color:#171c26;margin-left:5px}
-.statChipBtn{cursor:pointer;font:inherit;text-transform:uppercase;transition:.15s ease}
-.statChipBtn:hover,.statChipBtn:focus-visible{border-color:#d8a5b2;background:#fff5f7;color:#9f2340;outline:none}
+.statChipBtn{cursor:default;font:inherit;text-transform:uppercase;transition:.15s ease}.statMonthLabel{background:#fff;border-color:#d8dee7;color:#7a8493}.statMonthLabel strong{color:#4f5968}
 .dateTimeBlock{display:grid;gap:4px;flex:0 0 84px;align-content:center}
 .resultDate{display:block;font-size:8px;font-weight:1000;letter-spacing:.04em;color:#657084;white-space:nowrap}
 .resultCard{
@@ -773,7 +772,6 @@ tbody tr:focus-within td{background:#fff8fa}
   </header>
   <section class="receptionToolbar" aria-label="Filtros da recepção">
     <div class="filterField searchField"><label>BUSCA</label><input id="searchFilter" type="search" placeholder="BUSCAR GANHADOR, PRÊMIO OU PROGRAMA"></div>
-    <div class="filterField"><label>STATUS</label><select id="statusFilter"><option value="TODOS">TODOS</option><option value="PENDENTE">PENDENTES</option><option value="VENCE_HOJE">VENCE HOJE</option><option value="VENCE_AMANHA">VENCE AMANHÃ</option><option value="RETIRADO">RETIRADOS</option><option value="VENCIDO">VENCIDOS</option></select></div>
     <div class="receptionStats" id="receptionStats"></div>
   </section>
   <main class="list" id="resultList"></main>
@@ -1094,13 +1092,7 @@ function rowStatusClass(row){
 }
 function applyReceptionFilters(rows){
   const query=searchKey($('searchFilter')?.value||'');
-  const status=upper($('statusFilter')?.value||'TODOS');
   return rows.filter(r=>{
-    if(status && status!=='TODOS'){
-      if(status==='PENDENTE'){
-        if(!isPickupPending(r)) return false;
-      }else if(rowStatus(r)!==status) return false;
-    }
     if(query){
       const hay=searchKey(`${r.result||''} ${r.title||''} ${r.sub||''} ${r.date||''} ${formatBR(r.date||'')} ${r.time||''} ${r.deadlineLabel||''}`);
       if(!hay.includes(query)) return false;
@@ -1108,11 +1100,20 @@ function applyReceptionFilters(rows){
     return true;
   });
 }
+function receptionCurrentMonthRows(rows){
+  const month=todayISO().slice(0,7);
+  return (rows||[]).filter(r=>String(r?.date||'').slice(0,7)===month);
+}
+function receptionCurrentMonthLabel(){
+  const [y,m]=todayISO().slice(0,7).split('-').map(Number);
+  return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).toUpperCase();
+}
 function renderReceptionStats(rows){
-  const counts=rows.reduce((acc,r)=>{acc[rowStatus(r)]=(acc[rowStatus(r)]||0)+1;return acc;},{});
-  const pending=pickupPendingCount(rows);
-  const total=rows.length;
-  const html=`<button class="statChip statChipBtn" type="button" data-reception-stat="TODOS">TOTAL <strong>${total}</strong></button><button class="statChip statChipBtn" type="button" data-reception-stat="PENDENTE">PENDENTES <strong>${pending}</strong></button><button class="statChip statChipBtn" type="button" data-reception-stat="RETIRADO">RETIRADOS <strong>${counts.RETIRADO||0}</strong></button><button class="statChip statChipBtn" type="button" data-reception-stat="VENCE_HOJE">VENCE HOJE <strong>${counts.VENCE_HOJE||0}</strong></button><button class="statChip statChipBtn" type="button" data-reception-stat="VENCIDO">VENCIDOS <strong>${counts.VENCIDO||0}</strong></button>`;
+  const monthRows=receptionCurrentMonthRows(rows);
+  const counts=monthRows.reduce((acc,r)=>{acc[rowStatus(r)]=(acc[rowStatus(r)]||0)+1;return acc;},{});
+  const pending=pickupPendingCount(monthRows);
+  const total=monthRows.length;
+  const html=`<span class="statChip statMonthLabel">${esc(receptionCurrentMonthLabel())}</span><span class="statChip">TOTAL <strong>${total}</strong></span><span class="statChip">PENDENTES <strong>${pending}</strong></span><span class="statChip">RETIRADOS <strong>${counts.RETIRADO||0}</strong></span><span class="statChip">VENCE HOJE <strong>${counts.VENCE_HOJE||0}</strong></span><span class="statChip">VENCIDOS <strong>${counts.VENCIDO||0}</strong></span>`;
   const box=$('receptionStats'); if(box) box.innerHTML=html;
 }
 
@@ -1136,10 +1137,8 @@ function refreshOpenReceptionSheet(){if(!activeReceptionRow||$('receptionModal')
 function render(){
   const date=$('dateFilter').value||todayISO();
   const query=upper($('searchFilter')?.value||'');
-  const status=upper($('statusFilter')?.value||'TODOS');
   const allRows=allResultRows();
-  const useGlobal=query || (status && status!=='TODOS');
-  const sourceRows=useGlobal?allRows:resultRowsForDate(date);
+  const sourceRows=query?receptionCurrentMonthRows(allRows):resultRowsForDate(date);
   const filtered=applyReceptionFilters(sourceRows);
   renderReceptionStats(allRows);
   $('resultList').innerHTML=filtered.length?filtered.map(r=>{
@@ -1155,8 +1154,6 @@ function render(){
   }).join(''):'<div class="empty">NENHUM RESULTADO ENCONTRADO PARA ESTE FILTRO.</div>';
 }
 document.addEventListener('click',e=>{
-  const stat=e.target.closest('[data-reception-stat]');
-  if(stat){$('statusFilter').value=stat.dataset.receptionStat||'TODOS';$('searchFilter').value='';render();return;}
   if(e.target.closest('#receptionModalClose')){closeReceptionSheet();return;}
   if(e.target.id==='sheetConfirmPickup'){
     if(!activeReceptionRow||pickupBusy)return; const row=findReceptionRow(activeReceptionRow); if(!row)return;
@@ -1183,7 +1180,6 @@ document.addEventListener('contextmenu',e=>{
 $('dateFilter').value=todayISO();
 $('dateFilter').addEventListener('change',render);
 let searchTimer=null;$('searchFilter').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,90);});
-$('statusFilter').addEventListener('change',render);
 setInterval(render,60000);
 firebaseRef.on('value',snap=>{const payload=snap.val();const remote=payload?.months?payload:(payload?.state?.months?payload.state:null);if(remote){state=remote;selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}});
 </script>
