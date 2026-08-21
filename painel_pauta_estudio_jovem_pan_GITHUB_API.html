@@ -3386,11 +3386,37 @@ function buildStudioContext(item,promo){
   return `<div class="studioContextBar"><span>${esc(studioFullStationLabel())}</span><span>${esc(formatBR(date))}</span><span>${esc(formatStudioTime(item?.slot||''))}</span>${programInfo}${studioPromoResultDayAlert()}${manualInfo}</div>`;
 }
 function studioResultPending(item){return !!(item&&!item.__virtual&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
-function studioCountdownDuration(totalMinutes){
-  const mins=Math.max(0,Math.ceil(Math.abs(totalMinutes)));
-  if(mins<60)return `${mins} MIN`;
-  const h=Math.floor(mins/60),m=mins%60;
-  return `${h}H${m?` ${pad(m)}MIN`:''}`;
+function studioPrizeWindowMinutes(item){
+  const explicit=Number(item?.resultWindowMinutes ?? item?.windowMinutes ?? item?.durationMinutes ?? 0);
+  if(explicit===30||explicit===60)return explicit;
+  const mode=upper(item?.resultWindow||item?.windowType||item?.periodType||'');
+  if(mode.includes('30')||mode.includes('MEIA'))return 30;
+  if(mode.includes('60')||mode.includes('HORA'))return 60;
+  return slotMinute(item?.slot)===30?30:60;
+}
+function studioResultTargetMs(item){
+  const date=item?.date||todayISO();
+  const parts=String(date).split('-').map(Number);
+  const time=timeToHHMM(item?.slot||'').split(':').map(Number);
+  if(parts.length!==3||time.length!==2||parts.some(n=>!Number.isFinite(n))||time.some(n=>!Number.isFinite(n)))return NaN;
+  const [y,m,d]=parts,[hour,minute]=time;
+  const target=new Date(y,m-1,d,hour,minute+studioPrizeWindowMinutes(item),0,0);
+  // O resultado pertence ao último segundo da janela: 11H => 11:59:59; 11H30 => 11:59:59.
+  target.setSeconds(target.getSeconds()-1);
+  return target.getTime();
+}
+function studioCountdownClock(deltaMs){
+  const total=Math.max(0,Math.floor(Math.abs(deltaMs)/1000));
+  const h=Math.floor(total/3600),m=Math.floor((total%3600)/60),sec=total%60;
+  return h>0?`${pad(h)}:${pad(m)}:${pad(sec)}`:`${pad(m)}:${pad(sec)}`;
+}
+function studioCountdownVisual(deltaMs){
+  if(deltaMs>0){
+    const minutes=deltaMs/60000;
+    return {cls:minutes<=10?'urgent':minutes<=30?'soon':'',label:'RESULTADO EM',time:studioCountdownClock(deltaMs)};
+  }
+  if(deltaMs>-1000)return {cls:'now',label:'RESULTADO AGORA',time:''};
+  return {cls:'late',label:'RESULTADO ATRASADO',time:studioCountdownClock(deltaMs)};
 }
 function studioResultCountdownBox(item){
   if(!studioResultPending(item))return'';
@@ -3399,24 +3425,26 @@ function studioResultCountdownBox(item){
   if(date!==today){
     return `<div class="resultCountdownBox"><div class="resultCountdownCopy"><span>RESULTADO PROGRAMADO</span><strong>${esc(formatBR(date))}</strong></div></div>`;
   }
-  const now=currentSlotDate();
-  const [hourRaw,minuteRaw]=timeToHHMM(item.slot).split(':').map(Number);
-  const startHour=Number(hourRaw)||0, startMinute=Number(minuteRaw)||0;
-  // Regra operacional: hora cheia encerra no fim da hora (+60 min);
-  // meia-hora encerra no fim da meia-hora (+30 min).
-  const windowMinutes=startMinute===30?30:60;
-  const target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),startHour,startMinute+windowMinutes,0,0);
-  const delta=(target-now)/60000;
-  let cls='',label='RESULTADO EM',timeLabel='';
-  if(delta>0){
-    if(delta<=10) cls='urgent'; else if(delta<=30) cls='soon';
-    timeLabel=studioCountdownDuration(delta);
-  }else if(delta>-1){
-    cls='now'; label='RESULTADO AGORA'; timeLabel='';
-  }else{
-    cls='late'; label='RESULTADO ATRASADO'; timeLabel=studioCountdownDuration(delta);
-  }
-  return `<div class="resultCountdownBox ${cls}"><div class="resultCountdownCopy"><span>${esc(label)}</span>${timeLabel?`<strong>${esc(timeLabel)}</strong>`:''}</div></div>`;
+  const targetMs=studioResultTargetMs(item);
+  if(!Number.isFinite(targetMs))return'';
+  const visual=studioCountdownVisual(targetMs-Date.now());
+  return `<div class="resultCountdownBox ${visual.cls}" data-result-countdown-target="${targetMs}"><div class="resultCountdownCopy"><span>${esc(visual.label)}</span>${visual.time?`<strong>${esc(visual.time)}</strong>`:''}</div></div>`;
+}
+function refreshStudioCountdownClocks(){
+  document.querySelectorAll('.resultCountdownBox[data-result-countdown-target]').forEach(box=>{
+    const target=Number(box.dataset.resultCountdownTarget||0);
+    if(!target)return;
+    const visual=studioCountdownVisual(target-Date.now());
+    box.classList.remove('soon','urgent','now','late');
+    if(visual.cls)box.classList.add(visual.cls);
+    const label=box.querySelector('.resultCountdownCopy span');
+    let clock=box.querySelector('.resultCountdownCopy strong');
+    if(label)label.textContent=visual.label;
+    if(visual.time){
+      if(!clock){clock=document.createElement('strong');box.querySelector('.resultCountdownCopy')?.appendChild(clock);}
+      if(clock)clock.textContent=visual.time;
+    }else if(clock){clock.remove();}
+  });
 }
 function studioPrizePending(item){return !!(item&&!item.__virtual&&item.sourceType!=='promo-result'&&upper(item.status||'PENDENTE')!=='REALIZADO'&&!upper(item.winnerName||''));}
 /* ================= AV-57.3 · MOTOR GLOBAL DE LEITURAS ================= */
@@ -4427,6 +4455,7 @@ document.addEventListener('keydown',()=>{if(manual)scheduleManualReturn();});
 window.addEventListener('storage',()=>{state=loadState();selectStudioMonth();if(!manual)selectedIndex=-1;render();});
 window.addEventListener('focus',()=>syncStateFromApi(true));
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStateFromApi(true); });
+setInterval(()=>{ if(!document.hidden) refreshStudioCountdownClocks(); },1000);
 setInterval(()=>{
   const hk=currentHourKey();
   if(hk!==lastHourKey){

@@ -229,7 +229,7 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   white-space:nowrap;
 }
 .statChip strong{font-size:11px;color:#171c26;margin-left:5px}
-.statChipBtn{cursor:default;font:inherit;text-transform:uppercase;transition:.15s ease}.statMonthLabel{background:#fff;border-color:#d8dee7;color:#7a8493}.statMonthLabel strong{color:#4f5968}
+.statChipBtn{cursor:pointer;font:inherit;text-transform:uppercase;transition:.15s ease;appearance:none;-webkit-appearance:none}.statChipBtn:hover{background:#fff;border-color:#c8d1dc;color:#343e4c}.statChipBtn:focus-visible{outline:2px solid rgba(40,88,132,.22);outline-offset:2px}.statChipBtn.active{background:#eef4f8;border-color:#9fb7c9;color:#27465e;box-shadow:inset 0 0 0 1px rgba(39,70,94,.05)}.statChipBtn.active strong{color:#1f3b51}.statMonthLabel{background:#fff;border-color:#d8dee7;color:#7a8493}.statMonthLabel strong{color:#4f5968}
 .dateTimeBlock{display:grid;gap:4px;flex:0 0 84px;align-content:center}
 .resultDate{display:block;font-size:8px;font-weight:1000;letter-spacing:.04em;color:#657084;white-space:nowrap}
 .resultCard{
@@ -1090,6 +1090,7 @@ function rowStatusClass(row){
   const st=rowStatus(row);
   return st==='RETIRADO'?'retirado':st==='VENCIDO'?'vencido':st==='VENCE_HOJE'?'vence-hoje':st==='VENCE_AMANHA'?'vence-amanha':'pendente';
 }
+let receptionStatusFilter='ALL';
 function applyReceptionFilters(rows){
   const query=searchKey($('searchFilter')?.value||'');
   return rows.filter(r=>{
@@ -1097,6 +1098,7 @@ function applyReceptionFilters(rows){
       const hay=searchKey(`${r.result||''} ${r.title||''} ${r.sub||''} ${r.date||''} ${formatBR(r.date||'')} ${r.time||''} ${r.deadlineLabel||''}`);
       if(!hay.includes(query)) return false;
     }
+    if(receptionStatusFilter!=='ALL' && rowStatus(r)!==receptionStatusFilter)return false;
     return true;
   });
 }
@@ -1113,7 +1115,8 @@ function renderReceptionStats(rows){
   const counts=monthRows.reduce((acc,r)=>{acc[rowStatus(r)]=(acc[rowStatus(r)]||0)+1;return acc;},{});
   const pending=pickupPendingCount(monthRows);
   const total=monthRows.length;
-  const html=`<span class="statChip statMonthLabel">${esc(receptionCurrentMonthLabel())}</span><span class="statChip">TOTAL <strong>${total}</strong></span><span class="statChip">PENDENTES <strong>${pending}</strong></span><span class="statChip">RETIRADOS <strong>${counts.RETIRADO||0}</strong></span><span class="statChip">VENCE HOJE <strong>${counts.VENCE_HOJE||0}</strong></span><span class="statChip">VENCIDOS <strong>${counts.VENCIDO||0}</strong></span>`;
+  const button=(key,label,value)=>`<button class="statChip statChipBtn ${receptionStatusFilter===key?'active':''}" type="button" data-reception-filter="${key}" aria-pressed="${receptionStatusFilter===key?'true':'false'}">${label} <strong>${value}</strong></button>`;
+  const html=`<span class="statChip statMonthLabel">${esc(receptionCurrentMonthLabel())}</span>${button('ALL','TOTAL',total)}${button('PENDENTE','PENDENTES',pending)}${button('RETIRADO','RETIRADOS',counts.RETIRADO||0)}${button('VENCE_HOJE','VENCE HOJE',counts.VENCE_HOJE||0)}${button('VENCIDO','VENCIDOS',counts.VENCIDO||0)}`;
   const box=$('receptionStats'); if(box) box.innerHTML=html;
 }
 
@@ -1138,7 +1141,7 @@ function render(){
   const date=$('dateFilter').value||todayISO();
   const query=upper($('searchFilter')?.value||'');
   const allRows=allResultRows();
-  const sourceRows=query?receptionCurrentMonthRows(allRows):resultRowsForDate(date);
+  const sourceRows=(query||receptionStatusFilter!=='ALL')?receptionCurrentMonthRows(allRows):resultRowsForDate(date);
   const filtered=applyReceptionFilters(sourceRows);
   renderReceptionStats(allRows);
   $('resultList').innerHTML=filtered.length?filtered.map(r=>{
@@ -1154,6 +1157,8 @@ function render(){
   }).join(''):'<div class="empty">NENHUM RESULTADO ENCONTRADO PARA ESTE FILTRO.</div>';
 }
 document.addEventListener('click',e=>{
+  const stat=e.target.closest('[data-reception-filter]');
+  if(stat){receptionStatusFilter=stat.dataset.receptionFilter||'ALL';render();return;}
   if(e.target.closest('#receptionModalClose')){closeReceptionSheet();return;}
   if(e.target.id==='sheetConfirmPickup'){
     if(!activeReceptionRow||pickupBusy)return; const row=findReceptionRow(activeReceptionRow); if(!row)return;

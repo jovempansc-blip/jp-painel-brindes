@@ -3511,6 +3511,14 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 @media(max-width:620px){.promoStartChoices{grid-template-columns:1fr}.promoStartChoice{min-height:105px}}
 </style>
 
+
+<style>
+/* === AV-57.6.11 · BUSCA OPERACIONAL DA PROGRAMAÇÃO POR PRÊMIO === */
+.distFilterBar{grid-template-columns:minmax(180px,280px) minmax(310px,1fr) minmax(160px,230px) minmax(110px,168px)!important;align-items:end}
+.distFilterBar .distProgramSearchField{max-width:none!important}.distProgramSearchControl{display:grid;grid-template-columns:minmax(170px,1fr) auto;gap:6px;align-items:center}.distProgramSearchControl .btn{min-height:34px;white-space:nowrap}
+#distProgramSearchDrawer .distProgramSearchDrawerCard{width:min(1080px,95vw)!important}.distProgramSearchSummary{border:1px solid #dfe5ec;border-radius:16px;background:#f8fafc;padding:11px 13px;margin-bottom:10px}.distProgramSearchSummary strong{display:block;font-size:13px;color:#171c26}.distProgramSearchSummary span{display:block;margin-top:4px;font-size:9px;color:#687383;font-weight:900;letter-spacing:.035em}.distProgramSearchList{display:grid;gap:7px}.distProgramSearchRow{display:grid;grid-template-columns:92px 90px minmax(180px,1fr) minmax(170px,1fr) 86px auto;gap:8px;align-items:center;border:1px solid #e1e6ed;border-radius:13px;background:#fff;padding:8px 10px}.distProgramSearchRow.isDone{background:#f7faf8}.distProgramSearchRow .date{font-size:10px;font-weight:1000;color:#313946}.distProgramSearchRow .slot{font-size:12px;font-weight:1000;color:#991d34}.distProgramSearchRow .program,.distProgramSearchRow .prize{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.distProgramSearchRow .program{font-size:10px;font-weight:1000;color:#424d5c}.distProgramSearchRow .prize{font-size:9px;color:#6b7584;font-weight:900}.distProgramSearchRow .status{font-size:8px;font-weight:1000;text-align:center}.distProgramSearchActions{display:flex;gap:5px;justify-content:flex-end}.distProgramSearchActions .btn{min-height:29px;padding:0 9px;font-size:8px}.distProgramMovePanel{margin-top:12px;border:1px solid #e0e6ed;border-radius:16px;background:#f8fafc;padding:12px}.distProgramMovePanel[hidden]{display:none!important}.distProgramMoveHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px}.distProgramMoveHead strong{font-size:12px}.distProgramMoveHead span{font-size:9px;color:#687383;font-weight:900}.distProgramMoveGrid{display:grid;grid-template-columns:180px 160px minmax(250px,1fr);gap:8px;align-items:end}.distProgramTargetStatus{min-height:35px;display:flex;align-items:center;border:1px solid #dfe5ec;border-radius:11px;background:#fff;padding:7px 10px;font-size:9px;font-weight:1000;color:#546171}.distProgramTargetStatus.free{background:#f1f8f4;border-color:#c8dfd0;color:#37664a}.distProgramTargetStatus.busy{background:#fff5ed;border-color:#ead1b6;color:#8b5524}
+@media(max-width:940px){.distFilterBar{grid-template-columns:1fr!important}.distProgramSearchControl{grid-template-columns:1fr}.distProgramSearchRow{grid-template-columns:82px 72px 1fr}.distProgramSearchRow .prize,.distProgramSearchRow .status{grid-column:3}.distProgramSearchActions{grid-column:1/-1;justify-content:flex-start}.distProgramMoveGrid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -3582,6 +3590,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
         <div class="panelBody">
           <div class="filterBar distFilterBar">
             <div class="field"><label>BUSCAR NA DISTRIBUIÇÃO</label><input class="control" id="distSearchInput"></div>
+            <div class="field distProgramSearchField"><label>BUSCAR PROGRAMAÇÃO</label><div class="distProgramSearchControl"><input class="control" id="distProgramSearchInput" list="distProgramSearchDatalist" placeholder="DIGITE O PRÊMIO"><button class="btn" id="distProgramSearchBtn" type="button">VER PROGRAMAÇÃO</button></div><datalist id="distProgramSearchDatalist"></datalist></div>
             <div class="field"><label>STATUS DO SALDO</label><select class="control" id="distStatusFilter"><option value="">TODOS</option><option value="OK">OK</option><option value="SOBRA">COM SOBRA</option><option value="ZERADO">ZERADO</option><option value="ESTOURO">ESTOURO</option></select></div>
             <div class="field"><label>ORDENAR NOMES</label><select class="control" id="distOrderFilter"><option value="alpha">ALFABÉTICA</option><option value="created">CADASTRO</option></select></div>
           </div>
@@ -4321,6 +4330,25 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
         </div>
         <div class="formActions"><button class="btn red" type="submit">ADICIONAR GRUPO</button><button class="btn" type="button" data-close="winnerEquivalenceDrawer">FECHAR</button></div>
       </form>
+    </div>
+  </div>
+</div>
+
+<div class="drawer" id="distProgramSearchDrawer" aria-hidden="true">
+  <div class="drawerCard distProgramSearchDrawerCard">
+    <div class="drawerHead"><h3>PROGRAMAÇÃO DO PRÊMIO</h3><button class="btn small" data-close="distProgramSearchDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <div class="distProgramSearchSummary" id="distProgramSearchSummary"></div>
+      <div class="distProgramSearchList" id="distProgramSearchList"></div>
+      <section class="distProgramMovePanel" id="distProgramMovePanel" hidden>
+        <div class="distProgramMoveHead"><strong>ALTERAR HORÁRIO</strong><span id="distProgramMoveCurrent"></span></div>
+        <div class="distProgramMoveGrid">
+          <div class="field"><label>NOVA DATA</label><input class="control" type="date" id="distProgramMoveDate"></div>
+          <div class="field"><label>NOVO HORÁRIO</label><select class="control" id="distProgramMoveSlot"></select></div>
+          <div class="distProgramTargetStatus" id="distProgramTargetStatus"></div>
+        </div>
+        <div class="formActions"><button class="btn red" type="button" id="distProgramMoveApplyBtn">REManejar</button><button class="btn" type="button" id="distProgramMoveCancelBtn">CANCELAR</button></div>
+      </section>
     </div>
   </div>
 </div>
@@ -10537,6 +10565,7 @@ function markReturnedAsSobra(recordId){
 
 function renderDistribuicao(){
   alignPanelMonthWithInput();
+  refreshDistProgramSearchCatalog();
   const monthKey=state.currentMonth;
   const openedMonth=monthDataForKey(monthKey);
   const rows=filteredDistributions(monthKey);
@@ -11019,6 +11048,152 @@ function programFromDist(distId){
   clearItemForm(); $('itemDistribution').value=distId; handleItemDistributionChange(true); $('itemDate').value=todayISO(); if($('itemProgramStation')) $('itemProgramStation').value='JP1017'; $('itemChannel').value='RÁDIO'; $('itemStatus').value='PENDENTE'; renderItemSlotOptions(false); updateDistHint(); updateItemProgramFromSchedule(true); updateItemRotationVisibility(); setView('programacao'); openDrawer('itemDrawer');
 }
 function filterProgramByDist(distId){ activeDistributionFilter=distId; setView('programacao'); toast('FILTRO APLICADO NA PROGRAMAÇÃO.'); }
+let distProgramSearchContext=null;
+let distProgramMoveContext=null;
+function allDistributionCampaignEntries(){
+  const out=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>(m.distributions||[]).forEach(d=>out.push({monthKey,d})));
+  return out;
+}
+function refreshDistProgramSearchCatalog(){
+  const list=$('distProgramSearchDatalist'); if(!list)return;
+  const seen=new Set();
+  const rows=allDistributionCampaignEntries().sort((a,b)=>b.monthKey.localeCompare(a.monthKey)||distributionLabel(a.d).localeCompare(distributionLabel(b.d)));
+  list.innerHTML=rows.filter(({d})=>{const key=`${d.id}|${distributionLabel(d)}`;if(seen.has(key))return false;seen.add(key);return true;}).map(({monthKey,d})=>`<option value="${esc(distributionLabel(d))}" label="${esc(labelMonth(monthKey))}"></option>`).join('');
+}
+function distributionSearchCampaigns(term){
+  const q=prizeCatalogKey(term||'');
+  if(!q)return [];
+  const groups=new Map();
+  allDistributionCampaignEntries().forEach(entry=>{
+    const label=distributionLabel(entry.d),key=prizeCatalogKey(label);
+    if(!key.includes(q)&&!q.includes(key))return;
+    const id=entry.d.id||`${key}|${entry.monthKey}`;
+    if(!groups.has(id))groups.set(id,{id,label,entries:[]});
+    groups.get(id).entries.push(entry);
+  });
+  return [...groups.values()].sort((a,b)=>Number(prizeCatalogKey(a.label)!==q)-Number(prizeCatalogKey(b.label)!==q)||a.label.localeCompare(b.label));
+}
+function distributionProgramRowsForCampaigns(campaigns){
+  const ids=new Set((campaigns||[]).map(c=>c.id));
+  const labels=new Set((campaigns||[]).map(c=>prizeCatalogKey(c.label)));
+  const periods=[];
+  (campaigns||[]).forEach(c=>c.entries.forEach(({monthKey,d})=>periods.push({id:c.id,start:d.startDate||d.date||monthStartDate(monthKey),end:d.endDate||d.startDate||d.date||monthEndDate(monthKey),label:prizeCatalogKey(distributionLabel(d))})));
+  const out=[];
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{
+    (m.items||[]).forEach(item=>{
+      if(normalizeChannel(item.channel)!=='RÁDIO')return;
+      const linked=ids.has(item.distributionId);
+      const byLabel=labels.has(prizeCatalogKey(item.prize||item.title||''))&&periods.some(p=>p.label===prizeCatalogKey(item.prize||item.title||'')&&item.date>=p.start&&item.date<=p.end);
+      if(!linked&&!byLabel)return;
+      out.push({monthKey,item});
+    });
+  });
+  const seen=new Set();
+  return out.filter(({monthKey,item})=>{const k=`${monthKey}|${item.id}`;if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>`${a.item.date}|${normalizeSlot(a.item.slot)}`.localeCompare(`${b.item.date}|${normalizeSlot(b.item.slot)}`));
+}
+function openDistributionProgramSearch(value){
+  const term=norm(value||$('distProgramSearchInput')?.value||'');
+  if(!term){alert('DIGITE O NOME DO PRÊMIO PARA BUSCAR A PROGRAMAÇÃO.');return;}
+  const campaigns=distributionSearchCampaigns(term);
+  if(!campaigns.length){alert('NENHUMA DISTRIBUIÇÃO ENCONTRADA PARA ESTE PRÊMIO.');return;}
+  distProgramSearchContext={term,campaigns};
+  distProgramMoveContext=null;
+  if($('distProgramMovePanel'))$('distProgramMovePanel').hidden=true;
+  renderDistributionProgramSearch();
+  openDrawer('distProgramSearchDrawer');
+}
+function renderDistributionProgramSearch(){
+  if(!distProgramSearchContext)return;
+  const campaigns=distProgramSearchContext.campaigns||[],rows=distributionProgramRowsForCampaigns(campaigns);
+  const labels=[...new Set(campaigns.map(c=>c.label))];
+  const periods=campaigns.flatMap(c=>c.entries.map(({monthKey,d})=>({start:d.startDate||d.date||monthStartDate(monthKey),end:d.endDate||d.startDate||d.date||monthEndDate(monthKey)})));
+  const start=periods.map(p=>p.start).filter(Boolean).sort()[0]||'',end=periods.map(p=>p.end).filter(Boolean).sort().at(-1)||'';
+  $('distProgramSearchSummary').innerHTML=`<strong>${esc(labels.join(' · '))}</strong><span>${rows.length} HORÁRIO(S) DE RÁDIO · PERÍODO ${esc(formatBR(start)||'--')} A ${esc(formatBR(end)||'--')} · USE ALTERAR PARA REMANEJAR OU TROCAR COM OUTRO PRÊMIO.</span>`;
+  $('distProgramSearchList').innerHTML=rows.length?rows.map(({monthKey,item})=>{
+    const status=itemEffectiveStatus(item),done=status==='REALIZADO';
+    return `<div class="distProgramSearchRow ${done?'isDone':''}"><span class="date">${esc(formatBR(item.date))}</span><span class="slot">${esc(normalizeSlot(item.slot))}</span><span class="program">${esc(programForSlot(item.date,item.slot,itemStation(item))||item.program||'PROGRAMA NÃO IDENTIFICADO')}</span><span class="prize">${esc(item.prize||item.title||'')}</span><span class="status">${esc(status)}</span><div class="distProgramSearchActions"><button class="btn small" type="button" onclick="openDistributionProgramMove('${esc(monthKey)}','${esc(item.id)}')">ALTERAR</button><button class="btn small" type="button" onclick="openProgramItemFromSearch('${esc(monthKey)}','${esc(item.id)}')">VER NA GRADE</button></div></div>`;
+  }).join(''):'<div class="empty">ESTE PRÊMIO AINDA NÃO POSSUI HORÁRIOS DE RÁDIO PROGRAMADOS NO PERÍODO.</div>';
+}
+function locateDistributionProgramItem(monthKey,itemId){
+  const m=monthDataForKey(monthKey),item=(m.items||[]).find(i=>i.id===itemId);
+  if(!item)return null;
+  const copies=distributionCampaignCopies(item.distributionId);
+  const dist=(copies.find(x=>x.monthKey===monthKey)||copies[0])?.d || (m.distributions||[]).find(d=>d.id===item.distributionId) || null;
+  return {monthKey,m,item,dist};
+}
+function distributionMoveSlots(date,station='JP1017',selected=''){
+  const base=eligibleRotationSlotsForDate(date,station).map(normalizeSlot);
+  const slots=[...new Set(base.flatMap(slot=>[slot,halfHourSlotFor(slot)].filter(Boolean)))].filter(slot=>!!programFromSchedule(date,slot,station)).sort((a,b)=>slotOrder(a)-slotOrder(b));
+  const chosen=slots.includes(normalizeSlot(selected))?normalizeSlot(selected):(slots[0]||'');
+  return {slots,chosen};
+}
+function openDistributionProgramMove(monthKey,itemId){
+  const found=locateDistributionProgramItem(monthKey,itemId);if(!found)return;
+  const {item,dist}=found;if(!dist){alert('A DISTRIBUIÇÃO VINCULADA A ESTE ITEM NÃO FOI ENCONTRADA.');return;}
+  distProgramMoveContext={sourceMonthKey:monthKey,itemId,distId:item.distributionId};
+  const start=dist.startDate||dist.date||monthStartDate(monthKey),end=dist.endDate||dist.startDate||dist.date||monthEndDate(monthKey);
+  const date=$('distProgramMoveDate');date.min=start;date.max=end;date.value=item.date;
+  $('distProgramMoveCurrent').textContent=`ATUAL: ${formatBR(item.date)} · ${normalizeSlot(item.slot)} · ${item.prize||item.title||''}`;
+  $('distProgramMovePanel').hidden=false;
+  updateDistributionProgramMoveTarget(item.slot);
+  $('distProgramMovePanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function updateDistributionProgramMoveTarget(preferred=''){
+  if(!distProgramMoveContext)return;
+  const found=locateDistributionProgramItem(distProgramMoveContext.sourceMonthKey,distProgramMoveContext.itemId);if(!found)return;
+  const date=$('distProgramMoveDate').value,station=itemStation(found.item),opt=distributionMoveSlots(date,station,preferred||$('distProgramMoveSlot')?.value||found.item.slot);
+  const slot=$('distProgramMoveSlot');slot.innerHTML=opt.slots.length?opt.slots.map(s=>`<option value="${esc(s)}">${esc(s)} · ${esc(programFromSchedule(date,s,station))}</option>`).join(''):'<option value="">SEM HORÁRIO CADASTRADO</option>';slot.value=opt.chosen;
+  const targetMonth=date.slice(0,7),targetItems=(state.months?.[targetMonth]?.items||[]),occupied=targetItems.find(i=>i.id!==found.item.id&&normalizeChannel(i.channel)==='RÁDIO'&&itemStation(i)===station&&i.date===date&&normalizeSlot(i.slot)===normalizeSlot(opt.chosen));
+  const status=$('distProgramTargetStatus'),button=$('distProgramMoveApplyBtn');
+  if(!opt.chosen){status.className='distProgramTargetStatus busy';status.textContent='NÃO EXISTE HORÁRIO CADASTRADO PARA ESTA DATA.';button.disabled=true;button.textContent='SEM HORÁRIO';return;}
+  if(occupied){status.className='distProgramTargetStatus busy';status.textContent=`OCUPADO POR ${norm(occupied.prize||occupied.title||'OUTRO PRÊMIO')} · AÇÃO: TROCAR HORÁRIOS`;button.disabled=false;button.textContent='TROCAR HORÁRIOS';}
+  else{status.className='distProgramTargetStatus free';status.textContent=`HORÁRIO LIVRE · ${norm(programFromSchedule(date,opt.chosen,station)||'PROGRAMA CADASTRADO')}`;button.disabled=false;button.textContent='REManejar PARA ESTE HORÁRIO';}
+}
+function cancelDistributionProgramMove(){distProgramMoveContext=null;if($('distProgramMovePanel'))$('distProgramMovePanel').hidden=true;}
+function moveItemBetweenMonths(sourceMonthKey,targetMonthKey,item){
+  if(sourceMonthKey===targetMonthKey)return;
+  const source=monthDataForKey(sourceMonthKey),target=monthDataForKey(targetMonthKey);
+  source.items=(source.items||[]).filter(i=>i.id!==item.id);
+  if(!(target.distributions||[]).some(d=>d.id===item.distributionId)){
+    const sourceDist=(source.distributions||[]).find(d=>d.id===item.distributionId)||distributionCampaignCopies(item.distributionId)[0]?.d;
+    if(sourceDist)target.distributions.push(emptyDistributionMonthCopy(sourceDist,targetMonthKey));
+  }
+  target.items ||= [];target.items.push(item);
+}
+function applyDistributionProgramMove(){
+  if(!distProgramMoveContext)return;
+  const found=locateDistributionProgramItem(distProgramMoveContext.sourceMonthKey,distProgramMoveContext.itemId);if(!found)return;
+  const sourceItem=found.item,sourceDate=sourceItem.date,sourceSlot=normalizeSlot(sourceItem.slot),sourceMonthKey=found.monthKey,station=itemStation(sourceItem),date=$('distProgramMoveDate').value,slot=normalizeSlot($('distProgramMoveSlot').value),targetMonthKey=date.slice(0,7);
+  if(!date||!slot)return;
+  const start=found.dist.startDate||found.dist.date||monthStartDate(sourceMonthKey),end=found.dist.endDate||found.dist.startDate||found.dist.date||monthEndDate(sourceMonthKey);
+  if(date<start||date>end){alert(`DATA FORA DO PERÍODO DESTE PRÊMIO (${formatBR(start)} A ${formatBR(end)}).`);return;}
+  const targetMonth=monthDataForKey(targetMonthKey),occupied=(targetMonth.items||[]).find(i=>i.id!==sourceItem.id&&normalizeChannel(i.channel)==='RÁDIO'&&itemStation(i)===station&&i.date===date&&normalizeSlot(i.slot)===slot);
+  const sourceProgram=programFromSchedule(sourceDate,sourceSlot,station)||sourceItem.program||'',targetProgram=programFromSchedule(date,slot,station);
+  if(!targetProgram){alert('O HORÁRIO DE DESTINO NÃO POSSUI PROGRAMA CADASTRADO NA GRADE OFICIAL.');return;}
+  if(occupied){
+    if(sourceMonthKey!==targetMonthKey){alert('A TROCA DIRETA ENTRE PRÊMIOS DE MESES DIFERENTES FOI BLOQUEADA PARA PRESERVAR AS DISTRIBUIÇÕES. ESCOLHA UM HORÁRIO LIVRE OU FAÇA A TROCA DENTRO DO MESMO MÊS.');return;}
+    const otherDist=(monthDataForKey(sourceMonthKey).distributions||[]).find(d=>d.id===occupied.distributionId);
+    if(otherDist){const oStart=otherDist.startDate||otherDist.date||monthStartDate(sourceMonthKey),oEnd=otherDist.endDate||otherDist.startDate||otherDist.date||monthEndDate(sourceMonthKey);if(sourceDate<oStart||sourceDate>oEnd){alert(`A TROCA FOI BLOQUEADA: ${occupied.prize||occupied.title||'O OUTRO PRÊMIO'} NÃO PODE SER PROGRAMADO EM ${formatBR(sourceDate)}.`);return;}}
+    if(!confirm(`TROCAR OS HORÁRIOS?\n\n${sourceItem.prize||sourceItem.title} · ${formatBR(sourceDate)} ${sourceSlot}\n↕\n${occupied.prize||occupied.title} · ${formatBR(date)} ${slot}`))return;
+    occupied.date=sourceDate;occupied.slot=sourceSlot;occupied.day=dayName(sourceDate);occupied.week=weekLabel(sourceDate);occupied.program=sourceProgram;
+    sourceItem.date=date;sourceItem.slot=slot;sourceItem.day=dayName(date);sourceItem.week=weekLabel(date);sourceItem.program=targetProgram;
+    auditEvent('TROCA DE HORÁRIOS NA PROGRAMAÇÃO',sourceItem.prize||sourceItem.title,{targetId:sourceItem.id,note:`${formatBR(sourceDate)} ${sourceSlot} ↔ ${formatBR(date)} ${slot} · ${occupied.prize||occupied.title||'OUTRO PRÊMIO'}`});
+    saveState(true);queueApiSave(80);toast('HORÁRIOS TROCADOS COM SUCESSO.');
+  }else{
+    if(!confirm(`REMANEJAR ESTE PRÊMIO?\n\nDE: ${formatBR(sourceDate)} ${sourceSlot}\nPARA: ${formatBR(date)} ${slot} · ${targetProgram}`))return;
+    sourceItem.date=date;sourceItem.slot=slot;sourceItem.day=dayName(date);sourceItem.week=weekLabel(date);sourceItem.program=targetProgram;
+    moveItemBetweenMonths(sourceMonthKey,targetMonthKey,sourceItem);
+    auditEvent('REMANEJAMENTO DE HORÁRIO',sourceItem.prize||sourceItem.title,{targetId:sourceItem.id,note:`${formatBR(sourceDate)} ${sourceSlot} → ${formatBR(date)} ${slot}`});
+    saveState(true);queueApiSave(80);toast('PRÊMIO REMANEJADO PARA O NOVO HORÁRIO.');
+  }
+  cancelDistributionProgramMove();render();renderDistributionProgramSearch();
+}
+function openProgramItemFromSearch(monthKey,itemId){
+  state.currentMonth=monthKey;if($('monthInput'))$('monthInput').value=monthKey;activeDistributionFilter='';setView('programacao');
+  const found=locateDistributionProgramItem(monthKey,itemId);if(found&&$('weekFilter')){$('weekFilter').value=weekLabel(found.item.date);renderProgramacao();setTimeout(()=>document.querySelector(`[data-item-id="${CSS.escape(itemId)}"]`)?.scrollIntoView({behavior:'smooth',block:'center'}),50);}
+  closeDrawer('distProgramSearchDrawer');
+}
 function textFieldValue(obj,keys=[],multiline=false){
   for(const key of keys){
     const value=obj && obj[key];
@@ -12903,7 +13078,7 @@ function safePromoHex(value,fallback){ return /^#[0-9A-Fa-f]{6}$/.test(String(va
 function safePromoSize(value,min,max,fallback){ const n=Number(value); return Number.isFinite(n) ? Math.max(min,Math.min(max,n)) : fallback; }
 function populatePromoFontSelects(){
   ['promoTitleFont','promoDescFont','itemTitleFont','itemDescFont','distTitleFont','distDescFont'].forEach(id=>{
-    const sel=$(id); if(!sel || sel.options.length) return;
+    const sel=$(id); if(!sel || !('options' in sel) || sel.options.length) return;
     sel.innerHTML = WINDOWS_FONT_OPTIONS.map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
   });
 }
@@ -13569,6 +13744,12 @@ bind('promoStartModal','click',event=>{if(event.target===event.currentTarget)clo
 bind('clearDistFiltersBtn','click',()=>{ $('distSearchInput').value=''; $('distStatusFilter').value=''; renderDistribuicao(); });
 ['weekFilter','programStationFilter','statusFilter'].forEach(id=>bind(id,'input',()=>{ renderProgramacao(); renderClearProgramDrawer(); }));
 ['distSearchInput','distStatusFilter','distOrderFilter'].forEach(id=>bind(id,'input',renderDistribuicao));
+bind('distProgramSearchBtn','click',()=>openDistributionProgramSearch());
+bind('distProgramSearchInput','keydown',event=>{if(event.key==='Enter'){event.preventDefault();openDistributionProgramSearch();}});
+bind('distProgramMoveDate','change',()=>updateDistributionProgramMoveTarget());
+bind('distProgramMoveSlot','change',()=>updateDistributionProgramMoveTarget());
+bind('distProgramMoveApplyBtn','click',applyDistributionProgramMove);
+bind('distProgramMoveCancelBtn','click',cancelDistributionProgramMove);
 ['promoOrderFilter','promoTypeFilter','promoStationFilter','promoStatusFilter'].forEach(id=>bind(id,'input',renderPromos));
 bind('studioDateFilter','input',renderStudioPauta);
 bind('studioPautaType','input',renderStudioPauta);
