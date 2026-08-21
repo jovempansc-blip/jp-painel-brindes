@@ -10542,7 +10542,9 @@ function applyReturnedPrizeReuse(index){
   const warning=slot.forced?'\n\nATENÇÃO: ESTA OPÇÃO NÃO RESPEITA O ESPAÇAMENTO RECOMENDADO DO MESMO PRÊMIO.':' ';
   if(!confirm(`CONFIRMAR REALOCAÇÃO?\n\n${r.prize}\n${formatBR(slot.date)} · ${slot.slot} · ${slot.program}${warning}`)) return;
   if(slot.forced&&!confirm('CONFIRMAÇÃO FINAL\n\nDESEJA REALOCAR MESMO ASSIM E REGISTRAR ESTA EXCEÇÃO NO LOG?')) return;
-  const newItem={id:id('BR'),date:slot.date,day:dayName(slot.date),week:weekLabel(slot.date),slot:slot.slot,program:slot.program||programForSlot(slot.date,slot.slot),distributionId:d.id||'',prize:distributionLabel(d)||r.prize,title:d.title||r.prize,qty:1,winnerCapacity:1,channel:'RÁDIO',station:'JP1017',status:'PENDENTE',notes:`REAPROVEITAMENTO: PRÊMIO NÃO RETIRADO POR ${r.winner}. PRAZO VENCIDO EM ${r.deadlineLabel}.${slot.forced?' REALOCAÇÃO MANUAL FORA DO ESPAÇAMENTO RECOMENDADO.':''}`,titleStyle:d.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:d.descriptionStyle||defaultPromoTextStyle('desc'),returnedReuse:true,returnedFrom:r.id,forcedReuse:!!slot.forced,createdAt:new Date().toISOString()};
+  const reuseTemplate=findPrizeCatalogTemplate(distributionLabel(d)||r.prize);
+  const reuseDescription=textNorm(d.description||reuseTemplate?.description||'');
+  const newItem={id:id('BR'),date:slot.date,day:dayName(slot.date),week:weekLabel(slot.date),slot:slot.slot,program:slot.program||programForSlot(slot.date,slot.slot),distributionId:d.id||'',prize:distributionLabel(d)||r.prize,title:d.title||r.prize,description:reuseDescription,qty:1,winnerCapacity:1,channel:'RÁDIO',station:'JP1017',status:'PENDENTE',notes:`REAPROVEITAMENTO: PRÊMIO NÃO RETIRADO POR ${r.winner}. PRAZO VENCIDO EM ${r.deadlineLabel}.${slot.forced?' REALOCAÇÃO MANUAL FORA DO ESPAÇAMENTO RECOMENDADO.':''}`,titleStyle:d.titleStyle||reuseTemplate?.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:d.descriptionStyle||reuseTemplate?.descriptionStyle||defaultPromoTextStyle('desc'),returnedReuse:true,returnedFrom:r.id,forcedReuse:!!slot.forced,createdAt:new Date().toISOString()};
   const targetMonth=monthDataForKey(slot.date.slice(0,7)); targetMonth.items ||= []; targetMonth.items.push(newItem);
   updateWinnerReuseStatus(r,'realocado',{reusedItemId:newItem.id,reuseDecision:slot.forced?'REAPROVEITADO_FORCADO':'REAPROVEITADO',reuseDate:slot.date,reuseSlot:slot.slot});
   auditEvent(slot.forced?'REALOCAÇÃO MANUAL FORA DA RECOMENDAÇÃO':'REALOCAÇÃO INTELIGENTE DE PRÊMIO',r.prize,{note:`${formatBR(slot.date)} ${slot.slot} · ${slot.program} · GANHADOR ORIGINAL: ${r.winner}`,sourceId:r.id});
@@ -14005,5 +14007,6 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 })();
 </script>
 
+<!-- AV-57.6.6.12 · REAPROVEITAMENTO COM SNAPSHOT DA DESCRIÇÃO OFICIAL -->
 </body>
 </html>
