@@ -1104,6 +1104,26 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   margin-bottom:4px;
 }
 
+/* AV-57.6.6.13 — ESTRATÉGIA DE GERAÇÃO / CONCENTRAÇÃO */
+#radioConcentrationDrawer .drawerCard{width:min(760px,94vw)}
+.generationStrategyIntro{border:1px solid #e0e6ed;border-radius:18px;background:#f8fafc;padding:13px 14px;margin-bottom:12px}
+.generationStrategyIntro strong{display:block;color:#171c26;font-size:13px;margin-bottom:5px}
+.generationStrategyIntro span{display:block;color:#687486;font-size:10px;font-weight:800;line-height:1.45}
+.generationStrategyOptions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.generationStrategyOption{position:relative}
+.generationStrategyOption input{position:absolute;opacity:0;pointer-events:none}
+.generationStrategyOption span{display:flex;min-height:78px;flex-direction:column;justify-content:center;gap:5px;border:1px solid #dce3eb;border-radius:16px;background:#fff;padding:12px 14px;cursor:pointer;transition:.15s ease}
+.generationStrategyOption span strong{font-size:11px;color:#202733}
+.generationStrategyOption span small{font-size:9px;line-height:1.4;color:#6c7787;font-weight:800}
+.generationStrategyOption input:checked+span{border-color:#c9a7ae;background:#fff8f9;box-shadow:0 7px 18px rgba(113,28,47,.07)}
+.generationStrategyOption input:checked+span strong{color:#8f263b}
+.generationFocusBox{display:none;border:1px solid #e1e6ed;border-radius:16px;background:#fff;padding:12px;margin-bottom:12px}
+.generationFocusBox.show{display:block}
+.generationFocusGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.generationFocusHint{display:block;margin-top:9px;color:#6c7787;font-size:9px;font-weight:800;line-height:1.45}
+.generationEffectiveStart{display:inline-flex;margin-top:8px;border:1px solid #dde4ec;border-radius:999px;background:#fff;padding:6px 9px;color:#526074!important;font-size:9px!important;font-weight:900!important}
+@media(max-width:680px){.generationStrategyOptions,.generationFocusGrid{grid-template-columns:1fr}}
+
 
 /* AJUSTE — DISTRIBUIÇÃO NO CADASTRO E RELATÓRIO DO RODÍZIO */
 .distAllocBox{border:1px solid #e4e8ef;border-radius:16px;background:#f8f9fc;padding:10px}
@@ -3519,6 +3539,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 #distProgramSearchDrawer .distProgramSearchDrawerCard{width:min(1080px,95vw)!important}.distProgramSearchSummary{border:1px solid #dfe5ec;border-radius:16px;background:#f8fafc;padding:11px 13px;margin-bottom:10px}.distProgramSearchSummary strong{display:block;font-size:13px;color:#171c26}.distProgramSearchSummary span{display:block;margin-top:4px;font-size:9px;color:#687383;font-weight:900;letter-spacing:.035em}.distProgramSearchList{display:grid;gap:7px}.distProgramSearchRow{display:grid;grid-template-columns:92px 90px minmax(180px,1fr) minmax(170px,1fr) 86px auto;gap:8px;align-items:center;border:1px solid #e1e6ed;border-radius:13px;background:#fff;padding:8px 10px}.distProgramSearchRow.isDone{background:#f7faf8}.distProgramSearchRow .date{font-size:10px;font-weight:1000;color:#313946}.distProgramSearchRow .slot{font-size:12px;font-weight:1000;color:#991d34}.distProgramSearchRow .program,.distProgramSearchRow .prize{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.distProgramSearchRow .program{font-size:10px;font-weight:1000;color:#424d5c}.distProgramSearchRow .prize{font-size:9px;color:#6b7584;font-weight:900}.distProgramSearchRow .status{font-size:8px;font-weight:1000;text-align:center}.distProgramSearchActions{display:flex;gap:5px;justify-content:flex-end}.distProgramSearchActions .btn{min-height:29px;padding:0 9px;font-size:8px}.distProgramMovePanel{margin-top:12px;border:1px solid #e0e6ed;border-radius:16px;background:#f8fafc;padding:12px}.distProgramMovePanel[hidden]{display:none!important}.distProgramMoveHead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:9px}.distProgramMoveHead strong{font-size:12px}.distProgramMoveHead span{font-size:9px;color:#687383;font-weight:900}.distProgramMoveGrid{display:grid;grid-template-columns:180px 160px minmax(250px,1fr);gap:8px;align-items:end}.distProgramTargetStatus{min-height:35px;display:flex;align-items:center;border:1px solid #dfe5ec;border-radius:11px;background:#fff;padding:7px 10px;font-size:9px;font-weight:1000;color:#546171}.distProgramTargetStatus.free{background:#f1f8f4;border-color:#c8dfd0;color:#37664a}.distProgramTargetStatus.busy{background:#fff5ed;border-color:#ead1b6;color:#8b5524}
 @media(max-width:940px){.distFilterBar{grid-template-columns:1fr!important}.distProgramSearchControl{grid-template-columns:1fr}.distProgramSearchRow{grid-template-columns:82px 72px 1fr}.distProgramSearchRow .prize,.distProgramSearchRow .status{grid-column:3}.distProgramSearchActions{grid-column:1/-1;justify-content:flex-start}.distProgramMoveGrid{grid-template-columns:1fr}}
 </style>
+<!-- AV-57.6.6.13 · GERAÇÃO FUTURA + CONCENTRAÇÃO INTELIGENTE -->
 </head>
 <body>
 <div class="wrap">
@@ -4066,6 +4087,32 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 </div>
 
 
+
+<div class="drawer" id="radioConcentrationDrawer" aria-hidden="true">
+  <div class="drawerCard">
+    <div class="drawerHead"><h3>COMO DESEJA DISTRIBUIR NO PERÍODO?</h3><button class="btn small" data-close="radioConcentrationDrawer">FECHAR</button></div>
+    <div class="drawerBody">
+      <input type="hidden" id="radioConcentrationDistId">
+      <div class="generationStrategyIntro">
+        <strong id="radioConcentrationPrize">PRÊMIO</strong>
+        <span>O SISTEMA NUNCA CRIARÁ NOVA PROGRAMAÇÃO EM DATA OU HORÁRIO QUE JÁ PASSOU. A GERAÇÃO COMEÇA A PARTIR DO MOMENTO ATUAL E SEGUE ATÉ O FIM DA VALIDADE.</span>
+        <span class="generationEffectiveStart" id="radioGenerationEffectiveStart">INÍCIO DA GERAÇÃO</span>
+      </div>
+      <div class="generationStrategyOptions">
+        <label class="generationStrategyOption"><input type="radio" name="radioGenerationStrategy" value="balanced" checked><span><strong>DISTRIBUIR EQUILIBRADO</strong><small>ESPALHA A PROGRAMAÇÃO DE FORMA UNIFORME ENTRE OS DIAS E HORÁRIOS DISPONÍVEIS.</small></span></label>
+        <label class="generationStrategyOption"><input type="radio" name="radioGenerationStrategy" value="concentrated"><span><strong>CONCENTRAR MAIS EM UM PERÍODO</strong><small>LIBERA MENOS ANTES E AUMENTA AUTOMATICAMENTE A PRESENÇA DENTRO DO INTERVALO ESCOLHIDO.</small></span></label>
+      </div>
+      <div class="generationFocusBox" id="generationFocusBox">
+        <div class="generationFocusGrid">
+          <div class="field"><label>INÍCIO DA CONCENTRAÇÃO</label><input class="control" type="date" id="radioFocusStart"></div>
+          <div class="field"><label>FIM DA CONCENTRAÇÃO</label><input class="control" type="date" id="radioFocusEnd"></div>
+        </div>
+        <span class="generationFocusHint">O CÁLCULO PRIORIZA APROXIMADAMENTE 70% DAS NOVAS INSERÇÕES DENTRO DESTE INTERVALO, PRESERVANDO UMA PRESENÇA MENOR ANTES DELE QUANDO HOUVER ESPAÇO. A GRADE, O LIMITE DIÁRIO, O ESPAÇAMENTO E OS HORÁRIOS OCUPADOS CONTINUAM SENDO RESPEITADOS.</span>
+      </div>
+      <div class="formActions"><button class="btn red" type="button" id="confirmRadioGenerationStrategyBtn">GERAR SUGESTÃO</button><button class="btn" type="button" data-close="radioConcentrationDrawer">CANCELAR</button></div>
+    </div>
+  </div>
+</div>
 
 <div class="drawer" id="smartRadioReportDrawer" aria-hidden="true">
   <div class="drawerCard" style="width:min(920px,96vw)">
@@ -10157,16 +10204,17 @@ function samePrizeRepeatConflicts(d,date,slot,extraPlans=[],excludeId='',station
   const ns=normalizeSlot(slot);
   const period=periodKey(ns);
   const rows=[];
-  monthData().items.forEach(i=>{
+  Object.values(state.months||{}).forEach(m=>(m.items||[]).forEach(i=>{
     if(i.id===excludeId) return;
     if(i.distributionId!==d.id) return;
     if(normalizeChannel(i.channel)!=='RÁDIO') return;
+    if(normalizeStatus(i.status)==='CANCELADO') return;
     if(itemStation(i)!==station) return;
     const itemSlot=normalizeSlot(i.slot);
     if(itemSlot!==ns || periodKey(itemSlot)!==period) return;
     const gap=isoDayDistance(date,i.date);
     if(gap<=SMART_REPEAT_GAP_DAYS) rows.push({date:i.date,slot:itemSlot,period,gap,source:'EXISTENTE'});
-  });
+  }));
   (extraPlans||[]).forEach(p=>{
     if((p.station||station)!==station) return;
     const planSlot=normalizeSlot(p.slot);
@@ -11552,6 +11600,48 @@ function monthEndDate(key=state.currentMonth){
 }
 function distStartDate(d){ return d?.startDate || d?.date || monthStartDate(); }
 function distEndDate(d){ return d?.endDate || d?.startDate || d?.date || monthEndDate(); }
+function radioGenerationEffectiveRange(d){
+  const originalStart=distStartDate(d),end=distEndDate(d),today=todayISO();
+  const start=originalStart>today?originalStart:today;
+  return {originalStart,start,end,valid:!!start&&!!end&&start<=end,clamped:!!originalStart&&start!==originalStart};
+}
+function radioGenerationSlotIsFuture(date,slot){
+  const today=todayISO();
+  if(!date||date<today) return false;
+  if(date>today) return true;
+  const now=new Date(),currentMinutes=now.getHours()*60+now.getMinutes();
+  const slotMinutesValue=slotToMinutes(slot);
+  return Number.isFinite(slotMinutesValue) && slotMinutesValue>=currentMinutes;
+}
+function programmedAcrossMonths(distId,channel=''){
+  const target=channel?normalizeChannel(channel):'';
+  let total=0;
+  Object.values(state.months||{}).forEach(m=>{
+    (m.items||[]).forEach(i=>{
+      if(i.distributionId!==distId) return;
+      if(target&&normalizeChannel(i.channel)!==target) return;
+      if(normalizeStatus(i.status)==='CANCELADO') return;
+      total+=num(i.qty);
+    });
+  });
+  return total;
+}
+function distributionRadioTotal(d){
+  const campaignTotal=d?.id?distributionCampaignSegmentTotal(d.id,'ar'):0;
+  return Math.max(0,campaignTotal||num(d?.ar));
+}
+function normalizeRadioGenerationStrategy(d,strategy={}){
+  const range=radioGenerationEffectiveRange(d);
+  let mode=strategy?.mode==='concentrated'?'concentrated':'balanced';
+  let focusStart=String(strategy?.focusStart||''),focusEnd=String(strategy?.focusEnd||'');
+  if(mode==='concentrated'){
+    focusStart=focusStart&&focusStart>range.start?focusStart:range.start;
+    focusEnd=focusEnd&&focusEnd<range.end?focusEnd:range.end;
+    if(!range.valid||!focusStart||!focusEnd||focusEnd<focusStart){mode='balanced';focusStart='';focusEnd='';}
+  }else{focusStart='';focusEnd='';}
+  return {mode,focusStart,focusEnd,rangeStart:range.start,rangeEnd:range.end,originalStart:range.originalStart};
+}
+function radioDateInFocus(date,strategy){return strategy?.mode==='concentrated'&&date>=strategy.focusStart&&date<=strategy.focusEnd;}
 function distPeriodLabel(d){
   const start=distStartDate(d), end=distEndDate(d);
   return start || end ? `PERÍODO: ${formatBR(start)} A ${formatBR(end)}` : 'PERÍODO NÃO INFORMADO';
@@ -11641,12 +11731,18 @@ function repairInvalidAutoRadioItems(persist=false){
   return removed;
 }
 function radioItemsInPeriod(start,end){
-  return monthData().items.filter(i=>normalizeChannel(i.channel)==='RÁDIO' && i.date>=start && i.date<=end && normalizeSlot(i.slot));
+  const rows=[];
+  Object.values(state.months||{}).forEach(m=>(m.items||[]).forEach(i=>{
+    if(normalizeChannel(i.channel)!=='RÁDIO'||normalizeStatus(i.status)==='CANCELADO') return;
+    if(!i.date||i.date<start||i.date>end||!normalizeSlot(i.slot)) return;
+    rows.push(i);
+  }));
+  return rows;
 }
 function itemStation(i){ return i?.station || 'JP1017'; }
 function radioSlotConflicts(date,slot,excludeId='',station=''){
   const ns=normalizeSlot(slot);
-  return monthData().items.filter(i=>normalizeChannel(i.channel)==='RÁDIO' && i.id!==excludeId && (!station || itemStation(i)===station) && i.date===date && normalizeSlot(i.slot)===ns);
+  return radioItemsInPeriod(date,date).filter(i=>i.id!==excludeId && (!station || itemStation(i)===station) && normalizeSlot(i.slot)===ns);
 }
 
 function remapRadioItem(itemId){
@@ -11682,14 +11778,16 @@ function occupiedRadioMap(start,end,excludeId='',station='JP1017'){
   return map;
 }
 function radioPlannerCandidates(d,excludeId='',station='JP1017'){
-  const start=distStartDate(d), end=distEndDate(d);
+  const range=radioGenerationEffectiveRange(d);
+  if(!range.valid) return [];
+  const start=range.start, end=range.end;
   const occupied=occupiedRadioMap(start,end,excludeId,station);
   const dates=dateRangeBetween(start,end).filter(date=>new Date(`${date}T12:00:00`).getDay()!==0);
   const candidates=[];
   const allowedSlots=rotationAllowedSlots(d);
   dates.forEach((date,dayIndex)=>{
     const dayRegistered=eligibleRotationSlotsForDate(date,station);
-    const usable=dayRegistered.length?allowedSlots.filter(slot=>dayRegistered.includes(slot)):[];
+    const usable=dayRegistered.length?allowedSlots.filter(slot=>dayRegistered.includes(slot)&&radioGenerationSlotIsFuture(date,slot)):[];
     usable.forEach(slot=>{
       const program=programFromSchedule(date,slot,station);
       if(!program) return; // R5: sem programa cadastrado, não existe candidato.
@@ -11772,6 +11870,7 @@ function radioPlannerValidSlotsForDate(d,date,station='JP1017'){
   return eligibleRotationSlotsForDate(date,station)
     .map(normalizeSlot)
     .filter(slot=>allowed.has(slot))
+    .filter(slot=>radioGenerationSlotIsFuture(date,slot))
     .filter(slot=>!!programFromSchedule(date,slot,station))
     .sort((a,b)=>slotOrder(a)-slotOrder(b));
 }
@@ -11838,7 +11937,7 @@ function addRadioPlanRow(candidate=null, checked=true){
 
 let radioPlannerWarningText='';
 let pendingSmartRadioReport=null;
-function radioPlannerNeeded(d){ return Math.max(0, num(d?.ar) - programmed(d?.id,'RÁDIO')); }
+function radioPlannerNeeded(d){ return Math.max(0, distributionRadioTotal(d) - programmedAcrossMonths(d?.id,'RÁDIO')); }
 function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
   const registeredProgram=programFromSchedule(plan?.date,plan?.slot,'JP1017');
   if(!registeredProgram) throw new Error(`HORÁRIO FORA DA GRADE: ${plan?.date||''} ${normalizeSlot(plan?.slot||'')}`);
@@ -11903,17 +12002,20 @@ function nearestPreviousPlan(plans,date,period){
   const rows=plans.filter(p=>p.period===period && p.date<date).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   return rows[0]||null;
 }
-function buildSmartRadioPlans(d){
+function buildSmartRadioPlans(d,strategyInput={}){
   const needed=radioPlannerNeeded(d);
-  if(needed<=0) return {needed:0,plans:[],missing:0};
+  const strategy=normalizeRadioGenerationStrategy(d,strategyInput);
+  if(needed<=0) return {needed:0,plans:[],missing:0,strategy};
+  if(!strategy.rangeStart||!strategy.rangeEnd||strategy.rangeStart>strategy.rangeEnd) return {needed,plans:[],missing:needed,strategy};
 
   const allowed=[...new Set(rotationAllowedSlots(d).map(normalizeSlot))].sort((a,b)=>slotOrder(a)-slotOrder(b));
   const slotsByPeriod=rotationSlotsByPeriod(allowed);
   const maxPerDay=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1));
-  const dates=dateRangeBetween(distStartDate(d),distEndDate(d))
-    .filter(date=>eligibleRotationSlotsForDate(date,'JP1017').length>0);
-  const seed=smartRadioSeed(`${d.id}|${distributionLabel(d)}|${distStartDate(d)}|${distEndDate(d)}|${allowed.join(',')}`);
+  const dates=dateRangeBetween(strategy.rangeStart,strategy.rangeEnd)
+    .filter(date=>eligibleRotationSlotsForDate(date,'JP1017').some(slot=>radioGenerationSlotIsFuture(date,slot)));
+  const seed=smartRadioSeed(`${d.id}|${distributionLabel(d)}|${strategy.rangeStart}|${strategy.rangeEnd}|${allowed.join(',')}|${strategy.mode}|${strategy.focusStart}|${strategy.focusEnd}`);
 
+  // O que já foi programado em qualquer mês continua contando para saldo, rodízio e espaçamento.
   const existingRadio=radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id);
   const existingByDay=new Map();
   const existingPlans=[];
@@ -11937,20 +12039,16 @@ function buildSmartRadioPlans(d){
   dates.forEach((date,dayIndex)=>{
     const dayCandidates=[];
     const validDaySlots=eligibleRotationSlotsForDate(date,'JP1017');
-    const usableSlots=allowed.filter(slot=>validDaySlots.includes(slot));
+    const usableSlots=allowed.filter(slot=>validDaySlots.includes(slot)&&radioGenerationSlotIsFuture(date,slot));
     usableSlots.forEach(slot=>{
       const program=programFromSchedule(date,slot,'JP1017');
       if(!program) return;
       const period=periodKey(slot);
       if(radioSlotConflicts(date,slot,'','JP1017').length) return;
       dayCandidates.push({
-        date,
-        slot,
-        program,
-        period,
-        dayIndex,
+        date,slot,program,period,dayIndex,
         targetSlot:periodRotationTargetSlot(slotsByPeriod[period]||[],dayIndex,0,seed),
-        score: seededScore(`${seed}|${date}|${slot}|${dayIndex}`)
+        score:seededScore(`${seed}|${date}|${slot}|${dayIndex}`)
       });
     });
     if(dayCandidates.length) candidatesByDay.set(date,dayCandidates);
@@ -11958,79 +12056,77 @@ function buildSmartRadioPlans(d){
 
   const plans=[];
   const plannedByDay=new Map();
+  const focusTarget=strategy.mode==='concentrated'
+    ? (needed<=1?1:Math.min(needed-1,Math.max(1,Math.round(needed*.70))))
+    : 0;
 
-  for(let pass=0; pass<maxPerDay && plans.length<needed; pass++){
+  function chooseDatesForPass(eligibleDates,take,pass,remaining){
+    if(strategy.mode!=='concentrated'||!strategy.focusStart||!strategy.focusEnd) return pickEvenly(eligibleDates,take,`${seed}|PASS|${pass}|${remaining}`);
+    const alreadyFocus=plans.filter(p=>radioDateInFocus(p.date,strategy)).length;
+    const focusRemaining=Math.max(0,focusTarget-alreadyFocus);
+    const pre=eligibleDates.filter(date=>date<strategy.focusStart);
+    const focus=eligibleDates.filter(date=>radioDateInFocus(date,strategy));
+    const post=eligibleDates.filter(date=>date>strategy.focusEnd);
+    const selected=[];
+    const used=new Set();
+    const addFrom=(pool,count,label)=>{
+      if(count<=0) return;
+      pickEvenly(pool.filter(x=>!used.has(x)),Math.min(count,pool.filter(x=>!used.has(x)).length),`${seed}|${label}|${pass}|${remaining}`).forEach(date=>{if(!used.has(date)){used.add(date);selected.push(date);}});
+    };
+    // Reserva uma presença menor antes da janela de concentração sempre que houver espaço.
+    const desiredOutside=Math.max(0,take-Math.min(take,focusRemaining));
+    addFrom(pre,desiredOutside,'PRE');
+    addFrom(focus,Math.min(take-selected.length,focusRemaining),'FOCUS');
+    addFrom(post,take-selected.length,'POST');
+    addFrom(pre,take-selected.length,'PREFILL');
+    addFrom(focus,take-selected.length,'FOCUSFILL');
+    return selected.slice(0,take);
+  }
+
+  for(let pass=0;pass<maxPerDay&&plans.length<needed;pass++){
     const eligibleDates=dates.filter(date=>{
-      const existing=existingByDay.get(date) || {count:0,periods:new Set()};
-      const planned=plannedByDay.get(date) || {count:0,periods:new Set()};
-      if(existing.count + planned.count >= maxPerDay) return false;
+      const existing=existingByDay.get(date)||{count:0,periods:new Set()};
+      const planned=plannedByDay.get(date)||{count:0,periods:new Set()};
+      if(existing.count+planned.count>=maxPerDay) return false;
       const rows=candidatesByDay.get(date)||[];
-      return rows.some(c=>!existing.periods.has(c.period) && !planned.periods.has(c.period) && !samePrizeRepeatConflicts(d,c.date,c.slot,plans).length);
+      return rows.some(c=>!existing.periods.has(c.period)&&!planned.periods.has(c.period)&&!samePrizeRepeatConflicts(d,c.date,c.slot,plans).length);
     });
-
     if(!eligibleDates.length) continue;
-
     const remaining=needed-plans.length;
     const take=Math.min(remaining,eligibleDates.length);
-    const selectedDates=pickEvenly(eligibleDates,take,`${seed}|PASS|${pass}|${remaining}`);
+    const selectedDates=chooseDatesForPass(eligibleDates,take,pass,remaining);
 
     selectedDates.forEach((date,idx)=>{
       if(plans.length>=needed) return;
-      const existing=existingByDay.get(date) || {count:0,periods:new Set()};
-      const planned=plannedByDay.get(date) || {count:0,periods:new Set()};
-      if(existing.count + planned.count >= maxPerDay) return;
-
+      const existing=existingByDay.get(date)||{count:0,periods:new Set()};
+      const planned=plannedByDay.get(date)||{count:0,periods:new Set()};
+      if(existing.count+planned.count>=maxPerDay) return;
       let rows=(candidatesByDay.get(date)||[])
-        .filter(c=>!existing.periods.has(c.period) && !planned.periods.has(c.period))
+        .filter(c=>!existing.periods.has(c.period)&&!planned.periods.has(c.period))
         .filter(c=>!samePrizeRepeatConflicts(d,c.date,c.slot,plans).length);
-
       if(!rows.length) return;
-
       rows=rows.map(c=>{
         const periodSlots=slotsByPeriod[c.period]||[];
         const slotIndex=periodSlots.indexOf(c.slot);
         const targetIndex=periodRotationTargetIndex(periodSlots,c.dayIndex||0,pass,seed);
-        const targetDistance=slotIndex>=0 ? circularDistance(slotIndex,targetIndex,periodSlots.length) : 0;
+        const targetDistance=slotIndex>=0?circularDistance(slotIndex,targetIndex,periodSlots.length):0;
         const usage=slotUsage.get(`${c.period}|${c.slot}`)||0;
         const pUsage=periodUsage.get(c.period)||0;
         const previous=nearestPreviousPlan([...existingPlans,...plans],date,c.period);
-        const repeatedPrevious=previous && previous.slot===c.slot;
-        return {
-          ...c,
-          usage,
-          pUsage,
-          targetDistance,
-          finalScore:
-            pUsage*150 +
-            usage*100 +
-            targetDistance*55 +
-            (repeatedPrevious ? 220 : 0) +
-            periodOrderIndex(c.period)*6 +
-            seededScore(`${seed}|${pass}|${idx}|${date}|${c.slot}`)
-        };
-      }).sort((a,b)=>a.finalScore-b.finalScore || periodOrderIndex(a.period)-periodOrderIndex(b.period) || slotOrder(a.slot)-slotOrder(b.slot));
-
+        const repeatedPrevious=previous&&previous.slot===c.slot;
+        const focusBonus=strategy.mode==='concentrated'&&radioDateInFocus(c.date,strategy)?-35:0;
+        return {...c,usage,pUsage,targetDistance,finalScore:pUsage*150+usage*100+targetDistance*55+(repeatedPrevious?220:0)+periodOrderIndex(c.period)*6+focusBonus+seededScore(`${seed}|${pass}|${idx}|${date}|${c.slot}`)};
+      }).sort((a,b)=>a.finalScore-b.finalScore||periodOrderIndex(a.period)-periodOrderIndex(b.period)||slotOrder(a.slot)-slotOrder(b.slot));
       const chosen=rows[0];
       if(!chosen) return;
-
-      plans.push({
-        date:chosen.date,
-        slot:chosen.slot,
-        program:chosen.program||programFromSchedule(chosen.date,chosen.slot,'JP1017'),
-        key:radioSlotKey(chosen.date,chosen.slot),
-        period:chosen.period
-      });
-
-      planned.count++;
-      planned.periods.add(chosen.period);
-      plannedByDay.set(date,planned);
+      plans.push({date:chosen.date,slot:chosen.slot,program:chosen.program||programFromSchedule(chosen.date,chosen.slot,'JP1017'),key:radioSlotKey(chosen.date,chosen.slot),period:chosen.period});
+      planned.count++;planned.periods.add(chosen.period);plannedByDay.set(date,planned);
       periodUsage.set(chosen.period,(periodUsage.get(chosen.period)||0)+1);
       slotUsage.set(`${chosen.period}|${chosen.slot}`,(slotUsage.get(`${chosen.period}|${chosen.slot}`)||0)+1);
     });
   }
-
-  plans.sort((a,b)=>String(a.date).localeCompare(String(b.date)) || periodOrderIndex(a.period)-periodOrderIndex(b.period) || slotOrder(a.slot)-slotOrder(b.slot));
-  return {needed,plans,missing:Math.max(0,needed-plans.length)};
+  plans.sort((a,b)=>String(a.date).localeCompare(String(b.date))||periodOrderIndex(a.period)-periodOrderIndex(b.period)||slotOrder(a.slot)-slotOrder(b.slot));
+  return {needed,plans,missing:Math.max(0,needed-plans.length),strategy,focusTarget};
 }
 function distributeSmartQuantities(plans,total,maxPerSlot=4){
   const rows=(plans||[]).map(plan=>({...plan,qty:1}));
@@ -12127,13 +12223,16 @@ function autoBalanceSmartQuantities(){
 function smartValidDates(report){
   const d=distributionById(report?.distId);
   if(!d) return [];
-  return dateRangeBetween(distStartDate(d),distEndDate(d))
-    .filter(date=>eligibleRotationSlotsForDate(date,'JP1017').length>0);
+  const range=radioGenerationEffectiveRange(d);
+  if(!range.valid) return [];
+  return dateRangeBetween(range.start,range.end)
+    .filter(date=>eligibleRotationSlotsForDate(date,'JP1017').some(slot=>radioGenerationSlotIsFuture(date,slot)));
 }
 function smartValidSlots(report,date){
   const d=distributionById(report?.distId);
   if(!d||!date) return [];
   return eligibleRotationSlotsForDate(date,'JP1017')
+    .filter(slot=>radioGenerationSlotIsFuture(date,slot))
     .filter(slot=>!!programFromSchedule(date,slot,'JP1017'))
     .sort((a,b)=>slotOrder(a)-slotOrder(b));
 }
@@ -12181,10 +12280,13 @@ function smartPlanIssue(report,plan,index){
 function smartExistingItems(report){
   const d=distributionById(report?.distId);
   if(!d) return [];
-  return radioItemsInPeriod(distStartDate(d),distEndDate(d))
+  const range=radioGenerationEffectiveRange(d);
+  if(!range.valid) return [];
+  return radioItemsInPeriod(range.start,range.end)
     .filter(item=>itemStation(item)==='JP1017')
     .filter(item=>normalizeChannel(item.channel)==='RÁDIO')
     .filter(item=>normalizeStatus(item.status)!=='CANCELADO')
+    .filter(item=>radioGenerationSlotIsFuture(item.date,item.slot))
     .sort((a,b)=>String(a.date).localeCompare(String(b.date))||slotOrder(a.slot)-slotOrder(b.slot));
 }
 function smartFreeChoices(report){
@@ -12297,7 +12399,7 @@ function renderSmartRadioReport(report){
         <div class="smartChoiceCard">
           <strong>USAR HORÁRIO JÁ PROGRAMADO</strong>
           <div class="smartChoiceRow calendarRow">
-            <input id="smartExistingDate" type="date" min="${esc(distStartDate(d))}" max="${esc(distEndDate(d))}" value="${esc(existingChoices[0]?.date||distStartDate(d))}" onchange="fillSmartExistingSlots()">
+            <input id="smartExistingDate" type="date" min="${esc(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" max="${esc(distEndDate(d))}" value="${esc(existingChoices[0]?.date||report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" onchange="fillSmartExistingSlots()">
             <select id="smartExistingSchedule">
               <option value="">SELECIONE O HORÁRIO</option>
             </select>
@@ -12310,7 +12412,7 @@ function renderSmartRadioReport(report){
         <div class="smartChoiceCard">
           <strong>CRIAR NOVO HORÁRIO</strong>
           <div class="smartChoiceRow calendarRow">
-            <input id="smartNewDate" type="date" min="${esc(distStartDate(d))}" max="${esc(distEndDate(d))}" value="${esc(freeChoices[0]?.date||distStartDate(d))}" onchange="fillSmartNewSlots()">
+            <input id="smartNewDate" type="date" min="${esc(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" max="${esc(distEndDate(d))}" value="${esc(freeChoices[0]?.date||report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" onchange="fillSmartNewSlots()">
             <select id="smartNewSchedule">
               <option value="">SELECIONE O HORÁRIO</option>
             </select>
@@ -12323,7 +12425,11 @@ function renderSmartRadioReport(report){
       </div>
       ${report.missing>0&&report.plans.length?`<div style="margin-top:8px"><button class="btn small" type="button" onclick="autoBalanceSmartQuantities()">DISTRIBUIR EXCEDENTE AUTOMATICAMENTE</button></div>`:''}
     </div>`:'';
+  const strategyNotice=report.strategy?.mode==='concentrated'
+    ? `<div class="generationStrategyIntro"><strong>GERAÇÃO A PARTIR DE ${esc(formatBR(report.strategy.rangeStart))}</strong><span>CONCENTRAÇÃO INTELIGENTE: ${esc(formatBR(report.strategy.focusStart))} A ${esc(formatBR(report.strategy.focusEnd))} · PRIORIDADE APROXIMADA DE 70% DAS NOVAS INSERÇÕES NESTA JANELA.</span></div>`
+    : `<div class="generationStrategyIntro"><strong>GERAÇÃO A PARTIR DE ${esc(formatBR(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start))}</strong><span>DISTRIBUIÇÃO EQUILIBRADA ATÉ ${esc(formatBR(report.strategy?.rangeEnd||distEndDate(d)))}. DATAS E HORÁRIOS JÁ PASSADOS NÃO ENTRAM NO CÁLCULO.</span></div>`;
   summary.innerHTML=`
+    ${strategyNotice}
     ${concentrationHtml}
     <div class="smartQualityGrid">
       <div class="smartQualityScore"><strong>${quality.score}%</strong><span>QUALIDADE ${quality.label}</span></div>
@@ -12378,15 +12484,17 @@ function renderSmartRadioReport(report){
     },0);
   }
 }
-function openSmartRadioReport(d){
-  if(!d || num(d.ar)<=0) return false;
-  const built=buildSmartRadioPlans(d);
+function openSmartRadioReport(d,strategy={mode:'balanced'}){
+  if(!d || distributionRadioTotal(d)<=0) return false;
+  const built=buildSmartRadioPlans(d,strategy);
   const plans=built.plans.map(plan=>({...plan,qty:1}));
   pendingSmartRadioReport={
     distId:d.id,
     plans,
     missing:built.missing,
     needed:built.needed,
+    strategy:built.strategy,
+    focusTarget:built.focusTarget||0,
     manualConcentration:built.missing>0 && plans.length>0 && isTicketDist(d),
     createdAt:new Date().toISOString()
   };
@@ -12431,7 +12539,8 @@ function confirmSmartRadioReport(){
   const newPlans=validPlans.filter(plan=>!plan.existingItemId);
   const linkedPlans=validPlans.filter(plan=>plan.existingItemId);
   linkedPlans.forEach(plan=>{
-    const item=(monthData().items||[]).find(row=>row.id===plan.existingItemId);
+    let item=null;
+    Object.values(state.months||{}).some(m=>{item=(m.items||[]).find(row=>row.id===plan.existingItemId)||null;return !!item;});
     if(!item) return;
     item.qty=Math.max(1,num(item.qty)||1)+Math.max(1,num(plan.qty)||1);
     item.winnerCapacity=item.qty;
@@ -12451,13 +12560,17 @@ function confirmSmartRadioReport(){
     });
     auditEvent('EXCEÇÃO DE RODÍZIO CONFIRMADA',distributionLabel(d),{targetId:d.id,note:overrideNote});
   }
-  monthData().items.push(...newItems);
+  newItems.forEach(item=>{const target=monthDataForKey(String(item.date||state.currentMonth).slice(0,7));target.items||=[];target.items.push(item);});
+  const strategy=report.strategy||normalizeRadioGenerationStrategy(d,{mode:'balanced'});
+  auditEvent('GERAÇÃO INTELIGENTE DE RÁDIO',distributionLabel(d),{targetId:d.id,note:strategy.mode==='concentrated'?`GERAÇÃO A PARTIR DE ${formatBR(strategy.rangeStart)} · CONCENTRAÇÃO ${formatBR(strategy.focusStart)} A ${formatBR(strategy.focusEnd)}`:`GERAÇÃO EQUILIBRADA A PARTIR DE ${formatBR(strategy.rangeStart)}`});
   pendingSmartRadioReport=null;
   saveState(true);
   queueApiSave(80);
   closeDrawer('smartRadioReportDrawer');
   activeDistributionFilter='';
   const targetWeek=validPlans[0] ? weekLabel(validPlans[0].date) : '';
+  const targetMonth=validPlans[0]?.date?validPlans[0].date.slice(0,7):state.currentMonth;
+  if(targetMonth&&state.months?.[targetMonth]){state.currentMonth=targetMonth;if($('monthInput'))$('monthInput').value=targetMonth;renderFilters();}
   if($('programStationFilter')) $('programStationFilter').value='';
   if($('statusFilter')) $('statusFilter').value='';
   setView('programacao');
@@ -12480,7 +12593,7 @@ function redoSmartRadioReport(){
     : '<strong>REFAÇA O RODÍZIO.</strong> AJUSTE DATA, HORÁRIO OU PROGRAMA ANTES DE SALVAR.';
   openRadioPlanner(d.id);
 }
-function handleRadioScheduleAfterSave(d){ return openSmartRadioReport(d); }
+function handleRadioScheduleAfterSave(d){ return openRadioGenerationStrategy(d.id); }
 
 function openRadioPlanner(distId){
   const d=distributionById(distId); if(!d) return;
@@ -12492,9 +12605,9 @@ function openRadioPlanner(distId){
     radioPlannerWarningText='';
   }
   if($('radioPlannerDistId')) $('radioPlannerDistId').value=distId;
-  const start=distStartDate(d), end=distEndDate(d);
-  const radioTotal=num(d.ar);
-  const already=programmed(d.id,'RÁDIO');
+  const range=radioGenerationEffectiveRange(d),start=range.start,end=range.end;
+  const radioTotal=distributionRadioTotal(d);
+  const already=programmedAcrossMonths(d.id,'RÁDIO');
   const needed=Math.max(0,radioTotal-already);
   if($('radioPlannerPrize')) $('radioPlannerPrize').textContent=distributionLabel(d);
   if($('radioPlannerSummary')) $('radioPlannerSummary').textContent=`${distPeriodLabel(d)} | RÁDIO: ${radioTotal} | JÁ PROGRAMADO: ${already} | A PROGRAMAR: ${needed}`;
@@ -12983,20 +13096,55 @@ REDUZA/CANCELE OS SORTEIOS VINCULADOS ANTES DE DIMINUIR A QUANTIDADE.`); return 
   }
   return d;
 }
-function generateRadioFromDist(distId){
-  const d=distributionById(distId);
-  if(!d){ alert('DISTRIBUIÇÃO NÃO ENCONTRADA.'); return false; }
-  if(num(d.ar)<=0){ alert('O DESTINO RÁDIO ESTÁ ZERADO. INFORME A QUANTIDADE DE RÁDIO PARA GERAR A PROGRAMAÇÃO.'); return false; }
-  const needed=radioPlannerNeeded(d);
-  if(needed<=0){
-    filterProgramByDist(d.id);
-    alert('ESSA DISTRIBUIÇÃO JÁ TEM TODOS OS HORÁRIOS DE RÁDIO PROGRAMADOS. A GRADE FOI ABERTA PARA CONFERÊNCIA.');
-    return false;
-  }
-  const openedReport=handleRadioScheduleAfterSave(d);
-  if(!openedReport){ alert('NÃO FOI POSSÍVEL GERAR O RELATÓRIO. VERIFIQUE DATA DE INÍCIO, DATA DE TÉRMINO E HORÁRIOS DO RODÍZIO.'); return false; }
-  return true;
+let pendingRadioGenerationRequest=null;
+function defaultRadioFocusWindow(d){
+  const range=radioGenerationEffectiveRange(d);
+  if(!range.valid) return {start:'',end:''};
+  const dates=dateRangeBetween(range.start,range.end);
+  if(!dates.length) return {start:range.start,end:range.end};
+  const startIndex=Math.max(0,Math.floor(dates.length*.55));
+  return {start:dates[startIndex]||range.start,end:range.end};
 }
+function updateRadioConcentrationMode(){
+  const mode=document.querySelector('input[name="radioGenerationStrategy"]:checked')?.value||'balanced';
+  $('generationFocusBox')?.classList.toggle('show',mode==='concentrated');
+}
+function openRadioGenerationStrategy(distId){
+  const d=distributionById(distId)||distributionCampaignCopies(distId)[0]?.d;
+  if(!d){alert('DISTRIBUIÇÃO NÃO ENCONTRADA.');return false;}
+  if(distributionRadioTotal(d)<=0){alert('O DESTINO RÁDIO ESTÁ ZERADO. INFORME A QUANTIDADE DE RÁDIO PARA GERAR A PROGRAMAÇÃO.');return false;}
+  const needed=radioPlannerNeeded(d);
+  if(needed<=0){filterProgramByDist(d.id);alert('ESSA DISTRIBUIÇÃO JÁ TEM TODOS OS HORÁRIOS DE RÁDIO PROGRAMADOS. A GRADE FOI ABERTA PARA CONFERÊNCIA.');return false;}
+  const range=radioGenerationEffectiveRange(d);
+  if(!range.valid){alert(`A VALIDADE DESTE PRÊMIO JÁ TERMINOU EM ${formatBR(distEndDate(d))}. NÃO HÁ DATA FUTURA PARA GERAR A PROGRAMAÇÃO.`);return false;}
+  pendingRadioGenerationRequest={distId:d.id,openedAt:new Date().toISOString()};
+  if($('radioConcentrationDistId'))$('radioConcentrationDistId').value=d.id;
+  if($('radioConcentrationPrize'))$('radioConcentrationPrize').textContent=distributionLabel(d);
+  if($('radioGenerationEffectiveStart'))$('radioGenerationEffectiveStart').textContent=`GERAÇÃO: ${formatBR(range.start)} → ${formatBR(range.end)} · ${needed} A PROGRAMAR`;
+  const balanced=document.querySelector('input[name="radioGenerationStrategy"][value="balanced"]');if(balanced)balanced.checked=true;
+  const focus=defaultRadioFocusWindow(d);
+  if($('radioFocusStart')){$('radioFocusStart').min=range.start;$('radioFocusStart').max=range.end;$('radioFocusStart').value=focus.start;}
+  if($('radioFocusEnd')){$('radioFocusEnd').min=range.start;$('radioFocusEnd').max=range.end;$('radioFocusEnd').value=focus.end;}
+  updateRadioConcentrationMode();openDrawer('radioConcentrationDrawer');return true;
+}
+function confirmRadioGenerationStrategy(){
+  const request=pendingRadioGenerationRequest;
+  const d=request?(distributionById(request.distId)||distributionCampaignCopies(request.distId)[0]?.d):null;
+  if(!d){alert('DISTRIBUIÇÃO NÃO ENCONTRADA.');return;}
+  const mode=document.querySelector('input[name="radioGenerationStrategy"]:checked')?.value||'balanced';
+  const range=radioGenerationEffectiveRange(d);
+  let strategy={mode:'balanced'};
+  if(mode==='concentrated'){
+    const focusStart=$('radioFocusStart')?.value||'',focusEnd=$('radioFocusEnd')?.value||'';
+    if(!focusStart||!focusEnd){alert('INFORME O INÍCIO E O FIM DO PERÍODO DE CONCENTRAÇÃO.');return;}
+    if(focusStart<range.start||focusEnd>range.end||focusEnd<focusStart){alert(`O PERÍODO DE CONCENTRAÇÃO DEVE FICAR ENTRE ${formatBR(range.start)} E ${formatBR(range.end)}.`);return;}
+    strategy={mode:'concentrated',focusStart,focusEnd};
+  }
+  closeDrawer('radioConcentrationDrawer');pendingRadioGenerationRequest=null;
+  const opened=openSmartRadioReport(d,strategy);
+  if(!opened)alert('NÃO FOI POSSÍVEL GERAR O RELATÓRIO. VERIFIQUE A VALIDADE, A GRADE DE HORÁRIOS E OS HORÁRIOS AINDA DISPONÍVEIS.');
+}
+function generateRadioFromDist(distId){return openRadioGenerationStrategy(distId);}
 $('distForm').addEventListener('submit',e=>{
   e.preventDefault();
   saveDistributionFromForm(false);
@@ -13048,6 +13196,9 @@ $('saveReserveNoteBtn').addEventListener('click',saveReserveNote);
 if($('saveRadioPlannerBtn')) $('saveRadioPlannerBtn').addEventListener('click',saveRadioPlanner);
 bind('confirmSmartRadioBtn','click',confirmSmartRadioReport);
 bind('redoSmartRadioBtn','click',redoSmartRadioReport);
+bind('confirmRadioGenerationStrategyBtn','click',confirmRadioGenerationStrategy);
+document.querySelectorAll('input[name="radioGenerationStrategy"]').forEach(input=>input.addEventListener('change',updateRadioConcentrationMode));
+if($('radioFocusStart'))$('radioFocusStart').addEventListener('change',()=>{if($('radioFocusEnd')&&$('radioFocusEnd').value<$('radioFocusStart').value)$('radioFocusEnd').value=$('radioFocusStart').value;});
 if($('addRadioPlannerRowBtn')) $('addRadioPlannerRowBtn').addEventListener('click',()=>{
   const d=distributionById(radioPlannerDistId);
   const first=pickBestRadioSuggestions(d,1)[0] || radioPlannerCandidates(d).find(c=>!c.occupied);
