@@ -3231,6 +3231,7 @@ main{
 .globalSearchFooter button{border:0;background:transparent;color:#8b1830;font-size:7.5px;font-weight:1000;cursor:pointer;padding:5px 6px}
 @media(max-width:680px){.globalSearchDropdown{max-height:52vh}}
 
+/* === AV-57.6.6.15 · PROGRAMAÇÃO SEMANAL MULTIMÊS === */
 </style>
 
 
@@ -8743,6 +8744,27 @@ function renderSystemView(){
 }
 
 function distributionById(distId){ return monthData().distributions.find(d => d.id === distId); }
+function distributionByIdForMonth(distId,monthKey){
+  if(!distId) return null;
+  const key=monthKey||state.currentMonth;
+  return (monthDataForKey(key).distributions||[]).find(d=>d.id===distId) || null;
+}
+function programItemRecord(itemId){
+  if(!itemId) return null;
+  for(const [monthKey,m] of Object.entries(state.months||{})){
+    const items=Array.isArray(m?.items)?m.items:[];
+    const index=items.findIndex(i=>i.id===itemId);
+    if(index>=0) return {monthKey,month:m,item:items[index],index};
+  }
+  return null;
+}
+function distributionForProgramItem(item){
+  if(!item) return null;
+  const key=String(item.date||'').slice(0,7) || state.currentMonth;
+  return distributionByIdForMonth(item.distributionId,key)
+    || Object.values(state.months||{}).flatMap(m=>m.distributions||[]).find(d=>d.id===item.distributionId)
+    || null;
+}
 function distributionLabel(d){
   if(!d) return '';
   const prize = norm(d.prize || '');
@@ -10167,11 +10189,25 @@ function passTextFilter(obj, text){
   if(!text) return true;
   return Object.values(obj).some(v => norm(v).includes(text));
 }
+function programItemsForVisibleCalendar(){
+  const selectedWeek=$('weekFilter')?.value || '';
+  if(!selectedWeek) return [...(monthData().items||[])];
+  const dates=weekDatesForLabel(selectedWeek,state.currentMonth);
+  if(!dates.length) return [...(monthData().items||[])];
+  const dateSet=new Set(dates);
+  const monthKeys=[...new Set(dates.map(date=>String(date).slice(0,7)).filter(Boolean))];
+  const rows=[];
+  monthKeys.forEach(monthKey=>{
+    const m=monthDataForKey(monthKey);
+    (m.items||[]).forEach(item=>{ if(dateSet.has(item.date)) rows.push(item); });
+  });
+  return rows;
+}
 function filteredItems(){
   const week=norm($('weekFilter')?.value);
   const station=$('programStationFilter')?.value || '';
   const status=norm($('statusFilter')?.value);
-  return monthData().items.filter(i =>
+  return programItemsForVisibleCalendar().filter(i =>
     normalizeChannel(i.channel)==='RÁDIO' &&
     (!week || norm(weekLabel(i.date)) === week) &&
     (!station || itemStation(i) === station) &&
@@ -10254,7 +10290,7 @@ function periodIcon(key){
   return key === 'manha' ? '☀' : key === 'tarde' ? '☼' : '☾';
 }
 function renderProgramCard(i){
-  const d=distributionById(i.distributionId);
+  const d=distributionForProgramItem(i);
   const resolvedProgram=programFromSchedule(i.date,i.slot,itemStation(i))||norm(i.program||'');
   const cardTitle = i.prize || i.title || resolvedProgram || '';
   const cardSubtitle = i.title ? `${i.title}${resolvedProgram ? ' · ' + resolvedProgram : ''}` : resolvedProgram;
@@ -11049,6 +11085,17 @@ function clearProgramButtonClick(event){
 function programActionClick(event,action,itemId){
   if(event){ event.preventDefault(); event.stopPropagation(); }
   if(!itemId) return;
+  const located=programItemRecord(itemId);
+  if(located && located.monthKey!==state.currentMonth){
+    const keepWeek=$('weekFilter')?.value || weekLabel(located.item?.date||'');
+    state.currentMonth=located.monthKey;
+    manualMonthOverride=true;
+    calendarMonthOpened=located.monthKey;
+    if($('monthInput')) $('monthInput').value=located.monthKey;
+    renderFilters();
+    if(keepWeek && $('weekFilter') && [...$('weekFilter').options].some(o=>o.value===keepWeek)) $('weekFilter').value=keepWeek;
+    renderProgramacao();
+  }
   if(action==='edit') return editItem(itemId);
   if(action==='copy') return duplicateItem(itemId);
   if(action==='delete') return deleteItem(itemId);
@@ -11744,6 +11791,26 @@ function radioSlotConflicts(date,slot,excludeId='',station=''){
   const ns=normalizeSlot(slot);
   return radioItemsInPeriod(date,date).filter(i=>i.id!==excludeId && (!station || itemStation(i)===station) && normalizeSlot(i.slot)===ns);
 }
+function radioHalfHourFallback(d,date,fullSlot,extraPlans=[],excludeId='',station='JP1017'){
+  const base=normalizeSlot(fullSlot), parts=slotParts(base);
+  if(!parts || parts.minute!==0) return null;
+  const occupied=radioSlotConflicts(date,base,excludeId,station);
+  if(!occupied.length) return null;
+  // Se a própria distribuição já ocupa a hora cheia, não cria um segundo sorteio do mesmo prêmio na mesma hora.
+  if(d?.id && occupied.some(item=>item.distributionId===d.id)) return null;
+  const half=halfHourSlotFor(base);
+  if(!half || !radioGenerationSlotIsFuture(date,half)) return null;
+  const program=programFromSchedule(date,half,station);
+  if(!program) return null;
+  if(radioSlotConflicts(date,half,excludeId,station).length) return null;
+  if((extraPlans||[]).some(plan=>plan.date===date && normalizeSlot(plan.slot)===half)) return null;
+  if(d && samePrizeRepeatConflicts(d,date,half,extraPlans,excludeId,station).length) return null;
+  return {
+    date,slot:half,baseSlot:base,station,program,period:periodKey(half),
+    key:radioSlotKey(date,half,station),halfHourSuggestion:true,
+    baseOccupiedItems:occupied
+  };
+}
 
 function remapRadioItem(itemId){
   const item=monthData().items.find(i=>i.id===itemId);
@@ -11793,7 +11860,12 @@ function radioPlannerCandidates(d,excludeId='',station='JP1017'){
       if(!program) return; // R5: sem programa cadastrado, não existe candidato.
       const key=radioSlotKey(date,slot,station);
       const occ=occupied.get(key)||[];
-      candidates.push({date,slot,station,period:periodKey(slot),dayIndex,program,occupied:occ.length>0,occupiedItems:occ,key});
+      candidates.push({date,slot,baseSlot:slot,station,period:periodKey(slot),dayIndex,program,occupied:occ.length>0,occupiedItems:occ,key});
+      // Se a hora cheia já está ocupada por outro prêmio, a primeira alternativa é a meia hora da MESMA hora.
+      if(occ.length){
+        const half=radioHalfHourFallback(d,date,slot,[],excludeId,station);
+        if(half) candidates.push({...half,dayIndex,occupied:false,occupiedItems:[],baseOccupiedItems:occ});
+      }
     });
   });
   return candidates;
@@ -11824,7 +11896,8 @@ function pickBestRadioSuggestions(d,needed){
     if(!available.length) break;
     const chosen=available.map(c=>{
       const periodSlots=slotsByPeriod[c.period]||[];
-      const idx=periodSlots.indexOf(normalizeSlot(c.slot));
+      const rotationSlot=normalizeSlot(c.baseSlot||c.slot);
+      const idx=periodSlots.indexOf(rotationSlot);
       const target=periodRotationTargetIndex(periodSlots,c.dayIndex||0,0,smartRadioSeed(`${d.id}|${distributionLabel(d)}`));
       const targetDistance=idx>=0 ? circularDistance(idx,target,periodSlots.length) : 0;
       const pUsage=periodUsage.get(c.period)||0;
@@ -11859,26 +11932,40 @@ function radioRowStatus(date,slot,distId,avoidSet=new Set()){
   const d=distributionById(distId);
   const localDuplicate=avoidSet.has(radioSlotKey(date,ns,'JP1017'));
   const repeatConflicts=samePrizeRepeatConflicts(d,date,ns,[],'','JP1017');
-  if(!occupied.length && !localDuplicate && !repeatConflicts.length) return {cls:'free',text:'LIVRE'};
-  const alt=findNextFreeRadioSlot(d,avoidSet,'',[]);
+  if(!occupied.length && !localDuplicate && !repeatConflicts.length){
+    if(isHalfHourSlot(ns)){
+      const base=fullHourSlot(ns), baseOccupied=radioSlotConflicts(date,base,'','JP1017');
+      if(baseOccupied.length) return {cls:'free',text:`LIVRE · MEIA HORA APÓS ${base} (${conflictLabel(baseOccupied)})`};
+    }
+    return {cls:'free',text:'LIVRE'};
+  }
+  const half=(!localDuplicate && !repeatConflicts.length)?radioHalfHourFallback(d,date,ns,[],'','JP1017'):null;
+  const alt=half || findNextFreeRadioSlot(d,avoidSet,'',[]);
   const motivo=localDuplicate ? 'REPETIDO NA SELEÇÃO' : repeatConflicts.length ? `BLOQUEADO: ${samePrizeRepeatLabel(repeatConflicts)}` : `OCUPADO POR ${conflictLabel(occupied)}`;
-  return {cls:'busy',text:`${motivo} — SUGESTÃO: ${alt ? formatBR(alt.date)+' '+alt.slot : 'SEM HORÁRIO LIVRE'}`};
+  const suggestion=alt ? `${formatBR(alt.date)} ${alt.slot}${alt.halfHourSuggestion?' · MEIA HORA NA MESMA FAIXA':''}` : 'SEM HORÁRIO LIVRE';
+  return {cls:'busy',text:`${motivo} — SUGESTÃO: ${suggestion}`};
 }
 function radioPlannerValidSlotsForDate(d,date,station='JP1017'){
   if(!d || !date) return [];
   const allowed=new Set(rotationAllowedSlots(d).map(normalizeSlot));
-  return eligibleRotationSlotsForDate(date,station)
+  const base=eligibleRotationSlotsForDate(date,station)
     .map(normalizeSlot)
     .filter(slot=>allowed.has(slot))
     .filter(slot=>radioGenerationSlotIsFuture(date,slot))
-    .filter(slot=>!!programFromSchedule(date,slot,station))
-    .sort((a,b)=>slotOrder(a)-slotOrder(b));
+    .filter(slot=>!!programFromSchedule(date,slot,station));
+  const out=[];
+  base.forEach(slot=>{
+    out.push(slot);
+    const half=radioHalfHourFallback(d,date,slot,[],'',station);
+    if(half) out.push(half.slot);
+  });
+  return [...new Set(out)].sort((a,b)=>slotOrder(a)-slotOrder(b));
 }
 function radioPlannerSlotOptions(d,date,selected='',station='JP1017'){
   const valid=radioPlannerValidSlotsForDate(d,date,station);
   const chosen=valid.includes(normalizeSlot(selected))?normalizeSlot(selected):(valid[0]||'');
   if(!valid.length) return {html:'<option value="">SEM HORÁRIO CADASTRADO NESTE DIA</option>',chosen:''};
-  return {html:valid.map(slot=>`<option value="${esc(slot)}" ${slot===chosen?'selected':''}>${esc(slot)}</option>`).join(''),chosen};
+  return {html:valid.map(slot=>`<option value="${esc(slot)}" ${slot===chosen?'selected':''}>${esc(slot)}${isHalfHourSlot(slot)?' · MEIA HORA':''}</option>`).join(''),chosen};
 }
 function radioPlanRowHtml(candidate={}, checked=true){
   const d=distributionById(radioPlannerDistId);
@@ -12044,9 +12131,20 @@ function buildSmartRadioPlans(d,strategyInput={}){
       const program=programFromSchedule(date,slot,'JP1017');
       if(!program) return;
       const period=periodKey(slot);
-      if(radioSlotConflicts(date,slot,'','JP1017').length) return;
+      const occupied=radioSlotConflicts(date,slot,'','JP1017');
+      if(occupied.length){
+        const half=radioHalfHourFallback(d,date,slot,[],'','JP1017');
+        if(!half) return;
+        dayCandidates.push({
+          date,slot:half.slot,baseSlot:slot,program:half.program,period:periodKey(half.slot),dayIndex,
+          halfHourSuggestion:true,baseOccupiedItems:occupied,
+          targetSlot:periodRotationTargetSlot(slotsByPeriod[period]||[],dayIndex,0,seed),
+          score:seededScore(`${seed}|${date}|${half.slot}|${dayIndex}|HALF`)
+        });
+        return;
+      }
       dayCandidates.push({
-        date,slot,program,period,dayIndex,
+        date,slot,baseSlot:slot,program,period,dayIndex,
         targetSlot:periodRotationTargetSlot(slotsByPeriod[period]||[],dayIndex,0,seed),
         score:seededScore(`${seed}|${date}|${slot}|${dayIndex}`)
       });
@@ -12107,7 +12205,8 @@ function buildSmartRadioPlans(d,strategyInput={}){
       if(!rows.length) return;
       rows=rows.map(c=>{
         const periodSlots=slotsByPeriod[c.period]||[];
-        const slotIndex=periodSlots.indexOf(c.slot);
+        const rotationSlot=normalizeSlot(c.baseSlot||c.slot);
+        const slotIndex=periodSlots.indexOf(rotationSlot);
         const targetIndex=periodRotationTargetIndex(periodSlots,c.dayIndex||0,pass,seed);
         const targetDistance=slotIndex>=0?circularDistance(slotIndex,targetIndex,periodSlots.length):0;
         const usage=slotUsage.get(`${c.period}|${c.slot}`)||0;
@@ -12119,7 +12218,7 @@ function buildSmartRadioPlans(d,strategyInput={}){
       }).sort((a,b)=>a.finalScore-b.finalScore||periodOrderIndex(a.period)-periodOrderIndex(b.period)||slotOrder(a.slot)-slotOrder(b.slot));
       const chosen=rows[0];
       if(!chosen) return;
-      plans.push({date:chosen.date,slot:chosen.slot,program:chosen.program||programFromSchedule(chosen.date,chosen.slot,'JP1017'),key:radioSlotKey(chosen.date,chosen.slot),period:chosen.period});
+      plans.push({date:chosen.date,slot:chosen.slot,baseSlot:chosen.baseSlot||chosen.slot,program:chosen.program||programFromSchedule(chosen.date,chosen.slot,'JP1017'),key:radioSlotKey(chosen.date,chosen.slot),period:chosen.period,halfHourSuggestion:!!chosen.halfHourSuggestion,baseOccupiedLabel:chosen.baseOccupiedItems?.length?conflictLabel(chosen.baseOccupiedItems):''});
       planned.count++;planned.periods.add(chosen.period);plannedByDay.set(date,planned);
       periodUsage.set(chosen.period,(periodUsage.get(chosen.period)||0)+1);
       slotUsage.set(`${chosen.period}|${chosen.slot}`,(slotUsage.get(`${chosen.period}|${chosen.slot}`)||0)+1);
@@ -12180,12 +12279,25 @@ function smartPlanReason(plan,allPlans){
   const samePeriodBefore=(allPlans||[]).filter(p=>p!==plan&&p.period===plan.period&&p.date<plan.date).length;
   const sameSlotBefore=(allPlans||[]).filter(p=>p!==plan&&normalizeSlot(p.slot)===normalizeSlot(plan.slot)&&p.date<plan.date).length;
   const parts=[];
+  if(plan.halfHourSuggestion || isHalfHourSlot(plan.slot)){
+    const base=fullHourSlot(plan.slot), occupied=radioSlotConflicts(plan.date,base,'','JP1017');
+    if(occupied.length) parts.push(`MEIA HORA NA MESMA FAIXA · ${base} JÁ OCUPADO${plan.baseOccupiedLabel?' POR '+plan.baseOccupiedLabel:''}`);
+  }
   if(!sameSlotBefore) parts.push('HORÁRIO AINDA NÃO UTILIZADO');
   else parts.push('REPETIÇÃO CONTROLADA');
   if(!samePeriodBefore) parts.push('ABRE NOVO PERÍODO NO RODÍZIO');
   else parts.push('MANTÉM EQUILÍBRIO DO PERÍODO');
   parts.push('SEM CONFLITO NA GRADE');
   return parts.join(' · ');
+}
+function refreshSmartPlanHalfHourMeta(plan){
+  if(!plan) return;
+  const half=isHalfHourSlot(plan.slot);
+  const base=half?fullHourSlot(plan.slot):normalizeSlot(plan.slot);
+  const occupied=half?radioSlotConflicts(plan.date,base,'','JP1017'):[];
+  plan.baseSlot=base;
+  plan.halfHourSuggestion=!!(half&&occupied.length);
+  plan.baseOccupiedLabel=occupied.length?conflictLabel(occupied):'';
 }
 function smartAssignedQuantity(report){
   return (report?.plans||[]).reduce((sum,plan)=>sum+Math.max(1,num(plan.qty)||1),0);
@@ -12231,10 +12343,7 @@ function smartValidDates(report){
 function smartValidSlots(report,date){
   const d=distributionById(report?.distId);
   if(!d||!date) return [];
-  return eligibleRotationSlotsForDate(date,'JP1017')
-    .filter(slot=>radioGenerationSlotIsFuture(date,slot))
-    .filter(slot=>!!programFromSchedule(date,slot,'JP1017'))
-    .sort((a,b)=>slotOrder(a)-slotOrder(b));
+  return radioPlannerValidSlotsForDate(d,date,'JP1017');
 }
 function updateSmartPlanDate(index,date){
   const report=pendingSmartRadioReport;
@@ -12248,6 +12357,7 @@ function updateSmartPlanDate(index,date){
   plan.program=programFromSchedule(date,nextSlot,'JP1017');
   plan.period=periodKey(nextSlot);
   plan.key=radioSlotKey(date,nextSlot,'JP1017');
+  refreshSmartPlanHalfHourMeta(plan);
   renderSmartRadioReport(report);
 }
 function updateSmartPlanSlot(index,slot){
@@ -12261,6 +12371,7 @@ function updateSmartPlanSlot(index,slot){
   plan.program=programFromSchedule(plan.date,normalized,'JP1017');
   plan.period=periodKey(normalized);
   plan.key=radioSlotKey(plan.date,normalized,'JP1017');
+  refreshSmartPlanHalfHourMeta(plan);
   renderSmartRadioReport(report);
 }
 function smartPlanIssue(report,plan,index){
@@ -12442,6 +12553,7 @@ function renderSmartRadioReport(report){
         </div>
         <span>HORÁRIOS CADASTRADOS NA GRADE: ${esc(registered.join(', ')||'NENHUM CADASTRADO')}.</span>
         <span>REFERÊNCIA AUTOMÁTICA DESTE PRÊMIO: ${esc(rotationAllowedSlots(d).join(', ')||'TODOS OS HORÁRIOS CADASTRADOS')}.</span>
+        <span>REGRA DE ENCAIXE: SE A HORA CHEIA ESCOLHIDA JÁ TIVER OUTRO PRÊMIO, O SISTEMA PRIORIZA A MEIA HORA DA MESMA FAIXA (EX.: 11H → 11H30) ANTES DE PROCURAR OUTRO HORÁRIO.</span>
       </div>
     </div>
     ${report.missing>0?`<strong>AINDA FALTAM ${report.missing} ${distributionDeliveryUnit(d)==='pair'?'PAR(ES)':'PRÊMIO(S)'} PARA DISTRIBUIR.</strong> `:''}
@@ -12460,7 +12572,7 @@ function renderSmartRadioReport(report){
             ${dates.map(date=>`<option value="${esc(date)}" ${date===p.date?'selected':''}>${esc(formatBR(date))}</option>`).join('')}
           </select>
           <select class="smartPlanSlot" onchange="updateSmartPlanSlot(${idx},this.value)">
-            ${slots.map(slot=>`<option value="${esc(slot)}" ${normalizeSlot(slot)===normalizeSlot(p.slot)?'selected':''}>${esc(slot)}</option>`).join('')}
+            ${slots.map(slot=>`<option value="${esc(slot)}" ${normalizeSlot(slot)===normalizeSlot(p.slot)?'selected':''}>${esc(slot)}${isHalfHourSlot(slot)?' · MEIA HORA':''}</option>`).join('')}
           </select>
           <span>${esc(periodLabel(p.period||periodKey(p.slot)))}<span class="smartPlanProgram">${esc(program||'SEM PROGRAMA CADASTRADO')}</span>${p.existingItemId?'<span class="smartExistingTag">ACRÉSCIMO EM HORÁRIO EXISTENTE</span>':''}</span>
           <div>
@@ -13818,7 +13930,7 @@ $('promoForm').addEventListener('submit',e=>{
     promoReadSpecificDates:[...promoAV57SpecificDates].sort(),
     promoReadExcludedDates:[...promoAV57ExcludedDates].sort(),
     opecPrograms:promoAV57ProgramConfigsFromForm(),
-    plannerVersion:'AV57_3_SMART_BALANCE_V3',
+    plannerVersion:'AV57_6_6_14_HALF_HOUR_FALLBACK',
     reportVersion:57.3,
     name:norm($('promoName').value),
     title:norm($('promoName').value),
