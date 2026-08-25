@@ -3543,7 +3543,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 <!-- AV-57.6.6.13 · GERAÇÃO FUTURA + CONCENTRAÇÃO INTELIGENTE -->
 
 <style>
-/* AV-57.6.6.17 · PROGRAMAÇÃO: ARRASTE DIRETO + AÇÕES E CALENDÁRIO ROBUSTOS */
+/* AV-57.6.6.18 · PROGRAMAÇÃO: ARRASTE NATIVO + TOUCH + AÇÕES E CALENDÁRIO ROBUSTOS */
 #view-programacao .programDragHandle.isMovable{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;position:relative;transition:.16s ease}
 #view-programacao .programDragHandle.isMovable::after{content:none!important;display:none!important}
 #view-programacao .programDragHandle.isMovable:hover{background:#f7f9fc;border-radius:10px;color:#344255}
@@ -3577,6 +3577,16 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{bord
 @media(max-width:700px){#view-programacao .programDragHandle.isMovable::after{content:none!important;display:none!important}}
 </style>
 
+
+<style>
+/* AV-57.6.6.18 · feedback claro de arraste */
+#view-programacao .programDragHandle[draggable="true"]{-webkit-user-drag:element;cursor:grab!important}
+#view-programacao .programDragHandle[draggable="true"]:active{cursor:grabbing!important}
+body.programDragActive #view-programacao .programDragHandle.dragging{opacity:.72;transform:scale(.98)}
+body.programDragActive #view-programacao .periodCell[data-drop-date][data-drop-period]{outline:1px dashed #cbd4df!important;outline-offset:-4px}
+body.programDragActive #view-programacao .periodCell.programDropTarget,
+body.programDragActive #view-programacao .programCard.programDropCardTarget{outline:2px solid rgba(185,13,47,.38)!important;background:#fff7f9!important}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -10344,7 +10354,7 @@ function renderProgramCard(i){
   const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" data-program-action="remap" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'remap','${esc(i.id)}')" onpointerdown="event.stopPropagation()"><span class="iconGlyph">↪</span></button>` : '';
   const movable = !['REALIZADO','CANCELADO'].includes(itemEffectiveStatus(i)) && i.sourceType!=='promo-result' && normalizeChannel(i.channel)==='RÁDIO';
   return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}" data-program-item-id="${esc(i.id)}" data-drop-date="${esc(i.date||'')}" data-drop-slot="${esc(normalizeSlot(i.slot)||'')}" data-drop-period="${esc(periodKey(i.slot))}">
-    <div class="programTime programDragHandle ${movable?'isMovable':'isLocked'}" ${movable?`data-drag-item-id="${esc(i.id)}" tabindex="0" title="ARRASTE PARA MOVER · BOTÃO DIREITO PARA DEFINIR HORÁRIO"`:'title="ITEM BLOQUEADO PARA MOVIMENTAÇÃO"'}>${esc(i.slot || '')}</div>
+    <div class="programTime programDragHandle ${movable?'isMovable':'isLocked'}" ${movable?`data-drag-item-id="${esc(i.id)}" draggable="true" tabindex="0" title="ARRASTE O HORÁRIO PARA MOVER · BOTÃO DIREITO PARA DEFINIR HORÁRIO"`:'draggable="false" title="ITEM BLOQUEADO PARA MOVIMENTAÇÃO"'}>${esc(i.slot || '')}</div>
     <div class="programInfo">
       <strong>${esc(cardTitle)}</strong>
       <em>${esc(cardSubtitle)}</em>
@@ -11432,16 +11442,50 @@ function programDragDrop(itemId,target){
   const moved=executeProgramMove(itemId,date,slot,'ARRASTE NA GRADE',{skipConfirm:true});if(moved)setTimeout(()=>showProgramMoveChoice(itemId),80);
 }
 function beginProgramHoldDrag(event){
+  /* Mouse/trackpad usam o drag nativo do navegador; este fallback fica apenas para touch/caneta. */
+  if(event.pointerType==='mouse')return;
   const handle=event.target.closest?.('.programDragHandle[data-drag-item-id]');if(!handle||event.button!==0||programDragSession)return;
   const itemId=handle.dataset.dragItemId,found=programItemRecord(itemId);if(!found)return;const blocked=programMoveBlocked(found.item);if(blocked)return;
   const session={itemId,handle,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,active:false,target:null,timer:null};programDragSession=session;
   const cleanup=()=>{clearTimeout(session.timer);clearProgramDragVisuals();programDragSession=null;document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',cancel,true);};
   const activate=()=>{if(programDragSession!==session)return;session.active=true;handle.classList.add('dragging');document.body.classList.add('programDragActive');try{navigator.vibrate?.(18);}catch(_){}};
-  const move=e=>{if(e.pointerId!==session.pointerId)return;const distance=Math.hypot(e.clientX-session.startX,e.clientY-session.startY);if(!session.active&&distance>12){cleanup();return;}if(!session.active)return;e.preventDefault();const el=document.elementFromPoint(e.clientX,e.clientY),card=el?.closest?.('.programCard[data-drop-date][data-drop-slot]')||null,period=el?.closest?.('.periodCell[data-drop-date][data-drop-period]')||null,target=(card&&card.dataset.programItemId!==session.itemId)?card:period;if(target!==session.target){session.target?.classList.remove('programDropTarget','programDropCardTarget');session.target=target;if(session.target)session.target.classList.add(session.target.classList.contains('programCard')?'programDropCardTarget':'programDropTarget');}};
+  const move=e=>{if(e.pointerId!==session.pointerId)return;const distance=Math.hypot(e.clientX-session.startX,e.clientY-session.startY);if(!session.active&&distance>8)activate();if(!session.active)return;e.preventDefault();const el=document.elementFromPoint(e.clientX,e.clientY),card=el?.closest?.('.programCard[data-drop-date][data-drop-slot]')||null,period=el?.closest?.('.periodCell[data-drop-date][data-drop-period]')||null,target=(card&&card.dataset.programItemId!==session.itemId)?card:period;if(target!==session.target){session.target?.classList.remove('programDropTarget','programDropCardTarget');session.target=target;if(session.target)session.target.classList.add(session.target.classList.contains('programCard')?'programDropCardTarget':'programDropTarget');}};
   const up=e=>{if(e.pointerId!==session.pointerId)return;const active=session.active,target=session.target,idValue=session.itemId;cleanup();if(active&&target){e.preventDefault();e.stopPropagation();programDragDrop(idValue,target);}};
   const cancel=e=>{if(e.pointerId===session.pointerId)cleanup();};session.timer=setTimeout(activate,320);document.addEventListener('pointermove',move,{capture:true,passive:false});document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',cancel,true);
 }
 document.addEventListener('pointerdown',beginProgramHoldDrag,true);
+
+/* AV-57.6.6.18 · DRAG NATIVO DE DESKTOP — arraste o horário. */
+let nativeProgramDragItemId='';
+let nativeProgramDropTarget=null;
+function nativeProgramTargetFromPoint(target,itemId){
+  const card=target?.closest?.('.programCard[data-drop-date][data-drop-slot]')||null;
+  const period=target?.closest?.('.periodCell[data-drop-date][data-drop-period]')||null;
+  return (card&&card.dataset.programItemId!==itemId)?card:period;
+}
+function clearNativeProgramDrag(){
+  nativeProgramDropTarget?.classList.remove('programDropTarget','programDropCardTarget');
+  nativeProgramDropTarget=null;nativeProgramDragItemId='';clearProgramDragVisuals();
+}
+document.addEventListener('dragstart',event=>{
+  const handle=event.target.closest?.('.programDragHandle[data-drag-item-id]');if(!handle)return;
+  const itemId=handle.dataset.dragItemId,found=programItemRecord(itemId);if(!found){event.preventDefault();return;}
+  const blocked=programMoveBlocked(found.item);if(blocked){event.preventDefault();alert(blocked);return;}
+  nativeProgramDragItemId=itemId;
+  try{event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',itemId);event.dataTransfer.setData('application/x-jp-program-item',itemId);}catch(_){}
+  requestAnimationFrame(()=>{handle.classList.add('dragging');document.body.classList.add('programDragActive');});
+},true);
+document.addEventListener('dragover',event=>{
+  if(!nativeProgramDragItemId)return;const target=nativeProgramTargetFromPoint(event.target,nativeProgramDragItemId);if(!target)return;
+  event.preventDefault();try{event.dataTransfer.dropEffect='move';}catch(_){}
+  if(target!==nativeProgramDropTarget){nativeProgramDropTarget?.classList.remove('programDropTarget','programDropCardTarget');nativeProgramDropTarget=target;nativeProgramDropTarget.classList.add(nativeProgramDropTarget.classList.contains('programCard')?'programDropCardTarget':'programDropTarget');}
+},true);
+document.addEventListener('drop',event=>{
+  if(!nativeProgramDragItemId)return;const itemId=nativeProgramDragItemId,target=nativeProgramTargetFromPoint(event.target,itemId)||nativeProgramDropTarget;if(!target){clearNativeProgramDrag();return;}
+  event.preventDefault();event.stopPropagation();clearNativeProgramDrag();programDragDrop(itemId,target);
+},true);
+document.addEventListener('dragend',()=>clearNativeProgramDrag(),true);
+
 document.addEventListener('contextmenu',event=>{const handle=event.target.closest?.('.programDragHandle[data-drag-item-id]');if(!handle)return;event.preventDefault();event.stopPropagation();openProgramExactTimeDialog(handle.dataset.dragItemId);},true);
 
 function applyDistributionProgramMove(){
