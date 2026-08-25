@@ -3541,6 +3541,21 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 @media(max-width:940px){.distFilterBar{grid-template-columns:1fr!important}.distProgramSearchControl{grid-template-columns:1fr}.distProgramSearchRow{grid-template-columns:82px 72px 1fr}.distProgramSearchRow .prize,.distProgramSearchRow .status{grid-column:3}.distProgramSearchActions{grid-column:1/-1;justify-content:flex-start}.distProgramMoveGrid{grid-template-columns:1fr}}
 </style>
 <!-- AV-57.6.6.13 · GERAÇÃO FUTURA + CONCENTRAÇÃO INTELIGENTE -->
+
+<style>
+/* AV-57.6.6.16 · PROGRAMAÇÃO: ARRASTE PELO HORÁRIO + AÇÕES CLICÁVEIS */
+#view-programacao .programDragHandle.isMovable{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;position:relative;transition:.16s ease}
+#view-programacao .programDragHandle.isMovable::after{content:'SEGURE';position:absolute;left:50%;bottom:5px;transform:translateX(-50%);font-size:6.5px;font-weight:1000;letter-spacing:.06em;color:#a3acb9;opacity:.72}
+#view-programacao .programDragHandle.isMovable:hover{background:#f7f9fc;border-radius:10px;color:#344255}
+#view-programacao .programDragHandle.dragging{cursor:grabbing!important;background:#fff0f3!important;color:#a40d2c!important;box-shadow:inset 0 0 0 2px rgba(185,13,47,.20)}
+body.programDragActive{cursor:grabbing!important;user-select:none!important}
+body.programDragActive #view-programacao .periodCell[data-drop-date]{outline:1px dashed #cfd7e3;outline-offset:-5px;transition:.14s ease}
+body.programDragActive #view-programacao .periodCell.programDropTarget{background:#fff8fa!important;outline:2px solid rgba(185,13,47,.28)!important;box-shadow:inset 0 0 0 1px rgba(185,13,47,.06)}
+#view-programacao .programActions,#view-programacao .programActions button{pointer-events:auto!important;z-index:120!important}
+#promoSaveBtn{pointer-events:auto!important;position:relative!important;z-index:20!important}
+@media(max-width:700px){#view-programacao .programDragHandle.isMovable::after{content:'SEGURE'}}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -4217,7 +4232,7 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
   <div class="drawerCard">
     <div class="drawerHead"><h3 id="promoDrawerTitle">PROMOÇÕES</h3><button class="btn small" data-close="promoDrawer">FECHAR</button></div>
     <div class="drawerBody">
-      <form id="promoForm">
+      <form id="promoForm" novalidate>
         <input type="hidden" id="promoId">
         <input type="hidden" id="promoImageData">
         <div class="promoFormLayout">
@@ -10305,9 +10320,10 @@ function renderProgramCard(i){
   const conflictNote = radioConflict.length
     ? `<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`
     : (rotationConflict.length ? `<span class="programConflictNote">RODÍZIO: ${esc(samePrizeRepeatLabel(rotationConflict))}</span>` : '');
-  const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" data-program-card-action="remap" data-item-id="${esc(i.id)}" onclick="programActionClick(event,'remap','${esc(i.id)}')"><span class="iconGlyph">↪</span></button>` : '';
-  return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}">
-    <div class="programTime">${esc(i.slot || '')}</div>
+  const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" data-program-action="remap" data-item-id="${esc(i.id)}"><span class="iconGlyph">↪</span></button>` : '';
+  const movable = !['REALIZADO','CANCELADO'].includes(itemEffectiveStatus(i)) && i.sourceType!=='promo-result' && normalizeChannel(i.channel)==='RÁDIO';
+  return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}" data-program-item-id="${esc(i.id)}">
+    <div class="programTime programDragHandle ${movable?'isMovable':'isLocked'}" ${movable?`data-drag-item-id="${esc(i.id)}" tabindex="0" title="SEGURE E ARRASTE PARA REMANEJAR"`:'title="ITEM BLOQUEADO PARA MOVIMENTAÇÃO"'}>${esc(i.slot || '')}</div>
     <div class="programInfo">
       <strong>${esc(cardTitle)}</strong>
       <em>${esc(cardSubtitle)}</em>
@@ -10315,7 +10331,7 @@ function renderProgramCard(i){
       ${conflictNote}
     </div>
     <div class="programSide">
-      <div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" data-program-card-action="edit" data-item-id="${esc(i.id)}" onclick="programActionClick(event,'edit','${esc(i.id)}')"><span class="iconGlyph">✎</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" data-program-card-action="copy" data-item-id="${esc(i.id)}" onclick="programActionClick(event,'copy','${esc(i.id)}')"><span class="iconGlyph">⧉</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" data-program-card-action="delete" data-item-id="${esc(i.id)}" onclick="programActionClick(event,'delete','${esc(i.id)}')"><span class="iconGlyph">🗑</span></button></div>
+      <div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" data-program-action="edit" data-item-id="${esc(i.id)}"><span class="iconGlyph">✎</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" data-program-action="copy" data-item-id="${esc(i.id)}"><span class="iconGlyph">⧉</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" data-program-action="delete" data-item-id="${esc(i.id)}"><span class="iconGlyph">🗑</span></button></div>
     </div>
   </article>`;
 }
@@ -10332,7 +10348,7 @@ function renderProgramacao(){
   board.innerHTML = dates.map(date=>{
     const byPeriod = {manha:[], tarde:[], noite:[]};
     rows.filter(i=>i.date===date).forEach(i=>byPeriod[periodKey(i.slot)].push(i));
-    const renderPeriod = key => `<section class="periodCell ${key}">
+    const renderPeriod = key => `<section class="periodCell ${key}" data-drop-date="${esc(date)}" data-drop-period="${esc(key)}">
       <div class="periodTitle"><span class="periodIcon">${periodIcon(key)}</span><strong>${periodLabel(key)}</strong></div>
       <div class="periodItems">${byPeriod[key].length ? byPeriod[key].map(renderProgramCard).join('') : '<div class="periodEmpty">SEM ITEM NESTE PERÍODO</div>'}</div>
     </section>`;
@@ -11258,6 +11274,142 @@ function moveItemBetweenMonths(sourceMonthKey,targetMonthKey,item){
   }
   target.items ||= [];target.items.push(item);
 }
+function programMovePeriodMatches(slot,period){ return periodKey(slot)===period; }
+function programSuggestedSlotForDrop(date,period,station,currentSlot=''){
+  const candidates=distributionMoveSlots(date,station,currentSlot).slots.filter(slot=>programMovePeriodMatches(slot,period));
+  const current=normalizeSlot(currentSlot);
+  if(current && candidates.includes(current)) return current;
+  const currentParts=slotParts(current);
+  if(currentParts){
+    const sameMinute=candidates.find(slot=>slotParts(slot)?.minute===currentParts.minute);
+    if(sameMinute) return sameMinute;
+  }
+  return candidates[0]||'';
+}
+function programMoveDistributionRange(item,monthKey){
+  const dist=distributionForProgramItem(item);
+  if(!dist) return null;
+  return {dist,start:dist.startDate||dist.date||monthStartDate(monthKey),end:dist.endDate||dist.startDate||dist.date||monthEndDate(monthKey)};
+}
+function programMoveCanUseDate(item,monthKey,date){
+  const range=programMoveDistributionRange(item,monthKey);
+  if(!range) return true;
+  return date>=range.start && date<=range.end;
+}
+function programMoveBlocked(item){
+  if(!item) return 'ITEM NÃO ENCONTRADO.';
+  const status=itemEffectiveStatus(item);
+  if(status==='REALIZADO') return 'ITEM JÁ REALIZADO NÃO PODE SER MOVIMENTADO.';
+  if(status==='CANCELADO') return 'ITEM CANCELADO NÃO PODE SER MOVIMENTADO.';
+  if(item.sourceType==='promo-result') return 'RESULTADO DE PROMOÇÃO DEVE SER ALTERADO PELO CADASTRO DA PROMOÇÃO.';
+  if(normalizeChannel(item.channel)!=='RÁDIO') return 'SOMENTE ITENS DE RÁDIO PODEM SER MOVIMENTADOS NA GRADE.';
+  return '';
+}
+function executeProgramMove(itemId,targetDate,targetSlot,origin='GRADE'){
+  const found=programItemRecord(itemId);
+  if(!found) return false;
+  const item=found.item,sourceMonthKey=found.monthKey,sourceDate=item.date,sourceSlot=normalizeSlot(item.slot),station=itemStation(item);
+  const blocked=programMoveBlocked(item); if(blocked){alert(blocked);return false;}
+  const slot=normalizeSlot(targetSlot),targetMonthKey=String(targetDate||'').slice(0,7);
+  if(!targetDate||!slot||!slotParts(slot)){alert('HORÁRIO INVÁLIDO. USE HORA CHEIA OU MEIA HORA, EX.: 15:00 OU 15:30.');return false;}
+  if(targetDate===sourceDate&&slot===sourceSlot) return true;
+  if(!programMoveCanUseDate(item,sourceMonthKey,targetDate)){
+    const range=programMoveDistributionRange(item,sourceMonthKey);
+    alert(`A DATA ESCOLHIDA ESTÁ FORA DO PERÍODO DESTE PRÊMIO${range?` (${formatBR(range.start)} A ${formatBR(range.end)})`:''}.`);return false;
+  }
+  const targetProgram=programFromSchedule(targetDate,slot,station);
+  if(!targetProgram){alert('O HORÁRIO ESCOLHIDO NÃO EXISTE NA GRADE OFICIAL PARA ESTA DATA/EMISSORA.');return false;}
+  const sourceProgram=programFromSchedule(sourceDate,sourceSlot,station)||item.program||'';
+  const targetMonth=monthDataForKey(targetMonthKey);
+  const occupied=(targetMonth.items||[]).find(other=>other.id!==item.id&&normalizeChannel(other.channel)==='RÁDIO'&&normalizeStatus(other.status)!=='CANCELADO'&&itemStation(other)===station&&other.date===targetDate&&normalizeSlot(other.slot)===slot);
+  if(occupied){
+    const occupiedBlock=programMoveBlocked(occupied);
+    if(occupiedBlock){alert(`O HORÁRIO ESTÁ OCUPADO POR ${occupied.prize||occupied.title||'OUTRO PRÊMIO'}, MAS ELE NÃO PODE SER TROCADO.\n\n${occupiedBlock}`);return false;}
+    const occupiedMonthKey=targetMonthKey;
+    if(!programMoveCanUseDate(occupied,occupiedMonthKey,sourceDate)){
+      const range=programMoveDistributionRange(occupied,occupiedMonthKey);
+      alert(`A TROCA NÃO É POSSÍVEL: ${occupied.prize||occupied.title||'O OUTRO PRÊMIO'} NÃO PODE IR PARA ${formatBR(sourceDate)}${range?` · PERÍODO ${formatBR(range.start)} A ${formatBR(range.end)}`:''}.`);return false;
+    }
+    if(!sourceProgram){alert('A TROCA FOI BLOQUEADA PORQUE O HORÁRIO DE ORIGEM NÃO EXISTE MAIS NA GRADE OFICIAL.');return false;}
+    if(!confirm(`ESTE HORÁRIO JÁ TEM UM PRÊMIO.\n\nDESEJA TROCAR OS HORÁRIOS?\n\n${item.prize||item.title||'PRÊMIO'} · ${formatBR(sourceDate)} ${sourceSlot}\n↕\n${occupied.prize||occupied.title||'OUTRO PRÊMIO'} · ${formatBR(targetDate)} ${slot}`)) return false;
+    const beforeA=clone(item),beforeB=clone(occupied);
+    occupied.date=sourceDate;occupied.slot=sourceSlot;occupied.day=dayName(sourceDate);occupied.week=weekLabel(sourceDate);occupied.program=sourceProgram;occupied.updatedAt=new Date().toISOString();
+    item.date=targetDate;item.slot=slot;item.day=dayName(targetDate);item.week=weekLabel(targetDate);item.program=targetProgram;item.updatedAt=new Date().toISOString();
+    if(sourceMonthKey!==targetMonthKey){
+      moveItemBetweenMonths(sourceMonthKey,targetMonthKey,item);
+      moveItemBetweenMonths(occupiedMonthKey,sourceMonthKey,occupied);
+    }
+    auditEvent('TROCA DE HORÁRIOS NA PROGRAMAÇÃO',item.prize||item.title,{targetId:item.id,before:beforeA,after:clone(item),note:`${origin} · ${formatBR(sourceDate)} ${sourceSlot} ↔ ${formatBR(targetDate)} ${slot} · ${occupied.prize||occupied.title||'OUTRO PRÊMIO'}`});
+    auditEvent('TROCA DE HORÁRIOS NA PROGRAMAÇÃO',occupied.prize||occupied.title,{targetId:occupied.id,before:beforeB,after:clone(occupied),note:`${origin} · TROCA COM ${item.prize||item.title||'PRÊMIO'}`});
+    saveState(true);queueApiSave(80);render();toast('HORÁRIOS TROCADOS COM SUCESSO.');return true;
+  }
+  if(!confirm(`REMANEJAR ESTE PRÊMIO?\n\nDE: ${formatBR(sourceDate)} ${sourceSlot}\nPARA: ${formatBR(targetDate)} ${slot} · ${targetProgram}`)) return false;
+  const before=clone(item);
+  item.date=targetDate;item.slot=slot;item.day=dayName(targetDate);item.week=weekLabel(targetDate);item.program=targetProgram;item.updatedAt=new Date().toISOString();
+  moveItemBetweenMonths(sourceMonthKey,targetMonthKey,item);
+  auditEvent('REMANEJAMENTO DE HORÁRIO',item.prize||item.title,{targetId:item.id,before,after:clone(item),note:`${origin} · ${formatBR(sourceDate)} ${sourceSlot} → ${formatBR(targetDate)} ${slot}`});
+  saveState(true);queueApiSave(80);render();toast('PRÊMIO REMANEJADO PARA O NOVO HORÁRIO.');return true;
+}
+function promptProgramMoveTime(item,targetDate,targetPeriod){
+  const station=itemStation(item),suggested=programSuggestedSlotForDrop(targetDate,targetPeriod,station,item.slot);
+  if(!suggested){alert('NÃO EXISTE HORÁRIO CADASTRADO NA GRADE OFICIAL DENTRO DESTE PERÍODO.');return'';}
+  let raw=prompt(`DESEJA COLOCAR EM QUAL HORÁRIO?\n\nDATA: ${formatBR(targetDate)} · ${periodLabel(targetPeriod)}\nDIGITE HORA CHEIA OU MEIA HORA (EX.: 15:00 OU 15:30).`,timeToHHMM(suggested));
+  while(raw!==null){
+    const slot=normalizeSlot(raw);
+    if(slotParts(slot)&&programMovePeriodMatches(slot,targetPeriod)&&programFromSchedule(targetDate,slot,station)) return slot;
+    alert(`HORÁRIO INVÁLIDO PARA ${periodLabel(targetPeriod)} OU FORA DA GRADE OFICIAL.\n\nUSE UMA HORA CHEIA OU MEIA HORA CADASTRADA, EX.: 15:00 OU 15:30.`);
+    raw=prompt(`DESEJA COLOCAR EM QUAL HORÁRIO?\n\nDATA: ${formatBR(targetDate)} · ${periodLabel(targetPeriod)}`,timeToHHMM(suggested));
+  }
+  return'';
+}
+let programDragSession=null;
+function clearProgramDragVisuals(){
+  document.body.classList.remove('programDragActive');
+  document.querySelectorAll('.programDragHandle.dragging,.periodCell.programDropTarget').forEach(el=>el.classList.remove('dragging','programDropTarget'));
+}
+function programDragDrop(itemId,target){
+  const found=programItemRecord(itemId);if(!found||!target)return;
+  const date=target.dataset.dropDate||'',period=target.dataset.dropPeriod||'';
+  if(!date||!period)return;
+  const slot=promptProgramMoveTime(found.item,date,period);if(!slot)return;
+  executeProgramMove(itemId,date,slot,'ARRASTE NA GRADE');
+}
+function beginProgramHoldDrag(event){
+  const handle=event.target.closest?.('.programDragHandle[data-drag-item-id]');
+  if(!handle||event.button!==0||programDragSession)return;
+  const itemId=handle.dataset.dragItemId,found=programItemRecord(itemId);if(!found)return;
+  const blocked=programMoveBlocked(found.item);if(blocked)return;
+  const session={itemId,handle,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,active:false,target:null,timer:null};
+  programDragSession=session;
+  const cleanup=()=>{
+    clearTimeout(session.timer);clearProgramDragVisuals();programDragSession=null;
+    document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',cancel,true);
+  };
+  const activate=()=>{
+    if(programDragSession!==session)return;
+    session.active=true;handle.classList.add('dragging');document.body.classList.add('programDragActive');
+    try{navigator.vibrate?.(18);}catch(_){ }
+  };
+  const move=e=>{
+    if(e.pointerId!==session.pointerId)return;
+    const distance=Math.hypot(e.clientX-session.startX,e.clientY-session.startY);
+    if(!session.active&&distance>12){cleanup();return;}
+    if(!session.active)return;
+    e.preventDefault();
+    const el=document.elementFromPoint(e.clientX,e.clientY),target=el?.closest?.('.periodCell[data-drop-date][data-drop-period]')||null;
+    if(target!==session.target){session.target?.classList.remove('programDropTarget');session.target=target;session.target?.classList.add('programDropTarget');}
+  };
+  const up=e=>{
+    if(e.pointerId!==session.pointerId)return;
+    const active=session.active,target=session.target,idValue=session.itemId;cleanup();
+    if(active&&target){e.preventDefault();e.stopPropagation();programDragDrop(idValue,target);}
+  };
+  const cancel=e=>{if(e.pointerId===session.pointerId)cleanup();};
+  session.timer=setTimeout(activate,380);
+  document.addEventListener('pointermove',move,{capture:true,passive:false});document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',cancel,true);
+}
+document.addEventListener('pointerdown',beginProgramHoldDrag,true);
+
 function applyDistributionProgramMove(){
   if(!distProgramMoveContext)return;
   const found=locateDistributionProgramItem(distProgramMoveContext.sourceMonthKey,distProgramMoveContext.itemId);if(!found)return;
@@ -13892,9 +14044,34 @@ function readHourKeyForAdmin(date,slot){ const t=timeToHHMM(slot); return `${dat
 function removePromoResultFromProgram(promoId){
   Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===promoId)); });
 }
+function promoValidationFail(idValue,message){
+  alert(message);
+  const el=$(idValue);
+  if(el){
+    try{el.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){ }
+    setTimeout(()=>{try{el.focus({preventScroll:true});}catch(_){try{el.focus();}catch(__){}}},40);
+  }
+  return false;
+}
+function validatePromoFormExplicit(){
+  const kind=$('promoKind')?.value||'promo',isPromo=kind==='promo';
+  if(!$('promoStartDate')?.value) return promoValidationFail('promoStartDate','INFORME A DATA DE INÍCIO.');
+  if(!$('promoEndDate')?.value) return promoValidationFail('promoEndDate','INFORME A DATA DE ENCERRAMENTO.');
+  if(!norm($('promoName')?.value||'')) return promoValidationFail('promoName','INFORME O NOME / TÍTULO PARA O LOCUTOR.');
+  if(!textNorm($('promoDescription')?.value||'')) return promoValidationFail('promoDescription','INFORME O TEXTO PARA O LOCUTOR.');
+  if(isPromo){
+    if(!$('promoLocal')?.value) return promoValidationFail('promoLocal','SELECIONE O CANAL DA PROMOÇÃO.');
+    if(!$('promoDistributionId')?.value) return promoValidationFail('promoDistributionId','SELECIONE O PRÊMIO VINCULADO À DISTRIBUIÇÃO.');
+    if(!$('promoSegmentKey')?.value) return promoValidationFail('promoSegmentKey','SELECIONE O SEGMENTO DA DISTRIBUIÇÃO.');
+    if(!$('promoDrawDate')?.value) return promoValidationFail('promoDrawDate','INFORME A DATA DO SORTEIO.');
+    if(!$('promoDrawTime')?.value) return promoValidationFail('promoDrawTime','INFORME O HORÁRIO DO SORTEIO.');
+  }
+  return true;
+}
 
 $('promoForm').addEventListener('submit',e=>{
   e.preventDefault();
+  if(!validatePromoFormExplicit()) return;
   const idVal=$('promoId').value||id('PR');
   const existing=consolidatedPromoById(idVal) || {};
   const startDate=$('promoStartDate').value;
@@ -13930,7 +14107,7 @@ $('promoForm').addEventListener('submit',e=>{
     promoReadSpecificDates:[...promoAV57SpecificDates].sort(),
     promoReadExcludedDates:[...promoAV57ExcludedDates].sort(),
     opecPrograms:promoAV57ProgramConfigsFromForm(),
-    plannerVersion:'AV57_6_6_14_HALF_HOUR_FALLBACK',
+    plannerVersion:'AV57_6_6_16_DRAG_PROGRAM_PROMO_SAVE',
     reportVersion:57.3,
     name:norm($('promoName').value),
     title:norm($('promoName').value),
@@ -13993,9 +14170,7 @@ window.remapRadioItem=remapRadioItem;
 document.addEventListener('click',event=>{
   const btn=event.target.closest('[data-program-action]');
   if(!btn) return;
-  event.preventDefault();
-  event.stopPropagation();
-  handleProgramAction(btn.dataset.programAction,btn.dataset.itemId);
+  return programActionClick(event,btn.dataset.programAction,btn.dataset.itemId);
 });
 
 bind('addDistBtn','click',()=>{ clearDistForm(); openDrawer('distDrawer'); });
@@ -14171,105 +14346,8 @@ setInterval(()=>syncStateFromApi(false),15000);
 window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded)syncStateFromApi(true);});
 </script>
 
-<script>
-(function(){
-  function byId(id){ return document.getElementById(id); }
-  function stop(evt){ if(evt){ evt.preventDefault(); evt.stopPropagation(); if(evt.stopImmediatePropagation) evt.stopImmediatePropagation(); } }
-  function safeCall(fn,args,fallback){
-    try{
-      if(typeof fn === 'function') return fn.apply(window,args||[]);
-    }catch(err){
-      console.error('ERRO NA AÇÃO DA PROGRAMAÇÃO:', err);
-    }
-    if(typeof fallback === 'function') return fallback();
-  }
-  function fallbackOpenItemDrawer(){
-    var form=byId('itemForm');
-    if(form && typeof form.reset==='function') form.reset();
-    var id=byId('itemId'); if(id) id.value='';
-    var qty=byId('itemQty'); if(qty) qty.value=1;
-    var channel=byId('itemChannel'); if(channel) channel.value='RÁDIO';
-    var status=byId('itemStatus'); if(status) status.value='PENDENTE';
-    var date=byId('itemDate');
-    if(date && !date.value){
-      var d=new Date();
-      date.value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    }
-    var title=byId('itemDrawerTitle'); if(title) title.textContent='NOVO ITEM DA PROGRAMAÇÃO';
-    var drawer=byId('itemDrawer');
-    if(drawer){ drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); }
-  }
-  function fallbackOpenClearDrawer(){
-    var drawer=byId('clearProgramDrawer');
-    if(drawer){ drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); }
-  }
-  function fallbackEditItem(itemId){
-    var item=null;
-    try{
-      var months=(window.state && window.state.months) || {};
-      Object.keys(months).some(function(key){
-        var found=((months[key]||{}).items||[]).find(function(x){ return x.id===itemId; });
-        if(found){ item=found; return true; }
-        return false;
-      });
-    }catch(e){}
-    fallbackOpenItemDrawer();
-    if(!item) return;
-    var map={
-      itemId:item.id||'',
-      itemDate:item.date||'',
-      itemSlot:item.slot||'',
-      itemProgram:item.program||'',
-      itemDistribution:item.distributionId||'',
-      itemPrize:item.prize||'',
-      itemTitle:item.title||'',
-      itemQty:item.qty||1,
-      itemChannel:item.channel||'RÁDIO',
-      itemStatus:item.status||'PENDENTE',
-      itemNotes:item.notes||''
-    };
-    Object.keys(map).forEach(function(id){
-      var el=byId(id);
-      if(el) el.value=map[id];
-    });
-    var heading=byId('itemDrawerTitle'); if(heading) heading.textContent='EDITAR ITEM DA PROGRAMAÇÃO';
-  }
-  window.addProgramItemClick=function(evt){
-    stop(evt);
-    return safeCall(window.openProgramItemDrawer || window.__openProgramItemDrawer || null, [], fallbackOpenItemDrawer);
-  };
-  window.clearProgramButtonClick=function(evt){
-    stop(evt);
-    return safeCall(window.openClearProgramDrawer || window.__openClearProgramDrawer || null, [], fallbackOpenClearDrawer);
-  };
-  window.programActionClick=function(evt,action,itemId){
-    stop(evt);
-    if(!itemId) return;
-    if(action==='edit') return safeCall(window.editItem,[itemId],function(){ fallbackEditItem(itemId); });
-    if(action==='copy') return safeCall(window.duplicateItem,[itemId]);
-    if(action==='delete') return safeCall(window.deleteItem,[itemId]);
-    if(action==='remap') return safeCall(window.remapRadioItem,[itemId]);
-  };
-  document.addEventListener('click',function(evt){
-    var main=evt.target.closest && evt.target.closest('[data-program-main-action]');
-    if(main){
-      if(main.dataset.programMainAction==='add') return window.addProgramItemClick(evt);
-      if(main.dataset.programMainAction==='clear') return window.clearProgramButtonClick(evt);
-    }
-    var card=evt.target.closest && evt.target.closest('[data-program-card-action]');
-    if(card){
-      return window.programActionClick(evt,card.dataset.programCardAction,card.dataset.itemId);
-    }
-  },true);
-  document.addEventListener('DOMContentLoaded',function(){
-    var add=byId('addProgramBtn');
-    if(add){ add.type='button'; add.setAttribute('data-program-main-action','add'); add.onclick=window.addProgramItemClick; }
-    var clear=byId('clearProgramBtn');
-    if(clear){ clear.type='button'; clear.setAttribute('data-program-main-action','clear'); clear.onclick=window.clearProgramButtonClick; }
-  });
-})();
-</script>
+<!-- AV-57.6.6.16 · AÇÕES DA PROGRAMAÇÃO UNIFICADAS; SCRIPT DE CAPTURA LEGADO REMOVIDO -->
 
-<!-- AV-57.6.6.12 · REAPROVEITAMENTO COM SNAPSHOT DA DESCRIÇÃO OFICIAL -->
+<!-- AV-57.6.6.16 · PROGRAMAÇÃO COM ARRASTE + BOTÕES UNIFICADOS + SAVE PROMO EXPLÍCITO -->
 </body>
 </html>
