@@ -2354,6 +2354,19 @@ tbody tr:focus-within td{background:#fff8fa}
 @media(max-width:700px){.resultCountdownBox{width:min(440px,94%)!important;min-height:72px!important}.resultCountdownCopy strong{font-size:19px!important}}
 </style>
 
+
+<style>
+/* AV57.6.6.22 · RELIGAMENTO PRINCIPAL → ESTÚDIO · ALERTA DE PAUTA */
+.promoFooter{background:linear-gradient(90deg,#fff5e8 0%,#fff9f0 100%)!important;border-top:1px solid #f2c48d!important;overflow:visible!important}
+.promoFooterList{display:flex!important;align-items:center!important;gap:8px!important;overflow:visible!important}
+.promoFooter .promoPill.pending{width:auto!important;min-width:260px!important;max-width:min(520px,58vw)!important;height:30px!important;min-height:30px!important;padding:0 12px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;gap:8px!important;white-space:nowrap!important;overflow:hidden!important}
+.promoPill.pending .pendingCall{flex:none;font-size:7px!important;font-weight:1000!important;letter-spacing:.10em!important;opacity:.82}
+.promoPill.pending .pendingName{min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:9.5px!important;font-weight:1000!important;letter-spacing:.04em!important}
+.promoPill.pending.promo{background:#fff0d9!important;border-color:#f0a650!important;color:#9b5600!important;animation:studioPautaOrangePulse .9s ease-in-out infinite!important}
+.promoPill.pending.merchan{background:#fff2dd!important;border-color:#efb36d!important;color:#915313!important;animation:studioPautaOrangePulse 1.05s ease-in-out infinite!important}
+@keyframes studioPautaOrangePulse{0%,100%{transform:scale(1);filter:brightness(1);box-shadow:0 0 0 0 rgba(238,139,31,0)}50%{transform:scale(1.018);filter:brightness(1.06);box-shadow:0 0 0 5px rgba(238,139,31,.17),0 0 18px rgba(238,139,31,.22)}}
+@media(max-width:760px){.promoFooter .promoPill.pending{min-width:190px!important;max-width:72vw!important}.promoPill.pending .pendingName{font-size:8.5px!important}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -2525,8 +2538,28 @@ async function appendStudioAudit(entry){
     return rows.slice(-2500);
   },undefined,false));
 }
+function studioRows(value){
+  if(Array.isArray(value)) return value.filter(Boolean);
+  if(value&&typeof value==='object') return Object.keys(value).sort((a,b)=>{const na=Number(a),nb=Number(b);return Number.isFinite(na)&&Number.isFinite(nb)?na-nb:String(a).localeCompare(String(b));}).map(key=>value[key]).filter(Boolean);
+  return [];
+}
+function normalizeStudioStateShape(data){
+  if(!data||typeof data!=='object') return {currentMonth:'',months:{}};
+  data.months=data.months&&typeof data.months==='object'?data.months:{};
+  Object.entries(data.months).forEach(([monthKey,month])=>{
+    const target=month&&typeof month==='object'?month:{};
+    target.label=target.label||monthKey;
+    target.items=studioRows(target.items);
+    target.promos=studioRows(target.promos);
+    target.distributions=studioRows(target.distributions);
+    data.months[monthKey]=target;
+  });
+  data.schedules=studioRows(data.schedules);
+  data.programSchedules=studioRows(data.programSchedules);
+  return data;
+}
 function loadState(){
-  try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s&&s.months)return s;}catch(e){}
+  try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s&&s.months)return normalizeStudioStateShape(s);}catch(e){}
   return {currentMonth:'',months:{}};
 }
 function studioWriteLocalStateCache(data=state){
@@ -2596,7 +2629,7 @@ function applyRemoteFirebaseState(remoteState){
   firebaseLastSnapshotAt=Date.now();
   firebaseConnected=true;
   firebaseApplyingRemote=true;
-  state=remoteState;
+  state=normalizeStudioStateShape(remoteState);
   firebaseServerLoaded=true;
   selectStudioMonth();
   studioWriteLocalStateCache(state);
@@ -2662,6 +2695,16 @@ function syncStateFromApi(force=false){
   initFirebaseSync();
   if(force)return forceStudioFirebaseRefresh(true);
   if(!firebaseReady||!firebaseRef||!firebaseConnected||Date.now()-firebaseLastSnapshotAt>18000)scheduleStudioFirebaseReconnect(0);
+}
+function initStudioWorkspaceLiveBridge(){
+  try{
+    if('BroadcastChannel' in window){
+      const channel=new BroadcastChannel('jp_workspace_live_state');
+      channel.onmessage=event=>{if(event?.data?.type==='STATE_CHANGED')setTimeout(()=>syncStateFromApi(true),40);};
+      window.__jpStudioWorkspaceChannel=channel;
+    }
+  }catch(error){console.warn('STUDIO LIVE BRIDGE INDISPONÍVEL',error);}
+  window.addEventListener('storage',event=>{if(event.key===STORAGE_KEY)setTimeout(()=>syncStateFromApi(true),40);});
 }
 function winnerPlain(value){
   return upper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
@@ -3076,6 +3119,22 @@ function updateWinnerSaveState(){
   button.title=ready?'CONFIRMAR E REGISTRAR NO FIREBASE':'TODOS OS GANHADORES PRECISAM ESTAR APTOS E VALIDADOS';
 }
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
+function studioPromoPool(date=''){
+  const copies=new Map();
+  Object.entries(state.months||{}).forEach(([monthKey,month])=>{
+    studioRows(month?.promos).forEach((row,index)=>{
+      if(!row)return;
+      const idValue=String(row.id||`LEGACY_${monthKey}_${index}`);
+      const previous=copies.get(idValue);
+      if(!previous){copies.set(idValue,row);return;}
+      const previousTime=Date.parse(previous.updatedAt||previous.createdAt||'')||0;
+      const incomingTime=Date.parse(row.updatedAt||row.createdAt||'')||0;
+      if(incomingTime>=previousTime) copies.set(idValue,row);
+    });
+  });
+  const rows=[...copies.values()];
+  return date?rows.filter(row=>promoDateAllowed(row,date)):rows;
+}
 function studioPublishedPrizeItems(){
   const live=monthData().items||[], published=state.publishedPrograms?.[currentMonth];
   if(!published?.items?.length) return live;
@@ -3383,7 +3442,7 @@ function promoResultVirtualRows(){
     .filter(i=>i.sourceType==='promo-result' && i.promoId)
     .map(i=>`${i.promoId}|${i.station||STUDIO_STATION}|${i.occurrenceId||''}|${i.date}|${formatStudioTime(i.slot)}`));
   const rows=[];
-  [...(monthData().promos||[])].filter(p=>!isMerchan(p)&&p&&p.id).filter(p=>promoResultStations(p).includes(STUDIO_STATION)).forEach(p=>{
+  studioPromoPool().filter(p=>!isMerchan(p)&&p&&p.id).filter(p=>promoResultStations(p).includes(STUDIO_STATION)).forEach(p=>{
     promoOccurrences(p).filter(o=>upper(o.status||'')!=='CANCELADO').forEach(o=>{
       const slot=formatStudioTime(o.time||p.drawTime); const occurrenceId=o.id||`${p.id}|${o.date}|${timeToHHMM(o.time||p.drawTime)}`;
       const exactKey=`${p.id}|${STUDIO_STATION}|${occurrenceId}|${o.date}|${slot}`;
@@ -3404,7 +3463,7 @@ function studioOpecVisible(p){const status=upper(p?.status||'PENDENTE');return !
 function studioOpecPriority(p){const type=studioOpecTextType(p);return type==='promotional'?30:type==='institutional'?20:10;}
 function studioOpecVersion(p){return Math.max(1,Number(p?.opecTextVersion)||1);}
 function studioOpecRawEligible(p,item){if(!isMerchan(p)||!studioOpecVisible(p)||!stationAllowed(p)||!promoDateAllowed(p,item?.date||''))return false;if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item)||!promoHourAllowed(p,item))return false;return true;}
-function studioEffectiveOpecTextFor(p,item){const clientId=studioOpecClientId(p);if(!clientId)return p;const candidates=[...(monthData().promos||[])].filter(row=>studioOpecClientId(row)===clientId&&normalizeStationValue(row?.station||STUDIO_STATION)===normalizeStationValue(p?.station||STUDIO_STATION)&&upper(row?.program||'')===upper(p?.program||'')&&studioOpecRawEligible(row,item));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')||String(b.id||'').localeCompare(String(a.id||'')))[0];}
+function studioEffectiveOpecTextFor(p,item){const clientId=studioOpecClientId(p);if(!clientId)return p;const candidates=studioPromoPool(item?.date||todayISO()).filter(row=>studioOpecClientId(row)===clientId&&normalizeStationValue(row?.station||STUDIO_STATION)===normalizeStationValue(p?.station||STUDIO_STATION)&&upper(row?.program||'')===upper(p?.program||'')&&studioOpecRawEligible(row,item));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')||String(b.id||'').localeCompare(String(a.id||'')))[0];}
 function studioEffectiveOpecTextAllows(p,item){const chosen=studioEffectiveOpecTextFor(p,item);return !chosen||chosen.id===p.id;}
 function studioMerchanScheduleMode(p){return String(p?.merchanScheduleMode||p?.rotationMode||'fixed').toLowerCase()==='rotation'?'rotation':'fixed';}
 function studioRotationHours(p){return (p?.readHours||[]).map(value=>formatStudioTime(value)).filter(Boolean).sort((a,b)=>minutesOf(a)-minutesOf(b));}
@@ -3412,7 +3471,7 @@ function studioRotationSignature(p){return `${normalizeStationValue(p?.station||
 function studioRotationMembers(p,item){
   if(studioMerchanScheduleMode(p)!=='rotation') return [p];
   const sig=studioRotationSignature(p),date=item?.date||todayISO();
-  return [...(monthData().promos||[])].filter(row=>isMerchan(row)&&studioMerchanScheduleMode(row)==='rotation'&&studioRotationSignature(row)===sig&&studioOpecRawEligible(row,item)&&studioEffectiveOpecTextAllows(row,item)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
+  return studioPromoPool(item?.date||todayISO()).filter(row=>isMerchan(row)&&studioMerchanScheduleMode(row)==='rotation'&&studioRotationSignature(row)===sig&&studioOpecRawEligible(row,item)&&studioEffectiveOpecTextAllows(row,item)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
 }
 function studioRotationAssignedPromo(p,item){
   if(studioMerchanScheduleMode(p)!=='rotation') return p;
@@ -3423,7 +3482,7 @@ function studioRotationAssignedPromo(p,item){
   return members[(serial+slotIndex)%members.length]||members[0];
 }
 function studioRotationAllows(p,item){const assigned=studioRotationAssignedPromo(p,item);return !assigned||assigned.id===p.id;}
-function findPromoById(id){return monthData().promos?.find(p=>p.id===id)||null;}
+function findPromoById(id){return studioPromoPool(currentDisplayItem?.date||todayISO()).find(p=>p.id===id)||studioPromoPool().find(p=>p.id===id)||null;}
 function studioStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS' : 'JOVEMPAN';
 }
@@ -3528,7 +3587,12 @@ function studioAV57Scope(p){return String(p?.opecFrequencyScope||p?.promoFrequen
 function studioAV57Count(p){return Math.max(1,Number(p?.opecFrequencyCount||p?.promoFrequencyCount||1)||1);}
 function studioAV57DateAllowed(p,date){const start=promoStartDate(p),end=promoEndDate(p);if(start&&date<start)return false;if(end&&date>end)return false;const excluded=new Set([...(p?.opecExcludedDates||[]),...(p?.promoReadExcludedDates||[])]);if(excluded.has(date))return false;const specific=[...(p?.opecSpecificDates||[]),...(p?.promoReadSpecificDates||[])];const mode=String(p?.opecDateMode||p?.promoReadDateMode||'range').toLowerCase();if(mode==='specific')return specific.includes(date);if(specific.includes(date))return true;const weekdays=(p?.opecWeekdays||p?.promoReadWeekdays||[]).map(Number);if(!weekdays.length)return true;const [y,m,d]=String(date).split('-').map(Number);return weekdays.includes(new Date(y,m-1,d).getDay());}
 function studioAV57ProgramHours(program,date){const rows=(Array.isArray(state.programSchedules)?state.programSchedules:[]).filter(r=>(!r.station||r.station===STUDIO_STATION||r.station==='ALL')&&upper(studioScheduleName(r))===upper(program)&&dayMatchesSchedule(date,studioScheduleDays(r)));const set=new Set();rows.forEach(r=>{for(let minute=Math.ceil(minutesOf(studioScheduleStart(r))/60)*60;minute<minutesOf(studioScheduleEnd(r));minute+=60)set.add(`${pad(Math.floor(minute/60))}H`);});return [...set].sort((a,b)=>minutesOf(a)-minutesOf(b));}
-function studioAV57RecordPrograms(p,date){if(Array.isArray(p?.opecPrograms)&&p.opecPrograms.length)return p.opecPrograms.filter(c=>!c.station||c.station===STUDIO_STATION||c.station==='ALL').map(c=>({program:upper(c.program),hours:(c.hours||[]).map(studioAV57HourSlot).filter(Boolean)})).filter(c=>c.program);const program=upper(p?.program||p?.programName||'');if(!program||genericProgramName(program))return[];let hours=(p?.readHours||[]).map(studioAV57HourSlot).filter(Boolean);if(!hours.length)hours=studioAV57ProgramHours(program,date);return[{program,hours}];}
+function studioAV57RecordPrograms(p,date){
+  const source=Array.isArray(p?.opecPrograms)&&p.opecPrograms.length?p.opecPrograms:(Array.isArray(p?.programs)&&p.programs.length?p.programs:[]);
+  if(source.length)return source.filter(c=>!c.station||normalizeStationValue(c.station)==='ALL'||normalizeStationValue(c.station)===normalizeStationValue(STUDIO_STATION)).map(c=>({program:upper(c.program||c.name||c.programName||''),hours:studioRows(c.hours||c.readHours).map(studioAV57HourSlot).filter(Boolean)})).filter(c=>c.program);
+  const program=upper(p?.program||p?.programName||p?.pautaProgram||'');if(!program||genericProgramName(program))return[];
+  let hours=studioRows(p?.readHours).map(studioAV57HourSlot).filter(Boolean);if(!hours.length)hours=studioAV57ProgramHours(program,date);return[{program,hours}];
+}
 function studioAV57Visible(p){if(isMerchan(p))return studioOpecVisible(p);const st=upper(p?.status||'PENDENTE');return !!p&&!p.opecArchived&&!p.opecForceEnded&&st!=='CANCELADO'&&st!=='CANCELADA';}
 function studioAV57PauseBlocksSlot(p,date,slot){
   const periods=Array.isArray(p?.opecPausePeriods)?p.opecPausePeriods:[];
@@ -3542,7 +3606,7 @@ function studioAV57RawCandidates(p,date){
   studioAV57RecordPrograms(p,date).forEach(config=>{const allowed=studioAV57ProgramHours(config.program,date);if(!allowed.length)return;const hours=config.hours.length?config.hours:allowed;hours.forEach(slot=>{const normalized=studioAV57HourSlot(slot);if(allowed.includes(normalized)&&!studioAV57PauseBlocksSlot(p,date,normalized))out.push({program:config.program,slot:normalized});});});
   return out.filter((v,i,a)=>a.findIndex(x=>x.program===v.program&&x.slot===v.slot)===i);
 }
-function studioAV57EffectiveMerchan(p,date,program,slot){const clientId=studioOpecClientId(p);if(!clientId||!isMerchan(p))return p;const candidates=[...(monthData().promos||[])].filter(row=>isMerchan(row)&&studioOpecClientId(row)===clientId&&studioAV57RawCandidates(row,date).some(c=>c.program===upper(program)&&c.slot===studioAV57HourSlot(slot)));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0];}
+function studioAV57EffectiveMerchan(p,date,program,slot){const clientId=studioOpecClientId(p);if(!clientId||!isMerchan(p))return p;const candidates=studioPromoPool(date).filter(row=>isMerchan(row)&&studioOpecClientId(row)===clientId&&studioAV57RawCandidates(row,date).some(c=>c.program===upper(program)&&c.slot===studioAV57HourSlot(slot)));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0];}
 function studioAV57Candidates(p,date){return studioAV57RawCandidates(p,date).filter(c=>{const chosen=studioAV57EffectiveMerchan(p,date,c.program,c.slot);return !chosen||chosen.id===p.id;});}
 function studioAV57Logs(p,item){const date=item?.date||'',slot=studioAV57HourSlot(item?.slot||''),program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');return (p?.readLog||[]).filter(log=>{if(!log)return false;if(normalizeStationValue(log.station||STUDIO_STATION)!==normalizeStationValue(STUDIO_STATION))return false;const logDate=log.date||String(log.key||'').slice(0,10);if(logDate!==date)return false;const logSlot=studioAV57HourSlot(log.slot||log.scheduledHour||'');if(logSlot&&logSlot!==slot)return false;const lp=upper(log.program||'');if(lp&&program&&!genericProgramName(lp)&&lp!==program)return false;return !!validReadTimestamp(log.confirmedAt||log.readAt||'');}).sort((a,b)=>String(a.confirmedAt||a.readAt||'').localeCompare(String(b.confirmedAt||b.readAt||'')));}
 function studioAV57LogProgram(log){return upper(programFromSchedule(log?.date||'',log?.slot||log?.scheduledHour||'',STUDIO_STATION)||log?.program||'');}
@@ -3558,13 +3622,13 @@ function studioAV57Tokens(p,date){
   return out.map((token,index)=>({...token,sequence:index+1}));
 }
 function studioAV57LegacyHourAllowed(p,item){const itemHour=studioAV57HourSlot(item?.slot||''),date=item?.date||'';if(!itemHour||!studioAV57DateAllowed(p,date)||!stationAllowed(p))return false;if(!isMerchan(p)&&isPromoResultForItem(p,item))return true;const configured=(p?.readHours||[]).map(studioAV57HourSlot).filter(Boolean);if(configured.length&&!configured.includes(itemHour))return false;if((p.readMode||'all')==='selected'&&!configured.length)return false;if(isMerchan(p)){const configs=studioAV57RecordPrograms(p,date);if(configs.length){const program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');if(!configs.some(c=>c.program===program&&(!c.hours.length||c.hours.includes(itemHour))))return false;}else if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item))return false;}return true;}
-function studioAV57FixedLoad(date){const load=new Map();(monthData().promos||[]).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='fixed').forEach(p=>{const candidates=studioAV57Candidates(p,date),scope=studioAV57Scope(p),count=scope==='hour'?studioAV57Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
+function studioAV57FixedLoad(date){const load=new Map();studioPromoPool(date).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='fixed').forEach(p=>{const candidates=studioAV57Candidates(p,date),scope=studioAV57Scope(p),count=scope==='hour'?studioAV57Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
 function studioAV57OverrideFor(p,date,sequence){
   const rows=(Array.isArray(p?.opecOverrides)?p.opecOverrides:[]).filter(o=>!o?.disabled&&o?.date===date&&Number(o?.occurrence||o?.sequence||1)===Number(sequence));
   if(!rows.length)return null;const row=rows[rows.length-1];return{program:upper(row.program||''),slot:studioAV57HourSlot(row.slot||''),reason:String(row.reason||'')};
 }
 function studioAV57SmartPlan(date){
-  const records=(monthData().promos||[]).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='rotation'&&stationAllowed(p)),load=studioAV57FixedLoad(date),out=new Map(),tokens=[];
+  const records=studioPromoPool(date).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='rotation'&&stationAllowed(p)),load=studioAV57FixedLoad(date),out=new Map(),tokens=[];
   records.forEach(p=>studioAV57Tokens(p,date).forEach(t=>tokens.push(t)));
   tokens.sort((a,b)=>a.candidates.length-b.candidates.length||String(a.p.endDate||a.p.drawDate||'9999').localeCompare(String(b.p.endDate||b.p.drawDate||'9999'))||((studioAV57Hash(`${date}|${a.p.id}|${a.ordinal}`)%997)-(studioAV57Hash(`${date}|${b.p.id}|${b.ordinal}`)%997)));
   tokens.forEach(token=>{const own=out.get(token.p.id)||[],last=studioAV57LastCandidate(token.p,date),override=studioAV57OverrideFor(token.p,date,token.sequence);let best=null,bestScore=Infinity;
@@ -3573,12 +3637,39 @@ function studioAV57SmartPlan(date){
     if(best){const key=`${best.program}|${best.slot}`;load.set(key,(load.get(key)||0)+1);own.push({...best,override:!!forced,overrideReason:override?.reason||''});out.set(token.p.id,own);}
   });return out;
 }
-function studioRequiredReadsForHour(p,item){if(!p||!item||!studioAV57Visible(p)||!stationAllowed(p)||!studioAV57DateAllowed(p,item.date||''))return 0;const program=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||''),slot=studioAV57HourSlot(item.slot);if(studioAV57Mode(p)==='rotation'){const plan=studioAV57SmartPlan(item.date||todayISO());return(plan.get(p.id)||[]).filter(c=>c.program===program&&c.slot===slot).length;}const candidates=studioAV57Candidates(p,item.date||'');if(candidates.length){if(!candidates.some(c=>c.program===program&&c.slot===slot))return 0;return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;}return studioAV57LegacyHourAllowed(p,item)?(studioAV57Scope(p)==='hour'?studioAV57Count(p):1):0;}
+function studioFixedCompatRequiredReads(p,item){
+  if(studioAV57Mode(p)!=='fixed'||!p||!item||!studioAV57Visible(p)||!stationAllowed(p)||!studioAV57DateAllowed(p,item.date||''))return 0;
+  const program=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||''),slot=studioAV57HourSlot(item.slot);
+  if(!program||!slot)return 0;
+  const configs=studioAV57RecordPrograms(p,item.date||'');
+  if(configs.length){
+    const programConfigs=configs.filter(c=>genericProgramName(c.program)||c.program===program);
+    if(!programConfigs.length)return 0;
+    const hasHour=programConfigs.some(c=>!c.hours.length||c.hours.includes(slot));
+    if(!hasHour)return 0;
+    return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;
+  }
+  const declaredProgram=upper(p?.program||p?.programName||'');
+  if(declaredProgram&&!genericProgramName(declaredProgram)&&declaredProgram!==program)return 0;
+  const hours=studioRows(p?.readHours).map(studioAV57HourSlot).filter(Boolean);
+  if(hours.length&&!hours.includes(slot))return 0;
+  if((p?.readMode||'all')==='selected'&&!hours.length)return 0;
+  return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;
+}
+function studioRequiredReadsForHour(p,item){
+  if(!p||!item||!studioAV57Visible(p)||!stationAllowed(p)||!studioAV57DateAllowed(p,item.date||''))return 0;
+  const program=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||''),slot=studioAV57HourSlot(item.slot);
+  if(studioAV57Mode(p)==='rotation'){const plan=studioAV57SmartPlan(item.date||todayISO());return(plan.get(p.id)||[]).filter(c=>c.program===program&&c.slot===slot).length;}
+  const candidates=studioAV57Candidates(p,item.date||'');
+  if(candidates.length&&candidates.some(c=>c.program===program&&c.slot===slot))return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;
+  if(studioAV57LegacyHourAllowed(p,item))return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;
+  return studioFixedCompatRequiredReads(p,item);
+}
 function studioReadCountForHour(p,item){const logs=studioAV57Logs(p,item);if(logs.length)return logs.length;const direct=validReadTimestamp(hourMapValue(p?.readByHour,item,p));return direct?1:0;}
 function readTimestampForHour(p,item){const logs=studioAV57Logs(p,item);if(logs.length)return validReadTimestamp(logs[logs.length-1]?.confirmedAt||logs[logs.length-1]?.readAt||'');return validReadTimestamp(hourMapValue(p?.readByHour,item,p));}
 function promoEligibleForItemHour(p,item){return studioRequiredReadsForHour(p,item)>0;}
 function isPromoReadForHour(p,item){const required=studioRequiredReadsForHour(p,item);return required>0&&studioReadCountForHour(p,item)>=required;}
-function pautasForItemHour(item,includeRead=false,kind='all'){return [...(monthData().promos||[])].filter(p=>promoEligibleForItemHour(p,item)).filter(p=>kind==='all'||(kind==='merchan'?isMerchan(p):!isMerchan(p))).filter(p=>includeRead||!isPromoResolvedForHour(p,item)).sort((a,b)=>upper(a.name||a.title).localeCompare(upper(b.name||b.title)));}
+function pautasForItemHour(item,includeRead=false,kind='all'){return studioPromoPool(item?.date||todayISO()).filter(p=>promoEligibleForItemHour(p,item)).filter(p=>kind==='all'||(kind==='merchan'?isMerchan(p):!isMerchan(p))).filter(p=>includeRead||!isPromoResolvedForHour(p,item)).sort((a,b)=>upper(a.name||a.title).localeCompare(upper(b.name||b.title)));}
 function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
 function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
 function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
@@ -3592,14 +3683,14 @@ function isPromoResolvedForHour(p,item){const required=studioRequiredReadsForHou
 function studioMissedReasonForHour(p,item){const rows=studioAV57MissedLogs(p,item);return rows.map(r=>r.reason).filter(Boolean).join(' · ');}
 function studioAV57Progress(p,item){const required=studioRequiredReadsForHour(p,item),done=Math.min(required,studioReadCountForHour(p,item)),missed=Math.min(Math.max(0,required-done),studioMissedCountForHour(p,item));return{required,done,missed,remaining:Math.max(0,required-done-missed),label:required>1?`${done}/${required}`:(done?'OK':missed?'NÃO REALIZADA':'PENDENTE')};}
 function studioOpecContextLabel(p){if(!isMerchan(p)||studioOpecTextType(p)==='legacy')return studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE · DISTRIBUIÇÃO BALANCEADA':'';const base=studioOpecTextType(p)==='promotional'?`PROMOCIONAL ATÉ ${formatBR(p.endDate||p.drawDate||'')} · RETORNO INSTITUCIONAL AUTOMÁTICO`:`INSTITUCIONAL · VERSÃO ${studioOpecVersion(p)}`;return `${base} · ${studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE':'HORÁRIO FIXO'}`;}
-function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),clientLabel=upper(p.opecClientName||p.clientName||p.client||p.advertiser||''),tickerLabel=isMerchan(p)?(clientLabel||name):name,typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');const register=`LIDO: ${time}${progress.required>1?` · ${progress.done}/${progress.required}`:''}`;return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(tickerLabel+' · '+register)}"><span class="busTickerViewport"><span class="busTickerTrack"><span class="busTickerSeq"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span><span class="busTickerSeq" aria-hidden="true"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span></span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(tickerLabel)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+tickerLabel)}"><span>${esc(tickerLabel)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
+function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),clientLabel=upper(p.opecClientName||p.clientName||p.client||p.advertiser||''),tickerLabel=isMerchan(p)?(clientLabel||name):name,typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');const register=`LIDO: ${time}${progress.required>1?` · ${progress.done}/${progress.required}`:''}`;return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(tickerLabel+' · '+register)}"><span class="busTickerViewport"><span class="busTickerTrack"><span class="busTickerSeq"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span><span class="busTickerSeq" aria-hidden="true"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span></span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(tickerLabel)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+tickerLabel)}"><span class="pendingCall">${isMerchan(p)?'MERCHAN AGORA':'LER PAUTA'}</span><span class="pendingName">${esc(tickerLabel)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
 function buildPautaList(item,kind){const pautas=pautasForItemHour(item,true,kind),emptyLabel=kind==='merchan'?'SEM MERCHAN PROGRAMADO PARA ESTE HORÁRIO':'SEM PROMO / PAUTA PROGRAMADA PARA ESTE HORÁRIO';if(!pautas.length)return `<button class="promoListItem" type="button">${emptyLabel}</button>`;return pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;}).join('');}
 function buildPromoList(item){return buildPautaList(item,'promo');}
 function studioProgramMerchanRows(item){
   const date=item?.date||todayISO(),program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');
   if(!program||genericProgramName(program))return[];
   const rows=[];
-  studioAV57ProgramHours(program,date).forEach(slot=>{const target={date,slot,program,__virtual:true};(monthData().promos||[]).filter(isMerchan).forEach(p=>{const required=studioRequiredReadsForHour(p,target);if(required<1)return;rows.push({p,item:target,progress:studioAV57Progress(p,target)});});});
+  studioAV57ProgramHours(program,date).forEach(slot=>{const target={date,slot,program,__virtual:true};studioPromoPool(date).filter(isMerchan).forEach(p=>{const required=studioRequiredReadsForHour(p,target);if(required<1)return;rows.push({p,item:target,progress:studioAV57Progress(p,target)});});});
   return rows.sort((a,b)=>minutesOf(a.item.slot)-minutesOf(b.item.slot)||upper(a.p.name||a.p.title||'').localeCompare(upper(b.p.name||b.p.title||'')));
 }
 function buildMerchanList(item){
@@ -3661,7 +3752,7 @@ function pautaTypeLabel(p){
 }
 function readLogRowsForDate(date=todayISO()){
   const rows=[];
-  (monthData().promos||[]).forEach(p=>{
+  studioPromoPool(date).forEach(p=>{
     (p.readLog||[]).forEach(r=>{
       if((r.station||STUDIO_STATION)!==STUDIO_STATION) return;
       if((r.date||'')!==date) return;
@@ -3988,7 +4079,7 @@ function historyRowsForDate(date){
       result:upper(i.winnerName||'REALIZADO')
     }));
 
-  (monthData().promos||[])
+  studioPromoPool(date)
     .filter(p=>p && !isMerchan(p))
     .filter(p=>stationAllowed(p))
     .forEach(p=>{
@@ -4565,8 +4656,9 @@ selectStudioMonth();
 if($('historyDateInput')) $('historyDateInput').value=todayISO();
 render();
 initFirebaseSync();
+initStudioWorkspaceLiveBridge();
 initWinnerBank(false);
 </script>
-<!-- AV-57.6.6.21 · ESTÚDIO FIREBASE LIVE + STORAGE/BROADCAST FALLBACK -->
+<!-- AV-57.6.6.22 · ESTÚDIO PROMO/PAUTA RELINK + FIREBASE LIVE + STORAGE/BROADCAST FALLBACK -->
 </body>
 </html>
