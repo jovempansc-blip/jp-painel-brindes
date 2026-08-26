@@ -1440,7 +1440,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   background:#fff0f4;
   border-color:#ffc0cc;
 }
-.syncStatusBtn.local{
+.syncStatusBtn.offline{
   color:#667283;
   background:#f8fafc;
 }
@@ -3356,8 +3356,8 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 .appHeader .syncStatusBtn .syncDot{width:8px!important;height:8px!important;border-radius:50%!important;background:#d08616!important;display:block!important}
 .appHeader .syncStatusBtn.online{background:#f2fff8!important;border-color:#8edbb5!important;box-shadow:0 0 0 3px rgba(15,159,86,.10)!important}
 .appHeader .syncStatusBtn.online .syncDot{background:#0f9f56!important}
-.appHeader .syncStatusBtn.saving,.appHeader .syncStatusBtn.local{background:#fffaf2!important;border-color:#f0c98c!important;box-shadow:0 0 0 3px rgba(208,134,22,.10)!important}
-.appHeader .syncStatusBtn.saving .syncDot,.appHeader .syncStatusBtn.local .syncDot{background:#d08616!important}
+.appHeader .syncStatusBtn.saving,.appHeader .syncStatusBtn.offline{background:#fffaf2!important;border-color:#f0c98c!important;box-shadow:0 0 0 3px rgba(208,134,22,.10)!important}
+.appHeader .syncStatusBtn.saving .syncDot,.appHeader .syncStatusBtn.offline .syncDot{background:#d08616!important}
 .appHeader .syncStatusBtn.error{background:#fff5f7!important;border-color:#ee9cab!important;box-shadow:0 0 0 3px rgba(201,43,72,.10)!important}
 .appHeader .syncStatusBtn.error .syncDot{background:#c92b48!important}
 .appHeader .syncStatusBtn::after{
@@ -3875,30 +3875,29 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
             <div class="backupActions">
               <button class="btn" id="verifyFirebaseBtn" type="button">VERIFICAR FIREBASE</button>
               <button class="btn" id="forceLoadFirebaseBtn" type="button">RECARREGAR BASE OFICIAL</button>
-              <button class="btn red backupPrimaryAction" id="exportBackupBtn">EXPORTAR BACKUP LOCAL</button>
+              <button class="btn red backupPrimaryAction" id="exportBackupBtn">EXPORTAR BACKUP DO FIREBASE</button>
             </div>
           </div>
 
           <details class="backupSection danger backupAdvanced">
             <summary class="backupAdvancedSummary">
               <strong>AÇÕES AVANÇADAS DE RISCO</strong>
-              <span>Restaurar ou enviar base local pode substituir a base oficial.</span>
+              <span>Restaurar um arquivo de backup substitui a base oficial no Firebase.</span>
             </summary>
             <div class="backupActions">
               <button class="btn dark" id="chooseBackupBtn">RESTAURAR BACKUP MANUAL</button>
-              <button class="btn" id="forceUploadFirebaseBtn" type="button">ENVIAR BASE LOCAL PARA FIREBASE</button>
               <input id="backupFileInput" type="file" accept=".json,application/json" style="display:none">
             </div>
             <div class="backupImportRow">
               <div class="backupFileName" id="backupSelectedFile">NENHUM ARQUIVO SELECIONADO.</div>
-              <button class="btn ghost" id="clearBackupLocalBtn">LIMPAR MARCAÇÃO DE BACKUP</button>
+              <button class="btn ghost" id="clearBackupLocalBtn">LIMPAR SELEÇÃO</button>
             </div>
             <div class="backupPreviewBox" id="backupPreviewBox"></div>
-            <div class="backupAdvancedNote"><strong>REGRA:</strong> antes de restaurar ou enviar dados, confira os totais da base local, a tabela mensal e o diagnóstico do Firebase.</div>
+            <div class="backupAdvancedNote"><strong>REGRA:</strong> antes de restaurar um backup, confira os totais do arquivo e o diagnóstico do Firebase.</div>
           </details>
 
           <div class="firebaseSyncBox backupCompactRule">
-            O painel bloqueia envio de base local vazia para o Firebase. No uso normal, não é necessário restaurar manualmente em cada navegador.
+            O Firebase é a única base operacional. Os navegadores apenas exibem o snapshot recebido em tempo real.
           </div>
         </div>
       </div>
@@ -4452,2134 +4451,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 <div class="toast" id="toast"></div>
 
 <script>
-const BASE_STATE = {
-  "currentMonth": "2026-06",
-  "months": {
-    "2026-06": {
-      "label": "JUNHO 2026",
-      "items": [
-        {
-          "id": "BR0001",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-01",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR P12 - 04/06 DUBDOGZ",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0001",
-          "qty": 2
-        },
-        {
-          "id": "BR0002",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-01",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "10H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0003",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-01",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "1 INGRESSO P12 06/06 - SÃO JOÃO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0002",
-          "qty": 1
-        },
-        {
-          "id": "BR0004",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-02",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0005",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-02",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "10H",
-          "prize": "1 INGRESSO P12 06/06 - SÃO JOÃO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0002",
-          "qty": 1
-        },
-        {
-          "id": "BR0006",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-02",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0007",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-03",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR P12 - 04/06 DUBDOGZ",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0001",
-          "qty": 2
-        },
-        {
-          "id": "BR0008",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-03",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "10H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0009",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-03",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CIRCO OU KIT JOVEM PAN",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0007",
-          "qty": 2
-        },
-        {
-          "id": "BR0010",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-04",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0011",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-04",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "10H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0012",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-04",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CIRCO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0007",
-          "qty": 2
-        },
-        {
-          "id": "BR0013",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-05",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "1 INGRESSO P12 06/06 - SÃO JOÃO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0002",
-          "qty": 1
-        },
-        {
-          "id": "BR0014",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-05",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "10H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0015",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-05",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CIRCO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0007",
-          "qty": 2
-        },
-        {
-          "id": "BR0016",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-06",
-          "day": "SÁBADO",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0017",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-06",
-          "day": "SÁBADO",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0018",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-01",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0019",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-01",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "16H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0020",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-01",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "1 INGRESSO P12 06/06 - SÃO JOÃO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0002",
-          "qty": 1
-        },
-        {
-          "id": "BR0021",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-02",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR P12 - 04/06 DUBDOGZ",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0001",
-          "qty": 2
-        },
-        {
-          "id": "BR0022",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-02",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "16H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0023",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-02",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0024",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-03",
-          "day": "QUARTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR P12 - 04/06 DUBDOGZ",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0001",
-          "qty": 2
-        },
-        {
-          "id": "BR0025",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-03",
-          "day": "QUARTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "16H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0026",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-03",
-          "day": "QUARTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "CIRCO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0007",
-          "qty": 1
-        },
-        {
-          "id": "BR0027",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-04",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "1 INGRESSO P12 06/06 - SÃO JOÃO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0002",
-          "qty": 1
-        },
-        {
-          "id": "BR0028",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-04",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "16H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0029",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-04",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "PAR CIRCO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0007",
-          "qty": 2
-        },
-        {
-          "id": "BR0030",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-05",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CIRCO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0007",
-          "qty": 2
-        },
-        {
-          "id": "BR0031",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-05",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "16H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0032",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-05",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0033",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-01",
-          "day": "SEGUNDA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "GRAVADO",
-          "status": "GRAVADO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0034",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-02",
-          "day": "TERÇA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "GRAVADO",
-          "status": "GRAVADO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0035",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-03",
-          "day": "QUARTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "GRAVADO",
-          "status": "GRAVADO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0036",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-04",
-          "day": "QUINTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0037",
-          "week": "01 A 07 JUNHO / 2026",
-          "date": "2026-06-05",
-          "day": "SEXTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0038",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-08",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0039",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-08",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0040",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-09",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0041",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-09",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0042",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-10",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "1 INGRESSO P12 13/06 - FEIJOADA",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0003",
-          "qty": 1
-        },
-        {
-          "id": "BR0043",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-10",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0044",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-11",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0045",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-11",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0046",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-12",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "1 INGRESSO P12 13/06 - FEIJOADA",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0003",
-          "qty": 1
-        },
-        {
-          "id": "BR0047",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-12",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0048",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-13",
-          "day": "SÁBADO",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0049",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-13",
-          "day": "SÁBADO",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0050",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-08",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0051",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-08",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "1 INGRESSO P12 13/06 - FEIJOADA",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0003",
-          "qty": 1
-        },
-        {
-          "id": "BR0052",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-09",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0053",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-09",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0054",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-11",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0055",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-11",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "1 INGRESSO P12 13/06 - FEIJOADA",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0003",
-          "qty": 1
-        },
-        {
-          "id": "BR0056",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-12",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0057",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-12",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "1 INGRESSO P12 13/06 - FEIJOADA",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0003",
-          "qty": 1
-        },
-        {
-          "id": "BR0058",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-13",
-          "day": "SÁBADO",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0059",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-13",
-          "day": "SÁBADO",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0060",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-08",
-          "day": "SEGUNDA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "1 INGRESSO P12 13/06 - FEIJOADA",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0003",
-          "qty": 1
-        },
-        {
-          "id": "BR0061",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-09",
-          "day": "TERÇA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "1 INGRESSO P12 13/06 - FEIJOADA",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0003",
-          "qty": 1
-        },
-        {
-          "id": "BR0062",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-10",
-          "day": "QUARTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0063",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-11",
-          "day": "QUINTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "1 INGRESSO P12 13/06 - FEIJOADA",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0003",
-          "qty": 1
-        },
-        {
-          "id": "BR0064",
-          "week": "08 A 14 JUNHO / 2026",
-          "date": "2026-06-12",
-          "day": "SEXTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0065",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-15",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0066",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-15",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0067",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-16",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0068",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-16",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0069",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-17",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0070",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-17",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0071",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-18",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0072",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-18",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0073",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-19",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0074",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-19",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0075",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-20",
-          "day": "SÁBADO",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0076",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-20",
-          "day": "SÁBADO",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0077",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-15",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0078",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-15",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0079",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-16",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0080",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-16",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0081",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-17",
-          "day": "QUARTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0082",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-17",
-          "day": "QUARTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "ÁLBUM COPA C/ 60 FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0083",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-18",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0084",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-18",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0085",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-19",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0086",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-19",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0087",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-15",
-          "day": "SEGUNDA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0088",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-16",
-          "day": "TERÇA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0089",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-17",
-          "day": "QUARTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0090",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-18",
-          "day": "QUINTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR BETO CARREIRO",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0005",
-          "qty": 2
-        },
-        {
-          "id": "BR0091",
-          "week": "15 A 21 JUNHO / 2026",
-          "date": "2026-06-19",
-          "day": "SEXTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0092",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-22",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0093",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-22",
-          "day": "SEGUNDA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0094",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-23",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0095",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-23",
-          "day": "TERÇA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0096",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-24",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0097",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-24",
-          "day": "QUARTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0098",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-25",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0099",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-25",
-          "day": "QUINTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0100",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-26",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0101",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-26",
-          "day": "SEXTA",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0102",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-27",
-          "day": "SÁBADO",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "09H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0103",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-27",
-          "day": "SÁBADO",
-          "program": "MANHÃ DA PAN",
-          "host": "LAIS",
-          "programTime": "08:00 ÀS 12:00",
-          "slot": "11H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0104",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-22",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0105",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-22",
-          "day": "SEGUNDA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0106",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-23",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0107",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-23",
-          "day": "TERÇA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0108",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-24",
-          "day": "QUARTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0109",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-24",
-          "day": "QUARTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0110",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-25",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0111",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-25",
-          "day": "QUINTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0112",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-26",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "15H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0113",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-26",
-          "day": "SEXTA",
-          "program": "P12 RÁDIO SHOW",
-          "host": "CESINHA",
-          "programTime": "15:00 ÀS 18:00",
-          "slot": "17H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0114",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-22",
-          "day": "SEGUNDA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        },
-        {
-          "id": "BR0115",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-23",
-          "day": "TERÇA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0116",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-24",
-          "day": "QUARTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "A DEFINIR",
-          "status": "ABERTO",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "",
-          "qty": 0
-        },
-        {
-          "id": "BR0117",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-25",
-          "day": "QUINTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "ÁLBUM COPA C/ 60 PTC FIGURINHAS",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0009",
-          "qty": 1
-        },
-        {
-          "id": "BR0118",
-          "week": "22 A 28 JUNHO / 2026",
-          "date": "2026-06-26",
-          "day": "SEXTA",
-          "program": "JURASSIC PAN",
-          "host": "HUDSON",
-          "programTime": "20:00 ÀS 21:00",
-          "slot": "20H",
-          "prize": "PAR CINEMA CINESYSTEM",
-          "status": "NO AR",
-          "channel": "AR",
-          "notes": "",
-          "distributionId": "DST0006",
-          "qty": 2
-        }
-      ],
-      "promos": [
-        {
-          "id": "IG0001",
-          "week": "01 A 07 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO COPA MUNDO",
-          "description": "SORTEIO: CAMISA OFICIAL JOGADOR E TORCEDOR DA SELEÇÃO BRASILEIRA - JOVEM PAN/MUNDO CAR. SORTEIO 11/06 ÀS 12H; RETIRADA DO PRÊMIO E PARTICIPAÇÃO AO VIVO NO PROGRAMA ESPORTIVO “DEBATE DA PAN”, DIRETO DO MUNDO CAR NO DIA 12/06.",
-          "drawDate": "2026-06-11",
-          "status": "NO AR"
-        },
-        {
-          "id": "IG0002",
-          "week": "01 A 07 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO CINEMA CINESYSTEM",
-          "description": "PROMOÇÃO CINEMA CINESYSTEM. DETALHES OPERACIONAIS A DEFINIR.",
-          "drawDate": "",
-          "status": "NO AR"
-        },
-        {
-          "id": "IG0003",
-          "week": "08 A 14 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO COPA MUNDO",
-          "description": "SORTEIO: CAMISA OFICIAL JOGADOR E TORCEDOR DA SELEÇÃO BRASILEIRA - JOVEM PAN/MUNDO CAR. SORTEIO 11/06 ÀS 12H; RETIRADA DO PRÊMIO E PARTICIPAÇÃO AO VIVO NO “DEBATE DA PAN”, DIRETO DO MUNDO CAR NO DIA 12/06.",
-          "drawDate": "2026-06-11",
-          "status": "NO AR"
-        },
-        {
-          "id": "IG0004",
-          "week": "08 A 14 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO CINEMA CINESYSTEM",
-          "description": "PROMOÇÃO CINEMA CINESYSTEM. DETALHES OPERACIONAIS A DEFINIR.",
-          "drawDate": "",
-          "status": "NO AR"
-        },
-        {
-          "id": "IG0005",
-          "week": "08 A 14 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO TEN PILATES",
-          "description": "PROMOÇÃO TEN PILATES. DETALHES OPERACIONAIS A DEFINIR.",
-          "drawDate": "",
-          "status": "NO AR"
-        },
-        {
-          "id": "IG0006",
-          "week": "15 A 21 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO CINEMA CINESYSTEM",
-          "description": "ENTROU DIA 18/06. 5 OUVINTES SORTEADOS COM + 3 CONVIDADOS CADA. TOTAL DE 20 INGRESSOS. SORTEIO 30/06 ÀS 12H.",
-          "drawDate": "2026-06-30",
-          "status": "NO AR"
-        },
-        {
-          "id": "IG0007",
-          "week": "15 A 21 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO TEN PILATES",
-          "description": "ENTROU DIA 18/06. 1 OUVINTE SORTEADO PARA 1 MÊS DE AULAS METHABOLIC. SORTEIO 30/06 ÀS 12H.",
-          "drawDate": "2026-06-30",
-          "status": "NO AR"
-        },
-        {
-          "id": "IG0008",
-          "week": "22 A 28 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO CINEMA CINESYSTEM",
-          "description": "ENTROU DIA 18/06. 5 OUVINTES SORTEADOS COM + 3 CONVIDADOS CADA. TOTAL DE 20 INGRESSOS. SORTEIO 30/06 ÀS 12H.",
-          "drawDate": "2026-06-30",
-          "status": "NO AR"
-        },
-        {
-          "id": "IG0009",
-          "week": "22 A 28 JUNHO / 2026",
-          "channel": "INSTAGRAM",
-          "title": "PROMOÇÃO TEN PILATES",
-          "description": "ENTROU DIA 18/06. 1 OUVINTE SORTEADO PARA 1 MÊS DE AULAS METHABOLIC. SORTEIO 30/06 ÀS 12H.",
-          "drawDate": "2026-06-30",
-          "status": "NO AR"
-        }
-      ],
-      "distributions": [
-        {
-          "id": "DST0001",
-          "date": "2026-06-04",
-          "show": "P12 – NOSTALGIA DUBDOGZ",
-          "prize": "INGRESSOS P12 DUBDOGZ",
-          "total": 100,
-          "ar": 80,
-          "rs": 0,
-          "app": 0,
-          "clientes": 16,
-          "camarote": 0,
-          "camarim": 4,
-          "rua": 0,
-          "outros": 0,
-          "notes": "BASE IMPORTADA DA TABELA GERAL DE BRINDES."
-        },
-        {
-          "id": "DST0002",
-          "date": "2026-06-06",
-          "show": "P12 – SÃO JOÃO",
-          "prize": "INGRESSOS P12 SÃO JOÃO OPEN BAR / OPEN FOOD",
-          "total": 30,
-          "ar": 22,
-          "rs": 2,
-          "app": 0,
-          "clientes": 6,
-          "camarote": 0,
-          "camarim": 0,
-          "rua": 0,
-          "outros": 0,
-          "notes": "BASE IMPORTADA DA TABELA GERAL DE BRINDES."
-        },
-        {
-          "id": "DST0003",
-          "date": "2026-06-13",
-          "show": "P12 – FEIJOADA DE JORGE + SHOW JORGE ARAGÃO",
-          "prize": "INGRESSOS P12 FEIJOADA DE JORGE",
-          "total": 10,
-          "ar": 8,
-          "rs": 0,
-          "app": 0,
-          "clientes": 0,
-          "camarote": 0,
-          "camarim": 0,
-          "rua": 0,
-          "outros": 2,
-          "notes": "BASE IMPORTADA DA TABELA GERAL DE BRINDES."
-        },
-        {
-          "id": "DST0004",
-          "date": "2026-06-30",
-          "show": "TEN PILATES",
-          "prize": "02 PLANOS ACADEMIA / METHABOLIC",
-          "total": 2,
-          "ar": 0,
-          "rs": 2,
-          "app": 0,
-          "clientes": 0,
-          "camarote": 0,
-          "camarim": 0,
-          "rua": 0,
-          "outros": 0,
-          "notes": "AÇÃO DIGITAL / REDES SOCIAIS."
-        },
-        {
-          "id": "DST0005",
-          "date": "2026-06-30",
-          "show": "BETO CARREIRO",
-          "prize": "PARES / INGRESSOS BETO CARREIRO",
-          "total": 40,
-          "ar": 30,
-          "rs": 4,
-          "app": 0,
-          "clientes": 6,
-          "camarote": 0,
-          "camarim": 0,
-          "rua": 0,
-          "outros": 0,
-          "notes": "BASE IMPORTADA DA TABELA GERAL DE BRINDES."
-        },
-        {
-          "id": "DST0006",
-          "date": "2026-06-30",
-          "show": "CINEMA CINESYSTEM",
-          "prize": "INGRESSOS / PARES CINEMA CINESYSTEM",
-          "total": 240,
-          "ar": 60,
-          "rs": 20,
-          "app": 0,
-          "clientes": 30,
-          "camarote": 0,
-          "camarim": 30,
-          "rua": 20,
-          "outros": 0,
-          "notes": "A TABELA ORIGINAL INDICA TOTAL 240 E DISTRIBUIÇÕES PARCIAIS. SOBRA CALCULADA PELO PAINEL."
-        },
-        {
-          "id": "DST0007",
-          "date": "2026-06-30",
-          "show": "CIRCO DINÂMICO",
-          "prize": "PARES / INGRESSOS CIRCO DINÂMICO",
-          "total": 12,
-          "ar": 12,
-          "rs": 0,
-          "app": 0,
-          "clientes": 0,
-          "camarote": 0,
-          "camarim": 0,
-          "rua": 0,
-          "outros": 0,
-          "notes": "BASE IMPORTADA DA TABELA GERAL DE BRINDES."
-        },
-        {
-          "id": "DST0008",
-          "date": "2026-06-30",
-          "show": "KITS JOVEM PAN",
-          "prize": "KIT JOVEM PAN",
-          "total": 3,
-          "ar": 3,
-          "rs": 0,
-          "app": 0,
-          "clientes": 0,
-          "camarote": 0,
-          "camarim": 0,
-          "rua": 0,
-          "outros": 0,
-          "notes": "SACOLA, CALENDÁRIO, CADERNO, COPO, LÁPIS, CANETA, CHAVEIRO E BLOCO."
-        },
-        {
-          "id": "DST0009",
-          "date": "2026-06-30",
-          "show": "ÁLBUM COPA",
-          "prize": "ÁLBUM COPA COM 60 PACOTES DE FIGURINHAS",
-          "total": 0,
-          "ar": 0,
-          "rs": 0,
-          "app": 0,
-          "clientes": 0,
-          "camarote": 0,
-          "camarim": 0,
-          "rua": 0,
-          "outros": 0,
-          "notes": "CADASTRAR TOTAL QUANDO A QUANTIDADE FOR CONFIRMADA."
-        }
-      ]
-    }
-  }
-};
-const STORAGE_KEY = 'jp_programacao_brindes_distribuicao_v2';
+// AV57.6.6.24: sem base operacional embutida; dados somente do Firebase RTDB.
 const CHANNELS = [
   ['app','APP'],['camarote','CAMAROTE'],['camarim','CAMARIM'],['rua','EXTERNA'],['ar','RÁDIO'],['rs','REDES SOCIAIS'],['reservado','RESERVADO']
 ];
@@ -6600,7 +4472,7 @@ const esc = v => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt
 const OPERATOR_SESSION_KEY = 'jp_workspace_operator_v56';
 const WINNER_TRASH_RETENTION_DAYS = 30;
 const WINNER_PROGRAM_VERSION_LIMIT = 10;
-let state = normalizePanelState(loadState());
+let state = emptyWorkspaceState();
 let activeView = 'distribuicao';
 let activeDistributionFilter = '';
 let radioPlannerDistId = '';
@@ -6707,39 +4579,33 @@ function firebaseStateRootRef(){
   if(!firebaseRef) return null;
   return firebaseUsesWrappedState===true ? firebaseRef.child('state') : firebaseRef;
 }
-function loadState(){
-  try{
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if(saved && saved.months) return saved;
-  }catch(e){}
-  return clone(BASE_STATE);
+function emptyWorkspaceState(){
+  return normalizePanelState({currentMonth:'',months:{},schedules:[],programSchedules:[],auditLog:[],trash:[],pendingOps:[],publishedPrograms:{},programVersions:{},systemMeta:{},prizeCatalog:{}});
 }
-function writeLocalStateCache(data=state){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    return true;
-  }catch(error){
-    console.warn('CACHE LOCAL INDISPONÍVEL/LOTADO',error);
-    return false;
-  }
-}
-function notifyWorkspaceLocalChange(){
-  try{
-    if(!('BroadcastChannel' in window)) return;
-    window.__jpWorkspaceChannel=window.__jpWorkspaceChannel||new BroadcastChannel('jp_workspace_live_state');
-    window.__jpWorkspaceChannel.postMessage({type:'STATE_CHANGED',at:Date.now()});
-  }catch(error){console.warn('BROADCAST LOCAL INDISPONÍVEL',error);}
+function rollbackToFirebaseBaseline(message='ALTERAÇÃO NÃO CONFIRMADA PELO FIREBASE.'){
+  firebasePendingSave=false;
+  const openMonth=state?.currentMonth||'';
+  state=firebaseBaselineState?.months ? normalizePanelState(clone(firebaseBaselineState)) : emptyWorkspaceState();
+  if(openMonth&&state.months?.[openMonth]) state.currentMonth=openMonth;
+  setOfficialCalendarMonth(false);
+  render();
+  updateSyncStatus('error','FIREBASE INDISPONÍVEL');
+  console.warn(message);
 }
 function saveState(silent=false){
   normalizePanelState(state);
-  const localCacheOk=writeLocalStateCache(state);
-  if(localCacheOk) notifyWorkspaceLocalChange();
-  if(!firebaseApplyingRemote){
-    firebaseLastLocalWrite = Date.now();
-    firebasePendingSave = true;
-    queueApiSave(silent ? 90 : 40);
+  if(firebaseApplyingRemote) return true;
+  if(!firebaseReady||!firebaseRef||!firebaseConnected||!firebaseServerLoaded){
+    rollbackToFirebaseBaseline('GRAVAÇÃO BLOQUEADA: FIREBASE NÃO ESTÁ PRONTO.');
+    if(!silent) toast('NÃO SALVO · FIREBASE INDISPONÍVEL.');
+    forceFirebaseAutoConnect();
+    return false;
   }
-  if(!silent) toast(localCacheOk?'ALTERAÇÃO REGISTRADA · SINCRONIZANDO COM FIREBASE...':'ALTERAÇÃO REGISTRADA · CACHE LOCAL CHEIO · SINCRONIZANDO COM FIREBASE...');
+  firebaseLastLocalWrite=Date.now();
+  firebasePendingSave=true;
+  queueApiSave(silent?30:10);
+  if(!silent) toast('SALVANDO NO FIREBASE...');
+  return true;
 }
 function countStateRecords(data){
   if(!data || !data.months) return 0;
@@ -6959,28 +4825,23 @@ async function forceSetStateToApi(source='PAINEL_PRINCIPAL'){
   firebaseBaseEmpty=false;
 }
 
-function hasLocalPersistedState(){
-  try{
-    const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
-    return !!(saved && saved.months);
-  }catch(e){ return false; }
-}
-function updateSyncStatus(mode='local',text='LOCAL'){
+function hasLocalPersistedState(){ return false; }
+function updateSyncStatus(mode='offline',text='FIREBASE OFFLINE'){
   const btn=$('syncStatusBtn');
   const updated=$('mainHeaderUpdated');
   const statusText=$('syncStatusText');
   if(!btn) return;
-  btn.classList.remove('online','saving','error','local');
+  btn.classList.remove('online','saving','error','offline');
   btn.classList.add(mode);
-  const statusTitle = mode==='online' ? (firebaseBaseEmpty?'FIREBASE CONECTADO — BASE OFICIAL VAZIA':'FIREBASE ONLINE') : mode==='saving' ? 'CONECTANDO OU SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'MODO LOCAL — SEM CONEXÃO COM O FIREBASE';
+  const statusTitle = mode==='online' ? (firebaseBaseEmpty?'FIREBASE CONECTADO — BASE OFICIAL VAZIA':'FIREBASE ONLINE') : mode==='saving' ? 'CONECTANDO OU SALVANDO NO FIREBASE' : mode==='error' ? 'ERRO AO SINCRONIZAR COM FIREBASE' : 'FIREBASE OFFLINE — OPERAÇÕES BLOQUEADAS';
   btn.title = statusTitle;
   btn.setAttribute('aria-label',statusTitle);
   const dbHost = String(FIREBASE_CONFIG.databaseURL||'').replace(/^https?:\/\//,'').replace(/\/$/,'');
-  const connLabel = mode==='online' ? 'CONECTADO AO FIREBASE' : mode==='saving' ? 'CONECTANDO / SINCRONIZANDO' : mode==='error' ? 'ERRO DE CONEXÃO' : 'MODO LOCAL';
+  const connLabel = mode==='online' ? 'CONECTADO AO FIREBASE' : mode==='saving' ? 'CONECTANDO / SINCRONIZANDO' : mode==='error' ? 'ERRO DE CONEXÃO' : 'FIREBASE OFFLINE';
   btn.setAttribute('data-sync-tip', `${connLabel} • ${FIREBASE_CONFIG.projectId||'FIREBASE'} • ${dbHost} • /${FIREBASE_ROOT_PATH}`);
   if(statusText) statusText.textContent = text;
   if(updated){
-    const prefix=mode==='online'?'ATUALIZADO':mode==='saving'?'SINCRONIZANDO':mode==='error'?'ERRO DE SINCRONIZAÇÃO':mode==='local'?'BASE LOCAL':'ATUALIZADO';
+    const prefix=mode==='online'?'ATUALIZADO':mode==='saving'?'SINCRONIZANDO':mode==='error'?'ERRO DE SINCRONIZAÇÃO':mode==='offline'?'FIREBASE OFFLINE':'ATUALIZADO';
     updated.textContent=`${prefix}: ${new Date().toLocaleString('pt-BR')}`;
   }
 }
@@ -6995,8 +4856,7 @@ function applyRemoteFirebaseState(remoteState){
     state = normalizePanelState(clone(remoteState));
     if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
     firebaseServerLoaded = true;
-    writeLocalStateCache(state);
-    try{localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));}catch(_){ }
+    lastFirebaseLoadLabel=new Date().toLocaleString('pt-BR');
     setOfficialCalendarMonth(false);
     render();
     if(remoteTrashCount>(state.trash||[]).length){
@@ -7010,12 +4870,14 @@ function applyRemoteFirebaseState(remoteState){
   }
 }
 async function handleEmptyFirebase(){
-  // O Firebase é a fonte oficial. Navegador local nunca envia dados automaticamente
-  // quando o servidor está vazio, para evitar sobrescrever/apagar a base oficial.
-  firebaseBaseEmpty = true;
-  firebaseServerLoaded = true;
-  normalizePanelState(state);
-  updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
+  // O Firebase é a única fonte oficial. Servidor vazio = memória operacional vazia.
+  firebaseBaseEmpty=true;
+  firebaseServerLoaded=true;
+  state=emptyWorkspaceState();
+  setOfficialCalendarMonth(true);
+  firebaseBaselineState=normalizePanelState(clone(state));
+  render();
+  updateSyncStatus(firebaseConnected?'online':'offline',firebaseConnected?'FIREBASE ONLINE':'FIREBASE OFFLINE');
   renderBackup();
 }
 function firebaseMarkServerActivity(label='FIREBASE ONLINE'){
@@ -7070,7 +4932,7 @@ async function firebaseBootstrapRead(force=false){
     if(navigator.onLine===false){
       firebaseConnected=false;
       firebaseConnectionKnown=true;
-      updateSyncStatus('local','MODO LOCAL');
+      updateSyncStatus('offline','FIREBASE OFFLINE');
     }else{
       firebaseConnected=false;
       updateSyncStatus('saving','RECONECTANDO');
@@ -7083,7 +4945,7 @@ async function firebaseBootstrapRead(force=false){
 function initFirebaseSync(){
   if(firebaseStarted) return;
   if(!firebaseConfigReady()){
-    // Em cache lento o SDK pode ainda não ter terminado de carregar. Tenta novamente
+    // Em carregamento lento o SDK pode ainda não ter terminado de carregar. Tenta novamente
     // antes de declarar erro definitivo.
     updateSyncStatus('saving','CARREGANDO FIREBASE');
     let attempts=0;
@@ -7121,7 +4983,7 @@ function initFirebaseSync(){
       }
       if(navigator.onLine===false){
         firebaseConnected=false;
-        updateSyncStatus('local','MODO LOCAL');
+        updateSyncStatus('offline','FIREBASE OFFLINE');
         return;
       }
       // Não derruba uma conexão que acabou de receber dados do servidor.
@@ -7145,7 +5007,7 @@ function initFirebaseSync(){
       console.warn('FIREBASE LOAD ERROR',err);
       if(navigator.onLine===false){
         firebaseConnected=false;
-        updateSyncStatus('local','MODO LOCAL');
+        updateSyncStatus('offline','FIREBASE OFFLINE');
       }else{
         firebaseConnected=false;
         updateSyncStatus('saving','RECONECTANDO');
@@ -7181,7 +5043,7 @@ function syncStateFromApi(force=false){
     console.warn('FIREBASE CONNECTION PROBE ERROR',err);
     if(navigator.onLine===false){
       firebaseConnected=false;
-      updateSyncStatus('local','MODO LOCAL');
+      updateSyncStatus('offline','FIREBASE OFFLINE');
     }else{
       firebaseConnected=false;
       updateSyncStatus('saving','RECONECTANDO');
@@ -7207,7 +5069,7 @@ function handleBrowserConnectionChange(){
   if(navigator.onLine===false){
     firebaseConnected=false;
     firebaseConnectionKnown=true;
-    updateSyncStatus('local','MODO LOCAL');
+    updateSyncStatus('offline','FIREBASE OFFLINE');
     return;
   }
   updateSyncStatus('saving','CONECTANDO');
@@ -7222,16 +5084,17 @@ function handleBrowserConnectionChange(){
 function queueApiSave(delay=80){
   clearTimeout(firebaseSaveTimer);
   updateSyncStatus('saving','SALVANDO');
-  firebaseSaveTimer = setTimeout(saveStateToApi, delay);
+  firebaseSaveTimer = setTimeout(()=>{ saveStateToApi().catch(error=>console.warn('FIREBASE DIRECT SAVE FAILED',error)); }, delay);
 }
 async function saveStateToApi(){
   if(!firebaseReady || !firebaseRef){
     initFirebaseSync();
-    if(!firebaseReady || !firebaseRef) return;
+    if(!firebaseReady || !firebaseRef) throw new Error('FIREBASE INDISPONÍVEL PARA GRAVAÇÃO.');
   }
   if(!firebaseConnected){
-    updateSyncStatus(firebaseConnectionKnown?'local':'saving',firebaseConnectionKnown?'MODO LOCAL':'CONECTANDO');
-    return;
+    rollbackToFirebaseBaseline('GRAVAÇÃO CANCELADA: FIREBASE OFFLINE.');
+    if(navigator.onLine!==false) scheduleFirebaseRetry(900);
+    throw new Error('FIREBASE OFFLINE. ALTERAÇÃO NÃO SALVA.');
   }
   try{
     const hadPendingSave=!!firebasePendingSave;
@@ -7240,14 +5103,11 @@ async function saveStateToApi(){
       firebasePendingSave=false;
       updateSyncStatus('error','BASE VAZIA');
       renderBackup();
-      console.warn('ENVIO BLOQUEADO: BASE LOCAL VAZIA.');
-      return;
+      throw new Error('GRAVAÇÃO BLOQUEADA: SNAPSHOT OPERACIONAL VAZIO.');
     }
     if(!firebaseBaselineState || !firebaseServerLoaded){
       updateSyncStatus('saving','CARREGANDO BASE');
-      firebasePendingSave=true;
-      queueApiSave(220);
-      return;
+      throw new Error('BASE OFICIAL AINDA NÃO FOI CARREGADA DO FIREBASE.');
     }
     const openMonth=state.currentMonth;
     const latest=await persistGranularState();
@@ -7255,19 +5115,21 @@ async function saveStateToApi(){
       firebaseBaselineState=clone(latest);
       state=normalizePanelState(clone(latest));
       if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
-      localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
     }
-    localStorage.setItem('jp_painel_last_firebase_save',new Date().toLocaleString('pt-BR'));
+    lastFirebaseSaveLabel=new Date().toLocaleString('pt-BR');
     firebaseBaseEmpty=false;
     firebaseServerLoaded=true;
     firebasePendingSave=false;
-    updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
+    updateSyncStatus(firebaseConnected?'online':'offline',firebaseConnected?'FIREBASE ONLINE':'FIREBASE OFFLINE');
     renderBackup();
     if(hadPendingSave) toast('ALTERAÇÕES CONFIRMADAS NO FIREBASE.');
+    return true;
   }catch(err){
     console.warn('FIREBASE SAVE ERROR',err);
-    updateSyncStatus('error','ERRO FIREBASE');
-    toast('GRAVAÇÃO NÃO CONFIRMADA PELO FIREBASE. A ALTERAÇÃO CONTINUA PENDENTE.');
+    rollbackToFirebaseBaseline('GRAVAÇÃO REVERTIDA: FIREBASE NÃO CONFIRMOU A ALTERAÇÃO.');
+    renderBackup();
+    if(navigator.onLine!==false) scheduleFirebaseRetry(900);
+    throw err;
   }
 }
 
@@ -7912,7 +5774,7 @@ async function syncWinnerLinkedSource(sourceRef,{reason='CORREÇÃO DE GANHADOR'
       else if(changed && names.some(n=>!deliveryMap.has(n))){rows[index].deliveredAt='';rows[index].deliveredAtLabel='';rows[index].deliveredBy='';}
       return rows;
     },undefined,false);
-    if(result?.committed){const value=result.snapshot.val();state.months[monthKey] ||= {label:monthKey,items:[],promos:[],distributions:[]};state.months[monthKey].items=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true;}
+    if(result?.committed){const value=result.snapshot.val();state.months[monthKey] ||= {label:monthKey,items:[],promos:[],distributions:[]};state.months[monthKey].items=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);return true;}
     return false;
   }
   if(descriptor.type==='promo'){
@@ -7928,7 +5790,7 @@ async function syncWinnerLinkedSource(sourceRef,{reason='CORREÇÃO DE GANHADOR'
       rows[index]={...row,resultWinnersByHour:byHour,resultByHour:byName,occurrences,updatedAt:iso,winnerCorrectionReason:reason,winnerCorrectedBy:operatorName,winnerCorrectedAt:iso};
       return rows;
     },undefined,false);
-    if(result?.committed){const value=result.snapshot.val();state.months[monthKey] ||= {label:monthKey,items:[],promos:[],distributions:[]};state.months[monthKey].promos=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);localStorage.setItem(STORAGE_KEY,JSON.stringify(state));return true;}
+    if(result?.committed){const value=result.snapshot.val();state.months[monthKey] ||= {label:monthKey,items:[],promos:[],distributions:[]};state.months[monthKey].promos=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);return true;}
   }
   return false;
 }
@@ -8265,38 +6127,6 @@ async function confirmWinnerImport(){
   }
 }
 
-async function forceUploadLocalToFirebase(){
-  const c=backupCounts(state);
-  const total=backupTotal(c);
-  if(total===0){
-    alert('ENVIO BLOQUEADO. A BASE LOCAL ESTÁ VAZIA E NÃO PODE SUBSTITUIR O FIREBASE.');
-    renderBackup();
-    return;
-  }
-  if(!confirm(`ENVIAR OS DADOS DESTE NAVEGADOR PARA O FIREBASE?\n\nTOTAL LOCAL: ${total}\nITENS: ${c.items}\nDISTRIBUIÇÕES: ${c.distributions}\nPROMOÇÕES: ${c.promos}\nAGENDAMENTOS: ${c.schedules}\n\nUse apenas se este navegador contém a base correta.`)) return;
-  const typed=prompt('PARA CONFIRMAR O ENVIO, DIGITE: ENVIAR');
-  if(norm(typed)!=='ENVIAR') return;
-  initFirebaseSync();
-  if(!firebaseReady || !firebaseRef || !firebaseConnected){
-    alert('FIREBASE NÃO CONECTADO. AGUARDE A RECONEXÃO ANTES DE ENVIAR A BASE.');
-    updateSyncStatus(firebaseConnectionKnown?'local':'saving',firebaseConnectionKnown?'MODO LOCAL':'CONECTANDO');
-    return;
-  }
-  try{
-    updateSyncStatus('saving','ENVIANDO');
-    await forceSetStateToApi('ENVIO_MANUAL_CONFIRMADO');
-    firebaseBaseEmpty=false;
-    firebaseUsesWrappedState=false;
-    firebaseServerLoaded=true;
-    firebasePendingSave=false;
-    updateSyncStatus('online','FIREBASE ONLINE');
-    toast('DADOS DESTE NAVEGADOR ENVIADOS PARA O FIREBASE.');
-  }catch(error){
-    console.warn('FORCE FIREBASE UPLOAD ERROR',error);
-    updateSyncStatus('error','ERRO FIREBASE');
-    alert('NÃO FOI POSSÍVEL ENVIAR A BASE PARA O FIREBASE.');
-  }
-}
 async function verifyFirebaseState(){
   initFirebaseSync();
   if(!firebaseReady || !firebaseRef){ alert('FIREBASE NÃO CONECTADO.'); updateSyncStatus('error','ERRO FIREBASE'); return; }
@@ -8309,7 +6139,7 @@ async function verifyFirebaseState(){
     if(!remote){
       lastFirebaseDiagnostic={counts:{months:0,items:0,distributions:0,promos:0,schedules:0,programSchedules:0},checkedAtLabel:new Date().toLocaleString('pt-BR')};
       firebaseBaseEmpty=true;
-      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
+      updateSyncStatus(firebaseConnected?'online':'offline',firebaseConnected?'FIREBASE ONLINE':'FIREBASE OFFLINE');
       renderBackup();
       alert('FIREBASE VAZIO. NÃO HÁ BASE OFICIAL SALVA.');
       return;
@@ -8325,7 +6155,7 @@ async function verifyFirebaseState(){
     updateSyncStatus('error','ERRO FIREBASE');
   }
 }
-async function forceLoadFirebaseToLocal(){
+async function forceReloadFirebaseOfficial(){
   initFirebaseSync();
   if(!firebaseReady || !firebaseRef){ alert('FIREBASE NÃO CONECTADO. VERIFIQUE AS REGRAS DO DATABASE OU A CONEXÃO.'); updateSyncStatus('error','ERRO FIREBASE'); return; }
   try{
@@ -8338,12 +6168,12 @@ async function forceLoadFirebaseToLocal(){
       lastFirebaseDiagnostic={counts:backupCounts(remoteState),checkedAtLabel:new Date().toLocaleString('pt-BR'),savedAt:payload?.savedAt||''};
       applyRemoteFirebaseState(remoteState);
       firebasePendingSave=false;
-      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
-      toast('DADOS DO FIREBASE CARREGADOS NESTE NAVEGADOR.');
+      updateSyncStatus(firebaseConnected?'online':'offline',firebaseConnected?'FIREBASE ONLINE':'FIREBASE OFFLINE');
+      toast('BASE OFICIAL DO FIREBASE RECARREGADA.');
     }else{
-      alert('O FIREBASE AINDA NÃO TEM DADOS SALVOS. ENVIE OS DADOS A PARTIR DO NAVEGADOR ONDE ELES APARECEM.');
+      alert('O FIREBASE AINDA NÃO TEM DADOS SALVOS. RESTAURE UM BACKUP OFICIAL SE NECESSÁRIO.');
       firebaseBaseEmpty=true;
-      updateSyncStatus(firebaseConnected?'online':'local',firebaseConnected?'FIREBASE ONLINE':'MODO LOCAL');
+      updateSyncStatus(firebaseConnected?'online':'offline',firebaseConnected?'FIREBASE ONLINE':'FIREBASE OFFLINE');
     }
   }catch(err){
     console.warn('FORCE LOAD FIREBASE ERROR',err);
@@ -8393,7 +6223,6 @@ function setOfficialCalendarMonth(force=false){
   calendarMonthOpened=calendarKey;
   const input=$('monthInput');
   if(input) input.value=calendarKey;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 function ensureCurrentMonthAvailable(forceCalendar=false){
   if(forceCalendar) return setOfficialCalendarMonth(true);
@@ -8412,7 +6241,6 @@ function openMonthKey(key){
   manualMonthOverride=true;
   if(!state.months[key]) createBlankMonth(key);
   state.currentMonth=key;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   render();
   toast(`MÊS ${key} ABERTO.`);
 }
@@ -8422,14 +6250,13 @@ function alignPanelMonthWithInput({persist=false}={}){
   manualMonthOverride=true;
   if(!state.months[key]) createBlankMonth(key);
   state.currentMonth=key;
-  if(persist) saveState(true);
-  else localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  // seleção de mês é apenas estado de interface em memória
   return true;
 }
 function commitMonthInputSelection(){
-  if(!alignPanelMonthWithInput({persist:true})) return;
+  if(!alignPanelMonthWithInput({persist:false})) return;
   render();
-  toast('MÊS ABERTO · SINCRONIZANDO COM FIREBASE...');
+  toast('MÊS ABERTO.');
 }
 function normalizeStatus(value){
   const v = norm(value);
@@ -8646,7 +6473,7 @@ function systemPendingRecords(){
       if(segment && segment.commitment>segment.available) push('ATENÇÃO',`${p.name||p.title||'PROMOÇÃO'} — SALDO PREVISTO INSUFICIENTE`,`${segment.label}: COMPROMETIDO ${segment.commitment} · DISPONÍVEL ${segment.available}.`,'digital');
     });
   });
-  if(firebasePendingSave) push('ATENÇÃO','SINCRONIZAÇÃO PENDENTE','EXISTEM ALTERAÇÕES LOCAIS AINDA NÃO CONFIRMADAS PELO FIREBASE.','backup');
+  if(firebasePendingSave) push('ATENÇÃO','GRAVAÇÃO EM ANDAMENTO','EXISTE UMA ALTERAÇÃO AGUARDANDO CONFIRMAÇÃO DO FIREBASE.','backup');
   const pub=state.publishedPrograms?.[state.currentMonth];
   const draftSignature=JSON.stringify((monthData().items||[]).map(i=>[i.id,i.date,i.slot,i.qty,i.status,i.updatedAt]));
   if(!pub) push('INFORMATIVO','PROGRAMAÇÃO AINDA NÃO PUBLICADA',`${labelMonth(state.currentMonth)} ESTÁ SOMENTE EM RASCUNHO.`,'programacao');
@@ -9253,6 +7080,9 @@ function duplicateCurrentTo(key){
 
 
 let lastFirebaseDiagnostic=null;
+let lastFirebaseLoadLabel='NÃO CARREGADO';
+let lastFirebaseSaveLabel='NÃO ENVIADO';
+let lastBackupExportLabel='NÃO GERADO';
 function backupCounts(data=state){
   const months=data?.months || {};
   const values=Object.values(months);
@@ -9271,9 +7101,9 @@ function backupTotal(c){
 function backupRiskInfo(data=state){
   const c=backupCounts(data);
   const total=backupTotal(c);
-  if(total===0) return {cls:'danger',title:'BASE LOCAL VAZIA — ENVIO BLOQUEADO',text:'Este navegador não tem registros operacionais. O envio para o Firebase foi bloqueado para evitar apagar a base oficial.'};
-  if(c.months>0 && c.items===0 && c.distributions===0 && c.promos===0 && c.schedules===0) return {cls:'warn',title:'BASE COM MESES VAZIOS',text:'Existem meses criados, mas sem conteúdo operacional. Carregue o Firebase ou restaure um backup antes de enviar dados.'};
-  return {cls:'ok',title:'BASE LOCAL COM DADOS',text:`Base pronta para backup/sincronização. Total operacional: ${total} registro(s).`};
+  if(total===0) return {cls:'danger',title:'SNAPSHOT DO FIREBASE VAZIO',text:'O snapshot atual do Firebase não contém registros operacionais.'};
+  if(c.months>0 && c.items===0 && c.distributions===0 && c.promos===0 && c.schedules===0) return {cls:'warn',title:'BASE COM MESES VAZIOS',text:'Existem meses no Firebase sem conteúdo operacional. Verifique a base oficial antes de restaurar um backup.'};
+  return {cls:'ok',title:'SNAPSHOT FIREBASE CARREGADO',text:`Snapshot oficial pronto para backup. Total operacional: ${total} registro(s).`};
 }
 function firebaseDiagnosticLabel(){
   if(!lastFirebaseDiagnostic) return 'NÃO VERIFICADO';
@@ -9285,9 +7115,9 @@ function renderBackup(){
   const c=backupCounts(state);
   const risk=backupRiskInfo(state);
   const total=backupTotal(c);
-  const lastLoad=localStorage.getItem('jp_painel_last_firebase_load') || 'NÃO CARREGADO';
-  const lastSave=localStorage.getItem('jp_painel_last_firebase_save') || 'NÃO ENVIADO';
-  const lastBackup=localStorage.getItem('jp_painel_last_backup_export') || 'NÃO GERADO';
+  const lastLoad=lastFirebaseLoadLabel;
+  const lastSave=lastFirebaseSaveLabel;
+  const lastBackup=lastBackupExportLabel;
   box.innerHTML = `
     <div class="backupCard"><span>STATUS DO FIREBASE</span><strong style="font-size:16px;line-height:1.25">${esc(firebaseDiagnosticLabel())}</strong></div>
     <div class="backupCard"><span>ÚLTIMO CARREGAMENTO</span><strong style="font-size:15px;line-height:1.25">${esc(lastLoad)}</strong></div>
@@ -9310,11 +7140,6 @@ function renderBackup(){
       const stateLabel=r.total>0 ? 'COM DADOS' : 'VAZIO';
       return `<tr><td><strong>${esc(r.key)}</strong>${r.key===state.currentMonth?' · ABERTO':''}</td><td class="num">${r.items}</td><td class="num">${r.distributions}</td><td class="num">${r.promos}</td><td class="${r.total>0?'stateOk':'stateEmpty'}">${stateLabel}</td><td><button class="btn small" type="button" onclick="openMonthKey('${esc(r.key)}')">ABRIR</button></td></tr>`;
     }).join('')}</tbody></table>` : '';
-  }
-  const uploadBtn=$('forceUploadFirebaseBtn');
-  if(uploadBtn){
-    uploadBtn.disabled = total===0;
-    uploadBtn.title = total===0 ? 'ENVIO BLOQUEADO: BASE LOCAL VAZIA' : 'FORÇAR ENVIO PARA O FIREBASE';
   }
 }
 function winnerBankBackupCount(value=winnerBankSnapshot){
@@ -9358,7 +7183,7 @@ async function exportManualBackup(){
   const payload=buildBackupPayload(bank);
   const content=JSON.stringify(payload,null,2);
   downloadFile(`JP_WORKSPACE_BACKUP_${backupFileStamp()}.json`, content, 'application/json;charset=utf-8');
-  localStorage.setItem('jp_painel_last_backup_export', payload.exportedAtLabel);
+  lastBackupExportLabel=payload.exportedAtLabel;
   renderBackup();
   toast(`BACKUP COMPLETO GERADO · ${payload.counts.winnerBank} REGISTRO(S) NO BANCO DE GANHADORES.`);
 }
@@ -9395,7 +7220,6 @@ async function restoreCompleteBackupToFirebase(incoming,winnerBankData=null){
   }
   state=clone(restoredState);
   normalizePanelState(state);
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   firebaseBaselineState=clone(state);
   firebaseUsesWrappedState=false;
   firebaseBaseEmpty=false;
@@ -9789,14 +7613,9 @@ function promoEndingAlerts(){
   });
   return out;
 }
-function dismissedMiniAlerts(){
-  try{return JSON.parse(localStorage.getItem('jp_dismissed_mini_alerts')||'[]')}catch(e){return[]}
-}
-function dismissMiniAlert(idValue){
-  const list=[...new Set([...dismissedMiniAlerts(),idValue])];
-  localStorage.setItem('jp_dismissed_mini_alerts',JSON.stringify(list));
-  renderMiniAlerts();
-}
+const dismissedMiniAlertIds=new Set();
+function dismissedMiniAlerts(){ return [...dismissedMiniAlertIds]; }
+function dismissMiniAlert(idValue){ dismissedMiniAlertIds.add(idValue); renderMiniAlerts(); }
 function miniAlertItems(){
   const returns=pendingReturnRecords().map(r=>({id:`return:${r.id}`,type:'return',title:`RETORNO DE PRÊMIO: ${r.prize}`,text:`${r.winner} NÃO RETIROU NO PRAZO. PRÊMIO DISPONÍVEL PARA REAPROVEITAMENTO.`,record:r}));
   const promos=promoEndingAlerts();
@@ -9918,13 +7737,12 @@ function programFromSchedule(date,slot,station='JP1017'){
   return scheduleName(rows[0]);
 }
 
-let activeProgramStationFilter = localStorage.getItem('jp_program_station_filter') || 'JP1017';
+let activeProgramStationFilter = 'JP1017';
 function activeProgramStation(){
   return activeProgramStationFilter || 'JP1017';
 }
 function setProgramStationFilter(station){
   activeProgramStationFilter=station || 'JP1017';
-  localStorage.setItem('jp_program_station_filter', activeProgramStationFilter);
   $$('#programStationFilterTabs .stationTab').forEach(btn=>btn.classList.toggle('active',btn.dataset.station===activeProgramStationFilter));
   renderProgramSchedules();
 }
@@ -10004,7 +7822,6 @@ function saveProgramSchedule(e){
   const idx=programSchedules().findIndex(p=>p.id===idVal);
   if(idx>=0) programSchedules()[idx]=rec; else programSchedules().push(rec);
   activeProgramStationFilter=rec.station;
-  localStorage.setItem('jp_program_station_filter', activeProgramStationFilter);
   const savedRec={...rec};
   clearProgramScheduleForm();
   closeDrawer('programScheduleDrawer');
@@ -11835,7 +9652,6 @@ function quickAddProgramScheduleFromItem(){
   }
   programSchedules().push(rec);
   activeProgramStationFilter=station;
-  localStorage.setItem('jp_program_station_filter', activeProgramStationFilter);
   renderItemSlotOptions(false);
   if($('itemSlot')) $('itemSlot').value=slot;
   updateItemProgramFromSchedule(true);
@@ -11903,7 +9719,6 @@ function syncProgrammingMonthToDate(date,{refresh=true}={}){
   manualMonthOverride=true;
   calendarMonthOpened=key;
   if($('monthInput')) $('monthInput').value=key;
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   if(refresh){
     renderFilters();
     if(activeView==='programacao') renderProgramacao();
@@ -14051,7 +11866,7 @@ function editPromo(pid){
   renderPromoOccurrencesEditor(false);
   openDrawer('promoDrawer');
 }
-function deletePromo(pid){
+async function deletePromo(pid){
   const copies=promoCopiesById(pid).map(({monthKey,p})=>({monthKey,data:clone(p)})); if(!copies.length) return;
   const p=consolidatedPromoById(pid)||copies[0].data;
   const future=(p.occurrences||[]).some(o=>o.date>=todayISO()&&!['REALIZADO','CANCELADO'].includes(normalizeStatus(o.status)));
@@ -14060,8 +11875,16 @@ function deletePromo(pid){
   if(!confirm('REMOVER ESTA PROMOÇÃO EM TODOS OS MESES? ELA FICARÁ DISPONÍVEL PARA RESTAURAÇÃO.')) return;
   trashRecord('PROMOÇÃO',p.name||p.title||'PROMOÇÃO',{id:pid,copies},{sourceId:pid,monthKey:state.currentMonth});
   Object.values(state.months||{}).forEach(m=>{ m.promos=(m.promos||[]).filter(row=>row.id!==pid); });
-  removePromoResultFromProgram(pid); saveState(true); render(); toast('PROMOÇÃO REMOVIDA DA OPERAÇÃO · PUBLICANDO NO ESTÚDIO...');
-  flushFirebaseNow('EXCLUSÃO DE PROMOÇÃO/PAUTA').then(()=>toast('EXCLUSÃO CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO.')).catch(error=>{console.warn('EXCLUSÃO PENDENTE NO FIREBASE',error);queueApiSave(350);});
+  removePromoResultFromProgram(pid);
+  try{
+    if(!saveState(true)) throw new Error('FIREBASE INDISPONÍVEL.');
+    await flushFirebaseNow('EXCLUSÃO DE PROMOÇÃO/PAUTA');
+    render();
+    toast('EXCLUSÃO CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO.');
+  }catch(error){
+    console.warn('EXCLUSÃO NÃO CONFIRMADA NO FIREBASE',error);
+    rollbackToFirebaseBaseline('EXCLUSÃO CANCELADA: FIREBASE NÃO CONFIRMOU.');
+  }
 }
 let promoImageLoadPromise=Promise.resolve();
 $('promoImage').addEventListener('change',e=>{
@@ -14393,18 +12216,11 @@ $('promoForm').addEventListener('submit',async e=>{
   if(isPromo)syncPromoResultToProgram(p);else removePromoResultFromProgram(p.id);
   storePromoAcrossMonths(p);
   auditEvent(existing.id?`ALTERAÇÃO DE ${promoKindLabel(kind)}`:`CADASTRO DE ${promoKindLabel(kind)}`,p.name||p.title||promoKindLabel(kind),{targetId:p.id,before:existing.id?existing:'',after:p});
-  saveState(true);
+  if(!saveState(true)) throw new Error('FIREBASE INDISPONÍVEL. A PROMOÇÃO NÃO FOI SALVA.');
+  await flushFirebaseNow(`${promoKindLabel(kind)} SALVA`);
   closeDrawer('promoDrawer');
   render();
-  toast(`${promoKindLabel(kind)} SALVA · PUBLICANDO NO ESTÚDIO...`);
-  Promise.resolve()
-    .then(()=>flushFirebaseNow(`${promoKindLabel(kind)} SALVA`))
-    .then(()=>toast(`${promoKindLabel(kind)} CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO AUTOMATICAMENTE.`))
-    .catch(syncError=>{
-      console.error('PROMO/PAUTA FIREBASE IMMEDIATE SAVE ERROR',syncError);
-      toast(`${promoKindLabel(kind)} SALVA LOCALMENTE · FIREBASE PENDENTE, RECONEXÃO AUTOMÁTICA ATIVA.`);
-      queueApiSave(350);
-    });
+  toast(`${promoKindLabel(kind)} CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO AUTOMATICAMENTE.`);
   }catch(error){
     console.error('ERRO AO SALVAR PROMOÇÃO/PAUTA',error);
     alert(`NÃO FOI POSSÍVEL SALVAR.\n\n${error?.message||error}`);
@@ -14521,9 +12337,8 @@ bind('returnBellBtn','click',()=>{ renderReturnAlerts(); openDrawer('returnDrawe
 bind('exportBackupBtn','click',exportManualBackup);
 bind('chooseBackupBtn','click',()=>$('backupFileInput')?.click());
 bind('backupFileInput','change',e=>importManualBackupFile(e.target.files?.[0]));
-bind('clearBackupLocalBtn','click',()=>{ localStorage.removeItem('jp_painel_last_backup_export'); if($('backupSelectedFile')) $('backupSelectedFile').textContent='NENHUM ARQUIVO SELECIONADO.'; if($('backupPreviewBox')){$('backupPreviewBox').classList.remove('show'); $('backupPreviewBox').innerHTML='';} renderBackup(); toast('MARCAÇÃO LOCAL DE BACKUP LIMPA.'); });
-bind('forceUploadFirebaseBtn','click',forceUploadLocalToFirebase);
-bind('forceLoadFirebaseBtn','click',forceLoadFirebaseToLocal);
+bind('clearBackupLocalBtn','click',()=>{ lastBackupExportLabel='NÃO GERADO'; if($('backupSelectedFile')) $('backupSelectedFile').textContent='NENHUM ARQUIVO SELECIONADO.'; if($('backupPreviewBox')){$('backupPreviewBox').classList.remove('show'); $('backupPreviewBox').innerHTML='';} renderBackup(); });
+bind('forceLoadFirebaseBtn','click',forceReloadFirebaseOfficial);
 bind('verifyFirebaseBtn','click',verifyFirebaseState);
 bind('importWinnersBtn','click',()=>$('winnerImportFileInput')?.click());
 bind('winnerImportFileInput','change',event=>parseWinnerImportFile(event.target.files?.[0]));
@@ -14588,11 +12403,6 @@ window.confirmSmartRadioReport=confirmSmartRadioReport;
 window.redoSmartRadioReport=redoSmartRadioReport;
 window.openProgramScheduleForm=openProgramScheduleForm;
 window.editItem=editItem; window.duplicateItem=duplicateItem; window.deleteItem=deleteItem; window.programFromDist=programFromDist; window.filterProgramByDist=filterProgramByDist; window.editDist=editDist; window.deleteDist=deleteDist; window.editPromo=editPromo; window.deletePromo=deletePromo;
-window.addEventListener('storage',()=>{
-  state = loadState();
-  normalizePanelState(state);
-  render();
-});
 window.addEventListener('online',handleBrowserConnectionChange);
 document.addEventListener('DOMContentLoaded',()=>{
   if(!firebaseConnected||!firebaseServerLoaded) startFirebaseAutoConnectSequence();
@@ -14614,7 +12424,6 @@ try{
 }catch(error){
   console.error('INITIAL PANEL RENDER ERROR',error);
 }
-window.addEventListener('beforeunload',()=>{ normalizePanelState(state); localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); });
 setInterval(()=>{ syncCalendarMonthIfChanged(); },60000);
 setInterval(()=>syncStateFromApi(false),15000);
 window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded)syncStateFromApi(true);});

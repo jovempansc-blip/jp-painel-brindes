@@ -355,6 +355,7 @@ const FIREBASE_ROOT_PATH="jp-painel-brindes/state";
 const OPEC_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_opec';
 firebase.initializeApp(FIREBASE_CONFIG);
 const opecDatabase=firebase.database();
+if(typeof opecDatabase.goOnline==='function')opecDatabase.goOnline();
 const ref=opecDatabase.ref(FIREBASE_ROOT_PATH);
 const opecConnectionRef=opecDatabase.ref('.info/connected');
 let opecReconnectTimer=null;
@@ -632,7 +633,8 @@ function scheduleOpecFirebaseReconnect(delay=1400){
   },delay);
 }
 opecConnectionRef.on('value',snapshot=>{opecConnected=snapshot.val()===true;if(opecConnected){clearTimeout(opecReconnectTimer);opecReconnectTimer=null;}else{setSaveState('error','FIREBASE RECONECTANDO');scheduleOpecFirebaseReconnect();}});
-ref.on('value',snapshot=>{const payload=snapshot.val();const remote=payload?.months?payload:(payload?.state?.months?payload.state:null);if(remote){state=remote;state.programSchedules ||= [];state.months ||= {};setSaveState('','FIREBASE ONLINE');render();}},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
+ref.child('months').on('value',snapshot=>{state.months=snapshot.val()||{};setSaveState('','FIREBASE ONLINE');render();},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
+ref.child('programSchedules').on('value',snapshot=>{const value=snapshot.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);setSaveState('','FIREBASE ONLINE');render();},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
 window.addEventListener('online',()=>{try{if(typeof opecDatabase.goOnline==='function')opecDatabase.goOnline();}catch(error){}scheduleOpecFirebaseReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!opecConnected)scheduleOpecFirebaseReconnect(250);});
 </script>

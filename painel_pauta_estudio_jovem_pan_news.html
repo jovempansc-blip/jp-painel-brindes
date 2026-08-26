@@ -2297,13 +2297,12 @@ tbody tr:focus-within td{background:#fff8fa}
   </section>
 </div>
 <script>
-const STORAGE_KEY='jp_programacao_brindes_distribuicao_v2';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'" :'&#39;','"':'&quot;'}[c]));
 const upper=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
 const norm=upper;
 
-let state=loadState();
+let state={currentMonth:'',months:{},schedules:[],programSchedules:[]};
 let currentMonth=state.currentMonth||Object.keys(state.months||{})[0]||'';
 let selectedIndex=-1;
 let manual=false;
@@ -2338,6 +2337,7 @@ let firebaseRef=null;
 let firebaseDatabase=null;
 let firebaseConnectionRef=null;
 let firebaseReconnectTimer=null;
+let newsRealtimeBound=false;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
 
@@ -2357,13 +2357,6 @@ async function ensureStudioFirebaseOnline(){
 }
 function newsMonthKey(date=''){const valid=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));const key=String(date||'').slice(0,7);if(valid(key)&&state.months?.[key])return key;if(valid(currentMonth))return currentMonth;if(valid(key))return key;return todayISO().slice(0,7);}
 async function appendNewsAudit(entry){await studioRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(rows.some(row=>row?.id===entry.id))return rows;rows.push(entry);return rows.slice(-2500);},undefined,false));}
-function loadState(){
-  try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s&&s.months)return s;}catch(e){}
-  return {currentMonth:'',months:{}};
-}
-function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
 function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
@@ -2400,7 +2393,6 @@ async function persistStudioRecord(collection,record,fields){
     source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
     version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'
   })]);
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
 }
 function persistStudioPromo(record){
   return persistStudioRecord('promos',record,[
@@ -2420,15 +2412,27 @@ function applyRemoteFirebaseState(remoteState){
   state=remoteState;
   firebaseServerLoaded=true;
   selectStudioMonth();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if(!manual) selectedIndex=-1;
   render();
   firebaseApplyingRemote=false;
 }
 async function handleEmptyFirebase(){
-  // Firebase é a fonte oficial. O estúdio não envia cache local quando o servidor está vazio.
+  state={currentMonth:'',months:{},schedules:[],programSchedules:[],publishedPrograms:{}};
+  currentMonth='';
   firebaseServerLoaded=true;
+  selectedIndex=-1;selectedPromoId=null;currentDisplayItem=null;
   render();
+}
+function attachNewsRealtimeListeners(){
+  if(newsRealtimeBound||!firebaseRef)return;
+  newsRealtimeBound=true;
+  const applyPart=(key,value)=>{
+    if(key==='months')state.months=value||{};
+    else if(key==='programSchedules')state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);
+    else if(key==='publishedPrograms')state.publishedPrograms=value||{};
+    firebaseServerLoaded=true;selectStudioMonth();if(!manual)selectedIndex=-1;render();
+  };
+  ['months','programSchedules','publishedPrograms'].forEach(key=>firebaseRef.child(key).on('value',snapshot=>applyPart(key,snapshot.val()),error=>{console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleNewsFirebaseReconnect(900);}));
 }
 function initFirebaseSync(){
   if(firebaseStarted) return;
@@ -2440,6 +2444,7 @@ function initFirebaseSync(){
   try{
     const app=window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
     firebaseDatabase=window.firebase.database(app);
+    if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
     firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
     firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
     firebaseReady=true;
@@ -2447,15 +2452,8 @@ function initFirebaseSync(){
       if(snapshot.val()===true){clearTimeout(firebaseReconnectTimer);firebaseReconnectTimer=null;return;}
       scheduleNewsFirebaseReconnect();
     });
-    firebaseRef.on('value', async snapshot=>{
-      const payload=snapshot.val();
-      const remoteState=payload?.months?payload:(payload?.state?.months?payload.state:null);
-      if(!remoteState){
-        await handleEmptyFirebase();
-        return;
-      }
-      applyRemoteFirebaseState(remoteState);
-    },err=>{console.warn('FIREBASE LOAD ERROR',err);scheduleNewsFirebaseReconnect();});
+    attachNewsRealtimeListeners();
+    Promise.all([firebaseRef.child('months').get(),firebaseRef.child('programSchedules').get(),firebaseRef.child('publishedPrograms').get()]).then(([m,pubSched,published])=>{state={...state,months:m.val()||{},programSchedules:Array.isArray(pubSched.val())?pubSched.val():Object.values(pubSched.val()||{}).filter(Boolean),publishedPrograms:published.val()||{}};firebaseServerLoaded=true;selectStudioMonth();render();}).catch(()=>scheduleNewsFirebaseReconnect(700));
   }catch(err){
     console.warn('FIREBASE INIT ERROR',err);
   }
@@ -3058,7 +3056,6 @@ async function commitNewsOutcomeAtomicV56({collection,recordId,patch,occurrenceK
   if(changed){
     await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'ESTUDIO_JPNEWS',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_RESULT'}),appendNewsAudit({id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO',targetId:recordId,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   }
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   return true;
 }
 async function commitNewsOutcomeAtomic(payload){return commitNewsOutcomeAtomicV56(payload);}
@@ -3213,8 +3210,7 @@ async function markPromoReadMissed(promoId,date,slot,program,reason){
   await ensureStudioFirebaseOnline();
   const result=await studioRetry(async()=>{const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===promoId);if(index<0)return;found=true;const row=rows[index],required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return rows;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_4_NOTIFICATION_BELL'});row.updatedAt=iso;rows[index]=row;changed=true;return rows;},undefined,false);if(!tx?.committed){const error=new Error(found?'A INSERÇÃO NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
   const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
-  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_4_NOTIFICATION_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));selectedPromoId=null;render();return changed;
+  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_4_NOTIFICATION_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);selectedPromoId=null;render();return changed;
 }
 window.markPromoReadMissed=markPromoReadMissed;
 async function confirmPromoReadV56(event){
@@ -3248,7 +3244,6 @@ async function confirmPromoReadV56(event){
     });
     const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JPNEWS',version:'AV57_SMART_READ'}),appendNewsAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
     selectedPromoId=(savedOccurrence<required)?p.id:null;render();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
   finally{if(button){button.dataset.busy='0';button.disabled=false;button.textContent='CONFIRMAR LEITURA';}}
@@ -3544,7 +3539,6 @@ $('historyDateInput').addEventListener('change',renderHistoryList);
 $('historyModal').addEventListener('click',e=>{ if(e.target.id==='historyModal') closeHistoryModal(); });
 document.addEventListener('pointerdown',()=>{if(manual)scheduleManualReturn();},{passive:true});
 document.addEventListener('keydown',()=>{if(manual)scheduleManualReturn();});
-window.addEventListener('storage',()=>{state=loadState();selectStudioMonth();if(!manual)selectedIndex=-1;render();});
 window.addEventListener('focus',()=>syncStateFromApi(true));
 window.addEventListener('online',()=>{try{if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();}catch(error){}syncStateFromApi(true);scheduleNewsFirebaseReconnect(250);});
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden){syncStateFromApi(true);scheduleNewsFirebaseReconnect(250);} });

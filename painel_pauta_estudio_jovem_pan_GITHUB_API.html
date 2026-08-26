@@ -2356,7 +2356,7 @@ tbody tr:focus-within td{background:#fff8fa}
 
 
 <style>
-/* AV57.6.6.22 · RELIGAMENTO PRINCIPAL → ESTÚDIO · ALERTA DE PAUTA */
+/* AV57.6.6.24 · FIREBASE RTDB COMO FONTE ÚNICA · RELIGAMENTO PRINCIPAL → ESTÚDIO */
 .promoFooter{background:linear-gradient(90deg,#fff5e8 0%,#fff9f0 100%)!important;border-top:1px solid #f2c48d!important;overflow:visible!important}
 .promoFooterList{display:flex!important;align-items:center!important;gap:8px!important;overflow:visible!important}
 .promoFooter .promoPill.pending{width:auto!important;min-width:260px!important;max-width:min(520px,58vw)!important;height:30px!important;min-height:30px!important;padding:0 12px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;gap:8px!important;white-space:nowrap!important;overflow:hidden!important}
@@ -2435,13 +2435,12 @@ tbody tr:focus-within td{background:#fff8fa}
   </section>
 </div>
 <script>
-const STORAGE_KEY='jp_programacao_brindes_distribuicao_v2';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'" :'&#39;','"':'&quot;'}[c]));
 const upper=v=>String(v??'').trim().replace(/\s+/g,' ').toUpperCase();
 const norm=upper;
 
-let state=loadState();
+let state=normalizeStudioStateShape({currentMonth:'',months:{},schedules:[],programSchedules:[]});
 let currentMonth=state.currentMonth||Object.keys(state.months||{})[0]||'';
 let selectedIndex=-1;
 let manual=false;
@@ -2481,6 +2480,7 @@ let firebaseServerLoaded=false;
 let firebaseConnected=false;
 let firebaseLastSnapshotAt=0;
 let firebaseReconnectTimer=null;
+let studioRealtimeBound=false;
 let winnerBankRef=null;
 let winnerBankStarted=false;
 let winnerBankReady=false;
@@ -2558,22 +2558,6 @@ function normalizeStudioStateShape(data){
   data.programSchedules=studioRows(data.programSchedules);
   return data;
 }
-function loadState(){
-  try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s&&s.months)return normalizeStudioStateShape(s);}catch(e){}
-  return {currentMonth:'',months:{}};
-}
-function studioWriteLocalStateCache(data=state){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    return true;
-  }catch(error){
-    console.warn('STUDIO CACHE LOCAL INDISPONÍVEL/LOTADO',error);
-    return false;
-  }
-}
-function saveState(){
-  studioWriteLocalStateCache(state);
-}
 function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
@@ -2610,7 +2594,6 @@ async function persistStudioRecord(collection,record,fields){
     source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
     version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'
   })]);
-  studioWriteLocalStateCache(state);
 }
 function persistStudioPromo(record){
   return persistStudioRecord('promos',record,[
@@ -2632,14 +2615,16 @@ function applyRemoteFirebaseState(remoteState){
   state=normalizeStudioStateShape(remoteState);
   firebaseServerLoaded=true;
   selectStudioMonth();
-  studioWriteLocalStateCache(state);
   if(!manual) selectedIndex=-1;
   render();
   firebaseApplyingRemote=false;
 }
 async function handleEmptyFirebase(){
-  // Firebase é a fonte oficial. O estúdio não envia cache local quando o servidor está vazio.
+  // Firebase é a única fonte oficial. Snapshot vazio limpa a memória operacional.
+  state=normalizeStudioStateShape({currentMonth:'',months:{},schedules:[],programSchedules:[],publishedPrograms:{},prizeCatalog:{}});
+  currentMonth='';
   firebaseServerLoaded=true;
+  selectedIndex=-1;selectedPromoId=null;currentDisplayItem=null;
   render();
 }
 function studioApplyFirebaseSnapshot(snapshot){
@@ -2660,11 +2645,44 @@ async function forceStudioFirebaseRefresh(full=true){
   if(!firebaseReady||!firebaseRef)return false;
   try{
     if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
-    const snapshot=await Promise.race([firebaseRef.get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT FIREBASE')),7000))]);
-    studioApplyFirebaseSnapshot(snapshot);clearTimeout(firebaseReconnectTimer);return true;
+    const [monthsSnap,programSnap,publishedSnap,catalogSnap]=await Promise.race([
+      Promise.all([
+        firebaseRef.child('months').get(),
+        firebaseRef.child('programSchedules').get(),
+        firebaseRef.child('publishedPrograms').get(),
+        firebaseRef.child('prizeCatalog').get()
+      ]),
+      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT FIREBASE')),7000))
+    ]);
+    state=normalizeStudioStateShape({
+      ...state,
+      months:monthsSnap.val()||{},
+      programSchedules:programSnap.val()||[],
+      publishedPrograms:publishedSnap.val()||{},
+      prizeCatalog:catalogSnap.val()||{}
+    });
+    firebaseLastSnapshotAt=Date.now();firebaseConnected=true;firebaseServerLoaded=true;
+    selectStudioMonth();if(!manual)selectedIndex=-1;render();
+    clearTimeout(firebaseReconnectTimer);return true;
   }catch(error){
-    firebaseConnected=false;console.warn('FIREBASE REFRESH ERROR',error);scheduleStudioFirebaseReconnect(1800);return false;
+    firebaseConnected=false;console.warn('FIREBASE REFRESH ERROR',error);scheduleStudioFirebaseReconnect(1200);return false;
   }
+}
+function attachStudioRealtimeListeners(){
+  if(studioRealtimeBound||!firebaseRef)return;
+  studioRealtimeBound=true;
+  const applyPart=(key,value)=>{
+    if(key==='months')state.months=value||{};
+    else if(key==='programSchedules')state.programSchedules=value||[];
+    else if(key==='publishedPrograms')state.publishedPrograms=value||{};
+    else if(key==='prizeCatalog')state.prizeCatalog=value||{};
+    state=normalizeStudioStateShape(state);
+    firebaseLastSnapshotAt=Date.now();firebaseConnected=true;firebaseServerLoaded=true;
+    selectStudioMonth();if(!manual)selectedIndex=-1;render();
+  };
+  ['months','programSchedules','publishedPrograms','prizeCatalog'].forEach(key=>{
+    firebaseRef.child(key).on('value',snapshot=>applyPart(key,snapshot.val()),error=>{firebaseConnected=false;console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleStudioFirebaseReconnect(900);});
+  });
 }
 function initFirebaseSync(){
   if(firebaseStarted) return;
@@ -2681,7 +2699,7 @@ function initFirebaseSync(){
     firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
     firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
     firebaseReady=true;
-    firebaseRef.on('value',snapshot=>studioApplyFirebaseSnapshot(snapshot),err=>{firebaseConnected=false;console.warn('FIREBASE LOAD ERROR',err);scheduleStudioFirebaseReconnect(1400);});
+    attachStudioRealtimeListeners();
     firebaseConnectionRef.on('value',snapshot=>{
       firebaseConnected=snapshot.val()===true;
       if(firebaseConnected){forceStudioFirebaseRefresh(true);}else if(navigator.onLine!==false){scheduleStudioFirebaseReconnect(1600);}
@@ -2695,16 +2713,6 @@ function syncStateFromApi(force=false){
   initFirebaseSync();
   if(force)return forceStudioFirebaseRefresh(true);
   if(!firebaseReady||!firebaseRef||!firebaseConnected||Date.now()-firebaseLastSnapshotAt>18000)scheduleStudioFirebaseReconnect(0);
-}
-function initStudioWorkspaceLiveBridge(){
-  try{
-    if('BroadcastChannel' in window){
-      const channel=new BroadcastChannel('jp_workspace_live_state');
-      channel.onmessage=event=>{if(event?.data?.type==='STATE_CHANGED')setTimeout(()=>syncStateFromApi(true),40);};
-      window.__jpStudioWorkspaceChannel=channel;
-    }
-  }catch(error){console.warn('STUDIO LIVE BRIDGE INDISPONÍVEL',error);}
-  window.addEventListener('storage',event=>{if(event.key===STORAGE_KEY)setTimeout(()=>syncStateFromApi(true),40);});
 }
 function winnerPlain(value){
   return upper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
@@ -4000,7 +4008,6 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     }
     const remoteRows=stateResult.snapshot.val();
     if(state.months?.[monthKey]) state.months[monthKey][collection]=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
     try{applyWinnerBankSnapshot((await winnerBankRef.get()).val()||{});}catch(refreshError){initWinnerBank(true);}
     return true;
   }catch(error){
@@ -4180,8 +4187,7 @@ async function markPromoReadMissed(promoId,date,slot,program,reason){
   await ensureStudioFirebaseOnline();
   const result=await studioRetry(async()=>{const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===promoId);if(index<0)return;found=true;const row=rows[index],required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return rows;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_4_NOTIFICATION_BELL'});row.updatedAt=iso;rows[index]=row;changed=true;return rows;},undefined,false);if(!tx?.committed){const error=new Error(found?'A INSERÇÃO NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
   const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
-  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_4_NOTIFICATION_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));selectedPromoId=null;render();return changed;
+  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_4_NOTIFICATION_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);selectedPromoId=null;render();return changed;
 }
 window.markPromoReadMissed=markPromoReadMissed;
 async function confirmPromoReadV56(event){
@@ -4215,7 +4221,6 @@ async function confirmPromoReadV56(event){
     });
     const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'AV57_SMART_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
     selectedPromoId=(savedOccurrence<required)?p.id:null;render();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
   finally{if(button){button.dataset.busy='0';button.disabled=false;button.textContent='CONFIRMAR LEITURA';}}
@@ -4615,20 +4620,6 @@ $('historyDateInput').addEventListener('change',renderHistoryList);
 $('historyModal').addEventListener('click',e=>{ if(e.target.id==='historyModal') closeHistoryModal(); });
 document.addEventListener('pointerdown',()=>{if(manual)scheduleManualReturn();},{passive:true});
 document.addEventListener('keydown',()=>{if(manual)scheduleManualReturn();});
-function applyStudioLocalRealtimeState(){
-  try{
-    const next=loadState();
-    if(!next?.months)return;
-    state=next;selectStudioMonth();if(!manual)selectedIndex=-1;render();
-  }catch(error){console.warn('STUDIO LOCAL REALTIME APPLY ERROR',error);}
-}
-window.addEventListener('storage',event=>{if(!event.key||event.key===STORAGE_KEY)applyStudioLocalRealtimeState();});
-try{
-  if('BroadcastChannel' in window){
-    window.__jpWorkspaceStudioChannel=new BroadcastChannel('jp_workspace_live_state');
-    window.__jpWorkspaceStudioChannel.addEventListener('message',event=>{if(event?.data?.type==='STATE_CHANGED')applyStudioLocalRealtimeState();});
-  }
-}catch(error){console.warn('STUDIO BROADCAST CHANNEL ERROR',error);}
 window.addEventListener('focus',()=>syncStateFromApi(true));
 window.addEventListener('online',()=>syncStateFromApi(true));
 window.addEventListener('offline',()=>{firebaseConnected=false;});
@@ -4656,9 +4647,8 @@ selectStudioMonth();
 if($('historyDateInput')) $('historyDateInput').value=todayISO();
 render();
 initFirebaseSync();
-initStudioWorkspaceLiveBridge();
 initWinnerBank(false);
 </script>
-<!-- AV-57.6.6.22 · ESTÚDIO PROMO/PAUTA RELINK + FIREBASE LIVE + STORAGE/BROADCAST FALLBACK -->
+<!-- AV-57.6.6.24 · FIREBASE ÚNICO + LISTENERS RTDB GRANULARES -->
 </body>
 </html>

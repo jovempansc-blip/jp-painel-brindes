@@ -640,7 +640,6 @@ const FIREBASE_CONFIG={
   measurementId:"G-VB6Y2TS796"
 };
 const FIREBASE_ROOT_PATH="jp-painel-brindes/state";
-const STORAGE_KEY="jp_programacao_brindes_distribuicao_v2";
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??"").replace(/[&<>'"]/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
 const upper=value=>String(value??"").trim().replace(/\s+/g," ").toUpperCase();
@@ -671,7 +670,7 @@ let firebaseConnectionKnown=false;
 let firebaseRetryAttempt=0;
 let firebaseRestLastAttempt=0;
 let connectionMode="loading";
-let lastFirebaseSyncAt=localStorage.getItem('jp_direcao_last_firebase_sync')||"";
+let lastFirebaseSyncAt="";
 let reportFrom="";
 let reportTo="";
 let directionDrilldown=null;
@@ -1255,14 +1254,13 @@ function directionHasRecentServerActivity(maxAge=90000){
 function updateConnection(online,message='',mode=''){
   const badge=$('syncBadge');
   if(online){firebaseConnected=true;firebaseConnectionKnown=true;connectionMode='online';}
-  else connectionMode=mode||'local';
+  else connectionMode=mode||'offline';
   if(!badge)return;
   badge.classList.remove('offline','connecting','error');
   if(online){
     badge.textContent='FIREBASE ONLINE';
     badge.title='CONECTADO AUTOMATICAMENTE AO FIREBASE · CLIQUE PARA TESTAR NOVAMENTE';
     lastFirebaseSyncAt=new Date().toLocaleString('pt-BR');
-    localStorage.setItem('jp_direcao_last_firebase_sync',lastFirebaseSyncAt);
     $('updated').textContent=`ATUALIZADO: ${lastFirebaseSyncAt}`;
     return;
   }
@@ -1279,8 +1277,8 @@ function updateConnection(online,message='',mode=''){
     badge.title=message||firebaseLastError||'ERRO DE CONEXÃO';
   }else{
     badge.classList.add('offline');
-    badge.textContent='DADOS LOCAIS · RECONECTANDO';
-    badge.title=message||'AGUARDANDO RECONEXÃO AUTOMÁTICA';
+    badge.textContent='FIREBASE OFFLINE · RECONECTANDO';
+    badge.title=message||'SEM DADOS OFFLINE · AGUARDANDO FIREBASE';
   }
   $('updated').textContent=lastFirebaseSyncAt?`ÚLTIMA SINCRONIZAÇÃO REAL: ${lastFirebaseSyncAt}`:(message||'AGUARDANDO FIREBASE');
 }
@@ -1301,9 +1299,19 @@ function directionMarkFirebaseActivity(){
   clearTimeout(firebaseRetryTimer);
   updateConnection(true,'FIREBASE ONLINE');
 }
+function clearDirectionFirebaseState(source='firebase'){
+  state=directionNormalizeState({currentMonth:'',months:{},programSchedules:[],schedules:[]});
+  currentMonth=liveTodayISO().slice(0,7);
+  state.currentMonth=currentMonth;
+  const monthControl=$('monthFilter');if(monthControl)monthControl.value=currentMonth;
+  const dateControl=$('dateFilter');if(dateControl)dateControl.value=liveTodayISO();
+  fillMonthFilter();
+  if(source==='firebase'||source==='rest')directionMarkFirebaseActivity();
+  render();
+}
 function applyPayload(payload,source){
   const next=directionStateFromPayload(payload);
-  if(!next||!next.months)throw new Error('BASE SEM ESTRUTURA DE MESES');
+  if(!next||!next.months){clearDirectionFirebaseState(source);return;}
   state=directionNormalizeState(next);
   const requestedMonth=currentMonth||String($('dateFilter')?.value||liveTodayISO()).slice(0,7);
   if(state.months?.[requestedMonth])currentMonth=requestedMonth;
@@ -1312,25 +1320,20 @@ function applyPayload(payload,source){
   state.currentMonth=currentMonth;
   const monthControl=$('monthFilter');if(monthControl)monthControl.value=currentMonth;
   const dateControl=$('dateFilter');if(dateControl&&String(dateControl.value||'').slice(0,7)!==currentMonth)dateControl.value=`${currentMonth}-01`;
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
   fillMonthFilter();
   if(source==='firebase'||source==='rest')directionMarkFirebaseActivity();
   render();
 }
-function loadLocalFallback(){
-  try{
-    const local=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
-    if(local?.months){
-      state=directionNormalizeState(local);
-      const requestedMonth=currentMonth||String($('dateFilter')?.value||liveTodayISO()).slice(0,7);
-      currentMonth=state.months?.[requestedMonth]?requestedMonth:(state.months?.[state.currentMonth]?state.currentMonth:(availableMonths().at(-1)||liveTodayISO().slice(0,7)));
-      state.currentMonth=currentMonth;
-      fillMonthFilter();render();
-      if(!directionHasRecentServerActivity())updateConnection(false,'USANDO CACHE LOCAL ENQUANTO O FIREBASE RECONECTA','local');
-      return true;
-    }
-  }catch(error){console.warn('DIRECTION LOCAL FALLBACK ERROR',error);}
-  return false;
+function directionApplyRealtimePart(key,value){
+  if(!state||typeof state!=='object')state={months:{},programSchedules:[]};
+  if(key==='months')state.months=value||{};
+  else if(key==='programSchedules')state.programSchedules=directionList(value);
+  state=directionNormalizeState(state);
+  const requestedMonth=currentMonth||String($('dateFilter')?.value||liveTodayISO()).slice(0,7);
+  if(state.months?.[requestedMonth])currentMonth=requestedMonth;
+  else currentMonth=availableMonths().at(-1)||liveTodayISO().slice(0,7);
+  state.currentMonth=currentMonth;
+  fillMonthFilter();directionMarkFirebaseActivity();render();
 }
 function directionScheduleFirebaseRetry(baseDelay=1800){
   clearTimeout(firebaseRetryTimer);
@@ -1353,7 +1356,6 @@ async function directionFirebaseRestRead(force=false){
     ]);
     if(!response.ok)throw new Error(`REST FIREBASE HTTP ${response.status}`);
     const payload=await response.json();
-    if(!payload)throw new Error('BASE FIREBASE VAZIA');
     applyPayload(payload,'rest');
     return true;
   }catch(error){
@@ -1369,13 +1371,14 @@ async function directionFirebaseBootstrap(force=false){
   if(!directionHasRecentServerActivity())directionShowConnecting('CONECTANDO AUTOMATICAMENTE');
   try{
     if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
-    const snapshot=await Promise.race([
-      firebaseRef.get(),
+    const [monthsSnap,programSnap]=await Promise.race([
+      Promise.all([firebaseRef.child('months').get(),firebaseRef.child('programSchedules').get()]),
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT SDK FIREBASE')),9000))
     ]);
-    const value=snapshot.val();
-    if(!value)throw new Error('BASE FIREBASE VAZIA');
-    applyPayload(value,'firebase');
+    state=directionNormalizeState({months:monthsSnap.val()||{},programSchedules:directionList(programSnap.val())});
+    const requestedMonth=currentMonth||String($('dateFilter')?.value||liveTodayISO()).slice(0,7);
+    currentMonth=state.months?.[requestedMonth]?requestedMonth:(availableMonths().at(-1)||liveTodayISO().slice(0,7));
+    state.currentMonth=currentMonth;fillMonthFilter();directionMarkFirebaseActivity();render();
     return true;
   }catch(error){
     firebaseLastError=String(error?.message||error||'ERRO DE CONEXÃO');
@@ -1383,8 +1386,7 @@ async function directionFirebaseBootstrap(force=false){
     const restOk=await directionFirebaseRestRead(true);
     if(!restOk&&!directionHasRecentServerActivity()){
       firebaseConnected=false;
-      if(!firebaseServerLoaded)loadLocalFallback();
-      updateConnection(false,navigator.onLine===false?'NAVEGADOR SEM INTERNET':'RECONECTANDO AUTOMATICAMENTE',navigator.onLine===false?'local':'connecting');
+      updateConnection(false,navigator.onLine===false?'NAVEGADOR SEM INTERNET':'RECONECTANDO AUTOMATICAMENTE',navigator.onLine===false?'offline':'connecting');
       directionScheduleFirebaseRetry(1800);
     }
     return restOk;
@@ -1404,7 +1406,7 @@ function directionAttachFirebaseListeners(){
       return;
     }
     if(navigator.onLine===false){
-      firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','local');return;
+      firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','offline');return;
     }
     // .info/connected pode oscilar em redes/proxies. Uma leitura recente vale mais que esse sinal.
     if(directionHasRecentServerActivity(90000)){updateConnection(true,'FIREBASE ONLINE');setTimeout(()=>directionFirebaseHealthCheck(),250);return;}
@@ -1414,21 +1416,14 @@ function directionAttachFirebaseListeners(){
     if(!directionHasRecentServerActivity())directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');
     directionScheduleFirebaseRetry(1800);
   });
-  firebaseRef.on('value',snapshot=>{
-    try{
-      const value=snapshot.val();if(!value)throw new Error('BASE FIREBASE VAZIA');
-      applyPayload(value,'firebase');
-    }catch(error){
-      firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR FIREBASE');
-      console.warn('DIRECTION FIREBASE LISTENER APPLY ERROR',error);
-      if(!directionHasRecentServerActivity())directionScheduleFirebaseRetry(2200);
-    }
-  },error=>{
-    firebaseLastError=String(error?.message||error||'LISTENER FIREBASE');
-    console.warn('DIRECTION FIREBASE LISTENER ERROR',error);
-    if(!directionHasRecentServerActivity())directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');
-    directionScheduleFirebaseRetry(2000);
-  });
+  firebaseRef.child('months').on('value',snapshot=>{
+    try{directionApplyRealtimePart('months',snapshot.val());}
+    catch(error){firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR MESES');console.warn('DIRECTION FIREBASE MONTHS ERROR',error);directionScheduleFirebaseRetry(1200);}
+  },error=>{firebaseLastError=String(error?.message||error||'LISTENER MESES');console.warn('DIRECTION FIREBASE MONTHS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);});
+  firebaseRef.child('programSchedules').on('value',snapshot=>{
+    try{directionApplyRealtimePart('programSchedules',snapshot.val());}
+    catch(error){firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR GRADE');console.warn('DIRECTION FIREBASE PROGRAMS ERROR',error);directionScheduleFirebaseRetry(1200);}
+  },error=>{firebaseLastError=String(error?.message||error||'LISTENER GRADE');console.warn('DIRECTION FIREBASE PROGRAMS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);});
 }
 async function directionFirebaseHealthCheck(){
   if(navigator.onLine===false)return false;
@@ -1481,7 +1476,7 @@ function initDirectionFirebase(){
   }
 }
 function directionForceFirebaseConnect(force=false){
-  if(navigator.onLine===false){firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','local');return;}
+  if(navigator.onLine===false){firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','offline');return;}
   if(!firebaseReady){initDirectionFirebase();directionFirebaseRestRead(force);return;}
   try{if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();}catch(error){console.warn('DIRECTION FIREBASE GOONLINE ERROR',error);}
   directionFirebaseBootstrap(force||!firebaseConnected||!firebaseServerLoaded||!directionHasRecentServerActivity());
@@ -1494,11 +1489,10 @@ function startDirectionFirebaseAutoConnect(){
 }
 
 directionInitUI();
-// O painel fica operacional antes do SDK. A primeira leitura REST não depende do CDN do Firebase.
+// Firebase é a única fonte. A leitura REST consulta o mesmo RTDB enquanto o SDK inicializa.
 directionShowConnecting('CONECTANDO AUTOMATICAMENTE');
 directionFirebaseRestRead(true).finally(()=>initDirectionFirebase());
 startDirectionFirebaseAutoConnect();
-setTimeout(()=>{if(!firebaseServerLoaded)loadLocalFallback();},3000);
 setInterval(async()=>{
   if(navigator.onLine===false)return;
   if(directionHasRecentServerActivity(90000))return;
@@ -1506,7 +1500,7 @@ setInterval(async()=>{
   if(!healthy)directionForceFirebaseConnect(true);
 },30000);
 window.addEventListener('online',()=>{if(!directionHasRecentServerActivity())directionShowConnecting('INTERNET RESTABELECIDA · RECONECTANDO');directionForceFirebaseConnect(true);});
-window.addEventListener('offline',()=>{firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','local');});
+window.addEventListener('offline',()=>{firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','offline');});
 window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded||!directionHasRecentServerActivity(60000))directionForceFirebaseConnect(true);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&(!firebaseConnected||!firebaseServerLoaded||!directionHasRecentServerActivity(60000)))directionForceFirebaseConnect(true);});
 

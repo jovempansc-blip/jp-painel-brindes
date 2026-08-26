@@ -828,6 +828,7 @@ function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
 function promoPrizeTitle(p){const d=distributionById(p?.distributionId);return upper(p?.prizeTitle||d.title||d.show||p?.title||p?.name||d.prize||'PROMOÇÃO');}
 firebase.initializeApp(FIREBASE_CONFIG);
 const receptionDatabase=firebase.database();
+if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();
 const firebaseRef=receptionDatabase.ref(FIREBASE_ROOT_PATH);
 const receptionConnectionRef=receptionDatabase.ref('.info/connected');
 let receptionReconnectTimer=null;
@@ -906,7 +907,7 @@ async function saveReceptionRecord(source,record){
       receptionRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(!rows.some(row=>row?.id===log.id))rows.push(log);return rows.slice(-2500);},undefined,false)),
       firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'RECEPCAO',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_RECEPTION'})
     ]);
-    localStorage.setItem('jp_programacao_brindes_distribuicao_v2',JSON.stringify(state));return true;
+    return true;
   }finally{receptionPendingSaves.delete(record.id);}
 }
 
@@ -1080,7 +1081,7 @@ function setPickup(row,undo=false){
     changedRecord=promo;
   }
   if(!changedRecord) return;
-  return saveReceptionRecord(row.source,changedRecord).then(()=>{localStorage.setItem('jp_programacao_brindes_distribuicao_v2',JSON.stringify(state));render();refreshOpenReceptionSheet();return true;}).catch(err=>{console.warn('PICKUP SAVE ERROR',err);showReceptionToast(`NÃO FOI POSSÍVEL REGISTRAR A RETIRADA. ${upper(err?.message||'O PRÊMIO CONTINUA PENDENTE.')}`,true);throw err;});
+  return saveReceptionRecord(row.source,changedRecord).then(()=>{render();refreshOpenReceptionSheet();return true;}).catch(err=>{console.warn('PICKUP SAVE ERROR',err);showReceptionToast(`NÃO FOI POSSÍVEL REGISTRAR A RETIRADA. ${upper(err?.message||'O PRÊMIO CONTINUA PENDENTE.')}`,true);throw err;});
 }
 function rowStatus(row){
   if(row.deliveredAt) return 'RETIRADO';
@@ -1201,7 +1202,8 @@ receptionConnectionRef.on('value',snap=>{
   if(receptionConnected){clearTimeout(receptionReconnectTimer);receptionReconnectTimer=null;}
   else if(navigator.onLine!==false)receptionScheduleReconnect();
 });
-firebaseRef.on('value',snap=>{const payload=snap.val();const remote=payload?.months?payload:(payload?.state?.months?payload.state:null);if(remote){state=remote;selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}},error=>{console.warn('RECEPTION FIREBASE LOAD ERROR',error);receptionScheduleReconnect();});
+firebaseRef.child('months').on('value',snap=>{state.months=snap.val()||{};selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');},error=>{console.warn('RECEPTION MONTHS LOAD ERROR',error);receptionScheduleReconnect();});
+firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);render();},error=>{console.warn('RECEPTION PROGRAM SCHEDULE LOAD ERROR',error);receptionScheduleReconnect();});
 window.addEventListener('online',()=>{try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){}receptionScheduleReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!receptionConnected)receptionScheduleReconnect(250);});
 </script>
