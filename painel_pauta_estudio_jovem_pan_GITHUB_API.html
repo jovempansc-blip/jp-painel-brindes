@@ -2529,8 +2529,17 @@ function loadState(){
   try{const s=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(s&&s.months)return s;}catch(e){}
   return {currentMonth:'',months:{}};
 }
+function studioWriteLocalStateCache(data=state){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return true;
+  }catch(error){
+    console.warn('STUDIO CACHE LOCAL INDISPONÍVEL/LOTADO',error);
+    return false;
+  }
+}
 function saveState(){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  studioWriteLocalStateCache(state);
 }
 function countStateRecords(data){
   if(!data || !data.months) return 0;
@@ -2568,7 +2577,7 @@ async function persistStudioRecord(collection,record,fields){
     source:STUDIO_STATION==='JPNEWS983'?'ESTUDIO_JPNEWS':'ESTUDIO_JP',
     version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'
   })]);
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  studioWriteLocalStateCache(state);
 }
 function persistStudioPromo(record){
   return persistStudioRecord('promos',record,[
@@ -2590,7 +2599,7 @@ function applyRemoteFirebaseState(remoteState){
   state=remoteState;
   firebaseServerLoaded=true;
   selectStudioMonth();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  studioWriteLocalStateCache(state);
   if(!manual) selectedIndex=-1;
   render();
   firebaseApplyingRemote=false;
@@ -4515,7 +4524,20 @@ $('historyDateInput').addEventListener('change',renderHistoryList);
 $('historyModal').addEventListener('click',e=>{ if(e.target.id==='historyModal') closeHistoryModal(); });
 document.addEventListener('pointerdown',()=>{if(manual)scheduleManualReturn();},{passive:true});
 document.addEventListener('keydown',()=>{if(manual)scheduleManualReturn();});
-window.addEventListener('storage',()=>{state=loadState();selectStudioMonth();if(!manual)selectedIndex=-1;render();});
+function applyStudioLocalRealtimeState(){
+  try{
+    const next=loadState();
+    if(!next?.months)return;
+    state=next;selectStudioMonth();if(!manual)selectedIndex=-1;render();
+  }catch(error){console.warn('STUDIO LOCAL REALTIME APPLY ERROR',error);}
+}
+window.addEventListener('storage',event=>{if(!event.key||event.key===STORAGE_KEY)applyStudioLocalRealtimeState();});
+try{
+  if('BroadcastChannel' in window){
+    window.__jpWorkspaceStudioChannel=new BroadcastChannel('jp_workspace_live_state');
+    window.__jpWorkspaceStudioChannel.addEventListener('message',event=>{if(event?.data?.type==='STATE_CHANGED')applyStudioLocalRealtimeState();});
+  }
+}catch(error){console.warn('STUDIO BROADCAST CHANNEL ERROR',error);}
 window.addEventListener('focus',()=>syncStateFromApi(true));
 window.addEventListener('online',()=>syncStateFromApi(true));
 window.addEventListener('offline',()=>{firebaseConnected=false;});
@@ -4545,6 +4567,6 @@ render();
 initFirebaseSync();
 initWinnerBank(false);
 </script>
-<!-- AV-57.6.6.19 · ESTÚDIO LIVE FIREBASE + ATUALIZAÇÃO AUTOMÁTICA -->
+<!-- AV-57.6.6.21 · ESTÚDIO FIREBASE LIVE + STORAGE/BROADCAST FALLBACK -->
 </body>
 </html>

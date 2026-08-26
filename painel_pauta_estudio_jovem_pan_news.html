@@ -2335,6 +2335,9 @@ const NEWS_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_jpnews';
 let firebaseStarted=false;
 let firebaseReady=false;
 let firebaseRef=null;
+let firebaseDatabase=null;
+let firebaseConnectionRef=null;
+let firebaseReconnectTimer=null;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
 
@@ -2436,9 +2439,14 @@ function initFirebaseSync(){
   }
   try{
     const app=window.firebase.apps && window.firebase.apps.length ? window.firebase.app() : window.firebase.initializeApp(FIREBASE_CONFIG);
-    const database=window.firebase.database(app);
-    firebaseRef=database.ref(FIREBASE_ROOT_PATH);
+    firebaseDatabase=window.firebase.database(app);
+    firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
+    firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
     firebaseReady=true;
+    firebaseConnectionRef.on('value',snapshot=>{
+      if(snapshot.val()===true){clearTimeout(firebaseReconnectTimer);firebaseReconnectTimer=null;return;}
+      scheduleNewsFirebaseReconnect();
+    });
     firebaseRef.on('value', async snapshot=>{
       const payload=snapshot.val();
       const remoteState=payload?.months?payload:(payload?.state?.months?payload.state:null);
@@ -2447,10 +2455,18 @@ function initFirebaseSync(){
         return;
       }
       applyRemoteFirebaseState(remoteState);
-    },err=>console.warn('FIREBASE LOAD ERROR',err));
+    },err=>{console.warn('FIREBASE LOAD ERROR',err);scheduleNewsFirebaseReconnect();});
   }catch(err){
     console.warn('FIREBASE INIT ERROR',err);
   }
+}
+function scheduleNewsFirebaseReconnect(delay=1400){
+  if(!firebaseReady||!firebaseRef||navigator.onLine===false)return;
+  clearTimeout(firebaseReconnectTimer);
+  firebaseReconnectTimer=setTimeout(()=>{
+    try{if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();}catch(error){console.warn('FIREBASE GOONLINE ERROR',error);}
+    firebaseRef.child('savedAt').get().catch(()=>scheduleNewsFirebaseReconnect(Math.min(delay*2,15000)));
+  },delay);
 }
 function syncStateFromApi(force=false){
   initFirebaseSync();
@@ -3530,7 +3546,8 @@ document.addEventListener('pointerdown',()=>{if(manual)scheduleManualReturn();},
 document.addEventListener('keydown',()=>{if(manual)scheduleManualReturn();});
 window.addEventListener('storage',()=>{state=loadState();selectStudioMonth();if(!manual)selectedIndex=-1;render();});
 window.addEventListener('focus',()=>syncStateFromApi(true));
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStateFromApi(true); });
+window.addEventListener('online',()=>{try{if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();}catch(error){}syncStateFromApi(true);scheduleNewsFirebaseReconnect(250);});
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden){syncStateFromApi(true);scheduleNewsFirebaseReconnect(250);} });
 setInterval(()=>{
   const hk=currentHourKey();
   if(hk!==lastHourKey){

@@ -356,6 +356,9 @@ const OPEC_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_opec';
 firebase.initializeApp(FIREBASE_CONFIG);
 const opecDatabase=firebase.database();
 const ref=opecDatabase.ref(FIREBASE_ROOT_PATH);
+const opecConnectionRef=opecDatabase.ref('.info/connected');
+let opecReconnectTimer=null;
+let opecConnected=false;
 const $=id=>document.getElementById(id);
 const $$=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
 const norm=value=>String(value??'').trim().replace(/\s+/g,' ').toUpperCase();
@@ -620,7 +623,18 @@ $('openPreviewBtn').addEventListener('click',openStudioPreview);$('closePreviewB
 $('overrideProgram')?.addEventListener('change',refreshOverrideSlots);$('addOverrideBtn')?.addEventListener('click',addOverrideFromForm);$('frequencyScope').addEventListener('change',updateFrequencyUi);$('frequencyCount').addEventListener('input',updateFrequencyUi);$('periodTotal').addEventListener('input',updateFrequencyUi);$('dateMode').addEventListener('change',()=>{renderPlanningPreview();updatePreview();});$('addSpecificDateBtn').addEventListener('click',()=>addDateToken('specific'));$('addExcludedDateBtn').addEventListener('click',()=>addDateToken('exclude'));$('closeHistoryBtn').addEventListener('click',closeCampaignHistory);$('historyModal').addEventListener('click',event=>{if(event.target===$('historyModal'))closeCampaignHistory();});
 $('exportCsvBtn').addEventListener('click',exportCsv);$('printReportBtn').addEventListener('click',()=>window.print());$('merchanForm').addEventListener('submit',submitMerchan);$('saveDraftBtn').addEventListener('click',()=>{savePublicationMode='draft';$('merchanForm').requestSubmit();});$('resetBtn').addEventListener('click',event=>{event.preventDefault();resetForm();});
 initWeekdays();renderDateTokens();$('reportDate').value=todayISO();$('reportMonth').value=todayISO().slice(0,7);$('listMonthFilter').value=todayISO().slice(0,7);resetForm();setReportMode('dia');
-ref.on('value',snapshot=>{const payload=snapshot.val();const remote=payload?.months?payload:(payload?.state?.months?payload.state:null);if(remote){state=remote;state.programSchedules ||= [];state.months ||= {};setSaveState('','FIREBASE ONLINE');render();}},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');});
+function scheduleOpecFirebaseReconnect(delay=1400){
+  if(navigator.onLine===false)return;
+  clearTimeout(opecReconnectTimer);
+  opecReconnectTimer=setTimeout(()=>{
+    try{if(typeof opecDatabase.goOnline==='function')opecDatabase.goOnline();}catch(error){console.warn('OPEC FIREBASE GOONLINE ERROR',error);}
+    ref.child('savedAt').get().catch(()=>scheduleOpecFirebaseReconnect(Math.min(delay*2,15000)));
+  },delay);
+}
+opecConnectionRef.on('value',snapshot=>{opecConnected=snapshot.val()===true;if(opecConnected){clearTimeout(opecReconnectTimer);opecReconnectTimer=null;}else{setSaveState('error','FIREBASE RECONECTANDO');scheduleOpecFirebaseReconnect();}});
+ref.on('value',snapshot=>{const payload=snapshot.val();const remote=payload?.months?payload:(payload?.state?.months?payload.state:null);if(remote){state=remote;state.programSchedules ||= [];state.months ||= {};setSaveState('','FIREBASE ONLINE');render();}},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
+window.addEventListener('online',()=>{try{if(typeof opecDatabase.goOnline==='function')opecDatabase.goOnline();}catch(error){}scheduleOpecFirebaseReconnect(250);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!opecConnected)scheduleOpecFirebaseReconnect(250);});
 </script>
 </body>
 </html>

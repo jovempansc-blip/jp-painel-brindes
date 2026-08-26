@@ -3543,8 +3543,8 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 <!-- AV-57.6.6.13 · GERAÇÃO FUTURA + CONCENTRAÇÃO INTELIGENTE -->
 
 <style>
-/* AV-57.6.6.19 · PROGRAMAÇÃO: ARRASTE POR PRESSÃO + AÇÕES E CALENDÁRIO ROBUSTOS */
-#view-programacao .programDragHandle.isMovable{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;position:relative;transition:.16s ease;-webkit-user-drag:none}
+/* AV-57.6.6.21 · PROGRAMAÇÃO: DRAG NATIVO NO MOUSE + POINTER FALLBACK */
+#view-programacao .programDragHandle.isMovable{cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;position:relative;transition:.16s ease;-webkit-user-drag:element}
 #view-programacao .programDragHandle.isMovable::after{content:none!important;display:none!important}
 #view-programacao .programDragHandle.isMovable:hover{background:#f7f9fc;border-radius:10px;color:#344255}
 #view-programacao .programDragHandle.dragging{cursor:grabbing!important;background:#fff0f3!important;color:#a40d2c!important;box-shadow:inset 0 0 0 2px rgba(185,13,47,.20)}
@@ -3579,7 +3579,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{bord
 
 
 <style>
-/* AV-57.6.6.19 · feedback claro do arraste por clique/pressão */
+/* AV-57.6.6.21 · feedback visual do drag nativo + touch fallback */
 #view-programacao .programDragHandle.isMovable:active{cursor:grabbing!important}
 body.programDragActive #view-programacao .programDragHandle.dragging{opacity:.78;transform:scale(.98)}
 body.programDragActive #view-programacao .periodCell[data-drop-date][data-drop-period]{outline:1px dashed #cbd4df!important;outline-offset:-4px}
@@ -4355,7 +4355,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
               </div>
             </section>
 
-            <div class="formActions promoFormActionsBar"><button class="btn red" type="button" id="promoSaveBtn">SALVAR PROMOÇÃO</button><button class="btn" type="button" data-close="promoDrawer">CANCELAR</button></div>
+            <div class="formActions promoFormActionsBar"><button class="btn red" type="submit" formnovalidate id="promoSaveBtn">SALVAR PROMOÇÃO</button><button class="btn" type="button" data-close="promoDrawer">CANCELAR</button></div>
           </div>
           <aside class="promoPreviewBox">
             <div class="promoPreviewLabel">PREVIEW DA PAUTA PARA O LOCUTOR</div>
@@ -6714,15 +6714,32 @@ function loadState(){
   }catch(e){}
   return clone(BASE_STATE);
 }
+function writeLocalStateCache(data=state){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return true;
+  }catch(error){
+    console.warn('CACHE LOCAL INDISPONÍVEL/LOTADO',error);
+    return false;
+  }
+}
+function notifyWorkspaceLocalChange(){
+  try{
+    if(!('BroadcastChannel' in window)) return;
+    window.__jpWorkspaceChannel=window.__jpWorkspaceChannel||new BroadcastChannel('jp_workspace_live_state');
+    window.__jpWorkspaceChannel.postMessage({type:'STATE_CHANGED',at:Date.now()});
+  }catch(error){console.warn('BROADCAST LOCAL INDISPONÍVEL',error);}
+}
 function saveState(silent=false){
   normalizePanelState(state);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const localCacheOk=writeLocalStateCache(state);
+  if(localCacheOk) notifyWorkspaceLocalChange();
   if(!firebaseApplyingRemote){
     firebaseLastLocalWrite = Date.now();
     firebasePendingSave = true;
     queueApiSave(silent ? 90 : 40);
   }
-  if(!silent) toast('ALTERAÇÃO REGISTRADA · SINCRONIZANDO COM FIREBASE...');
+  if(!silent) toast(localCacheOk?'ALTERAÇÃO REGISTRADA · SINCRONIZANDO COM FIREBASE...':'ALTERAÇÃO REGISTRADA · CACHE LOCAL CHEIO · SINCRONIZANDO COM FIREBASE...');
 }
 function countStateRecords(data){
   if(!data || !data.months) return 0;
@@ -6978,8 +6995,8 @@ function applyRemoteFirebaseState(remoteState){
     state = normalizePanelState(clone(remoteState));
     if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
     firebaseServerLoaded = true;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));
+    writeLocalStateCache(state);
+    try{localStorage.setItem('jp_painel_last_firebase_load', new Date().toLocaleString('pt-BR'));}catch(_){ }
     setOfficialCalendarMonth(false);
     render();
     if(remoteTrashCount>(state.trash||[]).length){
@@ -10170,6 +10187,7 @@ function updatePromoKindMode(){
   if($('promoSegmentKey')) $('promoSegmentKey').required=isPromo;
   if($('promoDrawDate')) $('promoDrawDate').required=isPromo;
   if($('promoDrawTime')) $('promoDrawTime').required=isPromo;
+  document.querySelectorAll('#promoDrawer [data-promo-only="1"] input,#promoDrawer [data-promo-only="1"] select,#promoDrawer [data-promo-only="1"] textarea').forEach(el=>{el.disabled=!isPromo;});
   if($('promoProgram')) $('promoProgram').required=false;
   if($('promoLocalLabel')) $('promoLocalLabel').textContent='CANAL DA PROMOÇÃO';
   if($('promoProgramLabel')) $('promoProgramLabel').textContent=smart?'PROGRAMA(S) / FAIXAS PERMITIDAS':'PROGRAMA(S) / HORÁRIOS';
@@ -10381,7 +10399,7 @@ function renderProgramCard(i){
   const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" data-program-action="remap" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'remap','${esc(i.id)}')" onpointerdown="event.stopPropagation()"><span class="iconGlyph">↪</span></button>` : '';
   const movable = !['REALIZADO','CANCELADO'].includes(itemEffectiveStatus(i)) && i.sourceType!=='promo-result' && normalizeChannel(i.channel)==='RÁDIO';
   return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}" data-program-item-id="${esc(i.id)}" data-drop-date="${esc(i.date||'')}" data-drop-slot="${esc(normalizeSlot(i.slot)||'')}" data-drop-period="${esc(periodKey(i.slot))}">
-    <div class="programTime programDragHandle ${movable?'isMovable':'isLocked'}" ${movable?`data-drag-item-id="${esc(i.id)}" draggable="false" tabindex="0" title="ARRASTE O HORÁRIO PARA MOVER · BOTÃO DIREITO PARA DEFINIR HORÁRIO"`:'draggable="false" title="ITEM BLOQUEADO PARA MOVIMENTAÇÃO"'}>${esc(i.slot || '')}</div>
+    <div class="programTime programDragHandle ${movable?'isMovable':'isLocked'}" ${movable?`data-drag-item-id="${esc(i.id)}" draggable="true" tabindex="0" title="ARRASTE O HORÁRIO PARA MOVER · BOTÃO DIREITO PARA DEFINIR HORÁRIO"`:'draggable="false" title="ITEM BLOQUEADO PARA MOVIMENTAÇÃO"'}>${esc(i.slot || '')}</div>
     <div class="programInfo">
       <strong>${esc(cardTitle)}</strong>
       <em>${esc(cardSubtitle)}</em>
@@ -11423,54 +11441,80 @@ function programSuggestedSlotForDropDirect(item,targetDate,targetPeriod){
   return candidates[0]||'';
 }
 let programMoveDialogItemId='';
+let programMoveDialogDate='';
+let programMovePendingDrop=null;
 function ensureProgramMoveDialogs(){
   if(!$('programMoveChoiceOverlay')){
     const wrap=document.createElement('div');wrap.id='programMoveChoiceOverlay';wrap.className='programMoveChoiceOverlay';wrap.hidden=true;
-    wrap.innerHTML=`<div class="programMoveChoiceCard" role="dialog" aria-modal="true" aria-labelledby="programMoveChoiceTitle"><h3 id="programMoveChoiceTitle">PROGRAMAÇÃO ATUALIZADA</h3><p id="programMoveChoiceText">DESEJA MOVER OU ADICIONAR HORÁRIO?</p><div class="programMoveChoiceActions"><button type="button" class="btn" id="programMoveKeepBtn">MOVER</button><button type="button" class="btn red" id="programMoveExactBtn">ADICIONAR HORÁRIO</button></div></div>`;
+    wrap.innerHTML=`<div class="programMoveChoiceCard" role="dialog" aria-modal="true" aria-labelledby="programMoveChoiceTitle"><h3 id="programMoveChoiceTitle">MOVER PRÊMIO</h3><p id="programMoveChoiceText">DESEJA MOVER OU ADICIONAR HORÁRIO?</p><div class="programMoveChoiceActions"><button type="button" class="btn" id="programMoveKeepBtn">MOVER</button><button type="button" class="btn red" id="programMoveExactBtn">ADICIONAR HORÁRIO</button></div></div>`;
     document.body.appendChild(wrap);
-    $('programMoveKeepBtn').addEventListener('click',()=>closeProgramMoveChoice());
-    $('programMoveExactBtn').addEventListener('click',()=>{const idValue=programMoveDialogItemId;closeProgramMoveChoice();openProgramExactTimeDialog(idValue);});
+    $('programMoveKeepBtn').addEventListener('click',confirmProgramPendingDrop);
+    $('programMoveExactBtn').addEventListener('click',openProgramPendingExactTime);
     wrap.addEventListener('click',e=>{if(e.target===wrap)closeProgramMoveChoice();});
   }
   if(!$('programMoveTimeOverlay')){
     const wrap=document.createElement('div');wrap.id='programMoveTimeOverlay';wrap.className='programMoveChoiceOverlay';wrap.hidden=true;
     wrap.innerHTML=`<div class="programMoveChoiceCard" role="dialog" aria-modal="true" aria-labelledby="programMoveTimeTitle"><h3 id="programMoveTimeTitle">MOVER PRÊMIO PARA OUTRO HORÁRIO</h3><p>INFORME O HORÁRIO DEFINITIVO. USE HORA CHEIA OU MEIA HORA.</p><div class="programMoveTimeForm"><div class="programMoveDialogMeta" id="programMoveTimeMeta"></div><label for="programMoveTimeInput">NOVO HORÁRIO</label><input id="programMoveTimeInput" inputmode="numeric" autocomplete="off" placeholder="EX.: 10:30"><div class="programMoveChoiceActions"><button type="button" class="btn" id="programMoveTimeCancel">CANCELAR</button><button type="button" class="btn red" id="programMoveTimeApply">MOVER</button></div></div></div>`;
     document.body.appendChild(wrap);
-    $('programMoveTimeCancel').addEventListener('click',()=>closeProgramExactTimeDialog());
+    $('programMoveTimeCancel').addEventListener('click',closeProgramExactTimeDialog);
     $('programMoveTimeApply').addEventListener('click',applyProgramExactTimeDialog);
     $('programMoveTimeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();applyProgramExactTimeDialog();}if(e.key==='Escape')closeProgramExactTimeDialog();});
     wrap.addEventListener('click',e=>{if(e.target===wrap)closeProgramExactTimeDialog();});
   }
 }
-function closeProgramMoveChoice(){const el=$('programMoveChoiceOverlay');if(el)el.hidden=true;programMoveDialogItemId='';}
-function showProgramMoveChoice(itemId){
-  ensureProgramMoveDialogs();programMoveDialogItemId=itemId;const found=programItemRecord(itemId);
-  if(found)$('programMoveChoiceText').textContent=`${found.item.prize||found.item.title||'PRÊMIO'} · ${formatBR(found.item.date)} ${normalizeSlot(found.item.slot)}\nDESEJA MOVER OU ADICIONAR HORÁRIO?`;
+function closeProgramMoveChoice(){const el=$('programMoveChoiceOverlay');if(el)el.hidden=true;programMovePendingDrop=null;}
+function showProgramMoveChoice(itemId,targetDate,targetSlot){
+  ensureProgramMoveDialogs();
+  const found=programItemRecord(itemId);if(!found)return;
+  programMovePendingDrop={itemId,targetDate,targetSlot:normalizeSlot(targetSlot)};
+  $('programMoveChoiceText').textContent=`${found.item.prize||found.item.title||'PRÊMIO'}\nDE: ${formatBR(found.item.date)} ${normalizeSlot(found.item.slot)}\nPARA: ${formatBR(targetDate)} ${normalizeSlot(targetSlot)}\n\nESCOLHA MOVER OU INFORMAR OUTRO HORÁRIO.`;
   $('programMoveChoiceOverlay').hidden=false;
 }
-function closeProgramExactTimeDialog(){const el=$('programMoveTimeOverlay');if(el)el.hidden=true;programMoveDialogItemId='';}
-function openProgramExactTimeDialog(itemId){
+function confirmProgramPendingDrop(){
+  const pending=programMovePendingDrop?{...programMovePendingDrop}:null;
+  closeProgramMoveChoice();
+  if(!pending)return;
+  executeProgramMove(pending.itemId,pending.targetDate,pending.targetSlot,'ARRASTE NA GRADE',{skipConfirm:true});
+}
+function openProgramPendingExactTime(){
+  const pending=programMovePendingDrop?{...programMovePendingDrop}:null;
+  closeProgramMoveChoice();
+  if(!pending)return;
+  openProgramExactTimeDialog(pending.itemId,pending.targetDate,pending.targetSlot);
+}
+function closeProgramExactTimeDialog(){const el=$('programMoveTimeOverlay');if(el)el.hidden=true;programMoveDialogItemId='';programMoveDialogDate='';}
+function openProgramExactTimeDialog(itemId,targetDate='',suggestedSlot=''){
   const found=programItemRecord(itemId);if(!found)return;const blocked=programMoveBlocked(found.item);if(blocked){alert(blocked);return;}
-  ensureProgramMoveDialogs();programMoveDialogItemId=itemId;$('programMoveTimeMeta').textContent=`${found.item.prize||found.item.title||'PRÊMIO'} · ${formatBR(found.item.date)} · ATUAL ${normalizeSlot(found.item.slot)}`;$('programMoveTimeInput').value=timeToHHMM(found.item.slot);$('programMoveTimeOverlay').hidden=false;
+  ensureProgramMoveDialogs();
+  programMoveDialogItemId=itemId;
+  programMoveDialogDate=targetDate||found.item.date;
+  const suggested=normalizeSlot(suggestedSlot)||normalizeSlot(found.item.slot);
+  $('programMoveTimeMeta').textContent=`${found.item.prize||found.item.title||'PRÊMIO'} · DATA ${formatBR(programMoveDialogDate)} · ATUAL ${normalizeSlot(found.item.slot)}`;
+  $('programMoveTimeInput').value=timeToHHMM(suggested);
+  $('programMoveTimeOverlay').hidden=false;
   setTimeout(()=>{$('programMoveTimeInput')?.focus();$('programMoveTimeInput')?.select();},40);
 }
 function applyProgramExactTimeDialog(){
   const itemId=programMoveDialogItemId,found=programItemRecord(itemId);if(!found)return closeProgramExactTimeDialog();
-  const slot=normalizeSlot($('programMoveTimeInput').value),date=found.item.date,station=itemStation(found.item);
+  const slot=normalizeSlot($('programMoveTimeInput').value),date=programMoveDialogDate||found.item.date,station=itemStation(found.item);
   if(!slotParts(slot)){alert('HORÁRIO INVÁLIDO. USE HORA CHEIA OU MEIA HORA, EX.: 10:00 OU 10:30.');return;}
   if(!programFromSchedule(date,slot,station)){alert('ESTE HORÁRIO NÃO EXISTE NA GRADE OFICIAL PARA ESTE DIA/EMISSORA.');return;}
-  closeProgramExactTimeDialog();executeProgramMove(itemId,date,slot,'AJUSTE PELO BOTÃO DIREITO',{skipConfirm:true});
+  closeProgramExactTimeDialog();executeProgramMove(itemId,date,slot,'AJUSTE MANUAL DE HORÁRIO',{skipConfirm:true});
 }
 let programDragSession=null;
+let programNativeDragItemId='';
 function clearProgramDragVisuals(){
   document.body.classList.remove('programDragActive');
   document.querySelectorAll('.programDragHandle.dragging,.periodCell.programDropTarget,.programCard.programDropCardTarget').forEach(el=>el.classList.remove('dragging','programDropTarget','programDropCardTarget'));
   document.querySelector('.programDragGhost')?.remove();
 }
 function programDragDrop(itemId,target){
-  const found=programItemRecord(itemId);if(!found||!target)return;const item=found.item;let date=target.dataset.dropDate||'',slot=target.dataset.dropSlot||'',period=target.dataset.dropPeriod||'';
-  if(!date)return;if(!slot){if(!period)return;slot=programSuggestedSlotForDropDirect(item,date,period);}if(!slot){alert('NÃO EXISTE HORÁRIO DISPONÍVEL NA GRADE OFICIAL DENTRO DESTE PERÍODO.');return;}
-  const moved=executeProgramMove(itemId,date,slot,'ARRASTE NA GRADE',{skipConfirm:true});if(moved)setTimeout(()=>showProgramMoveChoice(itemId),70);
+  const found=programItemRecord(itemId);if(!found||!target)return;
+  const item=found.item;let date=target.dataset.dropDate||'',slot=target.dataset.dropSlot||'',period=target.dataset.dropPeriod||'';
+  if(!date)return;
+  if(!slot){if(!period)return;slot=programSuggestedSlotForDropDirect(item,date,period);}
+  if(!slot){alert('NÃO EXISTE HORÁRIO DISPONÍVEL NA GRADE OFICIAL DENTRO DESTE PERÍODO.');return;}
+  showProgramMoveChoice(itemId,date,slot);
 }
 function programPointerTargetAt(x,y,itemId){
   const el=document.elementFromPoint(x,y);
@@ -11478,29 +11522,52 @@ function programPointerTargetAt(x,y,itemId){
   const period=el?.closest?.('.periodCell[data-drop-date][data-drop-period]')||null;
   return (card&&card.dataset.programItemId!==itemId)?card:period;
 }
-function beginProgramHoldDrag(event){
+function markProgramDropTarget(target){
+  document.querySelectorAll('.periodCell.programDropTarget,.programCard.programDropCardTarget').forEach(el=>el.classList.remove('programDropTarget','programDropCardTarget'));
+  if(target)target.classList.add(target.classList.contains('programCard')?'programDropCardTarget':'programDropTarget');
+}
+document.addEventListener('dragstart',event=>{
   const handle=event.target.closest?.('.programDragHandle[data-drag-item-id]');
-  if(!handle||event.button!==0||programDragSession)return;
+  if(!handle)return;
+  const itemId=handle.dataset.dragItemId,found=programItemRecord(itemId);if(!found){event.preventDefault();return;}
+  const blocked=programMoveBlocked(found.item);if(blocked){event.preventDefault();alert(blocked);return;}
+  programNativeDragItemId=itemId;
+  handle.classList.add('dragging');document.body.classList.add('programDragActive');
+  try{event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('text/plain',itemId);}catch(_){ }
+},true);
+document.addEventListener('dragover',event=>{
+  if(!programNativeDragItemId)return;
+  const target=programPointerTargetAt(event.clientX,event.clientY,programNativeDragItemId);
+  if(!target)return;
+  event.preventDefault();
+  try{event.dataTransfer.dropEffect='move';}catch(_){ }
+  markProgramDropTarget(target);
+},true);
+document.addEventListener('drop',event=>{
+  if(!programNativeDragItemId)return;
+  const itemId=programNativeDragItemId,target=programPointerTargetAt(event.clientX,event.clientY,itemId);
+  if(!target)return;
+  event.preventDefault();event.stopPropagation();
+  programNativeDragItemId='';clearProgramDragVisuals();programDragDrop(itemId,target);
+},true);
+document.addEventListener('dragend',()=>{programNativeDragItemId='';clearProgramDragVisuals();},true);
+function beginProgramHoldDrag(event){
+  if(event.pointerType==='mouse')return;
+  const handle=event.target.closest?.('.programDragHandle[data-drag-item-id]');
+  if(!handle||programDragSession)return;
   const itemId=handle.dataset.dragItemId,found=programItemRecord(itemId);if(!found)return;
   const blocked=programMoveBlocked(found.item);if(blocked){alert(blocked);return;}
   event.preventDefault();event.stopPropagation();
   const session={itemId,handle,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,active:false,target:null,timer:null,ghost:null};
   programDragSession=session;
-  try{handle.setPointerCapture?.(event.pointerId);}catch(_){}
+  try{handle.setPointerCapture?.(event.pointerId);}catch(_){ }
   const positionGhost=(x,y)=>{if(!session.ghost)return;session.ghost.style.left=`${x}px`;session.ghost.style.top=`${y}px`;};
   const activate=()=>{
     if(programDragSession!==session||session.active)return;
     session.active=true;handle.classList.add('dragging');document.body.classList.add('programDragActive');
     const ghost=document.createElement('div');ghost.className='programDragGhost';ghost.textContent=`${found.item.prize||found.item.title||'PRÊMIO'} · ${normalizeSlot(found.item.slot)}`;document.body.appendChild(ghost);session.ghost=ghost;positionGhost(session.lastX,session.lastY);
-    try{navigator.vibrate?.(18);}catch(_){}
   };
-  const updateTarget=(x,y)=>{
-    const target=programPointerTargetAt(x,y,session.itemId);
-    if(target===session.target)return;
-    session.target?.classList.remove('programDropTarget','programDropCardTarget');
-    session.target=target;
-    if(session.target)session.target.classList.add(session.target.classList.contains('programCard')?'programDropCardTarget':'programDropTarget');
-  };
+  const updateTarget=(x,y)=>{session.target=programPointerTargetAt(x,y,session.itemId);markProgramDropTarget(session.target);};
   const move=e=>{
     if(e.pointerId!==session.pointerId)return;
     session.lastX=e.clientX;session.lastY=e.clientY;
@@ -11510,25 +11577,16 @@ function beginProgramHoldDrag(event){
     e.preventDefault();e.stopPropagation();positionGhost(e.clientX,e.clientY);updateTarget(e.clientX,e.clientY);
   };
   const cleanup=()=>{
-    clearTimeout(session.timer);
-    try{handle.releasePointerCapture?.(session.pointerId);}catch(_){}
+    clearTimeout(session.timer);try{handle.releasePointerCapture?.(session.pointerId);}catch(_){ }
     document.removeEventListener('pointermove',move,true);document.removeEventListener('pointerup',up,true);document.removeEventListener('pointercancel',cancel,true);
     clearProgramDragVisuals();programDragSession=null;
   };
-  const up=e=>{
-    if(e.pointerId!==session.pointerId)return;
-    if(session.active&&!session.target)updateTarget(e.clientX,e.clientY);
-    const active=session.active,target=session.target,idValue=session.itemId;
-    cleanup();
-    if(active&&target){e.preventDefault();e.stopPropagation();programDragDrop(idValue,target);}
-  };
+  const up=e=>{if(e.pointerId!==session.pointerId)return;if(session.active&&!session.target)updateTarget(e.clientX,e.clientY);const active=session.active,target=session.target,idValue=session.itemId;cleanup();if(active&&target){e.preventDefault();e.stopPropagation();programDragDrop(idValue,target);}};
   const cancel=e=>{if(e.pointerId===session.pointerId)cleanup();};
-  session.timer=setTimeout(activate,180);
-  document.addEventListener('pointermove',move,{capture:true,passive:false});
-  document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',cancel,true);
+  session.timer=setTimeout(activate,160);
+  document.addEventListener('pointermove',move,{capture:true,passive:false});document.addEventListener('pointerup',up,true);document.addEventListener('pointercancel',cancel,true);
 }
 document.addEventListener('pointerdown',beginProgramHoldDrag,true);
-
 document.addEventListener('contextmenu',event=>{const handle=event.target.closest?.('.programDragHandle[data-drag-item-id]');if(!handle)return;event.preventDefault();event.stopPropagation();openProgramExactTimeDialog(handle.dataset.dragItemId);},true);
 
 function applyDistributionProgramMove(){
@@ -14221,16 +14279,26 @@ function readHourKeyForAdmin(date,slot){ const t=timeToHHMM(slot); return `${dat
 function removePromoResultFromProgram(promoId){
   Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===promoId)); });
 }
+function clearPromoValidationState(){
+  document.querySelectorAll('#promoForm [aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
+  document.querySelectorAll('#promoForm [data-promo-validation-error]').forEach(el=>el.remove());
+}
 function promoValidationFail(idValue,message){
-  alert(message);
   const el=$(idValue);
   if(el){
+    el.setAttribute('aria-invalid','true');
+    const field=el.closest('.field,.miniField')||el.parentElement;
+    if(field && !field.querySelector('[data-promo-validation-error]')){
+      const note=document.createElement('span');note.className='uxFieldError';note.dataset.promoValidationError='1';note.textContent=message;field.appendChild(note);
+    }
     try{el.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){ }
     setTimeout(()=>{try{el.focus({preventScroll:true});}catch(_){try{el.focus();}catch(__){}}},40);
   }
+  alert(message);
   return false;
 }
 function validatePromoFormExplicit(){
+  clearPromoValidationState();
   const kind=$('promoKind')?.value||'promo',isPromo=kind==='promo';
   if(!$('promoStartDate')?.value) return promoValidationFail('promoStartDate','INFORME A DATA DE INÍCIO.');
   if(!$('promoEndDate')?.value) return promoValidationFail('promoEndDate','INFORME A DATA DE ENCERRAMENTO.');
@@ -14293,7 +14361,7 @@ $('promoForm').addEventListener('submit',async e=>{
     promoReadSpecificDates:[...promoAV57SpecificDates].sort(),
     promoReadExcludedDates:[...promoAV57ExcludedDates].sort(),
     opecPrograms:promoAV57ProgramConfigsFromForm(),
-    plannerVersion:'AV57_6_6_19_LIVE_STUDIO_POINTER_DRAG',
+    plannerVersion:'AV57_6_6_21_PROMO_LIVE_STUDIO_NATIVE_DRAG',
     reportVersion:57.3,
     name:norm($('promoName').value),
     title:norm($('promoName').value),
@@ -14329,14 +14397,14 @@ $('promoForm').addEventListener('submit',async e=>{
   closeDrawer('promoDrawer');
   render();
   toast(`${promoKindLabel(kind)} SALVA · PUBLICANDO NO ESTÚDIO...`);
-  try{
-    await flushFirebaseNow(`${promoKindLabel(kind)} SALVA`);
-    toast(`${promoKindLabel(kind)} CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO AUTOMATICAMENTE.`);
-  }catch(syncError){
-    console.error('PROMO/PAUTA FIREBASE IMMEDIATE SAVE ERROR',syncError);
-    toast(`${promoKindLabel(kind)} SALVA LOCALMENTE · FIREBASE PENDENTE, RECONEXÃO AUTOMÁTICA ATIVA.`);
-    queueApiSave(350);
-  }
+  Promise.resolve()
+    .then(()=>flushFirebaseNow(`${promoKindLabel(kind)} SALVA`))
+    .then(()=>toast(`${promoKindLabel(kind)} CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO AUTOMATICAMENTE.`))
+    .catch(syncError=>{
+      console.error('PROMO/PAUTA FIREBASE IMMEDIATE SAVE ERROR',syncError);
+      toast(`${promoKindLabel(kind)} SALVA LOCALMENTE · FIREBASE PENDENTE, RECONEXÃO AUTOMÁTICA ATIVA.`);
+      queueApiSave(350);
+    });
   }catch(error){
     console.error('ERRO AO SALVAR PROMOÇÃO/PAUTA',error);
     alert(`NÃO FOI POSSÍVEL SALVAR.\n\n${error?.message||error}`);
@@ -14410,7 +14478,7 @@ bind('programScheduleForm','submit',saveProgramSchedule);
 bind('addProgramScheduleBtn','click',()=>{ programScheduleOpenedFromItem=false; openProgramScheduleForm(); });
 document.addEventListener('click',e=>{ const btn=e.target.closest('#programStationFilterTabs .stationTab'); if(btn) setProgramStationFilter(btn.dataset.station); });
 bind('programStation','change',()=>{ populateProgramSelects(); });
-bind('promoSaveBtn','click',event=>{event.preventDefault();event.stopPropagation();if(!promoSaveInFlight)$('promoForm')?.requestSubmit();});
+// promoSaveBtn é submit nativo do #promoForm; o evento submit é a única rota oficial de salvamento.
 bind('promoKind','change',()=>{updatePromoKindMode(); updatePromoPreview();});
 bind('promoStation','change',()=>{populateProgramSelects(); updatePromoKindMode(); applyProgramHoursToPromo(); updatePromoPreview();});
 bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotationSlots('dist')));

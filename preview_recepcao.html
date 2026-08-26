@@ -829,6 +829,9 @@ function promoPrizeTitle(p){const d=distributionById(p?.distributionId);return u
 firebase.initializeApp(FIREBASE_CONFIG);
 const receptionDatabase=firebase.database();
 const firebaseRef=receptionDatabase.ref(FIREBASE_ROOT_PATH);
+const receptionConnectionRef=receptionDatabase.ref('.info/connected');
+let receptionReconnectTimer=null;
+let receptionConnected=false;
 const receptionPendingSaves=new Set();
 const receptionSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function receptionRetry(operation,maxAttempts=3){let lastError;for(let attempt=1;attempt<=maxAttempts;attempt+=1){try{return await operation(attempt);}catch(error){lastError=error;if(error?.retryable===false)throw error;if(attempt<maxAttempts)await receptionSleep(180*attempt);}}throw lastError;}
@@ -1186,7 +1189,21 @@ $('dateFilter').value=todayISO();
 $('dateFilter').addEventListener('change',render);
 let searchTimer=null;$('searchFilter').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,90);});
 setInterval(render,60000);
-firebaseRef.on('value',snap=>{const payload=snap.val();const remote=payload?.months?payload:(payload?.state?.months?payload.state:null);if(remote){state=remote;selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}});
+function receptionScheduleReconnect(delay=1600){
+  clearTimeout(receptionReconnectTimer);
+  receptionReconnectTimer=setTimeout(()=>{
+    try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){console.warn('RECEPTION FIREBASE GOONLINE ERROR',error);}
+    firebaseRef.child('savedAt').get().catch(()=>receptionScheduleReconnect(Math.min(delay*2,15000)));
+  },delay);
+}
+receptionConnectionRef.on('value',snap=>{
+  receptionConnected=snap.val()===true;
+  if(receptionConnected){clearTimeout(receptionReconnectTimer);receptionReconnectTimer=null;}
+  else if(navigator.onLine!==false)receptionScheduleReconnect();
+});
+firebaseRef.on('value',snap=>{const payload=snap.val();const remote=payload?.months?payload:(payload?.state?.months?payload.state:null);if(remote){state=remote;selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');}},error=>{console.warn('RECEPTION FIREBASE LOAD ERROR',error);receptionScheduleReconnect();});
+window.addEventListener('online',()=>{try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){}receptionScheduleReconnect(250);});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!receptionConnected)receptionScheduleReconnect(250);});
 </script>
 </body>
 </html>
