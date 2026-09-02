@@ -2329,15 +2329,20 @@ const FIREBASE_CONFIG = {
   "measurementId": "G-VB6Y2TS796"
 };
 const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
+const PROMO_ASSET_PATH = "jp-painel-brindes/assets/promos";
 const NEWS_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_jpnews';
 
 let firebaseStarted=false;
 let firebaseReady=false;
 let firebaseRef=null;
 let firebaseDatabase=null;
+let promoAssetRef=null;
+const promoImageCache=new Map();
 let firebaseConnectionRef=null;
 let firebaseReconnectTimer=null;
 let newsRealtimeBound=false;
+const newsMonthRefs=new Map();
+let newsRenderTimer=null;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
 
@@ -2356,7 +2361,13 @@ async function ensureStudioFirebaseOnline(){
   catch(error){throw new Error(`FIREBASE INDISPONÍVEL: ${error?.message||error}`);}
 }
 function newsMonthKey(date=''){const valid=value=>/^\d{4}-(0[1-9]|1[0-2])$/.test(String(value||''));const key=String(date||'').slice(0,7);if(valid(key)&&state.months?.[key])return key;if(valid(currentMonth))return currentMonth;if(valid(key))return key;return todayISO().slice(0,7);}
-async function appendNewsAudit(entry){await studioRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(rows.some(row=>row?.id===entry.id))return rows;rows.push(entry);return rows.slice(-2500);},undefined,false));}
+async function appendNewsAudit(entry){const key=String(entry?.id||`LOG_${Date.now()}`).replace(/[.#$\[\]/]/g,'_');await studioRetry(()=>firebaseRef.child('auditLog').child(key).set(entry));}
+function studioRows(value){if(Array.isArray(value))return value.filter(Boolean);if(value&&typeof value==='object')return Object.keys(value).sort((a,b)=>{const na=Number(a),nb=Number(b);return Number.isFinite(na)&&Number.isFinite(nb)?na-nb:String(a).localeCompare(String(b));}).map(key=>value[key]).filter(Boolean);return[];}
+function normalizeNewsState(data){
+  data=data&&typeof data==='object'?data:{currentMonth:'',months:{}};data.months=data.months||{};
+  Object.entries(data.months).forEach(([key,month])=>{month=month||{};month.label=month.label||key;month.items=studioRows(month.items);month.promos=studioRows(month.promos);month.distributions=studioRows(month.distributions);data.months[key]=month;});
+  data.schedules=studioRows(data.schedules);data.programSchedules=studioRows(data.programSchedules);return data;
+}
 function countStateRecords(data){
   if(!data || !data.months) return 0;
   return Object.values(data.months).reduce((total,m)=>total+(m.items||[]).length+(m.promos||[]).length+(m.distributions||[]).length,0) + (data.schedules||[]).length + (data.programSchedules||[]).length;
@@ -2375,18 +2386,13 @@ function pickStudioFields(record,fields){
   patch.updatedAt=new Date().toISOString();
   return patch;
 }
+async function newsFirebaseRecordRef(monthKey,collection,idValue){const query=firebaseRef.child('months').child(monthKey).child(collection).orderByChild('id').equalTo(idValue).limitToFirst(1),snapshot=await query.get();let foundRef=null;snapshot.forEach(child=>{if(!foundRef)foundRef=child.ref;});return foundRef;}
 async function persistStudioRecord(collection,record,fields){
   if(!record?.id) throw new Error('REGISTRO SEM ID');
   await ensureStudioFirebaseOnline();
   const patch=pickStudioFields(record,fields);
   const keys=studioRecordMonths(collection,record.id,record.resultDate||record.drawDate||record.date||record.startDate);
-  await Promise.all(keys.map(monthKey=>studioRetry(()=>firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
-    const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
-    const index=rows.findIndex(row=>row?.id===record.id);
-    if(index<0) rows.push({...record,...patch});
-    else rows[index]={...rows[index],...patch};
-    return rows;
-  },undefined,false))));
+  await Promise.all(keys.map(monthKey=>studioRetry(async()=>{let childRef=await newsFirebaseRecordRef(monthKey,collection,record.id);if(!childRef){childRef=firebaseRef.child('months').child(monthKey).child(collection).push();await childRef.set({...record,...patch});return true;}const result=await childRef.transaction(current=>current?{...current,...patch}:undefined,undefined,false);if(!result?.committed)throw new Error(`ATUALIZAÇÃO ${record.id} NÃO CONFIRMADA EM ${monthKey}.`);return true;})));
   await Promise.allSettled([firebaseRef.update({
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
@@ -2409,11 +2415,11 @@ function persistStudioItem(record){
 function applyRemoteFirebaseState(remoteState){
   if(!remoteState || !remoteState.months) return;
   firebaseApplyingRemote=true;
-  state=remoteState;
+  state=normalizeNewsState(remoteState);
   firebaseServerLoaded=true;
   selectStudioMonth();
   if(!manual) selectedIndex=-1;
-  render();
+  newsScheduleRender();
   firebaseApplyingRemote=false;
 }
 async function handleEmptyFirebase(){
@@ -2426,14 +2432,23 @@ async function handleEmptyFirebase(){
 function attachNewsRealtimeListeners(){
   if(newsRealtimeBound||!firebaseRef)return;
   newsRealtimeBound=true;
+  newsRelevantMonthKeys().forEach(monthKey=>{
+    const monthRef=firebaseRef.child('months').child(monthKey);newsMonthRefs.set(monthKey,monthRef);
+    monthRef.on('value',snapshot=>{state.months ||= {};state.months[monthKey]=snapshot.val()||{label:monthKey,items:[],promos:[],distributions:[]};state=normalizeNewsState(state);firebaseServerLoaded=true;newsScheduleRender();},error=>{console.warn(`FIREBASE MONTH ${monthKey} LISTENER ERROR`,error);scheduleNewsFirebaseReconnect(900);});
+  });
   const applyPart=(key,value)=>{
-    if(key==='months')state.months=value||{};
-    else if(key==='programSchedules')state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);
+    if(key==='programSchedules')state.programSchedules=studioRows(value);
     else if(key==='publishedPrograms')state.publishedPrograms=value||{};
-    firebaseServerLoaded=true;selectStudioMonth();if(!manual)selectedIndex=-1;render();
+    state=normalizeNewsState(state);firebaseServerLoaded=true;newsScheduleRender();
   };
-  ['months','programSchedules','publishedPrograms'].forEach(key=>firebaseRef.child(key).on('value',snapshot=>applyPart(key,snapshot.val()),error=>{console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleNewsFirebaseReconnect(900);}));
+  ['programSchedules','publishedPrograms'].forEach(key=>firebaseRef.child(key).on('value',snapshot=>applyPart(key,snapshot.val()),error=>{console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleNewsFirebaseReconnect(900);}));
 }
+function newsScheduleRender(delay=35){clearTimeout(newsRenderTimer);newsRenderTimer=setTimeout(()=>{selectStudioMonth();if(!manual)selectedIndex=-1;render();},delay);}
+function newsAdjacentMonth(key,delta){const [year,month]=String(key).split('-').map(Number),date=new Date(year,(month||1)-1+delta,1);return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;}
+function newsRelevantMonthKeys(){const current=todayISO().slice(0,7);return[newsAdjacentMonth(current,-1),current,newsAdjacentMonth(current,1)];}
+function newsPromoAssetKey(promo){return String(promo?.imageRef||promo?.id||'').replace(/[.#$\[\]/]/g,'_');}
+async function newsPromoImage(promo){if(promo?.imageData)return promo.imageData;const key=newsPromoAssetKey(promo);if(!key||!promoAssetRef)return'';if(promoImageCache.has(key))return promoImageCache.get(key);try{const snap=await promoAssetRef.child(key).child('data').get(),data=snap.val()||'';promoImageCache.set(key,data);return data;}catch(error){console.warn('PROMO IMAGE LOAD ERROR',error);return'';}}
+function hydrateNewsPromoImage(promo){const host=document.querySelector('[data-studio-promo-image]');if(!host||!promo?.imageRef)return;newsPromoImage(promo).then(data=>{if(data&&host.isConnected)host.innerHTML=`<img src="${data}" alt="IMAGEM DA PROMOÇÃO">`;});}
 function initFirebaseSync(){
   if(firebaseStarted) return;
   firebaseStarted=true;
@@ -2446,6 +2461,7 @@ function initFirebaseSync(){
     firebaseDatabase=window.firebase.database(app);
     if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
     firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
+    promoAssetRef=firebaseDatabase.ref(PROMO_ASSET_PATH);
     firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
     firebaseReady=true;
     firebaseConnectionRef.on('value',snapshot=>{
@@ -2453,7 +2469,7 @@ function initFirebaseSync(){
       scheduleNewsFirebaseReconnect();
     });
     attachNewsRealtimeListeners();
-    Promise.all([firebaseRef.child('months').get(),firebaseRef.child('programSchedules').get(),firebaseRef.child('publishedPrograms').get()]).then(([m,pubSched,published])=>{state={...state,months:m.val()||{},programSchedules:Array.isArray(pubSched.val())?pubSched.val():Object.values(pubSched.val()||{}).filter(Boolean),publishedPrograms:published.val()||{}};firebaseServerLoaded=true;selectStudioMonth();render();}).catch(()=>scheduleNewsFirebaseReconnect(700));
+    const keys=newsRelevantMonthKeys();Promise.all([Promise.all(keys.map(key=>firebaseRef.child('months').child(key).get())),firebaseRef.child('programSchedules').get(),firebaseRef.child('publishedPrograms').get()]).then(([months,pubSched,published])=>{state=normalizeNewsState({...state,months:Object.fromEntries(keys.map((key,index)=>[key,months[index].val()||{label:key,items:[],promos:[],distributions:[]}])) ,programSchedules:studioRows(pubSched.val()),publishedPrograms:published.val()||{}});firebaseServerLoaded=true;newsScheduleRender(0);}).catch(()=>scheduleNewsFirebaseReconnect(700));
   }catch(err){
     console.warn('FIREBASE INIT ERROR',err);
   }
@@ -3206,11 +3222,11 @@ function closePromoReadModal(){
 async function markPromoReadMissed(promoId,date,slot,program,reason){
   const p=findPromoById(promoId);if(!p)throw new Error('PAUTA NÃO LOCALIZADA.');
   const item={date,slot,program:upper(program||programFromSchedule(date,slot,STUDIO_STATION)||'PROGRAMA')},progress=studioAV57Progress(p,item);if(progress.remaining<1)return;
-  const operator=studioOperatorIdentity(true),now=new Date(),iso=now.toISOString(),monthKey=studioOutcomeMonthKey(date),missId=`MISS-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;let found=false,changed=false,savedOccurrence=progress.done+progress.missed+1;
+  const operator=newsOperatorIdentity(true),now=new Date(),iso=now.toISOString(),monthKey=newsMonthKey(date),missId=`MISS-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;let found=false,changed=false,savedOccurrence=progress.done+progress.missed+1;
   await ensureStudioFirebaseOnline();
-  const result=await studioRetry(async()=>{const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===promoId);if(index<0)return;found=true;const row=rows[index],required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return rows;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_4_NOTIFICATION_BELL'});row.updatedAt=iso;rows[index]=row;changed=true;return rows;},undefined,false);if(!tx?.committed){const error=new Error(found?'A INSERÇÃO NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
-  const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
-  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_4_NOTIFICATION_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);selectedPromoId=null;render();return changed;
+  const result=await studioRetry(async()=>{const recordRef=await newsFirebaseRecordRef(monthKey,'promos',promoId);if(!recordRef){const error=new Error('A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=true;throw error;}const tx=await recordRef.transaction(current=>{if(!current)return;found=true;const row=current,required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return row;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_4_NOTIFICATION_BELL'});row.updatedAt=iso;changed=true;return row;},undefined,false);if(!tx?.committed){const error=new Error(found?'A INSERÇÃO NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
+  const remoteRecord=result.snapshot.val();if(state.months?.[monthKey]){const rows=state.months[monthKey].promos||[],index=rows.findIndex(row=>row?.id===promoId);if(index>=0)rows[index]=remoteRecord;else rows.push(remoteRecord);}
+  if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_4_NOTIFICATION_BELL'}),appendNewsAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${upper(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);selectedPromoId=null;render();return changed;
 }
 window.markPromoReadMissed=markPromoReadMissed;
 async function confirmPromoReadV56(event){
@@ -3229,20 +3245,21 @@ async function confirmPromoReadV56(event){
     let found=false,changed=false,alreadyComplete=false;
     const result=await studioRetry(async()=>{
       found=false;changed=false;alreadyComplete=false;
-      const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{
-        const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===p.id);if(index<0)return;found=true;
-        const row=rows[index],logs=studioAV57Logs(row,item);let existingCount=logs.length;
+      const recordRef=await newsFirebaseRecordRef(monthKey,'promos',p.id);if(!recordRef){const error=new Error('A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=true;throw error;}
+      const tx=await recordRef.transaction(current=>{
+        if(!current)return;found=true;
+        const row=current,logs=studioAV57Logs(row,item);let existingCount=logs.length;
         if(!existingCount&&validReadTimestamp(hourMapValue(row?.readByHour,item,row)))existingCount=1;
         const existingMissed=studioMissedCountForHour(row,item),existingResolved=existingCount+existingMissed;
-        if(existingResolved>=required){alreadyComplete=true;return rows;}
+        if(existingResolved>=required){alreadyComplete=true;return row;}
         savedOccurrence=existingResolved+1;
         row.readByHour={...(row.readByHour||{}),[key]:iso};row.readLog=Array.isArray(row.readLog)?row.readLog:[];
         row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,plannerVersion:'AV57_3_SMART_BALANCE_V3',opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textSnapshot:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
-        row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA');row.updatedAt=iso;rows[index]=row;changed=true;return rows;
+        row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA');row.updatedAt=iso;changed=true;return row;
       },undefined,false);
       if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;
     });
-    const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
+    const remoteRecord=result.snapshot.val();if(state.months?.[monthKey]){const rows=state.months[monthKey].promos||[],index=rows.findIndex(row=>row?.id===p.id);if(index>=0)rows[index]=remoteRecord;else rows.push(remoteRecord);}
     if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JPNEWS',version:'AV57_SMART_READ'}),appendNewsAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
     selectedPromoId=(savedOccurrence<required)?p.id:null;render();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
@@ -3455,10 +3472,11 @@ function render(){
     if(pending.length) selectedPromoId=pending[0].id;
   }
   const promo=currentPromoForRead();
+  const promoImageCached=promo?(promo.imageData||promoImageCache.get(newsPromoAssetKey(promo))||''):'';
   const isVirtual=!!item.__virtual;
   const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
-      ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
+      ${promoImageCached?`<div class="promoReadBanner"><img src="${promoImageCached}" alt="IMAGEM DA PROMOÇÃO"></div>`:(promo.imageRef?'<div class="promoReadBanner" data-studio-promo-image>CARREGANDO IMAGEM...</div>':'')}
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
@@ -3494,6 +3512,7 @@ function render(){
     ${buildStudioContext(item,promo)}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
     ${buildPromoFooter(item)}`;
+  if(promo&&promo.imageRef&&!promoImageCached) hydrateNewsPromoImage(promo);
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
@@ -3544,17 +3563,19 @@ window.addEventListener('online',()=>{try{if(firebaseDatabase&&typeof firebaseDa
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden){syncStateFromApi(true);scheduleNewsFirebaseReconnect(250);} });
 setInterval(()=>{
   const hk=currentHourKey();
+  let hourChanged=false;
   if(hk!==lastHourKey){
     manual=false;
     selectedIndex=-1;
     selectedPromoId=null;
     manualHourDateMs=null;
     lastHourKey=hk;
+    hourChanged=true;
   }
   if(!manual) selectedIndex=-1;
   renderStudioDateStamp();
   syncStateFromApi(false);
-  if(!manual) render();
+  if(hourChanged&&!manual) render();
 },3000);
 selectStudioMonth();
 if($('historyDateInput')) $('historyDateInput').value=todayISO();

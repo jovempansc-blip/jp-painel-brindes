@@ -811,6 +811,8 @@ const timeToHHMM=slot=>{const p=slotParts(slot);return p?`${pad(p.hour)}:${pad(p
 const formatTime=slot=>{const p=slotParts(slot);return p?`${pad(p.hour)}H${p.minute===30?'30':''}`:upper(slot||'--H');};
 const statusBadge=s=>upper(s)==='REALIZADO'?'<span class="badge green">REALIZADO</span>':upper(s)==='NO AR'?'<span class="badge green">NO AR</span>':`<span class="badge">${esc(upper(s||'PENDENTE'))}</span>`;
 let state={months:{}}, currentMonth='';
+function receptionRows(value){return Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean);}
+function normalizeReceptionMonth(key,month){month=month||{};month.label=month.label||key;month.items=receptionRows(month.items);month.promos=receptionRows(month.promos);month.distributions=receptionRows(month.distributions);return month;}
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
 function availableMonths(){return Object.keys(state.months||{}).sort();}
 function selectMonthForDate(date){const m=String(date||todayISO()).slice(0,7); currentMonth=state.months?.[m]?m:(state.currentMonth||availableMonths().at(-1)||m);}
@@ -832,6 +834,9 @@ if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();
 const firebaseRef=receptionDatabase.ref(FIREBASE_ROOT_PATH);
 const receptionConnectionRef=receptionDatabase.ref('.info/connected');
 let receptionReconnectTimer=null;
+let receptionMonthRef=null;
+let receptionBoundMonth='';
+let receptionRenderTimer=null;
 let receptionConnected=false;
 const receptionPendingSaves=new Set();
 const receptionSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -863,11 +868,9 @@ function receptionRecordMonths(collection,idValue,date=''){
 }
 async function locateReceptionRecord(collection,monthKey,idValue){
   const collectionRef=firebaseRef.child('months').child(monthKey).child(collection);
-  const snapshot=await collectionRef.get();
-  const value=snapshot.val();
-  const entries=Array.isArray(value)?value.map((row,index)=>[String(index),row]).filter(([,row])=>row):Object.entries(value||{}).filter(([,row])=>row);
-  const match=entries.find(([,row])=>row?.id===idValue);
-  return match?{ref:collectionRef.child(match[0]),record:match[1]}:null;
+  const snapshot=await collectionRef.orderByChild('id').equalTo(idValue).limitToFirst(1).get();let match=null;
+  snapshot.forEach(child=>{if(!match)match={ref:child.ref,record:child.val()};});
+  return match;
 }
 async function saveReceptionRecord(source,record){
   const collection=source==='item'?'items':'promos';
@@ -904,7 +907,7 @@ async function saveReceptionRecord(source,record){
     if(!found)throw Object.assign(new Error('ETAPA LOCALIZAÇÃO: REGISTRO NÃO ENCONTRADO NA BASE OFICIAL.'),{retryable:false});
     const log={id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'RETIRADA DE PRÊMIO ATUALIZADA',targetId:record.id,origin:'RECEPÇÃO',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')};
     await Promise.allSettled([
-      receptionRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(!rows.some(row=>row?.id===log.id))rows.push(log);return rows.slice(-2500);},undefined,false)),
+      receptionRetry(()=>firebaseRef.child('auditLog').child(log.id).set(log)),
       firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'RECEPCAO',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_RECEPTION'})
     ]);
     return true;
@@ -1187,7 +1190,7 @@ document.addEventListener('contextmenu',e=>{
 });
 
 $('dateFilter').value=todayISO();
-$('dateFilter').addEventListener('change',render);
+$('dateFilter').addEventListener('change',()=>{receptionBindSelectedMonth();render();});
 let searchTimer=null;$('searchFilter').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,90);});
 setInterval(render,60000);
 function receptionScheduleReconnect(delay=1600){
@@ -1202,8 +1205,14 @@ receptionConnectionRef.on('value',snap=>{
   if(receptionConnected){clearTimeout(receptionReconnectTimer);receptionReconnectTimer=null;}
   else if(navigator.onLine!==false)receptionScheduleReconnect();
 });
-firebaseRef.child('months').on('value',snap=>{state.months=snap.val()||{};selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');},error=>{console.warn('RECEPTION MONTHS LOAD ERROR',error);receptionScheduleReconnect();});
-firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);render();},error=>{console.warn('RECEPTION PROGRAM SCHEDULE LOAD ERROR',error);receptionScheduleReconnect();});
+function receptionScheduleRender(delay=35){clearTimeout(receptionRenderTimer);receptionRenderTimer=setTimeout(()=>{render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');},delay);}
+function receptionBindSelectedMonth(){
+  const key=String($('dateFilter')?.value||todayISO()).slice(0,7);if(!key||key===receptionBoundMonth)return;
+  if(receptionMonthRef)receptionMonthRef.off();receptionBoundMonth=key;receptionMonthRef=firebaseRef.child('months').child(key);
+  receptionMonthRef.on('value',snap=>{state.months={[key]:normalizeReceptionMonth(key,snap.val())};selectMonthForDate($('dateFilter').value);receptionScheduleRender();},error=>{console.warn('RECEPTION MONTH LOAD ERROR',error);receptionScheduleReconnect();});
+}
+receptionBindSelectedMonth();
+firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);receptionScheduleRender();},error=>{console.warn('RECEPTION PROGRAM SCHEDULE LOAD ERROR',error);receptionScheduleReconnect();});
 window.addEventListener('online',()=>{try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){}receptionScheduleReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!receptionConnected)receptionScheduleReconnect(250);});
 </script>

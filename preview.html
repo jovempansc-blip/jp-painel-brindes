@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="jp-direction-build" content="AV-57.6.6.10">
+<meta name="jp-direction-build" content="AV-57.6.6.25">
 
 <!-- AV-57.6.6.10-DIRECAO-ESPELHO-REAL-POA-FIREBASE -->
 <title>Direção · Painel de Operação e Programação — Jovem Pan Floripa</title>
@@ -669,6 +669,7 @@ let firebaseLastError='';
 let firebaseConnectionKnown=false;
 let firebaseRetryAttempt=0;
 let firebaseRestLastAttempt=0;
+let directionRenderTimer=null;
 let connectionMode="loading";
 let lastFirebaseSyncAt="";
 let reportFrom="";
@@ -1173,7 +1174,7 @@ function renderRelatorios(){
   $("view-relatorios").innerHTML=`${offlineNotice()}<div class="reportHeader"><strong>RELATÓRIO EXECUTIVO</strong><span>PERÍODO: ${formatBR(r.from)} A ${formatBR(r.to)} · EMISSORA: ${esc(stationLabel)}</span></div><div class="sectionToolbar"><div class="toolbarTitle"><h2>RELATÓRIOS CONSOLIDADOS</h2><p>VISÃO EXECUTIVA DO PERÍODO EXATO, INCLUSIVE ENTRE COMPETÊNCIAS</p></div><div class="toolbarStats"><button class="badge" type="button" onclick="window.print()">EXPORTAR PDF</button><button class="badge" type="button" onclick="window.print()">IMPRIMIR</button></div></div><section class="panel"><div class="panelBody"><div class="reportFilters"><div class="field"><label>DE</label><input class="control" type="date" id="reportFrom" value="${esc(r.from)}"></div><div class="field"><label>ATÉ</label><input class="control" type="date" id="reportTo" value="${esc(r.to)}"></div><div class="field"><label>ATALHOS</label><div class="reportShortcuts"><button class="badge" type="button" onclick="setReportRange('today')">HOJE</button><button class="badge" type="button" onclick="setReportRange('week')">SEMANA</button><button class="badge" type="button" onclick="setReportRange('month')">MÊS</button></div></div></div></div></section><div class="kpiGrid"><div class="kpi"><span>PRÊMIOS RECEBIDOS</span><strong>${totalReceived}</strong><small>ENTRADAS REGISTRADAS NO PERÍODO</small></div><div class="kpi"><span>MOVIMENTAÇÃO / CONSUMO</span><strong>${totalConsumed}</strong><small>SALDO ATUAL ${currentBalance}</small></div><div class="kpi"><span>PROGRAMAÇÃO</span><strong>${items.length}</strong><small>ITENS NO PERÍODO</small></div><div class="kpi"><span>MERCHAN</span><strong>${merchanConfirmed}/${merchanPlanned}</strong><small>${merchanUnconfirmed} NÃO CONFIRMADA(S)</small></div><div class="kpi"><span>GANHADORES</span><strong>${promoWins+itemWins}</strong><small>RESULTADOS CONFIRMADOS</small></div><div class="kpi"><span>RETIRADAS</span><strong>${delivered}</strong><small>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</small></div></div><section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>INDICADOR</th><th class="num">TOTAL</th><th>OBSERVAÇÃO</th></tr></thead><tbody><tr><td>PRÊMIOS RECEBIDOS</td><td class="num">${totalReceived}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>MOVIMENTAÇÃO / CONSUMO</td><td class="num">${totalConsumed}</td><td>SALDO ATUAL DA ÚLTIMA COMPETÊNCIA: ${currentBalance}</td></tr><tr><td>MERCHANS PREVISTOS</td><td class="num">${merchanPlanned}</td><td>${merchanConfirmed} CONFIRMADOS · ${merchanUnconfirmed} NÃO CONFIRMADOS</td></tr><tr><td>RESULTADOS / GANHADORES</td><td class="num">${promoWins+itemWins}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>RETIRADAS CONFIRMADAS</td><td class="num">${delivered}</td><td>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</td></tr></tbody></table></div></section>`;
   $("reportFrom")?.addEventListener("change",e=>{reportFrom=e.target.value;renderRelatorios();});$("reportTo")?.addEventListener("change",e=>{reportTo=e.target.value;renderRelatorios();});
 }
-window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.10';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),months:availableMonths(),currentMonth,programItems:directionList(monthData(currentMonth).items).filter(i=>normalizeChannel(i.channel)==='RÁDIO').length,firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
+window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.25';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),months:availableMonths(),currentMonth,programItems:directionList(monthData(currentMonth).items).filter(i=>normalizeChannel(i.channel)==='RÁDIO').length,firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
 function fillMonthFilter(){const months=availableMonths();$("monthFilter").innerHTML=(months.length?months:[liveTodayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");}
 function setMonthFromDate(date){const key=String(date||liveTodayISO()).slice(0,7);currentMonth=state.months?.[key]?key:(state.currentMonth||availableMonths().at(-1)||key);}
 function directionRenderError(tab,error){
@@ -1333,7 +1334,12 @@ function directionApplyRealtimePart(key,value){
   if(state.months?.[requestedMonth])currentMonth=requestedMonth;
   else currentMonth=availableMonths().at(-1)||liveTodayISO().slice(0,7);
   state.currentMonth=currentMonth;
-  fillMonthFilter();directionMarkFirebaseActivity();render();
+  fillMonthFilter();directionMarkFirebaseActivity();directionScheduleRender();
+}
+function directionScheduleRender(delay=40){clearTimeout(directionRenderTimer);directionRenderTimer=setTimeout(render,delay);}
+function directionApplyMonthPart(monthKey,value,removed=false){
+  if(!monthKey)return;state.months ||= {};if(removed)delete state.months[monthKey];else state.months[monthKey]=value||{label:monthKey,items:[],promos:[],distributions:[]};
+  state=directionNormalizeState(state);if(!state.months?.[currentMonth])currentMonth=availableMonths().at(-1)||liveTodayISO().slice(0,7);state.currentMonth=currentMonth;fillMonthFilter();directionMarkFirebaseActivity();directionScheduleRender();
 }
 function directionScheduleFirebaseRetry(baseDelay=1800){
   clearTimeout(firebaseRetryTimer);
@@ -1416,10 +1422,10 @@ function directionAttachFirebaseListeners(){
     if(!directionHasRecentServerActivity())directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');
     directionScheduleFirebaseRetry(1800);
   });
-  firebaseRef.child('months').on('value',snapshot=>{
-    try{directionApplyRealtimePart('months',snapshot.val());}
-    catch(error){firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR MESES');console.warn('DIRECTION FIREBASE MONTHS ERROR',error);directionScheduleFirebaseRetry(1200);}
-  },error=>{firebaseLastError=String(error?.message||error||'LISTENER MESES');console.warn('DIRECTION FIREBASE MONTHS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);});
+  const monthsRef=firebaseRef.child('months');
+  monthsRef.on('child_added',snapshot=>directionApplyMonthPart(snapshot.key,snapshot.val()),error=>{firebaseLastError=String(error?.message||error||'LISTENER MESES');directionScheduleFirebaseRetry(1200);});
+  monthsRef.on('child_changed',snapshot=>directionApplyMonthPart(snapshot.key,snapshot.val()),error=>{firebaseLastError=String(error?.message||error||'LISTENER MESES');directionScheduleFirebaseRetry(1200);});
+  monthsRef.on('child_removed',snapshot=>directionApplyMonthPart(snapshot.key,null,true),error=>{firebaseLastError=String(error?.message||error||'LISTENER MESES');directionScheduleFirebaseRetry(1200);});
   firebaseRef.child('programSchedules').on('value',snapshot=>{
     try{directionApplyRealtimePart('programSchedules',snapshot.val());}
     catch(error){firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR GRADE');console.warn('DIRECTION FIREBASE PROGRAMS ERROR',error);directionScheduleFirebaseRetry(1200);}
