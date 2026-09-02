@@ -360,7 +360,6 @@ const ref=opecDatabase.ref(FIREBASE_ROOT_PATH);
 const opecConnectionRef=opecDatabase.ref('.info/connected');
 let opecReconnectTimer=null;
 let opecConnected=false;
-let opecRenderTimer=null;
 const $=id=>document.getElementById(id);
 const $$=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
 const norm=value=>String(value??'').trim().replace(/\s+/g,' ').toUpperCase();
@@ -385,7 +384,7 @@ async function ensureOpecOnline(){
     throw new Error(`ETAPA CONEXÃO OPEC: ${error?.message||error}`);
   }
 }
-async function appendOpecAudit(entry){const key=String(entry?.id||`LOG_${Date.now()}`).replace(/[.#$\[\]/]/g,'_');await opecRetry(()=>ref.child('auditLog').child(key).set(entry));}
+async function appendOpecAudit(entry){await opecRetry(()=>ref.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(!rows.some(row=>row?.id===entry.id))rows.push(entry);return rows.slice(-2500);},undefined,false));}
 function formatBR(value){if(!value)return'--';const [y,m,d]=String(value).split('-');return y&&m&&d?`${d}/${m}/${y}`:String(value);}
 function stationLabel(value){return value==='JPNEWS983'?'JOVEM PAN NEWS - 98,3':'JOVEM PAN - 101,7';}
 function countStateRecords(data){if(!data||!data.months)return 0;const months=Object.values(data.months).reduce((total,month)=>total+(month.items||[]).length+(month.promos||[]).length+(month.distributions||[]).length,0);return months+(data.schedules||[]).length+(data.programSchedules||[]).length;}
@@ -394,8 +393,6 @@ let activeTab='cadastro';
 let reportMode='dia';
 let lastReportRows=[];
 let savePublicationMode='published';
-function opecRows(value){return Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean);}
-function normalizeOpecMonth(key,month){month=month||{};month.label=month.label||key;month.items=opecRows(month.items);month.promos=opecRows(month.promos);month.distributions=opecRows(month.distributions);return month;}
 function ensureMonth(key){state.months ||= {};state.months[key] ||= {label:key,items:[],promos:[],distributions:[]};return state.months[key];}
 function schedules(){state.programSchedules ||= [];return state.programSchedules;}
 function dayIndex(date){const [y,m,d]=String(date||todayISO()).split('-').map(Number);return new Date(y,(m||1)-1,d||1).getDay();}
@@ -459,21 +456,23 @@ function mergeReadData(base,copy){
 function allMerchans(){const groups=new Map();Object.entries(state.months||{}).forEach(([month,monthData])=>(monthData.promos||[]).forEach(promo=>{if(norm(promo.kind)!=='MERCHAN')return;const id=promo.id||`${month}-${promo.name||promo.title}`;if(!groups.has(id)){const clone=deepClone(promo);clone.__months=[month];groups.set(id,clone);return;}const current=groups.get(id);const merged=mergeReadData(current,promo);merged.__months=[...new Set([...(merged.__months||[]),month])];const currentUpdated=Date.parse(current.updatedAt||current.createdAt||0)||0;const copyUpdated=Date.parse(promo.updatedAt||promo.createdAt||0)||0;if(copyUpdated>currentUpdated){const reads={readByHour:merged.readByHour,readLog:merged.readLog,missedLog:merged.missedLog,__months:merged.__months};Object.assign(merged,deepClone(promo),reads);}groups.set(id,merged);}));return [...groups.values()].sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.program).localeCompare(norm(b.program))||norm(a.name||a.title).localeCompare(norm(b.name||b.title)));}
 function findMerchan(id){const promo=allMerchans().find(row=>row.id===id);return promo?{p:promo,months:promo.__months||[]}:null;}
 function targetMonths(record){return monthKeysBetween(record.startDate,record.endDate||record.drawDate||record.startDate).filter(validMonthKey);}
-async function findOpecRecordRef(monthKey,idValue){const query=ref.child('months').child(monthKey).child('promos').orderByChild('id').equalTo(idValue).limitToFirst(1),snapshot=await query.get();let found=null;snapshot.forEach(child=>{if(!found)found={ref:child.ref,record:child.val()};});return found;}
 async function transactionForRecord(record){
   const operator=opecOperatorIdentity();
   await ensureOpecOnline();
   const target=new Set(targetMonths(record));
   const existingMonths=Object.entries(state.months||{}).filter(([key,month])=>validMonthKey(key)&&(month.promos||[]).some(row=>row?.id===record.id)).map(([key])=>key);
   const keys=[...new Set([...existingMonths,...target])].filter(validMonthKey);
-  await Promise.all(keys.map(key=>opecRetry(async()=>{const found=await findOpecRecordRef(key,record.id);state.months[key] ||= {label:key,items:[],promos:[],distributions:[]};if(!target.has(key)){if(found)await found.ref.remove();state.months[key].promos=(state.months[key].promos||[]).filter(row=>row?.id!==record.id);return;}const recordRef=found?.ref||ref.child('months').child(key).child('promos').push(),copy={...deepClone(record),updatedBy:operator.name,operatorSector:operator.sector};const tx=await recordRef.transaction(current=>{if(current)mergeReadData(copy,current);return copy;},undefined,false);if(!tx?.committed)throw new Error('GRAVAÇÃO DO MERCHAN NÃO CONFIRMADA.');const rows=state.months[key].promos||[],index=rows.findIndex(row=>row?.id===record.id);if(index>=0)rows[index]=tx.snapshot.val();else rows.push(tx.snapshot.val());})));
+  for(const key of keys){
+    const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const existing=rows.find(row=>row?.id===record.id);const filtered=rows.filter(row=>row?.id!==record.id);if(!target.has(key))return filtered;const copy={...deepClone(record),updatedBy:operator.name,operatorSector:operator.sector};if(existing)mergeReadData(copy,existing);return [...filtered,copy];},undefined,false);if(!tx?.committed)throw new Error('GRAVAÇÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});
+    state.months[key] ||= {label:key,items:[],promos:[],distributions:[]};const rows=result.snapshot.val();state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);
+  }
   const now=new Date(),savedMonth=String(record.startDate||'').slice(0,7);await Promise.allSettled([ref.update({currentMonth:validMonthKey(savedMonth)?savedMonth:todayISO().slice(0,7),updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   return state;
 }
 async function deleteRecord(id){
   const operator=opecOperatorIdentity();
   await ensureOpecOnline();const keys=Object.entries(state.months||{}).filter(([key,month])=>validMonthKey(key)&&(month.promos||[]).some(row=>row?.id===id)).map(([key])=>key);
-  await Promise.all(keys.map(key=>opecRetry(async()=>{const found=await findOpecRecordRef(key,id);if(found)await found.ref.remove();if(state.months?.[key])state.months[key].promos=(state.months[key].promos||[]).filter(row=>row?.id!==id);}))); 
+  for(const key of keys){const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);return rows.filter(row=>row?.id!==id);},undefined,false);if(!tx?.committed)throw new Error('EXCLUSÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});const rows=result.snapshot.val();if(state.months?.[key])state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);}
   const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'MERCHAN EXCLUÍDO',targetId:id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);return true;
 }
 
@@ -634,12 +633,8 @@ function scheduleOpecFirebaseReconnect(delay=1400){
   },delay);
 }
 opecConnectionRef.on('value',snapshot=>{opecConnected=snapshot.val()===true;if(opecConnected){clearTimeout(opecReconnectTimer);opecReconnectTimer=null;}else{setSaveState('error','FIREBASE RECONECTANDO');scheduleOpecFirebaseReconnect();}});
-function scheduleOpecRender(delay=35){clearTimeout(opecRenderTimer);opecRenderTimer=setTimeout(render,delay);}
-const opecMonthsRef=ref.child('months');
-opecMonthsRef.on('child_added',snapshot=>{state.months[snapshot.key]=normalizeOpecMonth(snapshot.key,snapshot.val());setSaveState('','FIREBASE ONLINE');scheduleOpecRender();},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
-opecMonthsRef.on('child_changed',snapshot=>{state.months[snapshot.key]=normalizeOpecMonth(snapshot.key,snapshot.val());setSaveState('','FIREBASE ONLINE');scheduleOpecRender();},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
-opecMonthsRef.on('child_removed',snapshot=>{delete state.months[snapshot.key];scheduleOpecRender();});
-ref.child('programSchedules').on('value',snapshot=>{state.programSchedules=opecRows(snapshot.val());setSaveState('','FIREBASE ONLINE');scheduleOpecRender();},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
+ref.child('months').on('value',snapshot=>{state.months=snapshot.val()||{};setSaveState('','FIREBASE ONLINE');render();},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
+ref.child('programSchedules').on('value',snapshot=>{const value=snapshot.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);setSaveState('','FIREBASE ONLINE');render();},error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();});
 window.addEventListener('online',()=>{try{if(typeof opecDatabase.goOnline==='function')opecDatabase.goOnline();}catch(error){}scheduleOpecFirebaseReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!opecConnected)scheduleOpecFirebaseReconnect(250);});
 </script>

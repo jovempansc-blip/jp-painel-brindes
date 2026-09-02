@@ -811,12 +811,13 @@ const timeToHHMM=slot=>{const p=slotParts(slot);return p?`${pad(p.hour)}:${pad(p
 const formatTime=slot=>{const p=slotParts(slot);return p?`${pad(p.hour)}H${p.minute===30?'30':''}`:upper(slot||'--H');};
 const statusBadge=s=>upper(s)==='REALIZADO'?'<span class="badge green">REALIZADO</span>':upper(s)==='NO AR'?'<span class="badge green">NO AR</span>':`<span class="badge">${esc(upper(s||'PENDENTE'))}</span>`;
 let state={months:{}}, currentMonth='';
-function receptionRows(value){return Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean);}
-function normalizeReceptionMonth(key,month){month=month||{};month.label=month.label||key;month.items=receptionRows(month.items);month.promos=receptionRows(month.promos);month.distributions=receptionRows(month.distributions);return month;}
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
+function receptionConsolidatedCollection(collection){const map=new Map();Object.entries(state.months||{}).forEach(([month,m])=>(m?.[collection]||[]).forEach((row,index)=>{if(!row)return;const id=String(row.id||`LEGACY_${collection}_${month}_${index}_${row.date||row.startDate||''}`),current=map.get(id);if(!current){map.set(id,{row,month});return;}const a=Date.parse(current.row.updatedAt||current.row.createdAt||current.row.resultAt||'')||0,b=Date.parse(row.updatedAt||row.createdAt||row.resultAt||'')||0,canonical=String(row.date||row.resultDate||row.drawDate||row.startDate||'').slice(0,7)===month,prevCanonical=String(current.row.date||current.row.resultDate||current.row.drawDate||current.row.startDate||'').slice(0,7)===current.month;if(b>a||(b===a&&canonical&&!prevCanonical))map.set(id,{row,month});}));return[...map.values()].map(entry=>entry.row);}
+function receptionAllItems(){return receptionConsolidatedCollection('items');}
+function receptionAllPromos(){return receptionConsolidatedCollection('promos');}
 function availableMonths(){return Object.keys(state.months||{}).sort();}
 function selectMonthForDate(date){const m=String(date||todayISO()).slice(0,7); currentMonth=state.months?.[m]?m:(state.currentMonth||availableMonths().at(-1)||m);}
-function distributionById(id){return (monthData().distributions||[]).find(d=>d.id===id)||{};}
+function distributionById(id){if(!id)return{};const direct=(monthData().distributions||[]).find(d=>d.id===id);if(direct)return direct;for(const m of Object.values(state.months||{})){const found=(m?.distributions||[]).find(d=>d.id===id);if(found)return found;}return{};}
 function itemTitle(i){const d=distributionById(i.distributionId);return upper(i.title||d.title||i.prize||'SEM TÍTULO');}
 function itemDesc(i){const d=distributionById(i.distributionId);return i.notes||d.description||'';}
 function channelName(i){return upper(i.channel||'RÁDIO');}
@@ -834,9 +835,6 @@ if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();
 const firebaseRef=receptionDatabase.ref(FIREBASE_ROOT_PATH);
 const receptionConnectionRef=receptionDatabase.ref('.info/connected');
 let receptionReconnectTimer=null;
-let receptionMonthRef=null;
-let receptionBoundMonth='';
-let receptionRenderTimer=null;
 let receptionConnected=false;
 const receptionPendingSaves=new Set();
 const receptionSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -868,9 +866,11 @@ function receptionRecordMonths(collection,idValue,date=''){
 }
 async function locateReceptionRecord(collection,monthKey,idValue){
   const collectionRef=firebaseRef.child('months').child(monthKey).child(collection);
-  const snapshot=await collectionRef.orderByChild('id').equalTo(idValue).limitToFirst(1).get();let match=null;
-  snapshot.forEach(child=>{if(!match)match={ref:child.ref,record:child.val()};});
-  return match;
+  const snapshot=await collectionRef.get();
+  const value=snapshot.val();
+  const entries=Array.isArray(value)?value.map((row,index)=>[String(index),row]).filter(([,row])=>row):Object.entries(value||{}).filter(([,row])=>row);
+  const match=entries.find(([,row])=>row?.id===idValue);
+  return match?{ref:collectionRef.child(match[0]),record:match[1]}:null;
 }
 async function saveReceptionRecord(source,record){
   const collection=source==='item'?'items':'promos';
@@ -907,7 +907,7 @@ async function saveReceptionRecord(source,record){
     if(!found)throw Object.assign(new Error('ETAPA LOCALIZAÇÃO: REGISTRO NÃO ENCONTRADO NA BASE OFICIAL.'),{retryable:false});
     const log={id:`LOG_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'RETIRADA DE PRÊMIO ATUALIZADA',targetId:record.id,origin:'RECEPÇÃO',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')};
     await Promise.allSettled([
-      receptionRetry(()=>firebaseRef.child('auditLog').child(log.id).set(log)),
+      receptionRetry(()=>firebaseRef.child('auditLog').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);if(!rows.some(row=>row?.id===log.id))rows.push(log);return rows.slice(-2500);},undefined,false)),
       firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'RECEPCAO',version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE_RECEPTION'})
     ]);
     return true;
@@ -970,7 +970,7 @@ function isExpiredNoPickup(dateValue){
 function resultRowsForDate(date){
   selectMonthForDate(date);
   const items=[];
-  (monthData().items||[])
+  receptionAllItems()
     .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || upper(i.winnerName) || (Array.isArray(i.winnerNames)&&i.winnerNames.length)))
     .forEach(i=>{
       const names=(Array.isArray(i.winnerNames)&&i.winnerNames.length)
@@ -1003,7 +1003,7 @@ function resultRowsForDate(date){
       });
     });
   const promos=[];
-  (monthData().promos||[]).forEach(p=>{
+  receptionAllPromos().forEach(p=>{
     const days=Math.max(1,Math.min(5,Number(p.pickupBusinessDays)||5));
     promoWinnerOccurrences(p).filter(w=>w.occurrenceDate===date).forEach(w=>{
       const reg=registeredDateForPromo({...p,resultDate:w.occurrenceDate,drawDate:w.occurrenceDate,drawTime:w.occurrenceTime},w),deadline=deadlineInfo(reg,w.deliveredAt||'',days);
@@ -1044,7 +1044,7 @@ function setPickup(row,undo=false){
   const now=new Date();
   let changedRecord=null;
   if(row.source==='item'){
-    const sourceItem=(monthData().items||[]).find(i=>i.id===row.id);
+    const sourceItem=receptionAllItems().find(i=>i.id===row.id);
     if(!sourceItem) return;
     const item=JSON.parse(JSON.stringify(sourceItem));
     const names=(Array.isArray(item.winnerNames)&&item.winnerNames.length)
@@ -1073,7 +1073,7 @@ function setPickup(row,undo=false){
     }
     changedRecord=item;
   }else if(row.source==='promo'){
-    const sourcePromo=(monthData().promos||[]).find(p=>p.id===row.id);if(!sourcePromo)return;const promo=JSON.parse(JSON.stringify(sourcePromo));const idx=Number(row.winnerIndex);
+    const sourcePromo=receptionAllPromos().find(p=>p.id===row.id);if(!sourcePromo)return;const promo=JSON.parse(JSON.stringify(sourcePromo));const idx=Number(row.winnerIndex);
     if(row.occurrenceKey){
       const winners=normalizeWinnerList(promo.resultWinnersByHour?.[row.occurrenceKey]||[]);if(!winners[idx])return;
       winners[idx]={...winners[idx],deliveredAt:undo?'':now.toISOString(),deliveredAtLabel:undo?'':now.toLocaleString('pt-BR'),deliveredBy:undo?'':'RECEPCAO',deliveredLate:undo?false:!!row.expired,deliveryDeadline:undo?'':(row.deadline?row.deadline.toISOString():'')};
@@ -1190,7 +1190,7 @@ document.addEventListener('contextmenu',e=>{
 });
 
 $('dateFilter').value=todayISO();
-$('dateFilter').addEventListener('change',()=>{receptionBindSelectedMonth();render();});
+$('dateFilter').addEventListener('change',render);
 let searchTimer=null;$('searchFilter').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,90);});
 setInterval(render,60000);
 function receptionScheduleReconnect(delay=1600){
@@ -1205,14 +1205,8 @@ receptionConnectionRef.on('value',snap=>{
   if(receptionConnected){clearTimeout(receptionReconnectTimer);receptionReconnectTimer=null;}
   else if(navigator.onLine!==false)receptionScheduleReconnect();
 });
-function receptionScheduleRender(delay=35){clearTimeout(receptionRenderTimer);receptionRenderTimer=setTimeout(()=>{render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');},delay);}
-function receptionBindSelectedMonth(){
-  const key=String($('dateFilter')?.value||todayISO()).slice(0,7);if(!key||key===receptionBoundMonth)return;
-  if(receptionMonthRef)receptionMonthRef.off();receptionBoundMonth=key;receptionMonthRef=firebaseRef.child('months').child(key);
-  receptionMonthRef.on('value',snap=>{state.months={[key]:normalizeReceptionMonth(key,snap.val())};selectMonthForDate($('dateFilter').value);receptionScheduleRender();},error=>{console.warn('RECEPTION MONTH LOAD ERROR',error);receptionScheduleReconnect();});
-}
-receptionBindSelectedMonth();
-firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);receptionScheduleRender();},error=>{console.warn('RECEPTION PROGRAM SCHEDULE LOAD ERROR',error);receptionScheduleReconnect();});
+firebaseRef.child('months').on('value',snap=>{state.months=snap.val()||{};selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');},error=>{console.warn('RECEPTION MONTHS LOAD ERROR',error);receptionScheduleReconnect();});
+firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);render();},error=>{console.warn('RECEPTION PROGRAM SCHEDULE LOAD ERROR',error);receptionScheduleReconnect();});
 window.addEventListener('online',()=>{try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){}receptionScheduleReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!receptionConnected)receptionScheduleReconnect(250);});
 </script>

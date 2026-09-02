@@ -4451,7 +4451,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 <div class="toast" id="toast"></div>
 
 <script>
-// AV57.6.6.25: Firebase único, gravação granular e listeners particionados.
+// AV57.6.6.24: sem base operacional embutida; dados somente do Firebase RTDB.
 const CHANNELS = [
   ['app','APP'],['camarote','CAMAROTE'],['camarim','CAMARIM'],['rua','EXTERNA'],['ar','RÁDIO'],['rs','REDES SOCIAIS'],['reservado','RESERVADO']
 ];
@@ -4489,7 +4489,6 @@ const FIREBASE_CONFIG = {
   "measurementId": "G-VB6Y2TS796"
 };
 const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
-const PROMO_ASSET_PATH = "jp-painel-brindes/assets/promos";
 const WINNER_BANK_PATH = "jp-painel-brindes/winnerBank";
 const WINNER_BLOCK_MONTHS = 8;
 const WINNER_SHORT_BLOCK_DAYS = 28;
@@ -4510,12 +4509,6 @@ let firebaseInitialSnapshotSeen = false;
 let firebaseServerLoaded = false;
 let firebaseBaselineState = null;
 let firebaseDatabase = null;
-let promoAssetRef = null;
-const promoImageCache = new Map();
-const firebaseRecordKeyMaps = new Map();
-let firebaseRealtimeBound = false;
-let firebaseRemoteRenderTimer = null;
-let promoImageMigrationStarted=false;
 let firebaseBootstrapInFlight = false;
 let firebaseRetryTimer = null;
 let firebaseLastServerActivity = 0;
@@ -4622,43 +4615,9 @@ function countStateRecords(data){
 function firebaseList(value){
   if(Array.isArray(value)) return value.filter(Boolean);
   if(value && typeof value==='object'){
-    return Object.keys(value).sort((a,b)=>{
-      const na=Number(a),nb=Number(b);
-      return Number.isFinite(na)&&Number.isFinite(nb)?na-nb:String(a).localeCompare(String(b));
-    }).map(key=>value[key]).filter(Boolean);
+    return Object.keys(value).sort((a,b)=>Number(a)-Number(b)).map(key=>value[key]).filter(Boolean);
   }
   return [];
-}
-function firebaseRememberCollectionKeys(relativePath,value){
-  const map=new Map();
-  Object.entries(value&&typeof value==='object'?value:{}).forEach(([key,row],index)=>{
-    if(!row||typeof row!=='object') return;
-    const identity=recordIdentity(row,index);
-    if(identity&&!identity.startsWith('__INDEX_')) map.set(identity,key);
-  });
-  firebaseRecordKeyMaps.set(relativePath,map);
-}
-function firebaseRememberStateKeys(remoteState){
-  Object.entries(remoteState?.months||{}).forEach(([monthKey,month])=>{
-    ['items','promos','distributions'].forEach(collection=>firebaseRememberCollectionKeys(`months/${monthKey}/${collection}`,month?.[collection]||{}));
-  });
-  ['schedules','programSchedules','auditLog','trash','pendingOps'].forEach(collection=>firebaseRememberCollectionKeys(collection,remoteState?.[collection]||{}));
-}
-function firebaseRecordChildKey(relativePath,idValue){
-  return firebaseRecordKeyMaps.get(relativePath)?.get(idValue)||'';
-}
-function firebaseStoreRecordChildKey(relativePath,idValue,key){
-  if(!idValue||!key) return;
-  if(!firebaseRecordKeyMaps.has(relativePath)) firebaseRecordKeyMaps.set(relativePath,new Map());
-  firebaseRecordKeyMaps.get(relativePath).set(idValue,key);
-}
-function scheduleFirebaseRemoteRender(delay=45){
-  clearTimeout(firebaseRemoteRenderTimer);
-  firebaseRemoteRenderTimer=setTimeout(()=>{
-    setOfficialCalendarMonth(false);
-    render();
-    updateSyncStatus('online','FIREBASE ONLINE');
-  },delay);
 }
 function sameValue(a,b){
   return JSON.stringify(a)===JSON.stringify(b);
@@ -4718,50 +4677,23 @@ async function persistCollectionDiff(relativePath,baseRows,localRows){
   if(!plan.replace && !plan.changes.length && !plan.deleted.length) return;
   const writeRoot=firebaseStateRootRef();
   if(!writeRoot) throw new Error('FIREBASE INDISPONÍVEL PARA GRAVAÇÃO.');
-  if(plan.replace){
-    await writeRoot.child(relativePath).set(clone(plan.value));
-    firebaseRememberCollectionKeys(relativePath,plan.value);
-    return;
-  }
-  const base=firebaseList(baseRows);
-  const baseMap=new Map(base.map((row,index)=>[recordIdentity(row,index),row]));
-  const tasks=[];
-  const newUpdates={};
-  plan.deleted.forEach(idValue=>{
-    const key=firebaseRecordChildKey(relativePath,idValue);
-    if(!key) throw new Error(`CHAVE FIREBASE NÃO LOCALIZADA PARA EXCLUIR ${idValue}.`);
-    const baseline=baseMap.get(idValue);
-    tasks.push(writeRoot.child(relativePath).child(key).transaction(current=>{
-      if(current===null||current===undefined) return null;
-      if(!sameValue(current,baseline)) return;
-      return null;
-    },undefined,false).then(result=>{
-      if(!result?.committed) throw new Error(`CONFLITO AO EXCLUIR ${idValue}. ATUALIZE A BASE E TENTE NOVAMENTE.`);
-      firebaseRecordKeyMaps.get(relativePath)?.delete(idValue);
-    }));
-  });
-  plan.changes.forEach(change=>{
-    const existingKey=firebaseRecordChildKey(relativePath,change.id);
-    if(!existingKey){
-      const newRef=writeRoot.child(relativePath).push();
-      firebaseStoreRecordChildKey(relativePath,change.id,newRef.key);
-      newUpdates[newRef.key]=clone(change.local);
-      return;
+  await writeRoot.child(relativePath).transaction(current=>{
+    if(plan.replace) return clone(plan.value);
+    let rows=firebaseList(current);
+    if(plan.deleted.length){
+      const removed=new Set(plan.deleted);
+      rows=rows.filter((row,index)=>!removed.has(recordIdentity(row,index)));
     }
-    const baseline=baseMap.get(change.id);
-    tasks.push(writeRoot.child(relativePath).child(existingKey).transaction(current=>{
-      if(current===null||current===undefined){
-        if(baseline!==undefined) return;
-        return clone(change.local);
+    plan.changes.forEach(change=>{
+      const index=rows.findIndex((row,rowIndex)=>recordIdentity(row,rowIndex)===change.id);
+      if(index<0){
+        rows.push(clone(change.local));
+        return;
       }
-      if(baseline!==undefined&&!sameValue(current,baseline)&&!sameValue(current,change.local)) return;
-      return applyNodeDiff(current,change.diff);
-    },undefined,false).then(result=>{
-      if(!result?.committed) throw new Error(`CONFLITO DE EDIÇÃO EM ${relativePath}: ${change.id}.`);
-    }));
+      rows[index]=applyNodeDiff(rows[index],change.diff);
+    });
+    return rows.filter(Boolean);
   });
-  if(Object.keys(newUpdates).length) tasks.push(writeRoot.child(relativePath).update(newUpdates));
-  if(tasks.length) await Promise.all(tasks);
 }
 function applyCollectionPlanToRows(currentRows,baseRows,localRows,context='REGISTRO'){
   const plan=collectionPlan(baseRows,localRows);
@@ -4855,11 +4787,13 @@ async function persistGranularState(){
     const plan=collectionPlan(baseRows,localRows);
     if(plan.replace||plan.changes.length||plan.deleted.length) tasks.push(persistCollectionDiff(collection,baseRows,localRows));
   });
-  ['auditLog','trash','pendingOps'].forEach(path=>{
-    const baseRows=baseline[path]||[],localRows=state[path]||[];
-    const plan=collectionPlan(baseRows,localRows);
-    if(plan.replace||plan.changes.length||plan.deleted.length) tasks.push(persistCollectionDiff(path,baseRows,localRows));
-  });
+  const mergeLogNode=(path,baseRows,localRows)=>{
+    if(sameValue(baseRows||[],localRows||[])) return;
+    tasks.push(writeRoot.child(path).transaction(current=>mergeAuditRows(current||[],localRows||[]),undefined,false));
+  };
+  mergeLogNode('auditLog',baseline.auditLog,state.auditLog);
+  mergeLogNode('trash',baseline.trash,state.trash);
+  mergeLogNode('pendingOps',baseline.pendingOps,state.pendingOps);
   if(!sameValue(baseline.prizeCatalog||{},state.prizeCatalog||{})){
     tasks.push(writeRoot.child('prizeCatalog').transaction(current=>applyKeyedObjectPlan(current||{},baseline.prizeCatalog||{},state.prizeCatalog||{},'CATÁLOGO DE PRÊMIOS'),undefined,false));
   }
@@ -4915,7 +4849,6 @@ function applyRemoteFirebaseState(remoteState){
   if(!remoteState || !remoteState.months) return;
   firebaseApplyingRemote = true;
   try{
-    firebaseRememberStateKeys(remoteState);
     const openMonth=firebaseServerLoaded ? state.currentMonth : '';
     const remoteTrashCount=Array.isArray(remoteState.trash)?remoteState.trash.length:Object.keys(remoteState.trash||{}).length;
     firebaseBaseEmpty = false;
@@ -4992,7 +4925,6 @@ async function firebaseBootstrapRead(force=false){
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONECTAR AO FIREBASE.')),9000))
     ]);
     firebaseApplySnapshot(snapshot,'bootstrap');
-    attachFirebaseGranularListeners();
     clearTimeout(firebaseRetryTimer);
     if(firebasePendingSave && firebaseServerLoaded) queueApiSave(100);
   }catch(error){
@@ -5009,90 +4941,6 @@ async function firebaseBootstrapRead(force=false){
   }finally{
     firebaseBootstrapInFlight=false;
   }
-}
-function applyFirebaseMonthSnapshot(monthKey,value){
-  if(firebasePendingSave||!monthKey) return;
-  firebaseApplyingRemote=true;
-  try{
-    const raw=value&&typeof value==='object'?value:{label:monthKey,items:[],promos:[],distributions:[]};
-    ['items','promos','distributions'].forEach(collection=>firebaseRememberCollectionKeys(`months/${monthKey}/${collection}`,raw[collection]||{}));
-    state.months ||= {};
-    state.months[monthKey]=clone(raw);
-    normalizePanelState(state);
-    firebaseBaselineState=normalizePanelState(clone(state));
-    firebaseMarkServerActivity();
-    scheduleFirebaseRemoteRender();
-  }finally{firebaseApplyingRemote=false;}
-}
-function applyFirebaseTopSnapshot(key,value){
-  if(firebasePendingSave) return;
-  firebaseApplyingRemote=true;
-  try{
-    if(['schedules','programSchedules','auditLog','trash','pendingOps'].includes(key)){
-      firebaseRememberCollectionKeys(key,value||{});
-      state[key]=firebaseList(value);
-    }else state[key]=clone(value||{});
-    normalizePanelState(state);
-    firebaseBaselineState=normalizePanelState(clone(state));
-    firebaseMarkServerActivity();
-    scheduleFirebaseRemoteRender();
-  }finally{firebaseApplyingRemote=false;}
-}
-function applyFirebaseRootRecord(key,snapshot,removed=false){
-  if(firebasePendingSave)return;
-  const value=snapshot.val(),identity=value?.id||snapshot.key;state[key]=firebaseList(state[key]);
-  const index=state[key].findIndex((row,rowIndex)=>recordIdentity(row,rowIndex)===identity);
-  if(removed){if(index>=0)state[key].splice(index,1);firebaseRecordKeyMaps.get(key)?.delete(identity);}
-  else{if(index>=0)state[key][index]=value;else state[key].push(value);firebaseStoreRecordChildKey(key,identity,snapshot.key);}
-  firebaseBaselineState=normalizePanelState(clone(state));firebaseMarkServerActivity();scheduleFirebaseRemoteRender();
-}
-function attachFirebaseGranularListeners(){
-  if(firebaseRealtimeBound||!firebaseRef||!firebaseServerLoaded) return;
-  const root=firebaseStateRootRef();
-  if(!root) return;
-  firebaseRealtimeBound=true;
-  const monthsRef=root.child('months');
-  monthsRef.on('child_added',snap=>applyFirebaseMonthSnapshot(snap.key,snap.val()),error=>{console.warn('FIREBASE MONTH ADD LISTENER ERROR',error);scheduleFirebaseRetry(1800);});
-  monthsRef.on('child_changed',snap=>applyFirebaseMonthSnapshot(snap.key,snap.val()),error=>{console.warn('FIREBASE MONTH CHANGE LISTENER ERROR',error);scheduleFirebaseRetry(1800);});
-  monthsRef.on('child_removed',snap=>{
-    if(firebasePendingSave) return;
-    delete state.months?.[snap.key];
-    ['items','promos','distributions'].forEach(collection=>firebaseRecordKeyMaps.delete(`months/${snap.key}/${collection}`));
-    firebaseBaselineState=normalizePanelState(clone(state));
-    scheduleFirebaseRemoteRender();
-  });
-  ['schedules','programSchedules','publishedPrograms','programVersions','systemMeta','prizeCatalog'].forEach(key=>{
-    root.child(key).on('value',snap=>applyFirebaseTopSnapshot(key,snap.val()),error=>{console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleFirebaseRetry(1800);});
-  });
-  ['auditLog','trash','pendingOps'].forEach(key=>{
-    const collection=root.child(key);
-    collection.on('child_added',snap=>applyFirebaseRootRecord(key,snap));
-    collection.on('child_changed',snap=>applyFirebaseRootRecord(key,snap));
-    collection.on('child_removed',snap=>applyFirebaseRootRecord(key,snap,true));
-  });
-  if(!promoImageMigrationStarted)setTimeout(migrateLegacyPromoImages,600);
-}
-async function migrateLegacyPromoImages(){
-  if(promoImageMigrationStarted||!firebaseConnected||!promoAssetRef)return;
-  promoImageMigrationStarted=true;
-  const groups=new Map();
-  Object.entries(state.months||{}).forEach(([monthKey,month])=>(month.promos||[]).forEach(promo=>{if(promo?.id&&promo.imageData){if(!groups.has(promo.id))groups.set(promo.id,{promo,copies:[]});groups.get(promo.id).copies.push({monthKey,promo});}}));
-  const writeRoot=firebaseStateRootRef();if(!writeRoot)return;
-  for(const [promoId,group] of groups){
-    try{
-      const assetKey=await persistPromoImageAsset(promoId,group.promo.imageData),updates={};
-      for(const copy of group.copies){
-        let childKey=firebaseRecordChildKey(`months/${copy.monthKey}/promos`,promoId);
-        if(!childKey){const query=writeRoot.child('months').child(copy.monthKey).child('promos').orderByChild('id').equalTo(promoId).limitToFirst(1),snap=await query.get();snap.forEach(child=>{if(!childKey)childKey=child.key;});}
-        if(!childKey)continue;
-        updates[`months/${copy.monthKey}/promos/${childKey}/imageRef`]=assetKey;
-        updates[`months/${copy.monthKey}/promos/${childKey}/imageData`]=null;
-        copy.promo.imageRef=assetKey;delete copy.promo.imageData;
-      }
-      if(Object.keys(updates).length)await writeRoot.update(updates);
-    }catch(error){console.warn(`PROMO IMAGE MIGRATION ERROR ${promoId}`,error);}
-  }
-  firebaseBaselineState=normalizePanelState(clone(state));
 }
 function initFirebaseSync(){
   if(firebaseStarted) return;
@@ -5117,7 +4965,6 @@ function initFirebaseSync(){
     firebaseDatabase=window.firebase.database(app);
     if(firebaseDatabase && typeof firebaseDatabase.goOnline==='function') firebaseDatabase.goOnline();
     firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
-    promoAssetRef=firebaseDatabase.ref(PROMO_ASSET_PATH);
     firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
     firebaseReady=true;
     updateSyncStatus('saving','CONECTANDO');
@@ -5150,8 +4997,26 @@ function initFirebaseSync(){
       scheduleFirebaseRetry(1800);
     });
 
-    // Uma leitura completa apenas na abertura; depois disso os listeners são
-    // particionados por mês e coleção para não reconstruir toda a base a cada clique.
+    firebaseRef.on('value',snapshot=>{
+      try{ firebaseApplySnapshot(snapshot,'listener'); }
+      catch(err){
+        console.warn('FIREBASE SNAPSHOT APPLY ERROR',err);
+        updateSyncStatus('error','ERRO AO CARREGAR');
+      }
+    },err=>{
+      console.warn('FIREBASE LOAD ERROR',err);
+      if(navigator.onLine===false){
+        firebaseConnected=false;
+        updateSyncStatus('offline','FIREBASE OFFLINE');
+      }else{
+        firebaseConnected=false;
+        updateSyncStatus('saving','RECONECTANDO');
+        scheduleFirebaseRetry(2200);
+      }
+    });
+
+    // Leitura explícita única na abertura: não depende do primeiro evento do listener
+    // e evita o painel ficar indefinidamente em "conectando".
     firebaseBootstrapRead(true);
   }catch(err){
     firebaseStarted=false;
@@ -6445,11 +6310,11 @@ function normalizeChannel(value){
 }
 function normalizePanelState(data){
   if(!data || !data.months) return data;
-  data.schedules=firebaseList(data.schedules);
-  data.programSchedules=firebaseList(data.programSchedules);
-  data.auditLog=firebaseList(data.auditLog);
-  data.trash=firebaseList(data.trash);
-  data.pendingOps=firebaseList(data.pendingOps);
+  data.schedules ||= [];
+  data.programSchedules ||= [];
+  data.auditLog ||= [];
+  data.trash ||= [];
+  data.pendingOps ||= [];
   data.publishedPrograms ||= {};
   data.programVersions ||= {};
   data.systemMeta ||= {};
@@ -6473,12 +6338,9 @@ function normalizePanelState(data){
   data.schedules ||= [];
   data.schedules.forEach(s=>{ s.type=normalizeScheduleType(s.type); s.status=legacyStatusToScheduleMeta(s); s.pending=normalizeSchedulePending(s.pending||s.pendencia||s.status); s.destination=normalizeScheduleDestination(s.destination); s.station ||= 'JP1017'; s.notes=textNorm(s.notes||''); });
   Object.values(data.months).forEach(m=>{
-    m.items=firebaseList(m.items);
-    m.promos=firebaseList(m.promos);
-    m.distributions=firebaseList(m.distributions);
-    m.items.forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
-    m.promos.forEach(p=>{ p.status = normalizeStatus(p.status); });
-    m.distributions.forEach(d=>{
+    (m.items || []).forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
+    (m.promos || []).forEach(p=>{ p.status = normalizeStatus(p.status); });
+    (m.distributions || []).forEach(d=>{
       if(d.reservado === undefined) d.reservado = num(d.clientes) + num(d.outros);
       d.reservadoNote ||= d.reservaObs || d.reservedNote || '';
       d.reservas = normalizeReservationEntries(d);
@@ -6571,22 +6433,11 @@ function promptOperatorIdentity(force=false){
 function currentOperatorIdentity(required=false){
   return readOperatorIdentity();
 }
-function auditSafeClone(value){
-  if(value===undefined) return '';
-  if(value===null||typeof value!=='object') return typeof value==='string'&&value.startsWith('data:image/')?'[IMAGEM NO FIREBASE]':value;
-  if(Array.isArray(value)) return value.map(auditSafeClone);
-  const out={};
-  Object.entries(value).forEach(([key,entry])=>{
-    if(key==='imageData'||key==='data'&&typeof entry==='string'&&entry.startsWith('data:image/')) return;
-    out[key]=auditSafeClone(entry);
-  });
-  return out;
-}
 function auditEvent(action,target='',details={}){
   normalizePanelState(state);
   const now=new Date();
   const operator=currentOperatorIdentity(true);
-  const row={id:id('LOG'),action:norm(action||'ALTERAÇÃO'),target:norm(target||''),targetId:details?.targetId||'',before:details?.before===undefined?'':auditSafeClone(details.before),after:details?.after===undefined?'':auditSafeClone(details.after),origin:details?.origin||'PAINEL PRINCIPAL',operatorName:operator.name,operatorSector:operator.sector,note:textNorm(details?.note||''),createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')};
+  const row={id:id('LOG'),action:norm(action||'ALTERAÇÃO'),target:norm(target||''),targetId:details?.targetId||'',before:details?.before===undefined?'':clone(details.before),after:details?.after===undefined?'':clone(details.after),origin:details?.origin||'PAINEL PRINCIPAL',operatorName:operator.name,operatorSector:operator.sector,note:textNorm(details?.note||''),createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')};
   state.auditLog.push(row);
   if(state.auditLog.length>2500) state.auditLog=state.auditLog.slice(-2500);
   return row;
@@ -7707,7 +7558,7 @@ function convertScheduleRecord(s,{auto=false,openProgramDrawer=false}={}){
     resultSlot:'',
     resultDate:'',
     resultByHour:{},
-    imageRef:'',
+    imageData:'',
     createdAt:new Date().toISOString(),
     updatedAt:new Date().toISOString()
   };
@@ -7744,7 +7595,7 @@ function convertSchedule(idValue){
     return;
   }
   state.currentMonth=scheduleTargetMonth(s);
-  saveState(true); render(); setView(target==='DISTRIBUIÇÃO GERAL'?'distribuicao':'digital');
+  saveState(true); queueApiSave(80); render(); setView(target==='DISTRIBUIÇÃO GERAL'?'distribuicao':'digital');
   toast(`AGENDAMENTO CONVERTIDO EM ${target}.`);
 }
 function promoEndingAlerts(){
@@ -8246,19 +8097,27 @@ function passTextFilter(obj, text){
   if(!text) return true;
   return Object.values(obj).some(v => norm(v).includes(text));
 }
+function allProgramItemsAcrossMonths(){
+  const map=new Map();
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>(m.items||[]).forEach((item,index)=>{
+    if(!item)return;
+    const key=String(item.id||`LEGACY_${monthKey}_${index}_${item.date||''}_${item.slot||''}`);
+    const current=map.get(key);
+    if(!current){map.set(key,{item,monthKey});return;}
+    const a=Date.parse(current.item.updatedAt||current.item.createdAt||'')||0,b=Date.parse(item.updatedAt||item.createdAt||'')||0;
+    const canonical=String(item.date||'').slice(0,7)===monthKey,prevCanonical=String(current.item.date||'').slice(0,7)===current.monthKey;
+    if(b>a||(b===a&&canonical&&!prevCanonical))map.set(key,{item,monthKey});
+  }));
+  return [...map.values()].map(entry=>entry.item);
+}
 function programItemsForVisibleCalendar(){
   const selectedWeek=$('weekFilter')?.value || '';
-  if(!selectedWeek) return [...(monthData().items||[])];
+  const pool=allProgramItemsAcrossMonths();
+  if(!selectedWeek) return pool.filter(item=>String(item.date||'').slice(0,7)===state.currentMonth);
   const dates=weekDatesForLabel(selectedWeek,state.currentMonth);
-  if(!dates.length) return [...(monthData().items||[])];
+  if(!dates.length) return pool.filter(item=>String(item.date||'').slice(0,7)===state.currentMonth);
   const dateSet=new Set(dates);
-  const monthKeys=[...new Set(dates.map(date=>String(date).slice(0,7)).filter(Boolean))];
-  const rows=[];
-  monthKeys.forEach(monthKey=>{
-    const m=monthDataForKey(monthKey);
-    (m.items||[]).forEach(item=>{ if(dateSet.has(item.date)) rows.push(item); });
-  });
-  return rows;
+  return pool.filter(item=>dateSet.has(item.date));
 }
 function filteredItems(){
   const week=norm($('weekFilter')?.value);
@@ -8690,7 +8549,7 @@ function applyReturnedPrizeReuse(index){
   const targetMonth=monthDataForKey(slot.date.slice(0,7)); targetMonth.items ||= []; targetMonth.items.push(newItem);
   updateWinnerReuseStatus(r,'realocado',{reusedItemId:newItem.id,reuseDecision:slot.forced?'REAPROVEITADO_FORCADO':'REAPROVEITADO',reuseDate:slot.date,reuseSlot:slot.slot});
   auditEvent(slot.forced?'REALOCAÇÃO MANUAL FORA DA RECOMENDAÇÃO':'REALOCAÇÃO INTELIGENTE DE PRÊMIO',r.prize,{note:`${formatBR(slot.date)} ${slot.slot} · ${slot.program} · GANHADOR ORIGINAL: ${r.winner}`,sourceId:r.id});
-  saveState(true); closeDrawer('returnReuseDrawer'); closeDrawer('returnDrawer'); render(); renderReturnAlerts(); toast(slot.forced?'PRÊMIO REALOCADO COM EXCEÇÃO REGISTRADA.':'PRÊMIO REALOCADO NA MELHOR JANELA DISPONÍVEL.');
+  saveState(true); queueApiSave(80); closeDrawer('returnReuseDrawer'); closeDrawer('returnDrawer'); render(); renderReturnAlerts(); toast(slot.forced?'PRÊMIO REALOCADO COM EXCEÇÃO REGISTRADA.':'PRÊMIO REALOCADO NA MELHOR JANELA DISPONÍVEL.');
 }
 function suggestedReuseSlot(d){return returnReuseCandidatePool(d,{allowRepeat:false,allowOccupied:false})[0]||null;}
 function reuseReturnedPrize(recordId){openReturnReuseSuggestions(recordId);}
@@ -9035,8 +8894,7 @@ function renderStudioPauta(){
   prizeGrid.innerHTML = prizeRows.length ? renderStudioPrizePeriods(prizeRows) : '<div class="empty">NENHUMA PAUTA DE PRÊMIO PROGRAMADA PARA ESTE DIA.</div>';
   promoGrid.innerHTML = promoRows.length ? promoRows.map(p=>{
     const st = promoStatusData(p);
-    const cachedImage=p.imageData||promoImageCache.get(promoAssetKey(p))||'';
-    const img = cachedImage ? `<img src="${cachedImage}" alt="IMAGEM DA PROMOÇÃO">` : (p.imageRef?`<span data-promo-image-ref="${esc(p.id)}">CARREGANDO IMAGEM...</span>`:'IMAGEM 1600 X 400');
+    const img = p.imageData ? `<img src="${p.imageData}" alt="IMAGEM DA PROMOÇÃO">` : 'IMAGEM 1600 X 400';
     return `<article class="studioPromoCard">
       <div class="studioPromoBanner">${img}</div>
       <div class="studioPromoHead"><span class="studioPromoLocal">${esc(adminAV572StudioStationLabel(p))} · ${esc(promoTypeDisplay(p))} · ${esc(adminAV572StudioHoursLabel(p))}</span><div class="studioPromoStatus">${`<span class="badge ${st.cls}">${st.label}</span>`}</div></div>
@@ -9048,7 +8906,6 @@ function renderStudioPauta(){
       </div>
     </article>`;
   }).join('') : '<div class="empty">NENHUMA PAUTA PROMO CADASTRADA PARA ESTE DIA.</div>';
-  hydratePromoImageElements(promoGrid);
 }
 
 function renderResumo(){
@@ -9385,14 +9242,14 @@ function executeProgramMove(itemId,targetDate,targetSlot,origin='GRADE',options=
     }
     auditEvent('TROCA DE HORÁRIOS NA PROGRAMAÇÃO',item.prize||item.title,{targetId:item.id,before:beforeA,after:clone(item),note:`${origin} · ${formatBR(sourceDate)} ${sourceSlot} ↔ ${formatBR(targetDate)} ${slot} · ${occupied.prize||occupied.title||'OUTRO PRÊMIO'}`});
     auditEvent('TROCA DE HORÁRIOS NA PROGRAMAÇÃO',occupied.prize||occupied.title,{targetId:occupied.id,before:beforeB,after:clone(occupied),note:`${origin} · TROCA COM ${item.prize||item.title||'PRÊMIO'}`});
-    saveState(true);render();toast('HORÁRIOS TROCADOS COM SUCESSO.');return true;
+    saveState(true);queueApiSave(80);render();toast('HORÁRIOS TROCADOS COM SUCESSO.');return true;
   }
   if(!options.skipConfirm && !confirm(`REMANEJAR ESTE PRÊMIO?\n\nDE: ${formatBR(sourceDate)} ${sourceSlot}\nPARA: ${formatBR(targetDate)} ${slot} · ${targetProgram}`)) return false;
   const before=clone(item);
   item.date=targetDate;item.slot=slot;item.day=dayName(targetDate);item.week=weekLabel(targetDate);item.program=targetProgram;item.updatedAt=new Date().toISOString();
   moveItemBetweenMonths(sourceMonthKey,targetMonthKey,item);
   auditEvent('REMANEJAMENTO DE HORÁRIO',item.prize||item.title,{targetId:item.id,before,after:clone(item),note:`${origin} · ${formatBR(sourceDate)} ${sourceSlot} → ${formatBR(targetDate)} ${slot}`});
-  saveState(true);render();toast('PRÊMIO REMANEJADO PARA O NOVO HORÁRIO.');return true;
+  saveState(true);queueApiSave(80);render();toast('PRÊMIO REMANEJADO PARA O NOVO HORÁRIO.');return true;
 }
 function programMoveSlotOccupied(date,slot,station,itemId=''){
   const month=state.months?.[String(date||'').slice(0,7)];
@@ -9575,13 +9432,13 @@ function applyDistributionProgramMove(){
     occupied.date=sourceDate;occupied.slot=sourceSlot;occupied.day=dayName(sourceDate);occupied.week=weekLabel(sourceDate);occupied.program=sourceProgram;
     sourceItem.date=date;sourceItem.slot=slot;sourceItem.day=dayName(date);sourceItem.week=weekLabel(date);sourceItem.program=targetProgram;
     auditEvent('TROCA DE HORÁRIOS NA PROGRAMAÇÃO',sourceItem.prize||sourceItem.title,{targetId:sourceItem.id,note:`${formatBR(sourceDate)} ${sourceSlot} ↔ ${formatBR(date)} ${slot} · ${occupied.prize||occupied.title||'OUTRO PRÊMIO'}`});
-    saveState(true);toast('HORÁRIOS TROCADOS COM SUCESSO.');
+    saveState(true);queueApiSave(80);toast('HORÁRIOS TROCADOS COM SUCESSO.');
   }else{
     if(!confirm(`REMANEJAR ESTE PRÊMIO?\n\nDE: ${formatBR(sourceDate)} ${sourceSlot}\nPARA: ${formatBR(date)} ${slot} · ${targetProgram}`))return;
     sourceItem.date=date;sourceItem.slot=slot;sourceItem.day=dayName(date);sourceItem.week=weekLabel(date);sourceItem.program=targetProgram;
     moveItemBetweenMonths(sourceMonthKey,targetMonthKey,sourceItem);
     auditEvent('REMANEJAMENTO DE HORÁRIO',sourceItem.prize||sourceItem.title,{targetId:sourceItem.id,note:`${formatBR(sourceDate)} ${sourceSlot} → ${formatBR(date)} ${slot}`});
-    saveState(true);toast('PRÊMIO REMANEJADO PARA O NOVO HORÁRIO.');
+    saveState(true);queueApiSave(80);toast('PRÊMIO REMANEJADO PARA O NOVO HORÁRIO.');
   }
   cancelDistributionProgramMove();render();renderDistributionProgramSearch();
 }
@@ -11091,7 +10948,7 @@ function syncDistributionToLinkedRadioItems(d){
     }
   });
 }
-async function saveRadioPlanner(){
+function saveRadioPlanner(){
   const d=distributionById(radioPlannerDistId); if(!d) return;
   const rows=Array.from(document.querySelectorAll('#radioPlannerSuggestions [data-plan-row]')).filter(row=>row.querySelector('.radioPlanCheck')?.checked);
   if(!rows.length){ toast('NENHUM HORÁRIO SELECIONADO.'); return; }
@@ -11149,9 +11006,8 @@ CADASTRE O PROGRAMA/DIA/HORÁRIO OU ESCOLHA OUTRO HORÁRIO VÁLIDO.`);
   if(!plans.length){ toast('PREENCHA DATA, HORÁRIO E PROGRAMA.'); return; }
   const newItems=plans.map(plan=>makeRadioScheduleItem(d,plan,'RADIO_PLANNER'));
   monthData().items.push(...newItems);
-  if(!saveState(true)){toast('NÃO SALVO · FIREBASE INDISPONÍVEL.');return;}
-  try{await flushFirebaseNow('GERAÇÃO DA PROGRAMAÇÃO');}
-  catch(error){rollbackToFirebaseBaseline('GERAÇÃO CANCELADA: FIREBASE NÃO CONFIRMOU.');alert(error?.message||'NÃO FOI POSSÍVEL CONFIRMAR A GERAÇÃO NO FIREBASE.');return;}
+  saveState(true);
+  queueApiSave(80);
   closeDrawer('radioPlannerDrawer');
   activeDistributionFilter='';
   const targetWeek=plans[0] ? weekLabel(plans[0].date) : '';
@@ -11835,7 +11691,6 @@ function setPromoReadControls(p={}){
 }
 function clearPromoForm(){
   $('promoForm').reset();
-  promoImageDirty=false;
   $('promoId').value='';
   $('promoImageData').value='';
   if($('promoKind')) $('promoKind').value='promo'; promoSetKindChoice('promo');
@@ -12013,14 +11868,11 @@ function editPromo(pid){
   $('promoDescription').value=p.description||'';
   setPromoStyleControls('promoTitle',p.titleStyle,'title');
   setPromoStyleControls('promoDesc',p.descriptionStyle,'desc');
-  $('promoImageData').value=p.imageData||promoImageCache.get(promoAssetKey(p))||'';
+  $('promoImageData').value=p.imageData||'';
   promoUpdateMechanics();
   updatePromoPreview();
   renderPromoOccurrencesEditor(false);
   openDrawer('promoDrawer');
-  if(!$('promoImageData').value&&p.imageRef){
-    loadPromoImageData(p).then(data=>{if(data&&$('promoId').value===p.id){$('promoImageData').value=data;updatePromoPreview();}});
-  }
 }
 async function deletePromo(pid){
   const copies=promoCopiesById(pid).map(({monthKey,p})=>({monthKey,data:clone(p)})); if(!copies.length) return;
@@ -12035,7 +11887,6 @@ async function deletePromo(pid){
   try{
     if(!saveState(true)) throw new Error('FIREBASE INDISPONÍVEL.');
     await flushFirebaseNow('EXCLUSÃO DE PROMOÇÃO/PAUTA');
-    if(p.imageRef&&promoAssetRef) promoAssetRef.child(promoAssetKey(p)).remove().catch(error=>console.warn('PROMO IMAGE CLEANUP ERROR',error));
     render();
     toast('EXCLUSÃO CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO.');
   }catch(error){
@@ -12044,17 +11895,25 @@ async function deletePromo(pid){
   }
 }
 let promoImageLoadPromise=Promise.resolve();
-let promoImageDirty=false;
 $('promoImage').addEventListener('change',e=>{
   const file=e.target.files?.[0];
   if(!file){promoImageLoadPromise=Promise.resolve();return;}
-  promoImageDirty=true;
-  promoImageLoadPromise=compressPromoImage(file).then(result=>{
-    if(!result.ok){toast('NÃO FOI POSSÍVEL LER A IMAGEM SELECIONADA.');return false;}
-    if(result.width!==1600||result.height!==400) toast(`IMAGEM IDEAL: 1600 X 400. ARQUIVO ATUAL: ${result.width} X ${result.height}.`);
-    $('promoImageData').value=result.data;
-    updatePromoPreview();
-    return true;
+  promoImageLoadPromise=new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onerror=()=>{toast('NÃO FOI POSSÍVEL LER A IMAGEM SELECIONADA.');resolve(false);};
+    reader.onload=()=>{
+      const data=reader.result;
+      const img=new Image();
+      img.onerror=()=>{toast('A IMAGEM SELECIONADA NÃO PÔDE SER VALIDADA.');resolve(false);};
+      img.onload=()=>{
+        if(img.width !== 1600 || img.height !== 400) toast(`IMAGEM IDEAL: 1600 X 400. ARQUIVO ATUAL: ${img.width} X ${img.height}.`);
+        $('promoImageData').value=data;
+        updatePromoPreview();
+        resolve(true);
+      };
+      img.src=data;
+    };
+    reader.readAsDataURL(file);
   });
 });
 ['promoName','promoDescription','promoTitleFont','promoTitleSize','promoTitleColor','promoDescFont','promoDescSize','promoDescColor','promoLocal','promoPickupDays','promoDistributionId','promoSegmentKey'].forEach(id=>bind(id,'input',()=>{updatePromoPreview();updatePromoSegmentBalance();}));
@@ -12251,59 +12110,6 @@ function readHourKeyForAdmin(date,slot){ const t=timeToHHMM(slot); return `${dat
 function removePromoResultFromProgram(promoId){
   Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===promoId)); });
 }
-function promoAssetKey(promo){return String(promo?.imageRef||promo?.id||'').replace(/[.#$\[\]/]/g,'_');}
-async function loadPromoImageData(promo){
-  if(!promo) return '';
-  if(promo.imageData) return promo.imageData;
-  const key=promoAssetKey(promo);
-  if(!key||!promoAssetRef) return '';
-  if(promoImageCache.has(key)) return promoImageCache.get(key);
-  try{
-    const snapshot=await promoAssetRef.child(key).child('data').get();
-    const data=snapshot.val()||'';
-    promoImageCache.set(key,data);
-    return data;
-  }catch(error){console.warn('PROMO IMAGE LOAD ERROR',error);return '';}
-}
-async function persistPromoImageAsset(promoId,data){
-  const key=promoAssetKey({id:promoId});
-  if(!data||!key) return '';
-  if(!promoAssetRef) throw new Error('FIREBASE DE IMAGENS INDISPONÍVEL.');
-  const contentType=String(data).match(/^data:([^;,]+)/)?.[1]||'image/webp';
-  await promoAssetRef.child(key).set({data,contentType,updatedAt:new Date().toISOString(),source:'PAINEL_PRINCIPAL'});
-  promoImageCache.set(key,data);
-  return key;
-}
-function compressPromoImage(file){
-  return new Promise(resolve=>{
-    const reader=new FileReader();
-    reader.onerror=()=>resolve({ok:false,data:'',width:0,height:0});
-    reader.onload=()=>{
-      const original=String(reader.result||''),img=new Image();
-      img.onerror=()=>resolve({ok:false,data:'',width:0,height:0});
-      img.onload=()=>{
-        const width=img.naturalWidth||img.width,height=img.naturalHeight||img.height;
-        if(original.length<220000){resolve({ok:true,data:original,width,height});return;}
-        const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=400;
-        const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,1600,400);
-        const scale=Math.min(1600/width,400/height),dw=Math.max(1,Math.round(width*scale)),dh=Math.max(1,Math.round(height*scale));
-        ctx.drawImage(img,Math.round((1600-dw)/2),Math.round((400-dh)/2),dw,dh);
-        const optimized=canvas.toDataURL('image/webp',.88);
-        resolve({ok:true,data:optimized.length<original.length?optimized:original,width,height});
-      };
-      img.src=original;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-async function hydratePromoImageElements(root=document){
-  const nodes=Array.from(root.querySelectorAll('[data-promo-image-ref]'));
-  await Promise.all(nodes.map(async node=>{
-    const promo=consolidatedPromoById(node.dataset.promoImageRef)||{id:node.dataset.promoImageRef,imageRef:node.dataset.promoImageRef};
-    const data=await loadPromoImageData(promo);
-    if(data&&node.isConnected) node.innerHTML=`<img src="${data}" alt="IMAGEM DA PROMOÇÃO">`;
-  }));
-}
 function clearPromoValidationState(){
   document.querySelectorAll('#promoForm [aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
   document.querySelectorAll('#promoForm [data-promo-validation-error]').forEach(el=>el.remove());
@@ -12386,7 +12192,7 @@ $('promoForm').addEventListener('submit',async e=>{
     promoReadSpecificDates:[...promoAV57SpecificDates].sort(),
     promoReadExcludedDates:[...promoAV57ExcludedDates].sort(),
     opecPrograms:promoAV57ProgramConfigsFromForm(),
-    plannerVersion:'AV57_6_6_25_FAST_FIREBASE',
+    plannerVersion:'AV57_6_6_21_PROMO_LIVE_STUDIO_NATIVE_DRAG',
     reportVersion:57.3,
     name:norm($('promoName').value),
     title:norm($('promoName').value),
@@ -12395,13 +12201,10 @@ $('promoForm').addEventListener('submit',async e=>{
     descriptionStyle:promoStyleFromForm('promoDesc','desc'),
     readMode:(!promoAV57SmartMode()&&$('promoReadAll')?.checked) ? 'all' : 'selected',
     readHours:promoAV57SmartMode()?[...new Set(promoAV57ProgramConfigsFromForm().flatMap(c=>c.hours))].sort():( $('promoReadAll')?.checked ? [] : getPromoReadHoursFromForm()),
-    imageRef:existing.imageRef||'',
+    imageData:$('promoImageData').value||existing.imageData||'',
     createdAt:existing.createdAt||new Date().toISOString(),
     updatedAt:new Date().toISOString()
   };
-  const promoImageCandidate=promoImageDirty?($('promoImageData').value||''):(existing.imageData||'');
-  if(promoImageCandidate) p.imageRef=await persistPromoImageAsset(idVal,promoImageCandidate);
-  delete p.imageData;
   const av57Now=new Date().toISOString();
   const priorHistory=Array.isArray(existing.opecHistory)?existing.opecHistory:[];
   p.opecHistory=[...priorHistory,{at:av57Now,action:existing.id?'ALTERAÇÃO DE REGRA/PAUTA':'CADASTRO',operator:'PAINEL PRINCIPAL',scheduleMode:p.promoScheduleMode,frequencyScope:p.promoFrequencyScope,frequencyCount:p.promoFrequencyCount,periodTotal:p.promoPeriodTotal,programs:clone(p.opecPrograms),dateMode:p.promoReadDateMode,weekdays:[...p.promoReadWeekdays],specificDates:[...p.promoReadSpecificDates],excludedDates:[...p.promoReadExcludedDates],version:'AV-57.3'}].slice(-200);
@@ -12423,7 +12226,6 @@ $('promoForm').addEventListener('submit',async e=>{
   auditEvent(existing.id?`ALTERAÇÃO DE ${promoKindLabel(kind)}`:`CADASTRO DE ${promoKindLabel(kind)}`,p.name||p.title||promoKindLabel(kind),{targetId:p.id,before:existing.id?existing:'',after:p});
   if(!saveState(true)) throw new Error('FIREBASE INDISPONÍVEL. A PROMOÇÃO NÃO FOI SALVA.');
   await flushFirebaseNow(`${promoKindLabel(kind)} SALVA`);
-  promoImageDirty=false;
   closeDrawer('promoDrawer');
   render();
   toast(`${promoKindLabel(kind)} CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO AUTOMATICAMENTE.`);
@@ -12592,7 +12394,7 @@ function toCsv(){
   lines.push(['TIPO','DATA','CAMPO 1','CAMPO 2','CAMPO 3','QTD/TOTAL','CANAL/DESTINO','STATUS/SALDO'].map(csvCell).join(';'));
   monthData().items.forEach(i=>lines.push(['PROGRAMAÇÃO',formatBR(i.date),i.program,i.slot,i.prize,i.title||'',i.notes||'',i.qty,i.channel,i.status].map(csvCell).join(';')));
   monthData().distributions.forEach(d=>lines.push(['DISTRIBUIÇÃO',distributionLabel(d),'INÍCIO',distStartDate(d),'TÉRMINO',distEndDate(d),'TOTAL',d.total,'APP',d.app,'CAMAROTE',d.camarote,'CAMARIM',d.camarim,'EXTERNA',d.rua,'RÁDIO',d.ar,'REDES SOCIAIS',d.rs,'RESERVADO',reservationPackageTotal(d),'RESERVA UNID.',reservationConsumed(d),'OBS RESERVA',reservationEntries(d).map(r=>`${r.qty} ${reservationUnitText(r.unit)} ${r.note||''}`).join(' | '),'PROG RADIO',programmed(d.id,'RÁDIO'),'SALDO',leftTotal(d)].map(csvCell).join(';')));
-  monthData().promos.forEach(p=>lines.push(['PROMOÇÕES',p.name||p.title||'',formatBR(p.startDate||''),formatBR(p.drawDate),p.drawTime||'',p.local||'',p.description||'',(p.imageData||p.imageRef) ? 'COM IMAGEM' : 'SEM IMAGEM'].map(csvCell).join(';')));
+  monthData().promos.forEach(p=>lines.push(['PROMOÇÕES',p.name||p.title||'',formatBR(p.startDate||''),formatBR(p.drawDate),p.drawTime||'',p.local||'',p.description||'',p.imageData ? 'COM IMAGEM' : 'SEM IMAGEM'].map(csvCell).join(';')));
   return '\ufeff'+lines.join('\n');
 }
 window.convertSchedule=convertSchedule;

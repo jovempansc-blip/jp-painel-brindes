@@ -2356,7 +2356,7 @@ tbody tr:focus-within td{background:#fff8fa}
 
 
 <style>
-/* AV57.6.6.25 · FIREBASE ÚNICO · LEITURA E GRAVAÇÃO GRANULARES */
+/* AV57.6.6.24 · FIREBASE RTDB COMO FONTE ÚNICA · RELIGAMENTO PRINCIPAL → ESTÚDIO */
 .promoFooter{background:linear-gradient(90deg,#fff5e8 0%,#fff9f0 100%)!important;border-top:1px solid #f2c48d!important;overflow:visible!important}
 .promoFooterList{display:flex!important;align-items:center!important;gap:8px!important;overflow:visible!important}
 .promoFooter .promoPill.pending{width:auto!important;min-width:260px!important;max-width:min(520px,58vw)!important;height:30px!important;min-height:30px!important;padding:0 12px!important;border-radius:999px!important;display:inline-flex!important;align-items:center!important;gap:8px!important;white-space:nowrap!important;overflow:hidden!important}
@@ -2467,7 +2467,6 @@ const FIREBASE_CONFIG = {
   "measurementId": "G-VB6Y2TS796"
 };
 const FIREBASE_ROOT_PATH = "jp-painel-brindes/state";
-const PROMO_ASSET_PATH = "jp-painel-brindes/assets/promos";
 const WINNER_BANK_PATH = "jp-painel-brindes/winnerBank";
 const WINNER_BLOCK_MONTHS = 8;
 const WINNER_SHORT_BLOCK_DAYS = 28;
@@ -2475,8 +2474,6 @@ let firebaseStarted=false;
 let firebaseReady=false;
 let firebaseRef=null;
 let firebaseDatabase=null;
-let promoAssetRef=null;
-const promoImageCache=new Map();
 let firebaseConnectionRef=null;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
@@ -2484,8 +2481,6 @@ let firebaseConnected=false;
 let firebaseLastSnapshotAt=0;
 let firebaseReconnectTimer=null;
 let studioRealtimeBound=false;
-const studioMonthRefs=new Map();
-let studioRenderTimer=null;
 let winnerBankRef=null;
 let winnerBankStarted=false;
 let winnerBankReady=false;
@@ -2536,8 +2531,12 @@ function studioOutcomeMonthKey(context={}){
 }
 async function appendStudioAudit(entry){
   const row={...entry};
-  const key=String(row.id||`LOG_${Date.now()}`).replace(/[.#$\[\]/]/g,'_');
-  await studioRetry(()=>firebaseRef.child('auditLog').child(key).set(row));
+  await studioRetry(()=>firebaseRef.child('auditLog').transaction(current=>{
+    const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+    if(rows.some(item=>item?.id===row.id)) return rows;
+    rows.push(row);
+    return rows.slice(-2500);
+  },undefined,false));
 }
 function studioRows(value){
   if(Array.isArray(value)) return value.filter(Boolean);
@@ -2577,27 +2576,18 @@ function pickStudioFields(record,fields){
   patch.updatedAt=new Date().toISOString();
   return patch;
 }
-async function studioFirebaseRecordRef(monthKey,collection,idValue){
-  const query=firebaseRef.child('months').child(monthKey).child(collection).orderByChild('id').equalTo(idValue).limitToFirst(1);
-  const snapshot=await query.get();let foundRef=null;
-  snapshot.forEach(child=>{if(!foundRef)foundRef=child.ref;});
-  return foundRef;
-}
 async function persistStudioRecord(collection,record,fields){
   if(!record?.id) throw new Error('REGISTRO SEM ID');
   await ensureStudioFirebaseOnline();
   const patch=pickStudioFields(record,fields);
   const keys=studioRecordMonths(collection,record.id,record.resultDate||record.drawDate||record.date||record.startDate);
-  await Promise.all(keys.map(monthKey=>studioRetry(async()=>{
-    let childRef=await studioFirebaseRecordRef(monthKey,collection,record.id);
-    if(!childRef){
-      childRef=firebaseRef.child('months').child(monthKey).child(collection).push();
-      await childRef.set({...record,...patch});return true;
-    }
-    const result=await childRef.transaction(current=>current?{...current,...patch}:undefined,undefined,false);
-    if(!result?.committed)throw new Error(`ATUALIZAÇÃO ${record.id} NÃO CONFIRMADA EM ${monthKey}.`);
-    return true;
-  })));
+  await Promise.all(keys.map(monthKey=>studioRetry(()=>firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
+    const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+    const index=rows.findIndex(row=>row?.id===record.id);
+    if(index<0) rows.push({...record,...patch});
+    else rows[index]={...rows[index],...patch};
+    return rows;
+  },undefined,false))));
   await Promise.allSettled([firebaseRef.update({
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
@@ -2626,7 +2616,7 @@ function applyRemoteFirebaseState(remoteState){
   firebaseServerLoaded=true;
   selectStudioMonth();
   if(!manual) selectedIndex=-1;
-  studioScheduleRender();
+  render();
   firebaseApplyingRemote=false;
 }
 async function handleEmptyFirebase(){
@@ -2649,36 +2639,15 @@ function scheduleStudioFirebaseReconnect(delay=1200){
   if(navigator.onLine===false)return;
   firebaseReconnectTimer=setTimeout(()=>forceStudioFirebaseRefresh(true),delay);
 }
-function studioScheduleRender(delay=35){
-  clearTimeout(studioRenderTimer);
-  studioRenderTimer=setTimeout(()=>{selectStudioMonth();if(!manual)selectedIndex=-1;render();},delay);
-}
-function studioAdjacentMonth(key,delta){
-  const [year,month]=String(key).split('-').map(Number),date=new Date(year,(month||1)-1+delta,1);
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}`;
-}
-function studioRelevantMonthKeys(){const current=todayISO().slice(0,7);return [studioAdjacentMonth(current,-1),current,studioAdjacentMonth(current,1)];}
-function studioPromoAssetKey(promo){return String(promo?.imageRef||promo?.id||'').replace(/[.#$\[\]/]/g,'_');}
-async function studioPromoImage(promo){
-  if(promo?.imageData)return promo.imageData;
-  const key=studioPromoAssetKey(promo);if(!key||!promoAssetRef)return'';
-  if(promoImageCache.has(key))return promoImageCache.get(key);
-  try{const snap=await promoAssetRef.child(key).child('data').get(),data=snap.val()||'';promoImageCache.set(key,data);return data;}catch(error){console.warn('PROMO IMAGE LOAD ERROR',error);return'';}
-}
-function hydrateStudioPromoImage(promo){
-  const host=document.querySelector('[data-studio-promo-image]');if(!host||!promo?.imageRef)return;
-  studioPromoImage(promo).then(data=>{if(data&&host.isConnected)host.innerHTML=`<img src="${data}" alt="IMAGEM DA PROMOÇÃO">`;});
-}
 async function forceStudioFirebaseRefresh(full=true){
   if(navigator.onLine===false)return false;
   if(!firebaseReady||!firebaseRef){firebaseStarted=false;initFirebaseSync();}
   if(!firebaseReady||!firebaseRef)return false;
   try{
     if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
-    const relevantKeys=studioRelevantMonthKeys();
-    const [monthSnaps,programSnap,publishedSnap,catalogSnap]=await Promise.race([
+    const [monthsSnap,programSnap,publishedSnap,catalogSnap]=await Promise.race([
       Promise.all([
-        Promise.all(relevantKeys.map(key=>firebaseRef.child('months').child(key).get())),
+        firebaseRef.child('months').get(),
         firebaseRef.child('programSchedules').get(),
         firebaseRef.child('publishedPrograms').get(),
         firebaseRef.child('prizeCatalog').get()
@@ -2687,13 +2656,13 @@ async function forceStudioFirebaseRefresh(full=true){
     ]);
     state=normalizeStudioStateShape({
       ...state,
-      months:Object.fromEntries(relevantKeys.map((key,index)=>[key,monthSnaps[index].val()||{label:key,items:[],promos:[],distributions:[]}])) ,
+      months:monthsSnap.val()||{},
       programSchedules:programSnap.val()||[],
       publishedPrograms:publishedSnap.val()||{},
       prizeCatalog:catalogSnap.val()||{}
     });
     firebaseLastSnapshotAt=Date.now();firebaseConnected=true;firebaseServerLoaded=true;
-    studioScheduleRender(0);
+    selectStudioMonth();if(!manual)selectedIndex=-1;render();
     clearTimeout(firebaseReconnectTimer);return true;
   }catch(error){
     firebaseConnected=false;console.warn('FIREBASE REFRESH ERROR',error);scheduleStudioFirebaseReconnect(1200);return false;
@@ -2702,22 +2671,16 @@ async function forceStudioFirebaseRefresh(full=true){
 function attachStudioRealtimeListeners(){
   if(studioRealtimeBound||!firebaseRef)return;
   studioRealtimeBound=true;
-  studioRelevantMonthKeys().forEach(monthKey=>{
-    const monthRef=firebaseRef.child('months').child(monthKey);studioMonthRefs.set(monthKey,monthRef);
-    monthRef.on('value',snapshot=>{
-      state.months ||= {};state.months[monthKey]=snapshot.val()||{label:monthKey,items:[],promos:[],distributions:[]};
-      state=normalizeStudioStateShape(state);firebaseLastSnapshotAt=Date.now();firebaseConnected=true;firebaseServerLoaded=true;studioScheduleRender();
-    },error=>{firebaseConnected=false;console.warn(`FIREBASE MONTH ${monthKey} LISTENER ERROR`,error);scheduleStudioFirebaseReconnect(900);});
-  });
   const applyPart=(key,value)=>{
-    if(key==='programSchedules')state.programSchedules=value||[];
+    if(key==='months')state.months=value||{};
+    else if(key==='programSchedules')state.programSchedules=value||[];
     else if(key==='publishedPrograms')state.publishedPrograms=value||{};
     else if(key==='prizeCatalog')state.prizeCatalog=value||{};
     state=normalizeStudioStateShape(state);
     firebaseLastSnapshotAt=Date.now();firebaseConnected=true;firebaseServerLoaded=true;
-    studioScheduleRender();
+    selectStudioMonth();if(!manual)selectedIndex=-1;render();
   };
-  ['programSchedules','publishedPrograms','prizeCatalog'].forEach(key=>{
+  ['months','programSchedules','publishedPrograms','prizeCatalog'].forEach(key=>{
     firebaseRef.child(key).on('value',snapshot=>applyPart(key,snapshot.val()),error=>{firebaseConnected=false;console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleStudioFirebaseReconnect(900);});
   });
 }
@@ -2734,13 +2697,12 @@ function initFirebaseSync(){
     firebaseDatabase=window.firebase.database(app);
     if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
     firebaseRef=firebaseDatabase.ref(FIREBASE_ROOT_PATH);
-    promoAssetRef=firebaseDatabase.ref(PROMO_ASSET_PATH);
     firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
     firebaseReady=true;
     attachStudioRealtimeListeners();
     firebaseConnectionRef.on('value',snapshot=>{
       firebaseConnected=snapshot.val()===true;
-      if(firebaseConnected){if(!firebaseServerLoaded||Date.now()-firebaseLastSnapshotAt>30000)forceStudioFirebaseRefresh(true);}else if(navigator.onLine!==false){scheduleStudioFirebaseReconnect(1600);}
+      if(firebaseConnected){forceStudioFirebaseRefresh(true);}else if(navigator.onLine!==false){scheduleStudioFirebaseReconnect(1600);}
     },err=>console.warn('FIREBASE CONNECTION STATUS ERROR',err));
     forceStudioFirebaseRefresh(true);
   }catch(err){
@@ -2749,10 +2711,7 @@ function initFirebaseSync(){
 }
 function syncStateFromApi(force=false){
   initFirebaseSync();
-  if(force){
-    if(firebaseReady&&firebaseRef&&firebaseServerLoaded&&Date.now()-firebaseLastSnapshotAt<30000){firebaseRef.child('savedAt').get().catch(()=>scheduleStudioFirebaseReconnect(0));return;}
-    return forceStudioFirebaseRefresh(true);
-  }
+  if(force)return forceStudioFirebaseRefresh(true);
   if(!firebaseReady||!firebaseRef||!firebaseConnected||Date.now()-firebaseLastSnapshotAt>18000)scheduleStudioFirebaseReconnect(0);
 }
 function winnerPlain(value){
@@ -3168,6 +3127,39 @@ function updateWinnerSaveState(){
   button.title=ready?'CONFIRMAR E REGISTRAR NO FIREBASE':'TODOS OS GANHADORES PRECISAM ESTAR APTOS E VALIDADOS';
 }
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
+function studioRecordFreshness(row,monthKey=''){
+  const updated=Date.parse(row?.updatedAt||row?.createdAt||row?.resultAt||'')||0;
+  const canonicalMonth=String(row?.date||row?.resultDate||row?.drawDate||'').slice(0,7);
+  const canonicalBonus=canonicalMonth&&canonicalMonth===monthKey?1:0;
+  return {updated,canonicalBonus};
+}
+function studioAllPrizeItems(){
+  const copies=new Map();
+  Object.entries(state.months||{}).forEach(([monthKey,month])=>{
+    studioRows(month?.items).forEach((row,index)=>{
+      if(!row)return;
+      const idValue=String(row.id||`LEGACY_ITEM_${monthKey}_${index}_${row.date||''}_${row.slot||''}`);
+      const previous=copies.get(idValue);
+      if(!previous){copies.set(idValue,{row,monthKey});return;}
+      const a=studioRecordFreshness(previous.row,previous.monthKey),b=studioRecordFreshness(row,monthKey);
+      if(b.updated>a.updated||(b.updated===a.updated&&b.canonicalBonus>a.canonicalBonus))copies.set(idValue,{row,monthKey});
+    });
+  });
+  return [...copies.values()].map(entry=>entry.row);
+}
+function studioLocatePrizeItem(idValue){
+  if(!idValue)return null;
+  let best=null;
+  Object.entries(state.months||{}).forEach(([monthKey,month])=>{
+    studioRows(month?.items).forEach(row=>{
+      if(row?.id!==idValue)return;
+      if(!best){best={row,monthKey};return;}
+      const a=studioRecordFreshness(best.row,best.monthKey),b=studioRecordFreshness(row,monthKey);
+      if(b.updated>a.updated||(b.updated===a.updated&&b.canonicalBonus>a.canonicalBonus))best={row,monthKey};
+    });
+  });
+  return best;
+}
 function studioPromoPool(date=''){
   const copies=new Map();
   Object.entries(state.months||{}).forEach(([monthKey,month])=>{
@@ -3185,15 +3177,12 @@ function studioPromoPool(date=''){
   return date?rows.filter(row=>promoDateAllowed(row,date)):rows;
 }
 function studioPublishedPrizeItems(){
-  const live=monthData().items||[], published=state.publishedPrograms?.[currentMonth];
-  if(!published?.items?.length) return live;
-  const liveMap=new Map(live.map(i=>[i.id,i]));
-  const mutable=['winnerName','winnerNames','winnerCapacity','status','resultAt','resultAtLabel','deliveredAt','deliveredAtLabel','deliveredBy'];
-  return published.items.map(base=>{
-    const current=liveMap.get(base.id)||{}; const row={...base};
-    mutable.forEach(k=>{ if(Object.prototype.hasOwnProperty.call(current,k)) row[k]=current[k]; });
-    return row;
-  });
+  // A programação operacional vem sempre de months/*/items no Firebase.
+  // Não limitar por currentMonth: itens de setembro podem ter sido cadastrados
+  // enquanto agosto estava aberto e continuar fisicamente em months/2026-08.
+  // Também não usar publishedPrograms como fonte preferencial, pois é snapshot
+  // e poderia manter item excluído/alterado no Principal.
+  return studioAllPrizeItems();
 }
 function pad(n){return String(n).padStart(2,'0');}
 function formatBR(iso){if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
@@ -3540,7 +3529,7 @@ function studioFullStationLabel(){
 }
 function studioPrizeMomentAlert(item,promo){return '';}
 function studioTodayPromoResultRows(){
-  const date=todayISO(),seen=new Map(),source=[...(monthData().items||[]),...promoResultVirtualRows()];
+  const date=todayISO(),seen=new Map(),source=[...studioPublishedPrizeItems(),...promoResultVirtualRows()];
   source.filter(r=>r&&r.sourceType==='promo-result'&&r.date===date&&normalizeStationValue(r.station||STUDIO_STATION)===normalizeStationValue(STUDIO_STATION)).forEach(r=>{const key=r.occurrenceId||`${r.promoId}|${r.date}|${formatStudioTime(r.slot)}`;const current=seen.get(key);if(!current||(!current.winnerName&&r.winnerName))seen.set(key,r);});
   return [...seen.values()].sort((a,b)=>minutesOf(a.slot)-minutesOf(b.slot));
 }
@@ -3974,7 +3963,7 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     const cleanNames=(names||[]).map(upper).filter(Boolean);
     if(!cleanNames.length) throw studioOutcomeError(new Error('NENHUM GANHADOR INFORMADO.'),'VALIDAÇÃO');
     const now=new Date();
-    const monthKey=studioOutcomeMonthKey(context);
+    const monthKey=studioRecordMonths(collection,recordId,context?.date||'')[0]||studioOutcomeMonthKey(context);
     operationId=`V5611_${studioOperationToken(`${context.sourceRef}|${cleanNames.join('|')}|${now.getTime()}`)}`;
     lockOperationId=operationId;
     try{acquiredLocks=await acquireStudioWinnerLocks(cleanNames.map(winnerPersonKey),lockOperationId,operator);}catch(error){throw studioOutcomeError(error,'TRAVA DO OUVINTE');}
@@ -4011,23 +4000,24 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     let targetFound=false;
     const stateResult=await studioRetry(async()=>{
       stateConflict='';targetFound=false;stateChanged=false;
-      const recordRef=await studioFirebaseRecordRef(monthKey,collection,recordId);
-      if(!recordRef)return;
-      const result=await recordRef.transaction(current=>{
-        if(!current)return;
+      const result=await firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
+        const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+        const index=rows.findIndex(row=>row?.id===recordId);
+        if(index<0) return;
         targetFound=true;
-        const row=current;
+        const row=rows[index];
         let previousNames=[];
         if(collection==='items') previousNames=String(row.winnerName||'').split(',').map(upper).filter(Boolean);
         if(collection==='promos'&&occurrenceKey) previousNames=normalizeWinnerList(row.resultWinnersByHour?.[occurrenceKey]||[]).map(w=>w.name);
         if(previousNames.length){
-          if([...previousNames].sort().join('|')===[...cleanNames].sort().join('|')) return row;
+          if([...previousNames].sort().join('|')===[...cleanNames].sort().join('|')) return rows;
           if(!correctionMode){stateConflict='ESTE RESULTADO JÁ FOI CONFIRMADO EM OUTRO COMPUTADOR.';return;}
         }
         const next={...row,...JSON.parse(JSON.stringify(patch)),winnerOperationId:operationId,updatedAt:now.toISOString()};
         if(correctionMode){next.winnerCorrectedAt=now.toISOString();next.winnerCorrectedAtLabel=now.toLocaleString('pt-BR');next.winnerCorrectedBy=operator.name;next.winnerCorrectionReason='CORREÇÃO NO ESTÚDIO';if(collection==='items'){next.winnerDeliveries=[];next.deliveredAt='';next.deliveredAtLabel='';next.deliveredBy='';}}
+        rows[index]=next;
         stateChanged=true;
-        return next;
+        return rows;
       },undefined,false);
       if(!result?.committed){
         const error=new Error(stateConflict||'O SORTEIO NÃO FOI LOCALIZADO OU O FIREBASE NÃO CONFIRMOU O RESULTADO.');
@@ -4046,11 +4036,9 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
     if(stateChanged){
       try{await appendStudioAudit({id:`LOG_${operationId}`,action:correctionMode?'CORREÇÃO DE GANHADOR':(collection==='promos'?'RESULTADO DE PROMOÇÃO CONFIRMADO':'RESULTADO DE SORTEIO CONFIRMADO'),target:context.prize,targetId:recordId,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${cleanNames.length} GANHADOR(ES) · ${context.sourceRef}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')});}catch(auditError){console.warn('AUDITORIA DO RESULTADO PENDENTE:',auditError);}
     }
-    const remoteRecord=stateResult.snapshot.val();
-    if(state.months?.[monthKey]){
-      const rows=state.months[monthKey][collection]||[],index=rows.findIndex(row=>row?.id===recordId);
-      if(index>=0)rows[index]=remoteRecord;else rows.push(remoteRecord);
-    }
+    const remoteRows=stateResult.snapshot.val();
+    if(state.months?.[monthKey]) state.months[monthKey][collection]=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
+    try{applyWinnerBankSnapshot((await winnerBankRef.get()).val()||{});}catch(refreshError){initWinnerBank(true);}
     return true;
   }catch(error){
     if(!stateChanged){
@@ -4112,7 +4100,7 @@ function historyRowsForDate(date){
     rows.push({...row,__dedupeKey:dedupeKey});
   };
 
-  (monthData().items||[])
+  studioPublishedPrizeItems()
     .filter(i=>i && i.date===date)
     .filter(i=>(i.station||'JP1017')===STUDIO_STATION)
     .filter(i=>upper(i.status)==='REALIZADO' || upper(i.winnerName||''))
@@ -4225,10 +4213,10 @@ function closePromoReadModal(){
 async function markPromoReadMissed(promoId,date,slot,program,reason){
   const p=findPromoById(promoId);if(!p)throw new Error('PAUTA NÃO LOCALIZADA.');
   const item={date,slot,program:upper(program||programFromSchedule(date,slot,STUDIO_STATION)||'PROGRAMA')},progress=studioAV57Progress(p,item);if(progress.remaining<1)return;
-  const operator=studioOperatorIdentity(true),now=new Date(),iso=now.toISOString(),monthKey=studioOutcomeMonthKey(date),missId=`MISS-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;let found=false,changed=false,savedOccurrence=progress.done+progress.missed+1;
+  const operator=studioOperatorIdentity(true),now=new Date(),iso=now.toISOString(),monthKey=studioRecordMonths('promos',promoId,date)[0]||studioOutcomeMonthKey({date}),missId=`MISS-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;let found=false,changed=false,savedOccurrence=progress.done+progress.missed+1;
   await ensureStudioFirebaseOnline();
-  const result=await studioRetry(async()=>{const recordRef=await studioFirebaseRecordRef(monthKey,'promos',promoId);if(!recordRef){const error=new Error('A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=true;throw error;}const tx=await recordRef.transaction(current=>{if(!current)return;found=true;const row=current,required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return row;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_4_NOTIFICATION_BELL'});row.updatedAt=iso;changed=true;return row;},undefined,false);if(!tx?.committed){const error=new Error(found?'A INSERÇÃO NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
-  const remoteRecord=result.snapshot.val();if(state.months?.[monthKey]){const rows=state.months[monthKey].promos||[],index=rows.findIndex(row=>row?.id===promoId);if(index>=0)rows[index]=remoteRecord;else rows.push(remoteRecord);}
+  const result=await studioRetry(async()=>{const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===promoId);if(index<0)return;found=true;const row=rows[index],required=studioRequiredReadsForHour(row,item),readCount=studioReadCountForHour(row,item),missedCount=studioMissedCountForHour(row,item);if(required<1||readCount+missedCount>=required)return rows;savedOccurrence=readCount+missedCount+1;row.missedLog=Array.isArray(row.missedLog)?row.missedLog:[];row.missedLog.push({id:missId,date,scheduledHour:timeToHHMM(slot),slot:formatStudioTime(slot),station:STUDIO_STATION,program:item.program,type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,status:'NÃO REALIZADA',reason:textNorm(reason),markedAt:iso,markedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector,plannerVersion:'AV57_4_NOTIFICATION_BELL'});row.updatedAt=iso;rows[index]=row;changed=true;return rows;},undefined,false);if(!tx?.committed){const error=new Error(found?'A INSERÇÃO NÃO FOI ATUALIZADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;});
+  const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
   if(changed)await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO',version:'AV57_4_NOTIFICATION_BELL'}),appendStudioAudit({id:`LOG_${missId}`,action:'LEITURA MARCADA COMO NÃO REALIZADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:`ESTÚDIO ${studioFullStationLabel()}`,operatorName:operator.name,operatorSector:operator.sector,note:`${date} · ${formatStudioTime(slot)} · ${textNorm(reason)}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);selectedPromoId=null;render();return changed;
 }
 window.markPromoReadMissed=markPromoReadMissed;
@@ -4244,25 +4232,24 @@ async function confirmPromoReadV56(event){
   let savedOccurrence=beforeResolved+1;
   try{
     await ensureStudioFirebaseOnline();
-    const now=new Date(),iso=now.toISOString(),key=readHourKey(item,p),logId=`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,monthKey=studioOutcomeMonthKey(item.date||todayISO());
+    const now=new Date(),iso=now.toISOString(),key=readHourKey(item,p),logId=`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,monthKey=studioRecordMonths('promos',p.id,item.date||todayISO())[0]||studioOutcomeMonthKey({date:item.date||todayISO()});
     let found=false,changed=false,alreadyComplete=false;
     const result=await studioRetry(async()=>{
       found=false;changed=false;alreadyComplete=false;
-      const recordRef=await studioFirebaseRecordRef(monthKey,'promos',p.id);if(!recordRef){const error=new Error('A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=true;throw error;}
-      const tx=await recordRef.transaction(current=>{
-        if(!current)return;found=true;
-        const row=current,logs=studioAV57Logs(row,item);let existingCount=logs.length;
+      const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{
+        const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===p.id);if(index<0)return;found=true;
+        const row=rows[index],logs=studioAV57Logs(row,item);let existingCount=logs.length;
         if(!existingCount&&validReadTimestamp(hourMapValue(row?.readByHour,item,row)))existingCount=1;
         const existingMissed=studioMissedCountForHour(row,item),existingResolved=existingCount+existingMissed;
-        if(existingResolved>=required){alreadyComplete=true;return row;}
+        if(existingResolved>=required){alreadyComplete=true;return rows;}
         savedOccurrence=existingResolved+1;
         row.readByHour={...(row.readByHour||{}),[key]:iso};row.readLog=Array.isArray(row.readLog)?row.readLog:[];
         row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,plannerVersion:'AV57_3_SMART_BALANCE_V3',opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textSnapshot:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
-        row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA');row.updatedAt=iso;changed=true;return row;
+        row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA');row.updatedAt=iso;rows[index]=row;changed=true;return rows;
       },undefined,false);
       if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;
     });
-    const remoteRecord=result.snapshot.val();if(state.months?.[monthKey]){const rows=state.months[monthKey].promos||[],index=rows.findIndex(row=>row?.id===p.id);if(index>=0)rows[index]=remoteRecord;else rows.push(remoteRecord);}
+    const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'AV57_SMART_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
     selectedPromoId=(savedOccurrence<required)?p.id:null;render();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
@@ -4276,13 +4263,12 @@ function isAutoGeneratedStudioPrize(item){
 }
 function isScheduledStudioPrize(item){
   if(!item || !item.date || !item.slot) return false;
-  if((item.station||'JP1017')!==STUDIO_STATION) return false;
+  if(normalizeStationValue(item.station||'JP1017')!==STUDIO_STATION) return false;
   const channel=upper(item.channel||'RÁDIO');
-  if(channel && channel!=='RÁDIO') return false;
+  if(channel && !['RÁDIO','RADIO'].includes(channel)) return false;
   if(upper(item.status||'')==='CANCELADO') return false;
-  // R5: item gerado automaticamente só aparece no Estúdio se o programa
-  // realmente existir na grade cadastrada para aquele dia e horário.
-  if(isAutoGeneratedStudioPrize(item) && !programFromSchedule(item.date,item.slot,STUDIO_STATION)) return false;
+  // O item programado no Firebase é a fonte oficial. A grade pode complementar
+  // o nome do programa, mas nunca deve ocultar um prêmio já programado.
   return !!(item.prize || item.title || item.distributionId);
 }
 function allPrizeRows(){
@@ -4344,7 +4330,7 @@ function timeClass(item){
 }
 function currentItemRecord(){
   if(!currentDisplayItem || currentDisplayItem.__virtual) return null;
-  return monthData().items?.find(i=>i.id===currentDisplayItem.id) || null;
+  return studioLocatePrizeItem(currentDisplayItem.id)?.row || null;
 }
 function winnerCapacity(item){
   return Math.max(1,Number(item?.winnerCapacity||item?.qty||1)||1);
@@ -4382,7 +4368,7 @@ function removeWinnerInput(index){
   values.splice(index,1);
   renderWinnerInputs(values);
 }
-function studioWinnerMoveCandidates(item){return (monthData().items||[]).filter(row=>row&&row.id!==item?.id&&row.date===item?.date&&row.sourceType!=='promo-result'&&!upper(row.winnerName||'')&&!(Array.isArray(row.winnerNames)&&row.winnerNames.length)).sort((a,b)=>minutesOf(a.slot)-minutesOf(b.slot)||upper(a.title||'').localeCompare(upper(b.title||'')));}
+function studioWinnerMoveCandidates(item){return studioPublishedPrizeItems().filter(row=>row&&row.id!==item?.id&&row.date===item?.date&&row.sourceType!=='promo-result'&&!upper(row.winnerName||'')&&!(Array.isArray(row.winnerNames)&&row.winnerNames.length)).sort((a,b)=>minutesOf(a.slot)-minutesOf(b.slot)||upper(a.title||'').localeCompare(upper(b.title||'')));}
 function fillWinnerMoveTargets(item){const select=$('winnerMoveTargetSelect');if(!select)return;const rows=studioWinnerMoveCandidates(item);select.innerHTML=rows.length?rows.map(row=>`<option value="${esc(row.id)}">${esc(formatStudioTime(row.slot))} · ${esc(upper(row.title||row.prize||'PRÊMIO'))}</option>`).join(''):'<option value="">NENHUM OUTRO PRÊMIO DISPONÍVEL NESTE DIA</option>';$('confirmMoveWinnerBtn').disabled=!rows.length;}
 function openWinnerModal(){
   const item=currentItemRecord();if(!item)return;initWinnerBank(true);const existing=existingWinnerNames(item),editing=existing.length>0;renderWinnerInputs(existing);$('winnerModalTitle').textContent=editing?'CORRIGIR GANHADOR(ES)':'INDICAR GANHADOR(ES)';$('winnerModalHint').textContent=editing?'CORRIJA O NOME, MOVA PARA O PRÊMIO CORRETO OU REMOVA O REGISTRO. TODAS AS TELAS SERÃO SINCRONIZADAS.':'DIGITE O NOME DO OUVINTE SORTEADO. USE O BOTÃO + QUANDO HOUVER MAIS DE UM GANHADOR PARA O MESMO HORÁRIO.';$('winnerCorrectionTools').hidden=!editing;$('winnerMovePanel').hidden=true;fillWinnerMoveTargets(item);$('saveWinnerBtn').textContent=editing?'SALVAR CORREÇÃO':'SALVAR GANHADOR(ES)';$('winnerModal').classList.add('show');setTimeout(()=>document.querySelector('.winnerNameField')?.focus(),30);
@@ -4417,7 +4403,7 @@ window.addEventListener('blur',closeWinnerContextMenu);window.addEventListener('
 async function clearCurrentWinnerOutcome(){
   const item=currentItemRecord();if(!item||!existingWinnerNames(item).length)return;
   if(!confirm(`REMOVER O(S) GANHADOR(ES) DESTE PRÊMIO?\n\n${upper(item.title||item.prize||'PRÊMIO')}\n\nA PROGRAMAÇÃO VOLTARÁ PARA PENDENTE E O NOME SERÁ REMOVIDO DO ESTÚDIO, RECEPÇÃO E BANCO DE GANHADORES.`))return;
-  const context=winnerContextForItem(item),operator=studioOperatorIdentity(true),now=new Date(),monthKey=studioOutcomeMonthKey(context);
+  const context=winnerContextForItem(item),operator=studioOperatorIdentity(true),now=new Date(),monthKey=studioRecordMonths('items',item.id,context.date)[0]||studioOutcomeMonthKey(context);
   try{
     initWinnerBank(true);const bank=(await studioRetry(()=>winnerBankRef.get())).val()||{},map=winnerRecordMap(bank.records||{}),entries=Object.entries(map).filter(([,record])=>record?.sourceRef===context.sourceRef),updates={};entries.forEach(([key])=>updates[key]=null);if(entries.length)await studioRetry(()=>winnerBankRef.child('records').update(updates));
     const result=await studioRetry(()=>firebaseRef.child('months').child(monthKey).child('items').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const idx=rows.findIndex(row=>row?.id===item.id);if(idx<0)return;rows[idx]={...rows[idx],winnerNames:[],winnerName:'',winnerDeliveries:[],status:'PENDENTE',resultAt:'',resultAtLabel:'',deliveredAt:'',deliveredAtLabel:'',deliveredBy:'',winnerCorrectedAt:now.toISOString(),winnerCorrectedAtLabel:now.toLocaleString('pt-BR'),winnerCorrectedBy:operator.name,winnerCorrectionReason:'GANHADOR REMOVIDO NO ESTÚDIO',updatedAt:now.toISOString()};return rows;},undefined,false));
@@ -4425,10 +4411,10 @@ async function clearCurrentWinnerOutcome(){
   }catch(error){console.error(error);alert(`NÃO FOI POSSÍVEL REMOVER O GANHADOR.\n\n${error.message||''}`);}
 }
 async function moveCurrentWinnerOutcome(){
-  const source=currentItemRecord(),targetId=$('winnerMoveTargetSelect')?.value;if(!source||!targetId)return;const target=(monthData().items||[]).find(row=>row?.id===targetId);if(!target)return;
+  const source=currentItemRecord(),targetId=$('winnerMoveTargetSelect')?.value;if(!source||!targetId)return;const target=studioLocatePrizeItem(targetId)?.row;if(!target)return;
   const names=existingWinnerNames(source);if(!names.length)return;if(upper(target.winnerName||'')||(Array.isArray(target.winnerNames)&&target.winnerNames.length)){alert('O PRÊMIO DE DESTINO JÁ POSSUI GANHADOR.');return;}
   if(!confirm(`MOVER ${names.join(', ')} PARA:\n\n${formatStudioTime(target.slot)} · ${upper(target.title||target.prize||'PRÊMIO')}?`))return;
-  const sourceContext=winnerContextForItem(source),targetContext=winnerContextForItem(target),operator=studioOperatorIdentity(true),now=new Date(),monthKey=studioOutcomeMonthKey(sourceContext),backup={};
+  const sourceContext=winnerContextForItem(source),targetContext=winnerContextForItem(target),operator=studioOperatorIdentity(true),now=new Date(),sourceMonthKey=studioRecordMonths('items',source.id,sourceContext.date)[0]||studioOutcomeMonthKey(sourceContext),targetMonthKey=studioRecordMonths('items',target.id,targetContext.date)[0]||studioOutcomeMonthKey(targetContext),monthKey=sourceMonthKey,backup={};
   try{
     initWinnerBank(true);const bank=(await studioRetry(()=>winnerBankRef.get())).val()||{},map=winnerRecordMap(bank.records||{}),oldEntries=Object.entries(map).filter(([,record])=>record?.sourceRef===sourceContext.sourceRef);oldEntries.forEach(([key,record])=>backup[key]=record);const working=winnerRecordList(map).filter(record=>record.sourceRef!==sourceContext.sourceRef&&record.sourceRef!==targetContext.sourceRef),updates={};oldEntries.forEach(([key])=>updates[key]=null);
     for(const name of names){const eligibility=winnerEvaluateAgainst(working,name,targetContext.prize,targetContext.date,bank.blocks||{});if(!eligibility.allowed){const e=new Error(eligibility.reason||'O OUVINTE NÃO ESTÁ APTO PARA O PRÊMIO DE DESTINO.');e.eligibility=eligibility;throw e;}const id=winnerBankRef.child('records').push().key;const record={id,name,date:targetContext.date,program:targetContext.program,prize:targetContext.prize,personKey:winnerPersonKey(name),prizeKey:winnerPrizeKey(targetContext.prize),source:'ESTUDIO_JP1017',sourceRef:targetContext.sourceRef,operationId:`MOVE_${Date.now()}`,operationStatus:'CONFIRMED',createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR'),confirmedAt:now.toISOString(),updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector,movedFrom:sourceContext.sourceRef};updates[id]=record;working.push(record);}
@@ -4537,11 +4523,10 @@ function render(){
     if(pending.length) selectedPromoId=pending[0].id;
   }
   const promo=currentPromoForRead();
-  const promoImageCached=promo?(promo.imageData||promoImageCache.get(studioPromoAssetKey(promo))||''):'';
   const isVirtual=!!item.__virtual;
   const winnerBlock = item.winnerName ? `<div class="winnerBox" data-has-winner="1" title="BOTÃO DIREITO: AÇÕES DO GANHADOR"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
-      ${promoImageCached?`<div class="promoReadBanner"><img src="${promoImageCached}" alt="IMAGEM DA PROMOÇÃO"></div>`:(promo.imageRef?'<div class="promoReadBanner" data-studio-promo-image>CARREGANDO IMAGEM...</div>':'')}
+      ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
@@ -4577,7 +4562,6 @@ function render(){
     ${buildStudioContext(item,promo)}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
     ${buildPromoFooter(item)}`;
-  if(promo&&promo.imageRef&&!promoImageCached) hydrateStudioPromoImage(promo);
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
@@ -4672,19 +4656,17 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStat
 setInterval(()=>{ if(!document.hidden) refreshStudioCountdownClocks(); },1000);
 setInterval(()=>{
   const hk=currentHourKey();
-  let hourChanged=false;
   if(hk!==lastHourKey){
     manual=false;
     selectedIndex=-1;
     selectedPromoId=null;
     manualHourDateMs=null;
     lastHourKey=hk;
-    hourChanged=true;
   }
   if(!manual) selectedIndex=-1;
   renderStudioDateStamp();
   syncStateFromApi(false);
-  if(hourChanged&&!manual) render();
+  if(!manual) render();
 },3000);
 setInterval(()=>{
   if(document.hidden||navigator.onLine===false)return;
@@ -4696,6 +4678,6 @@ render();
 initFirebaseSync();
 initWinnerBank(false);
 </script>
-<!-- AV-57.6.6.25 · FIREBASE ÚNICO + PERFORMANCE GRANULAR -->
+<!-- AV-57.6.6.24 · FIREBASE ÚNICO + LISTENERS RTDB GRANULARES -->
 </body>
 </html>
