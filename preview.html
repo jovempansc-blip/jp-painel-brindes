@@ -844,7 +844,13 @@ function allPromos(){
   }));
   return [...map.values()];
 }
-function promosForMonth(monthKey=currentMonth){return allPromos().filter(p=>{const start=promoStart(p)||`${monthKey}-01`,end=promoEnd(p)||monthLastDay(monthKey);return start<=monthLastDay(monthKey)&&end>=`${monthKey}-01`;});}
+function promosForMonth(monthKey=currentMonth){
+  const map=new Map(),pinned=new Set();
+  (monthData(monthKey).promos||[]).forEach((p,index)=>{if(!p)return;const id=p.id||`LEGACY_${monthKey}_${index}_${promoTitle(p)}`;map.set(id,{...p,__sourceMonth:monthKey});pinned.add(id);});
+  // Fallback apenas para registros legados ainda armazenados fisicamente em outro mês.
+  allPromos().forEach((p,index)=>{const id=p.id||`LEGACY_GLOBAL_${index}_${promoTitle(p)}`;if(pinned.has(id))return;const start=promoStart(p)||`${monthKey}-01`,end=promoEnd(p)||monthLastDay(monthKey);if(start<=monthLastDay(monthKey)&&end>=`${monthKey}-01`)map.set(id,p);});
+  return [...map.values()].filter(p=>{const start=promoStart(p)||`${monthKey}-01`,end=promoEnd(p)||monthLastDay(monthKey);return start<=monthLastDay(monthKey)&&end>=`${monthKey}-01`;});
+}
 function readKeys(date,slot){const hhmm=timeToHHMM(slot),compact=hhmm.replace(":",""),hour=hhmm.slice(0,2),minute=hhmm.slice(3,5),keys=[`${date}-${compact}`];if(minute==="00")keys.push(`${date}-${hour}`);return keys;}
 function rawReadValue(promo,date,slot){for(const key of readKeys(date,slot)){if(Object.prototype.hasOwnProperty.call(promo.readByHour||{},key))return promo.readByHour[key];}return "";}
 function validReadTimestamp(value){if(!value)return"";if(typeof value==='object')value=value.confirmedAt||value.readAt||value.at||value.iso||value.value||'';if(typeof value!=='string')return"";const d=new Date(value);return Number.isNaN(d.getTime())?"":value;}

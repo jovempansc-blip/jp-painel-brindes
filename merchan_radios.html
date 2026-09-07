@@ -454,34 +454,54 @@ function mergeReadData(base,copy){
   if(copy.readAt&&(!base.readAt||copy.readAt>base.readAt)){base.readAt=copy.readAt;base.readAtLabel=copy.readAtLabel||base.readAtLabel;base.readSlot=copy.readSlot||base.readSlot;}return base;
 }
 function allMerchans(){const groups=new Map();Object.entries(state.months||{}).forEach(([month,monthData])=>(monthData.promos||[]).forEach(promo=>{if(norm(promo.kind)!=='MERCHAN')return;const id=promo.id||`${month}-${promo.name||promo.title}`;if(!groups.has(id)){const clone=deepClone(promo);clone.__months=[month];groups.set(id,clone);return;}const current=groups.get(id);const merged=mergeReadData(current,promo);merged.__months=[...new Set([...(merged.__months||[]),month])];const currentUpdated=Date.parse(current.updatedAt||current.createdAt||0)||0;const copyUpdated=Date.parse(promo.updatedAt||promo.createdAt||0)||0;if(copyUpdated>currentUpdated){const reads={readByHour:merged.readByHour,readLog:merged.readLog,missedLog:merged.missedLog,__months:merged.__months};Object.assign(merged,deepClone(promo),reads);}groups.set(id,merged);}));return [...groups.values()].sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||'')||norm(a.program).localeCompare(norm(b.program))||norm(a.name||a.title).localeCompare(norm(b.name||b.title)));}
-function findMerchan(id){const promo=allMerchans().find(row=>row.id===id);return promo?{p:promo,months:promo.__months||[]}:null;}
+function opecRecordMonths(id){return Object.entries(state.months||{}).filter(([key,month])=>validMonthKey(key)&&(month.promos||[]).some(row=>row?.id===id)).map(([key])=>key).sort();}
+function opecOperationMonth(record=null,existingMonths=[]){
+  const todayMonth=todayISO().slice(0,7),stateMonth=validMonthKey(state.currentMonth)?state.currentMonth:'';
+  if(existingMonths.includes(todayMonth))return todayMonth;
+  if(stateMonth&&existingMonths.includes(stateMonth))return stateMonth;
+  const start=String(record?.startDate||'').slice(0,7);
+  if(validMonthKey(start)&&(existingMonths.includes(start)||!existingMonths.length))return start;
+  return existingMonths[0]||todayMonth;
+}
+function findMerchan(id){
+  const months=opecRecordMonths(id),operationMonth=opecOperationMonth(null,months),direct=(state.months?.[operationMonth]?.promos||[]).find(row=>row?.id===id);
+  if(direct)return{p:deepClone(direct),months,operationMonth};
+  const promo=allMerchans().find(row=>row.id===id);return promo?{p:promo,months:promo.__months||months,operationMonth}:null;
+}
 function targetMonths(record){return monthKeysBetween(record.startDate,record.endDate||record.drawDate||record.startDate).filter(validMonthKey);}
 async function transactionForRecord(record){
   const operator=opecOperatorIdentity();
   await ensureOpecOnline();
-  const target=new Set(targetMonths(record));
-  const existingMonths=Object.entries(state.months||{}).filter(([key,month])=>validMonthKey(key)&&(month.promos||[]).some(row=>row?.id===record.id)).map(([key])=>key);
-  const keys=[...new Set([...existingMonths,...target])].filter(validMonthKey);
+  const target=new Set(targetMonths(record)),existingMonths=opecRecordMonths(record.id),isNew=!existingMonths.length,operationMonth=opecOperationMonth(record,existingMonths);
+  const missing=[...target].filter(key=>!existingMonths.includes(key));
+  const keys=(isNew?[...target]:[...new Set([operationMonth,...missing])]).filter(validMonthKey);
+  const originMonth=String(record.originMonth||record.startDate||operationMonth).slice(0,7)||operationMonth;
   for(const key of keys){
-    const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);const existing=rows.find(row=>row?.id===record.id);const filtered=rows.filter(row=>row?.id!==record.id);if(!target.has(key))return filtered;const copy={...deepClone(record),updatedBy:operator.name,operatorSector:operator.sector};if(existing)mergeReadData(copy,existing);return [...filtered,copy];},undefined,false);if(!tx?.committed)throw new Error('GRAVAÇÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});
+    const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{
+      const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),existing=rows.find(row=>row?.id===record.id),filtered=rows.filter(row=>row?.id!==record.id);
+      const now=new Date().toISOString(),copy={...deepClone(record),originMonth,snapshotMonth:key,monthlySnapshotVersion:2,monthlyRevision:Math.max(1,Number(existing?.monthlyRevision)||0)+1,monthlyEdited:!isNew&&key===operationMonth,monthlyUpdatedAt:now,snapshotCreatedAt:existing?.snapshotCreatedAt||now,updatedBy:operator.name,operatorSector:operator.sector};
+      if(existing)mergeReadData(copy,existing);
+      return [...filtered,copy];
+    },undefined,false);if(!tx?.committed)throw new Error('GRAVAÇÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});
     state.months[key] ||= {label:key,items:[],promos:[],distributions:[]};const rows=result.snapshot.val();state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);
   }
-  const now=new Date(),savedMonth=String(record.startDate||'').slice(0,7);await Promise.allSettled([ref.update({currentMonth:validMonthKey(savedMonth)?savedMonth:todayISO().slice(0,7),updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
+  const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V57_6_6_26_MONTHLY'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)} · COMPETÊNCIA ${isNew?'INICIAL MULTIMÊS':operationMonth}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   return state;
 }
 async function deleteRecord(id){
   const operator=opecOperatorIdentity();
-  await ensureOpecOnline();const keys=Object.entries(state.months||{}).filter(([key,month])=>validMonthKey(key)&&(month.promos||[]).some(row=>row?.id===id)).map(([key])=>key);
-  for(const key of keys){const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);return rows.filter(row=>row?.id!==id);},undefined,false);if(!tx?.committed)throw new Error('EXCLUSÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});const rows=result.snapshot.val();if(state.months?.[key])state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);}
-  const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V56_16_TOKEN_SAFE'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'MERCHAN EXCLUÍDO',targetId:id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);return true;
+  await ensureOpecOnline();const existingMonths=opecRecordMonths(id),key=opecOperationMonth(null,existingMonths);if(!existingMonths.includes(key))throw new Error('CADASTRO NÃO ENCONTRADO NA COMPETÊNCIA ATUAL.');
+  const result=await opecRetry(async()=>{const tx=await ref.child('months').child(key).child('promos').transaction(current=>{const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);return rows.filter(row=>row?.id!==id);},undefined,false);if(!tx?.committed)throw new Error('EXCLUSÃO DO MERCHAN NÃO CONFIRMADA.');return tx;});const rows=result.snapshot.val();if(state.months?.[key])state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);
+  const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V57_6_6_26_MONTHLY'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:'MERCHAN EXCLUÍDO DA COMPETÊNCIA',targetId:id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`COMPETÊNCIA ${key} · OUTROS MESES PRESERVADOS`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);return true;
 }
 
 function confirmDeleteMerchan(id){
   const found=findMerchan(id);if(!found)return;
   const p=found.p,label=`${opecClientName(p)} · ${norm(p.name||p.title||'TEXTO')}`;
-  if(!confirm(`EXCLUIR DEFINITIVAMENTE ${label}?
+  const operationMonth=found.operationMonth||opecOperationMonth(p,found.months||[]);
+  if(!confirm(`EXCLUIR ${label} SOMENTE DA COMPETÊNCIA ${operationMonth}?
 
-ESTA AÇÃO REMOVERÁ O CADASTRO DO TEXTO EM TODOS OS MESES E NÃO PODERÁ SER DESFEITA.`))return;
+OS OUTROS MESES SERÃO PRESERVADOS.`))return;
   setSaveState('saving','EXCLUINDO CADASTRO...');
   deleteRecord(id).then(()=>{setSaveState('','CADASTRO EXCLUÍDO');render();}).catch(error=>{console.error(error);setSaveState('error','ERRO AO EXCLUIR');alert(error.message||'NÃO FOI POSSÍVEL EXCLUIR O CADASTRO.');});
 }

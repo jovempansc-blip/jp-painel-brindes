@@ -2568,6 +2568,10 @@ function studioRecordMonths(collection,idValue,date=''){
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
     if(valid(monthKey)&&(m?.[collection]||[]).some(row=>row?.id===idValue)) keys.push(monthKey);
   });
+  const preferred=String(date||'').slice(0,7);
+  // Snapshots mensais usam o mesmo ID. Confirmações pertencem somente ao mês da ocorrência.
+  if(valid(preferred)&&keys.includes(preferred)) return [preferred];
+  // Compatibilidade com registros antigos fisicamente gravados em outro mês.
   return keys.length?keys:[studioOutcomeMonthKey({date})];
 }
 function pickStudioFields(record,fields){
@@ -3161,15 +3165,22 @@ function studioLocatePrizeItem(idValue){
   return best;
 }
 function studioPromoPool(date=''){
-  const copies=new Map();
+  const requestedMonth=String(date||'').slice(0,7),copies=new Map(),pinned=new Set();
+  // Para uma data concreta, a fotografia daquele mês sempre vence, mesmo que outra competência tenha updatedAt mais novo.
+  if(/^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)){
+    studioRows(state.months?.[requestedMonth]?.promos).forEach((row,index)=>{
+      if(!row)return;const idValue=String(row.id||`LEGACY_${requestedMonth}_${index}`);copies.set(idValue,row);pinned.add(idValue);
+    });
+  }
   Object.entries(state.months||{}).forEach(([monthKey,month])=>{
     studioRows(month?.promos).forEach((row,index)=>{
       if(!row)return;
       const idValue=String(row.id||`LEGACY_${monthKey}_${index}`);
+      if(pinned.has(idValue))return;
       const previous=copies.get(idValue);
       if(!previous){copies.set(idValue,row);return;}
-      const previousTime=Date.parse(previous.updatedAt||previous.createdAt||'')||0;
-      const incomingTime=Date.parse(row.updatedAt||row.createdAt||'')||0;
+      const previousTime=Date.parse(previous.monthlyUpdatedAt||previous.updatedAt||previous.createdAt||'')||0;
+      const incomingTime=Date.parse(row.monthlyUpdatedAt||row.updatedAt||row.createdAt||'')||0;
       if(incomingTime>=previousTime) copies.set(idValue,row);
     });
   });
@@ -4432,14 +4443,30 @@ async function saveWinner(){
   if(!names.length||names.some(name=>!name)){ fields.find(input=>!upper(input.value))?.focus(); return; }
   const max=winnerCapacity(item); if(names.length>max){ alert(`ESTE HORÁRIO PERMITE NO MÁXIMO ${max} GANHADOR(ES).`); return; }
   validateAllWinnerInputs(); if(!winnerBankReady||winnerInputChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
-  button.dataset.busy='1'; button.disabled=true; button.textContent='VALIDANDO E SALVANDO...';
+  const wasEditing=existingWinnerNames(item).length>0;
+  button.dataset.busy='1'; button.disabled=true; button.textContent='SALVANDO...';
+  // A janela é operacional: depois da validação, fecha imediatamente.
+  // O resultado só aparece como confirmado quando o Firebase concluir a transação.
+  closeWinnerModal();
   try{
     const context=winnerContextForItem(item), now=new Date();
     const patch={winnerNames:names,winnerName:names.join(', '),winnerCapacity:max,status:'REALIZADO',resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')};
     await commitStudioOutcomeAtomic({collection:'items',recordId:item.id,patch,names,context});
-    closeWinnerModal(); render();
-  }catch(error){ console.error('ERRO AO SALVAR GANHADORES:',error); alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR OS GANHADORES.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`); initWinnerBank(true); validateAllWinnerInputs(); }
-  finally{ button.dataset.busy='0'; button.textContent=existingWinnerNames(currentItemRecord()||{}).length?'SALVAR CORREÇÃO':'SALVAR GANHADOR(ES)'; updateWinnerSaveState(); }
+    render();
+  }catch(error){
+    console.error('ERRO AO SALVAR GANHADORES:',error);
+    alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR OS GANHADORES.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`);
+    initWinnerBank(true);
+    // Em erro real, reabre com os nomes digitados para o operador não perder o trabalho.
+    openWinnerModal();
+    renderWinnerInputs(names);
+    $('winnerModalTitle').textContent=wasEditing?'CORRIGIR GANHADOR(ES)':'INDICAR GANHADOR(ES)';
+    setTimeout(()=>document.querySelector('.winnerNameField')?.focus(),30);
+  }finally{
+    button.dataset.busy='0';
+    button.textContent=existingWinnerNames(currentItemRecord()||{}).length?'SALVAR CORREÇÃO':'SALVAR GANHADOR(ES)';
+    updateWinnerSaveState();
+  }
 }
 function step(delta){
   const base = manualHourDateMs !== null

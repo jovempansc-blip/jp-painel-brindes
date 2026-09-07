@@ -178,6 +178,9 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 .distActions .actionIcon .iconGlyph{font-size:9px}
 .distInlineNum{width:48px;min-height:27px;padding:5px 5px;border:1px solid var(--line);border-radius:9px;background:#fff;text-align:center;font-size:12px;font-weight:800;color:var(--ink);margin:0 auto;display:block}
 .distInlineNum:focus{border-color:rgba(201,0,43,.42);box-shadow:0 0 0 3px rgba(201,0,43,.08)}
+.distStockMeta{display:flex;flex-wrap:wrap;gap:4px 7px;margin-top:5px;font-size:7.4px;font-weight:900;letter-spacing:.025em;color:#667181}
+.distStockMeta b{color:#263242}.distStockMeta .ok{color:#137947}.distStockMeta .warn{color:#a56700}.distStockMeta .bad{color:#b4233c}
+.distSaldoStack{display:grid;gap:3px;justify-items:center}.distSaldoStack small{font-size:6.8px;font-weight:900;color:#7a8494;white-space:nowrap}
 .distSaldoCell .badge{margin:0 auto}
 .distSaldoCell .badge.red{background:#fff1f3;color:var(--danger);border-color:#f3b5c0}
 .reservationBoard{display:none;margin:0 0 10px}
@@ -4049,13 +4052,17 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
               <label class="miniField"><span>COR</span><input id="distTitleColor" type="color"></label>
             </div>
           </div>
-          <div class="field"><label>TOTAL UNITÁRIO</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"></div>
+          <div class="field"><label id="distTotalLabel">TOTAL UNITÁRIO DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"><span class="ticketFormHint" id="distTotalHint">NO NOVO CADASTRO, INFORME O ESTOQUE FÍSICO TOTAL. O SISTEMA DIVIDE A COTA ENTRE OS MESES DA VIGÊNCIA.</span></div>
+          <div class="field" id="distMasterStockField" hidden><label>ESTOQUE TOTAL DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distMasterTotal" value="0"><span class="ticketFormHint">ESTOQUE FÍSICO GLOBAL. ALTERAR ESTE CAMPO NÃO MUDA AUTOMATICAMENTE AS COTAS DOS OUTROS MESES.</span></div>
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
           <div class="field"><label>PADRÃO DE ENTREGA</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE O MODO INICIAL. CADA DESTINO PODE SER ALTERADO ENTRE IND. E PAR.</span></div>
           <div class="field"><label>DISPONÍVEL</label><input class="control" id="distPairsPreview" readonly value="0 PRÊMIOS"></div>
 
           
 
+          <div class="field full" id="distMonthlyStockOverview" hidden>
+            <div class="serverSourceBox" id="distMonthlyStockOverviewText"><strong>ESTOQUE:</strong> CARREGANDO CONTROLE MENSAL...</div>
+          </div>
           <div class="field full">
             <div class="distConversionSummary" id="distConversionSummary">
               <div><span>TOTAL UNITÁRIO</span><strong>0</strong></div>
@@ -4763,7 +4770,7 @@ function mergeAuditRows(remoteRows,localRows){
   return [...map.values()].sort((a,b)=>String(a.createdAt||a.timestamp||'').localeCompare(String(b.createdAt||b.timestamp||''))).slice(-2500);
 }
 async function persistGranularState(){
-  const baseline=normalizePanelState(clone(firebaseBaselineState || {months:{},schedules:[],programSchedules:[]}));
+  const baseline=normalizePanelState(clone(firebaseBaselineState || {months:{},schedules:[],programSchedules:[]}),{hydrateSnapshots:false});
   normalizePanelState(state);
   const writeRoot=firebaseStateRootRef();
   if(!writeRoot) throw new Error('FIREBASE INDISPONÍVEL PARA GRAVAÇÃO.');
@@ -4852,15 +4859,17 @@ function applyRemoteFirebaseState(remoteState){
     const openMonth=firebaseServerLoaded ? state.currentMonth : '';
     const remoteTrashCount=Array.isArray(remoteState.trash)?remoteState.trash.length:Object.keys(remoteState.trash||{}).length;
     firebaseBaseEmpty = false;
-    firebaseBaselineState=normalizePanelState(clone(remoteState));
+    firebaseBaselineState=normalizePanelState(clone(remoteState),{hydrateSnapshots:false});
     state = normalizePanelState(clone(remoteState));
+    const snapshotMigrationCount=Number(state.__legacyDistributionSnapshotsHydrated||0);
     if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
     firebaseServerLoaded = true;
     lastFirebaseLoadLabel=new Date().toLocaleString('pt-BR');
     setOfficialCalendarMonth(false);
     render();
-    if(remoteTrashCount>(state.trash||[]).length){
+    if(remoteTrashCount>(state.trash||[]).length || snapshotMigrationCount>0){
       firebasePendingSave=true;
+      if(snapshotMigrationCount>0) console.info(`MIGRAÇÃO FIREBASE: ${snapshotMigrationCount} FOTOGRAFIA(S) MENSAIS LEGADAS HIDRATADA(S).`);
       if(firebaseConnected) queueApiSave(250);
     }
   }catch(error){
@@ -6308,7 +6317,7 @@ function normalizeChannel(value){
   if(v === 'CLIENTES' || v === 'RESERVA' || v === 'RESERVADO') return 'RESERVADO';
   return v || 'RÁDIO';
 }
-function normalizePanelState(data){
+function normalizePanelState(data,options={}){
   if(!data || !data.months) return data;
   data.schedules ||= [];
   data.programSchedules ||= [];
@@ -6337,7 +6346,7 @@ function normalizePanelState(data){
   });
   data.schedules ||= [];
   data.schedules.forEach(s=>{ s.type=normalizeScheduleType(s.type); s.status=legacyStatusToScheduleMeta(s); s.pending=normalizeSchedulePending(s.pending||s.pendencia||s.status); s.destination=normalizeScheduleDestination(s.destination); s.station ||= 'JP1017'; s.notes=textNorm(s.notes||''); });
-  Object.values(data.months).forEach(m=>{
+  Object.entries(data.months).forEach(([monthKey,m])=>{
     (m.items || []).forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
     (m.promos || []).forEach(p=>{ p.status = normalizeStatus(p.status); });
     (m.distributions || []).forEach(d=>{
@@ -6350,10 +6359,20 @@ function normalizePanelState(data){
       d.description ||= d.notes || '';
       d.startDate ||= d.date || '';
       d.endDate ||= d.finishDate || d.finalDate || d.end || '';
+      d.snapshotMonth ||= monthKey;
+      d.originMonth ||= String(d.startDate||d.date||monthKey).slice(0,7)||monthKey;
+      if(d.campaignStockTotal===undefined && d.masterTotal!==undefined) d.campaignStockTotal=num(d.masterTotal);
+      if(d.stockModelVersion>=3){
+        d.campaignStockTotal=Math.max(0,num(d.campaignStockTotal));
+        d.monthlyInitialTotal=Math.max(0,num(d.monthlyInitialTotal ?? d.total));
+        d.monthlyAdjusted=num(d.total)!==num(d.monthlyInitialTotal);
+      }
       d.clientes = 0;
       d.outros = 0;
     });
   });
+  const hydratedSnapshots=options.hydrateSnapshots===false?0:hydrateLegacyDistributionSnapshots(data);
+  try{Object.defineProperty(data,'__legacyDistributionSnapshotsHydrated',{value:hydratedSnapshots,enumerable:false,configurable:true});}catch(error){}
   return data;
 }
 function monthData(){
@@ -6457,8 +6476,10 @@ function systemPendingRecords(){
   const push=(level,title,detail,action='')=>rows.push({id:`P${rows.length+1}`,level,title,detail,action});
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
     (m.distributions||[]).forEach(d=>{
-      const left=leftTotal(d);
-      if(left<0) push('CRÍTICO',`${distributionLabel(d)} — SALDO NEGATIVO`,`${labelMonth(monthKey)} · ESTOURO DE ${Math.abs(left)} UNIDADE(S).`,'distribuicao');
+      const left=leftTotal(d),monthStock=distributionMonthStockStatus(d,monthKey),globalStock=distributionCampaignGlobalBalance(d);
+      if(left<0) push('CRÍTICO',`${distributionLabel(d)} — DÉFICIT DE PLANEJAMENTO`,`${labelMonth(monthKey)} · DESTINOS ULTRAPASSAM A COTA EM ${Math.abs(left)} UNIDADE(S).`,'distribuicao');
+      if(monthStock.executionBalance<0) push('CRÍTICO',`${distributionLabel(d)} — DÉFICIT EXECUTADO`,`${labelMonth(monthKey)} · REALIZADO ULTRAPASSA A COTA EM ${Math.abs(monthStock.executionBalance)} UNIDADE(S).`,'distribuicao');
+      if(monthKey===distributionCampaignCopies(d.id)[0]?.monthKey && globalStock.balance<0) push('CRÍTICO',`${distributionLabel(d)} — DÉFICIT GLOBAL`,`ESTOQUE FÍSICO ${globalStock.master} · COTAS MENSAIS ${globalStock.planned} · FALTA ${Math.abs(globalStock.balance)} UNIDADE(S).`,'distribuicao');
       if(distStartDate(d)&&distEndDate(d)&&distEndDate(d)<distStartDate(d)) push('CRÍTICO',`${distributionLabel(d)} — PERÍODO INVÁLIDO`,`${formatBR(distStartDate(d))} A ${formatBR(distEndDate(d))}.`,'distribuicao');
       CHANNELS.forEach(([key,label])=>{ const amount=num(d[key]); const used=programmedForMonth?.(d.id,label,monthKey) ?? (monthKey===state.currentMonth?programmed(d.id,label):0); if(used>amount) push('CRÍTICO',`${distributionLabel(d)} — ${label}`,`PROGRAMADO/UTILIZADO ${used} · DEFINIDO ${amount}.`,'programacao'); });
     });
@@ -6500,10 +6521,8 @@ function validateProgramDraft(monthKey=state.currentMonth){
     const key=`${i.station||'JP1017'}|${i.date}|${normalizeSlot(i.slot)}`;
     if(slotSeen.has(key)) issues.push(`CONFLITO EM ${formatBR(i.date)} ${normalizeSlot(i.slot)} — ${i.prize||i.title} / ${slotSeen.get(key)}.`); else slotSeen.set(key,i.prize||i.title||'ITEM');
   });
-  (m.distributions||[]).forEach(d=>{
-    if(leftTotal(d)<0) issues.push(`${distributionLabel(d)} COM SALDO NEGATIVO (${leftTotal(d)}).`);
-    CHANNELS.forEach(([key,label])=>{ const used=programmedForMonth(d.id,label,monthKey); if(used>num(d[key])) issues.push(`${distributionLabel(d)} — ${label}: ${used} UTILIZADO(S) PARA ${num(d[key])} DISPONÍVEL(IS).`); });
-  });
+  // Déficits de estoque são alertas de integridade, não apagam nem bloqueiam o histórico mensal.
+  // A publicação só é bloqueada por problemas estruturais da grade acima.
   return {ok:issues.length===0,issues:[...new Set(issues)]};
 }
 function publishProgramMonth(){
@@ -6542,7 +6561,7 @@ function restoreTrashRecord(trashId){
   }else if(row.type==='PROMOÇÃO'){
     const copies=Array.isArray(payload?.copies)?payload.copies:[{monthKey:row.monthKey,data:payload}];
     copies.forEach(copy=>{ const m=monthDataForKey(copy.monthKey); if(!(m.promos||[]).some(x=>x.id===copy.data.id)) m.promos.push(clone(copy.data)); });
-    const p=consolidatedPromoById(row.sourceId); if(p) syncPromoResultToProgram(p);
+    copies.forEach(copy=>{ const p=promoByIdForMonth(row.sourceId,copy.monthKey)||copy.data; if(p) syncPromoResultToProgram(p,copy.monthKey); });
   }else if(row.type==='GANHADOR'){
     if(!winnerBankRef){ alert('BANCO DE GANHADORES INDISPONÍVEL PARA RESTAURAÇÃO.'); return; }
     const restoreKey=winnerValidFirebaseKey(payload.firebaseKey)?payload.firebaseKey:winnerBankRef.child('records').push().key;
@@ -7024,14 +7043,15 @@ function ticketSummaryText(d){
   return ` | MODO INDIVIDUAL · ${num(d.total)} UNID.`;
 }
 function distributionBalanceCell(d){
+  const monthKey=d?.snapshotMonth||state.currentMonth;
   const unit=distributionDeliveryUnit(d);
   const pkgLeft=leftDeliverable(d);
   const realLeft=leftTotal(d);
-  const cls=realLeft<0||pkgLeft<0?'red':(pkgLeft===0?'amber':'green');
-  if(unit==='pair'){
-    return `<span class="badge ${cls}">${pkgLeft} PAR${Math.abs(pkgLeft)===1?'':'ES'}</span><small>${realLeft} UNID.</small>`;
-  }
-  return balanceBadge(realLeft);
+  const stock=distributionMonthStockStatus(d,monthKey);
+  const cls=realLeft<0||pkgLeft<0||stock.executionBalance<0?'red':(pkgLeft===0?'amber':'green');
+  const execText=stock.executionBalance<0?`EXEC. -${Math.abs(stock.executionBalance)}`:`EXEC. ${stock.executionBalance}`;
+  if(unit==='pair') return `<div class="distSaldoStack"><span class="badge ${cls}">${pkgLeft} PAR${Math.abs(pkgLeft)===1?'':'ES'}</span><small>${realLeft} UNID. · ${execText}</small></div>`;
+  return `<div class="distSaldoStack">${balanceBadge(realLeft)}<small>${execText}</small></div>`;
 }
 function programmed(distId, channel=''){
   const target = channel ? normalizeChannel(channel) : '';
@@ -7510,7 +7530,7 @@ function convertScheduleRecord(s,{auto=false,openProgramDrawer=false}={}){
       createdAt:new Date().toISOString(),
       updatedAt:new Date().toISOString()
     };
-    targetMonth.distributions.push(d);
+    storeDistributionAcrossMonths(d,key,true);
     markScheduleConverted(s,'DISTRIBUIÇÃO GERAL');
     return {ok:true,target:'DISTRIBUIÇÃO GERAL'};
   }
@@ -8267,8 +8287,9 @@ function filteredDistributions(monthKey=state.currentMonth){
   const status=$('distStatusFilter').value;
   const order=$('distOrderFilter')?.value || 'alpha';
   const rows = monthDataForKey(monthKey).distributions.filter(d=>{
-    const left=leftTotal(d);
-    const passStatus = !status || (status==='OK' && left>=0) || (status==='SOBRA' && left>0) || (status==='ZERADO' && left===0) || (status==='ESTOURO' && left<0);
+    const left=leftTotal(d),stock=distributionMonthStockStatus(d,monthKey),global=distributionCampaignGlobalBalance(d);
+    const deficit=left<0||stock.executionBalance<0||global.balance<0;
+    const passStatus = !status || (status==='OK' && !deficit && left>=0) || (status==='SOBRA' && !deficit && left>0) || (status==='ZERADO' && !deficit && left===0) || (status==='ESTOURO' && deficit);
     return passTextFilter(d,text) && passStatus;
   });
   if(order==='alpha') rows.sort((a,b)=> norm(distributionLabel(a)).localeCompare(norm(distributionLabel(b))));
@@ -8597,8 +8618,9 @@ function renderDistribuicao(){
     const left=leftTotal(d); const prog=programmed(d.id,'RÁDIO');
     const titleLine = norm(d.title || '') ? `<span>${esc(d.title)}</span>` : '';
     const periodLine = `<em class="distPeriodLine">${esc(distPeriodLabel(d))}${esc(ticketSummaryText(d))}</em>`;
+    const stockLine=distributionStockMetaHtml(d,monthKey);
     return `<tr data-dist-row="${esc(d.id)}">
-      <td class="distPrizeCell"><div class="distPrizeWrap"><strong>${esc(distributionLabel(d))}</strong>${titleLine}${periodLine}</div></td>
+      <td class="distPrizeCell"><div class="distPrizeWrap"><strong>${esc(distributionLabel(d))}</strong>${titleLine}${periodLine}${stockLine}</div></td>
       <td class="num">${num(d.total)}</td>
       <td class="num distPairCell" data-pairs-id="${esc(d.id)}">${ticketPairsCell(d)}</td>
       <td class="num">${inlineNum(d,'app','APP')}</td>
@@ -8922,7 +8944,10 @@ function renderResumo(){
   }).join('') || `<tr><td colspan="6"><div class="empty">SEM DADOS PARA CONFERÊNCIA.</div></td></tr>`;
   const alerts=[];
   m.distributions.forEach(d=>{
-    if(leftTotal(d)<0) alerts.push(`SALDO NEGATIVO EM ${distributionLabel(d)}: SOBRAM ${leftTotal(d)}.`);
+    const ms=distributionMonthStockStatus(d,state.currentMonth),gs=distributionCampaignGlobalBalance(d);
+    if(leftTotal(d)<0) alerts.push(`DÉFICIT DE PLANEJAMENTO EM ${distributionLabel(d)}: ${Math.abs(leftTotal(d))} UNIDADE(S) ACIMA DA COTA DE ${labelMonth(state.currentMonth)}.`);
+    if(ms.executionBalance<0) alerts.push(`DÉFICIT EXECUTADO EM ${distributionLabel(d)}: ${Math.abs(ms.executionBalance)} UNIDADE(S) ACIMA DA COTA DE ${labelMonth(state.currentMonth)}.`);
+    if(gs.balance<0) alerts.push(`DÉFICIT GLOBAL EM ${distributionLabel(d)}: ESTOQUE ${gs.master}, COTAS MENSAIS ${gs.planned}, FALTA ${Math.abs(gs.balance)}.`);
     CHANNELS.forEach(([key,label])=>{
       const saldo = num(d[key]) - programmed(d.id,label);
       if(saldo < 0) alerts.push(`${distributionLabel(d)} ESTOUROU O CANAL ${label} EM ${Math.abs(saldo)} UNIDADE(S).`);
@@ -9047,7 +9072,9 @@ function duplicateItem(itemId){
     copy.slot=alt.slot;
     copy.program=alt.program || programForSlot(alt.date,alt.slot,itemStation(copy));
   }
-  monthData().items.push(copy);
+  const copyMonthKey=String(copy.date||state.currentMonth).slice(0,7)||state.currentMonth;
+  if(copy.distributionId) ensureDistributionSnapshotForMonth(copy.distributionId,copyMonthKey,distributionById(copy.distributionId));
+  monthDataForKey(copyMonthKey).items.push(copy);
   saveState(true); render(); toast('ITEM COPIADO E REMANEJADO.');
 }
 function deleteItem(itemId){
@@ -9816,7 +9843,7 @@ $('itemForm').addEventListener('submit',e=>{
   const finalMonthKey=String(item.date).slice(0,7);
   if(!state.months[finalMonthKey]) createBlankMonth(finalMonthKey);
   if(item.distributionId){
-    const d=distributionByIdForMonth(item.distributionId,finalMonthKey) || distributionForProgramItem(existingItem);
+    const d=ensureDistributionSnapshotForMonth(item.distributionId,finalMonthKey,distributionForProgramItem(existingItem)||distributionById(item.distributionId));
     const key=(CHANNELS.find(c=>c[1]===item.channel)||['ar'])[0];
     const oldQty=existingItem && existingItem.distributionId===item.distributionId && normalizeChannel(existingItem.channel)===item.channel ? num(existingItem.qty) : 0;
     const used=programmedForMonth(item.distributionId,item.channel,finalMonthKey);
@@ -9824,7 +9851,7 @@ $('itemForm').addEventListener('submit',e=>{
     if(d && item.qty > saldo){ alert(`QUANTIDADE INDISPONÍVEL.\n\nCANAL: ${item.channel}\nDISPONÍVEL AGORA: ${Math.max(0,saldo)}\nSOLICITADO: ${item.qty}\n\nAJUSTE A DISTRIBUIÇÃO ANTES DE PROGRAMAR.`); return; }
   }
   if(item.distributionId){
-    const linked=distributionByIdForMonth(item.distributionId,finalMonthKey) || distributionForProgramItem(existingItem);
+    const linked=ensureDistributionSnapshotForMonth(item.distributionId,finalMonthKey,distributionForProgramItem(existingItem)||distributionById(item.distributionId));
     if(linked){
       if(item.title){ linked.title=item.title; linked.titleStyle=item.titleStyle; }
       if(item.notes){ linked.description=item.notes; linked.notes=item.notes; linked.descriptionStyle=item.descriptionStyle; }
@@ -9851,9 +9878,21 @@ function monthEndDate(key=state.currentMonth){
 function distStartDate(d){ return d?.startDate || d?.date || monthStartDate(); }
 function distEndDate(d){ return d?.endDate || d?.startDate || d?.date || monthEndDate(); }
 function radioGenerationEffectiveRange(d){
-  const originalStart=distStartDate(d),end=distEndDate(d),today=todayISO();
-  const start=originalStart>today?originalStart:today;
-  return {originalStart,start,end,valid:!!start&&!!end&&start<=end,clamped:!!originalStart&&start!==originalStart};
+  const originalStart=distStartDate(d),originalEnd=distEndDate(d),today=todayISO();
+  const snapshotMonth=String(d?.snapshotMonth||d?.monthKey||state.currentMonth||'').slice(0,7);
+  const monthStart=snapshotMonth?monthStartDate(snapshotMonth):originalStart;
+  const monthEnd=snapshotMonth?monthEndDate(snapshotMonth):originalEnd;
+  const boundedStart=[originalStart,monthStart,today].filter(Boolean).sort().pop()||'';
+  const boundedEnd=[originalEnd,monthEnd].filter(Boolean).sort()[0]||'';
+  return {
+    originalStart,
+    originalEnd,
+    snapshotMonth,
+    start:boundedStart,
+    end:boundedEnd,
+    valid:!!boundedStart&&!!boundedEnd&&boundedStart<=boundedEnd,
+    clamped:boundedStart!==originalStart||boundedEnd!==originalEnd
+  };
 }
 function radioGenerationSlotIsFuture(date,slot){
   const today=todayISO();
@@ -9877,8 +9916,9 @@ function programmedAcrossMonths(distId,channel=''){
   return total;
 }
 function distributionRadioTotal(d){
-  const campaignTotal=d?.id?distributionCampaignSegmentTotal(d.id,'ar'):0;
-  return Math.max(0,campaignTotal||num(d?.ar));
+  const monthKey=d?.snapshotMonth||d?.monthKey||state.currentMonth;
+  const snapshotTotal=d?.id?distributionCampaignSegmentTotal(d.id,'ar',monthKey):0;
+  return Math.max(0,snapshotTotal||num(d?.ar));
 }
 function normalizeRadioGenerationStrategy(d,strategy={}){
   const range=radioGenerationEffectiveRange(d);
@@ -10089,7 +10129,7 @@ function pickBestRadioSuggestions(d,needed){
   const picked=[], usedKeys=new Set();
   const periodUsage=new Map();
   const slotUsage=new Map();
-  radioItemsInPeriod(distStartDate(d),distEndDate(d)).filter(i=>i.distributionId===d.id).forEach(i=>{
+  (()=>{const r=radioGenerationEffectiveRange(d);return r.valid?radioItemsInPeriod(r.start,r.end):[];})().filter(i=>i.distributionId===d.id).forEach(i=>{
     const slot=normalizeSlot(i.slot), period=periodKey(slot);
     periodUsage.set(period,(periodUsage.get(period)||0)+1);
     slotUsage.set(`${period}|${slot}`,(slotUsage.get(`${period}|${slot}`)||0)+1);
@@ -10124,8 +10164,8 @@ function conflictLabel(items){
 function renderOccupiedRadioList(d){
   const box=$('radioPlannerOccupied');
   if(!box) return;
-  const start=distStartDate(d), end=distEndDate(d);
-  const rows=radioItemsInPeriod(start,end).sort((a,b)=>`${a.date}${normalizeSlot(a.slot)}`.localeCompare(`${b.date}${normalizeSlot(b.slot)}`));
+  const range=radioGenerationEffectiveRange(d), start=range.start, end=range.end;
+  const rows=range.valid?radioItemsInPeriod(start,end).sort((a,b)=>`${a.date}${normalizeSlot(a.slot)}`.localeCompare(`${b.date}${normalizeSlot(b.slot)}`)):[];
   if(!rows.length){ box.innerHTML='<div class="radioPlannerEmpty">NENHUM HORÁRIO OCUPADO NESTE PERÍODO.</div>'; return; }
   box.innerHTML=rows.map(i=>`<div class="occupiedItem"><strong>${esc(formatBR(i.date))} · ${esc(normalizeSlot(i.slot))}</strong><span>${esc(i.program || '')}<br>${esc(i.prize || i.title || '')}</span></div>`).join('');
 }
@@ -10227,9 +10267,13 @@ function addRadioPlanRow(candidate=null, checked=true){
 
 let radioPlannerWarningText='';
 let pendingSmartRadioReport=null;
-function radioPlannerNeeded(d){ return Math.max(0, distributionRadioTotal(d) - programmedAcrossMonths(d?.id,'RÁDIO')); }
+function radioPlannerNeeded(d){
+  const monthKey=String(d?.snapshotMonth||d?.monthKey||state.currentMonth||'').slice(0,7);
+  return Math.max(0,distributionRadioTotal(d)-programmedForMonth(d?.id,'RÁDIO',monthKey));
+}
 function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
   const registeredProgram=programFromSchedule(plan?.date,plan?.slot,'JP1017');
+  const effectiveRange=radioGenerationEffectiveRange(d);
   if(!registeredProgram) throw new Error(`HORÁRIO FORA DA GRADE: ${plan?.date||''} ${normalizeSlot(plan?.slot||'')}`);
   return {
     id:id('BR'),
@@ -10251,8 +10295,8 @@ function makeRadioScheduleItem(d,plan,source='SMART_RADIO_ROTATION'){
     autoRadioPlanner:true,
     generatedBy:source,
     sourceDistributionId:d.id,
-    sourcePeriodStart:distStartDate(d),
-    sourcePeriodEnd:distEndDate(d),
+    sourcePeriodStart:effectiveRange.start||distStartDate(d),
+    sourcePeriodEnd:effectiveRange.end||distEndDate(d),
     createdAt:new Date().toISOString()
   };
 }
@@ -10713,7 +10757,7 @@ function renderSmartRadioReport(report){
         <div class="smartChoiceCard">
           <strong>USAR HORÁRIO JÁ PROGRAMADO</strong>
           <div class="smartChoiceRow calendarRow">
-            <input id="smartExistingDate" type="date" min="${esc(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" max="${esc(distEndDate(d))}" value="${esc(existingChoices[0]?.date||report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" onchange="fillSmartExistingSlots()">
+            <input id="smartExistingDate" type="date" min="${esc(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" max="${esc(radioGenerationEffectiveRange(d).end)}" value="${esc(existingChoices[0]?.date||report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" onchange="fillSmartExistingSlots()">
             <select id="smartExistingSchedule">
               <option value="">SELECIONE O HORÁRIO</option>
             </select>
@@ -10726,7 +10770,7 @@ function renderSmartRadioReport(report){
         <div class="smartChoiceCard">
           <strong>CRIAR NOVO HORÁRIO</strong>
           <div class="smartChoiceRow calendarRow">
-            <input id="smartNewDate" type="date" min="${esc(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" max="${esc(distEndDate(d))}" value="${esc(freeChoices[0]?.date||report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" onchange="fillSmartNewSlots()">
+            <input id="smartNewDate" type="date" min="${esc(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" max="${esc(radioGenerationEffectiveRange(d).end)}" value="${esc(freeChoices[0]?.date||report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start)}" onchange="fillSmartNewSlots()">
             <select id="smartNewSchedule">
               <option value="">SELECIONE O HORÁRIO</option>
             </select>
@@ -10741,7 +10785,7 @@ function renderSmartRadioReport(report){
     </div>`:'';
   const strategyNotice=report.strategy?.mode==='concentrated'
     ? `<div class="generationStrategyIntro"><strong>GERAÇÃO A PARTIR DE ${esc(formatBR(report.strategy.rangeStart))}</strong><span>CONCENTRAÇÃO INTELIGENTE: ${esc(formatBR(report.strategy.focusStart))} A ${esc(formatBR(report.strategy.focusEnd))} · PRIORIDADE APROXIMADA DE 70% DAS NOVAS INSERÇÕES NESTA JANELA.</span></div>`
-    : `<div class="generationStrategyIntro"><strong>GERAÇÃO A PARTIR DE ${esc(formatBR(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start))}</strong><span>DISTRIBUIÇÃO EQUILIBRADA ATÉ ${esc(formatBR(report.strategy?.rangeEnd||distEndDate(d)))}. DATAS E HORÁRIOS JÁ PASSADOS NÃO ENTRAM NO CÁLCULO.</span></div>`;
+    : `<div class="generationStrategyIntro"><strong>GERAÇÃO A PARTIR DE ${esc(formatBR(report.strategy?.rangeStart||radioGenerationEffectiveRange(d).start))}</strong><span>DISTRIBUIÇÃO EQUILIBRADA ATÉ ${esc(formatBR(report.strategy?.rangeEnd||radioGenerationEffectiveRange(d).end))}. DATAS E HORÁRIOS JÁ PASSADOS NÃO ENTRAM NO CÁLCULO.</span></div>`;
   summary.innerHTML=`
     ${strategyNotice}
     ${concentrationHtml}
@@ -10922,7 +10966,8 @@ function openRadioPlanner(distId){
   if($('radioPlannerDistId')) $('radioPlannerDistId').value=distId;
   const range=radioGenerationEffectiveRange(d),start=range.start,end=range.end;
   const radioTotal=distributionRadioTotal(d);
-  const already=programmedAcrossMonths(d.id,'RÁDIO');
+  const plannerMonth=String(d?.snapshotMonth||d?.monthKey||state.currentMonth||'').slice(0,7);
+  const already=programmedForMonth(d.id,'RÁDIO',plannerMonth);
   const needed=Math.max(0,radioTotal-already);
   if($('radioPlannerPrize')) $('radioPlannerPrize').textContent=distributionLabel(d);
   if($('radioPlannerSummary')) $('radioPlannerSummary').textContent=`${distPeriodLabel(d)} | RÁDIO: ${radioTotal} | JÁ PROGRAMADO: ${already} | A PROGRAMAR: ${needed}`;
@@ -11005,7 +11050,11 @@ CADASTRE O PROGRAMA/DIA/HORÁRIO OU ESCOLHA OUTRO HORÁRIO VÁLIDO.`);
   }
   if(!plans.length){ toast('PREENCHA DATA, HORÁRIO E PROGRAMA.'); return; }
   const newItems=plans.map(plan=>makeRadioScheduleItem(d,plan,'RADIO_PLANNER'));
-  monthData().items.push(...newItems);
+  newItems.forEach(item=>{
+    const monthKey=String(item.date||state.currentMonth).slice(0,7)||state.currentMonth;
+    ensureDistributionSnapshotForMonth(d.id,monthKey,d);
+    monthDataForKey(monthKey).items.push(item);
+  });
   saveState(true);
   queueApiSave(80);
   closeDrawer('radioPlannerDrawer');
@@ -11021,6 +11070,11 @@ CADASTRE O PROGRAMA/DIA/HORÁRIO OU ESCOLHA OUTRO HORÁRIO VÁLIDO.`);
 
 function clearDistForm(){
   $('distForm').reset(); $('distId').value=''; $('distDrawerTitle').textContent='NOVA DISTRIBUIÇÃO'; $('distDate').value=todayISO(); $('distShow').value=''; $('distStartDate').value=todayISO(); $('distEndDate').value=todayISO(); $('distTotal').value=0; $('distTitle').value=''; $('distDescription').value='';
+  if($('distTotalLabel')) $('distTotalLabel').textContent='TOTAL UNITÁRIO DO PRÊMIO';
+  if($('distTotalHint')) $('distTotalHint').textContent='INFORME O ESTOQUE FÍSICO TOTAL. AO SALVAR, O SISTEMA DIVIDE A COTA ENTRE OS MESES DA VIGÊNCIA.';
+  if($('distMasterStockField')) $('distMasterStockField').hidden=true;
+  if($('distMonthlyStockOverview')) $('distMonthlyStockOverview').hidden=true;
+  if($('distMasterTotal')) $('distMasterTotal').value=0;
   $('distDescription').dataset.catalogAutofilled='0';
   $('distDescription').dataset.catalogKey='';
   if($('distCatalogHint')) $('distCatalogHint').textContent='AO ESCOLHER UM TÍTULO JÁ CADASTRADO, A DESCRIÇÃO PADRÃO SERÁ CARREGADA AUTOMATICAMENTE.';
@@ -11269,15 +11323,7 @@ function autoDetectTicketType(){
 
 function updateDistributionRow(distId){
   const d=distributionById(distId); if(!d) return;
-  const saldoCell = document.querySelector(`[data-saldo-id="${CSS.escape(distId)}"]`);
-  if(saldoCell) saldoCell.innerHTML = distributionBalanceCell(d);
-  updateReturnColumn(distId);
-  const pairCell = document.querySelector(`[data-pairs-id="${CSS.escape(distId)}"]`);
-  if(pairCell) pairCell.innerHTML = ticketPairsCell(d);
-  const reserveCell = document.querySelector(`[data-dist-row="${CSS.escape(distId)}"] .reserveSummaryDistCell`);
-  if(reserveCell) reserveCell.innerHTML = reservationSummaryCell(d);
-  const progCell = document.querySelector(`[data-prog-id="${CSS.escape(distId)}"]`);
-  if(progCell) progCell.textContent = programmed(distId,'RÁDIO');
+  renderDistribuicao();
   renderReservations();
   renderStats();
   renderResumo();
@@ -11292,7 +11338,7 @@ function openReserveDrawer(distId){
 function saveReserveNote(){
   const d=distributionById($('reserveDistId').value);
   if(!d) return;
-  d.reservadoNote=norm($('reserveNote').value);
+  d.reservadoNote=norm($('reserveNote').value);d.monthlyEdited=true;d.monthlyAdjusted=true;d.monthlyRevision=Math.max(1,num(d.monthlyRevision)||1)+1;d.monthlyUpdatedAt=new Date().toISOString();d.updatedAt=d.monthlyUpdatedAt;
   saveState(true);
   closeDrawer('reserveDrawer');
   updateDistributionRow(d.id);
@@ -11309,36 +11355,314 @@ function distributionCampaignCopies(distId){
   const rows=[]; Object.entries(state.months||{}).forEach(([monthKey,m])=>(m.distributions||[]).filter(d=>d.id===distId).forEach(d=>rows.push({monthKey,d})));
   return rows.sort((a,b)=>a.monthKey.localeCompare(b.monthKey));
 }
-function emptyDistributionMonthCopy(source,monthKey){
-  const copy=clone(source); copy.monthKey=monthKey; copy.carryForward=true; copy.total=0;
-  ['app','camarote','camarim','rua','ar','rs','reservado','reservadoReal','clientes','outros'].forEach(k=>copy[k]=0);
-  copy.reservas=[]; copy.reservadoNote=''; copy.createdAt=new Date().toISOString(); copy.updatedAt=copy.createdAt; return copy;
+function distributionSnapshotOriginMonth(source,monthKey=''){
+  return source?.originMonth || String(source?.startDate||source?.date||monthKey||state.currentMonth).slice(0,7) || monthKey || state.currentMonth;
 }
-function storeDistributionAcrossMonths(d,editingMonth=state.currentMonth,isNew=false){
-  const keys=distributionPeriodMonthKeys(d); const allowed=new Set(keys); const existingCopies=distributionCampaignCopies(d.id);
+function distributionCampaignMasterTotal(sourceOrId){
+  const distId=typeof sourceOrId==='string'?sourceOrId:sourceOrId?.id;
+  const direct=typeof sourceOrId==='object'&&sourceOrId?sourceOrId:null;
+  if(direct && Number.isFinite(Number(direct.campaignStockTotal))) return Math.max(0,num(direct.campaignStockTotal));
+  const copies=distId?distributionCampaignCopies(distId):[];
+  const explicit=copies.find(({d})=>Number.isFinite(Number(d?.campaignStockTotal)));
+  if(explicit) return Math.max(0,num(explicit.d.campaignStockTotal));
+  const origin=copies.find(({monthKey,d})=>monthKey===distributionSnapshotOriginMonth(d,monthKey))||copies[0];
+  return Math.max(0,num(origin?.d?.total));
+}
+function distributionCampaignPlannedTotal(distId){
+  return distributionCampaignCopies(distId).reduce((sum,{d})=>sum+Math.max(0,num(d.total)),0);
+}
+function distributionCampaignGlobalBalance(sourceOrId){
+  const idValue=typeof sourceOrId==='string'?sourceOrId:sourceOrId?.id;
+  const master=distributionCampaignMasterTotal(sourceOrId);
+  const planned=idValue?distributionCampaignPlannedTotal(idValue):Math.max(0,num(sourceOrId?.total));
+  return {master,planned,balance:master-planned};
+}
+function distributionMonthRealizedUnits(distId,monthKey=state.currentMonth){
+  if(!distId||!monthKey)return 0;
+  const seen=new Set();let total=0;
+  Object.values(state.months||{}).forEach(m=>(m?.items||[]).forEach(item=>{
+    if(!item||item.distributionId!==distId||String(item.date||'').slice(0,7)!==monthKey||normalizeStatus(item.status)!=='REALIZADO')return;
+    const key=String(item.id||`${item.date}|${item.slot}|${item.prize||''}`);if(seen.has(key))return;seen.add(key);
+    const units=Number(item.stockUnits);total+=Number.isFinite(units)&&units>0?units:Math.max(1,num(item.qty)||1);
+  }));
+  return total;
+}
+function distributionMonthStockStatus(d,monthKey=d?.snapshotMonth||state.currentMonth){
+  const quota=Math.max(0,num(d?.total));
+  const allocatedUnits=allocated(d||{});
+  const realized=distributionMonthRealizedUnits(d?.id,monthKey);
+  return {
+    quota,allocated:allocatedUnits,realized,
+    planningBalance:quota-allocatedUnits,
+    executionBalance:quota-realized
+  };
+}
+function distributionStockMetaHtml(d,monthKey=d?.snapshotMonth||state.currentMonth){
+  const global=distributionCampaignGlobalBalance(d),monthly=distributionMonthStockStatus(d,monthKey);
+  const gcls=global.balance<0?'bad':global.balance>0?'warn':'ok';
+  const mcls=monthly.executionBalance<0||monthly.planningBalance<0?'bad':monthly.executionBalance===0?'warn':'ok';
+  const globalText=global.balance<0?`DÉFICIT GLOBAL ${Math.abs(global.balance)}`:global.balance>0?`NÃO ALOCADO ${global.balance}`:'GLOBAL FECHADO';
+  const monthText=monthly.executionBalance<0?`DÉFICIT EXEC. ${Math.abs(monthly.executionBalance)}`:`SALDO EXEC. ${monthly.executionBalance}`;
+  return `<div class="distStockMeta"><span><b>${esc(labelMonth(monthKey))}</b> · COTA ${monthly.quota}</span><span>REALIZADO ${monthly.realized}</span><span class="${mcls}">${monthText}</span><span>ESTOQUE ${global.master}</span><span>MESES ${global.planned}</span><span class="${gcls}">${globalText}</span></div>`;
+}
+function distributionMonthlySnapshot(source,monthKey,originMonth=''){
+  const copy=clone(source||{});
+  const now=new Date().toISOString();
+  const origin=originMonth||distributionSnapshotOriginMonth(copy,monthKey);
+  copy.monthKey=monthKey;
+  copy.snapshotMonth=monthKey;
+  copy.originMonth=origin;
+  copy.monthlySnapshotVersion=3;
+  copy.stockModelVersion=3;
+  copy.campaignStockTotal=Math.max(0,num(copy.campaignStockTotal ?? copy.masterTotal ?? copy.total));
+  copy.monthlyInitialTotal=Math.max(0,num(copy.monthlyInitialTotal ?? copy.total));
+  copy.monthlyAdjusted=num(copy.total)!==num(copy.monthlyInitialTotal);
+  copy.carryForward=monthKey!==origin;
+  copy.snapshotCreatedAt=copy.snapshotCreatedAt||now;
+  copy.monthlyUpdatedAt=now;
+  copy.updatedAt=now;
+  return copy;
+}
+function distributionOperationallyEmpty(d){
+  if(!d) return true;
+  const numericKeys=['total','app','camarote','camarim','rua','ar','rs','reservado','reservadoReal','clientes','outros'];
+  return numericKeys.every(key=>num(d[key])===0) && !normalizeReservationEntries(d).length && !String(d.reservadoNote||'').trim();
+}
+function distributionOperationalFingerprint(d){
+  if(!d)return '';
+  return JSON.stringify({
+    total:num(d.total),app:num(d.app),camarote:num(d.camarote),camarim:num(d.camarim),rua:num(d.rua),ar:num(d.ar),rs:num(d.rs),
+    reservas:normalizeReservationEntries(d).map(r=>[num(r.qty),normalizeReservationUnit(r.unit),norm(r.note)]),
+    ticketUnits:d.ticketUnits||{},ticketDefaultUnit:d.ticketDefaultUnit||'unit'
+  });
+}
+function balancedIntegerSplit(total,keys){
+  const clean=[...keys];const n=clean.length;const value=Math.max(0,Math.floor(num(total)));const out={};
+  if(!n)return out;const base=Math.floor(value/n),extra=value%n;
+  clean.forEach((key,index)=>out[key]=base+(index<extra?1:0));return out;
+}
+function campaignAllocationTasks(source){
+  const tasks=[];
+  const pushPackages=(key,qty,unit,note='',reserveId='')=>{
+    const count=Math.max(0,Math.floor(num(qty)));const normalized=normalizeReservationUnit(unit);const consume=normalized==='pair'?2:1;
+    for(let i=0;i<count;i++)tasks.push({key,unit:normalized,consume,note,reserveId});
+  };
+  ['app','camarote','camarim','rua','ar','rs'].forEach(key=>pushPackages(key,source?.[key],ticketUnit(source,key)));
+  normalizeReservationEntries(source).forEach(r=>pushPackages('reservado',r.qty,r.unit,r.note||'',r.id||''));
+  return tasks;
+}
+function blankMonthlyOperationalCopy(source,monthKey,originMonth,masterTotal,quota,initialQuota=quota){
+  const copy=distributionMonthlySnapshot(source,monthKey,originMonth);
+  copy.campaignStockTotal=Math.max(0,num(masterTotal));
+  copy.total=Math.max(0,num(quota));
+  copy.monthlyInitialTotal=Math.max(0,num(initialQuota));
+  copy.monthlyAdjusted=copy.total!==copy.monthlyInitialTotal;
+  ['app','camarote','camarim','rua','ar','rs','reservado','reservadoReal','clientes','outros'].forEach(key=>copy[key]=0);
+  copy.reservas=[];copy.reservadoNote='';
+  copy.ticketUnits=clone(source?.ticketUnits||{});
+  return copy;
+}
+function allocateCampaignOperationalValues(source,keys,quotaMap,existingFixed={}){
+  const masterTotal=Math.max(0,num(source?.campaignStockTotal ?? source?.masterTotal ?? source?.total));
+  const origin=distributionSnapshotOriginMonth(source,keys[0]||state.currentMonth);
+  const snapshots={};
   keys.forEach(key=>{
-    const m=monthDataForKey(key); m.distributions ||= [];
-    const idx=m.distributions.findIndex(x=>x.id===d.id);
-    if(key===editingMonth){ if(idx>=0)m.distributions[idx]=clone(d); else m.distributions.push(clone(d)); return; }
-    if(idx<0) m.distributions.push(emptyDistributionMonthCopy(d,key));
-    else{
-      const current=m.distributions[idx];
-      ['prize','show','title','description','notes','startDate','endDate','prizeType','ticketDefaultUnit','titleStyle','descriptionStyle','rotationSlots','radioDailyLimit'].forEach(field=>{ current[field]=clone(d[field]); });
-      current.updatedAt=new Date().toISOString();
-    }
+    if(existingFixed[key]) snapshots[key]=distributionMonthlySnapshot(existingFixed[key],key,origin);
+    else snapshots[key]=blankMonthlyOperationalCopy(source,key,origin,masterTotal,quotaMap[key]||0,quotaMap[key]||0);
   });
-  existingCopies.forEach(({monthKey,d:copy})=>{
-    if(allowed.has(monthKey)) return;
-    const hasMovement=num(copy.total)>0||allocated(copy)>0||programmedForMonth(copy.id,'RÁDIO',monthKey)>0;
-    if(!hasMovement){ const m=monthDataForKey(monthKey); m.distributions=(m.distributions||[]).filter(x=>x.id!==d.id); }
+  const remainingCapacity={};
+  keys.forEach(key=>remainingCapacity[key]=Math.max(0,num(snapshots[key].total)-allocated(snapshots[key])));
+  const fixedSegmentTotals={app:0,camarote:0,camarim:0,rua:0,ar:0,rs:0,reservado:0};
+  Object.entries(existingFixed).forEach(([key,d])=>{
+    if(!snapshots[key])return;
+    ['app','camarote','camarim','rua','ar','rs'].forEach(seg=>fixedSegmentTotals[seg]+=num(d[seg]));
+    fixedSegmentTotals.reservado+=reservationPackageTotal(d);
   });
+  const tasks=campaignAllocationTasks(source).filter(task=>{
+    const seg=task.key; if((fixedSegmentTotals[seg]||0)>0){ fixedSegmentTotals[seg]--; return false; } return true;
+  });
+  let cursor=0;
+  tasks.forEach(task=>{
+    const candidates=keys.filter(key=>!existingFixed[key]&&remainingCapacity[key]>=task.consume);
+    const fallback=keys.filter(key=>!existingFixed[key]);
+    const pool=candidates.length?candidates:fallback;if(!pool.length)return;
+    pool.sort((a,b)=>{
+      const ar=num(snapshots[a].total)?allocated(snapshots[a])/num(snapshots[a].total):allocated(snapshots[a]);
+      const br=num(snapshots[b].total)?allocated(snapshots[b])/num(snapshots[b].total):allocated(snapshots[b]);
+      return ar-br || remainingCapacity[b]-remainingCapacity[a] || keys.indexOf(a)-keys.indexOf(b);
+    });
+    const key=pool[cursor%Math.min(pool.length,Math.max(1,pool.length))];cursor++;
+    const target=snapshots[key];
+    if(task.key==='reservado'){
+      let row=target.reservas.find(r=>r.note===task.note&&normalizeReservationUnit(r.unit)===task.unit);
+      if(!row){row={id:task.reserveId||id('RSV'),qty:0,unit:task.unit,note:task.note};target.reservas.push(row);}row.qty++;
+      target.reservado=reservationPackageTotal(target);target.reservadoReal=reservationConsumed(target);
+      target.reservadoNote=target.reservas.map(r=>r.note).filter(Boolean).join(' · ');
+    }else target[task.key]=num(target[task.key])+1;
+    remainingCapacity[key]-=task.consume;
+  });
+  // Pares e outras unidades indivisíveis podem não caber numa divisão aritmética perfeita
+  // (ex.: 6 unidades em 2 meses = 3/3, mas 3 pares precisam de 4/2). Ajustamos somente
+  // competências ainda não editadas, preservando o estoque global e sem tocar em meses fixos.
+  const flexibleKeys=keys.filter(key=>!existingFixed[key]);
+  const deficits=()=>flexibleKeys.filter(key=>allocated(snapshots[key])>num(snapshots[key].total));
+  let guard=0;
+  while(deficits().length && guard++<10000){
+    const needKey=deficits()[0];
+    const need=allocated(snapshots[needKey])-num(snapshots[needKey].total);
+    const donor=flexibleKeys
+      .filter(key=>key!==needKey && num(snapshots[key].total)>allocated(snapshots[key]))
+      .sort((a,b)=>(num(snapshots[b].total)-allocated(snapshots[b]))-(num(snapshots[a].total)-allocated(snapshots[a])))[0];
+    if(!donor)break;
+    const spare=num(snapshots[donor].total)-allocated(snapshots[donor]);
+    const move=Math.max(0,Math.min(need,spare));
+    if(!move)break;
+    snapshots[donor].total=num(snapshots[donor].total)-move;
+    snapshots[needKey].total=num(snapshots[needKey].total)+move;
+    snapshots[donor].monthlyInitialTotal=num(snapshots[donor].total);
+    snapshots[needKey].monthlyInitialTotal=num(snapshots[needKey].total);
+  }
+  return snapshots;
 }
-function distributionCampaignSegmentTotal(distId,key){
-  return distributionCampaignCopies(distId).reduce((sum,{d})=>sum+num(d?.[key]),0);
+function mergeLegacyMonthlyMetadata(previous,generated){
+  if(!previous) return generated;
+  const out={...clone(generated),...clone(previous)};
+  const generatedKeys=[
+    'total','app','camarote','camarim','rua','ar','rs','reservado','reservadoReal','clientes','outros',
+    'reservas','reservadoNote','ticketUnits','ticketDefaultUnit',
+    'campaignStockTotal','masterTotal','monthlyInitialTotal','monthlyAdjusted','monthlyRevision','monthlyEdited',
+    'stockModelVersion','monthlySnapshotVersion','monthKey','snapshotMonth','originMonth','carryForward',
+    'legacyStockModelMigrated','stockMigratedAt'
+  ];
+  generatedKeys.forEach(key=>{if(Object.prototype.hasOwnProperty.call(generated,key))out[key]=clone(generated[key]);});
+  out.snapshotCreatedAt=previous.snapshotCreatedAt||generated.snapshotCreatedAt;
+  out.createdAt=previous.createdAt||generated.createdAt;
+  out.monthlyUpdatedAt=generated.monthlyUpdatedAt||new Date().toISOString();
+  out.updatedAt=generated.updatedAt||new Date().toISOString();
+  return out;
+}
+function migrateLegacyDistributionGroup(data,distId,rows){
+  rows.sort((a,b)=>a.monthKey.localeCompare(b.monthKey));
+  const origin=rows.find(row=>row.monthKey===distributionSnapshotOriginMonth(row.d,row.monthKey))||rows[0];
+  if(!origin?.d)return 0;
+  const periodKeys=distributionPeriodMonthKeys({...origin.d,startDate:origin.d.startDate||origin.d.date,endDate:origin.d.endDate||origin.d.startDate||origin.d.date});
+  const keys=[...new Set([...periodKeys,...rows.map(r=>r.monthKey)])].sort();
+  if(!keys.length)return 0;
+  const masterTotal=Math.max(0,num(origin.d.campaignStockTotal ?? origin.d.masterTotal ?? origin.d.total));
+  const originFingerprint=distributionOperationalFingerprint(origin.d);
+  const fixed={};
+  rows.forEach(row=>{
+    const already=row.d?.stockModelVersion>=3;
+    if(already){fixed[row.monthKey]=row.d;return;}
+    // Nas versões antigas, as competências futuras eram cópias integrais do mês de origem.
+    // Só tratamos como alteração mensal um snapshot cujo conteúdo operacional realmente divergiu.
+    if(row.monthKey!==origin.monthKey && !distributionOperationallyEmpty(row.d) && distributionOperationalFingerprint(row.d)!==originFingerprint){fixed[row.monthKey]=row.d;}
+  });
+  if(rows.every(row=>row.d?.stockModelVersion>=3) && keys.every(key=>data.months?.[key]?.distributions?.some(d=>d.id===distId)))return 0;
+
+  // A fotografia inicial é calculada uma única vez a partir do estoque físico mestre.
+  // Alterações mensais existentes NÃO são compensadas nos demais meses: diferença vira saldo ou déficit global.
+  const baselineQuota=balancedIntegerSplit(masterTotal,keys);
+  const quotaMap={...baselineQuota};
+  Object.entries(fixed).forEach(([key,d])=>quotaMap[key]=Math.max(0,num(d.total)));
+
+  const source={...clone(origin.d),campaignStockTotal:masterTotal,masterTotal};
+  const snapshots=allocateCampaignOperationalValues(source,keys,quotaMap,fixed);
+  let changed=0;
+  keys.forEach(key=>{
+    data.months[key] ||= {label:labelMonth(key),items:[],promos:[],distributions:[]};
+    data.months[key].distributions ||= [];
+    const arr=data.months[key].distributions;const idx=arr.findIndex(d=>d?.id===distId);
+    const previous=idx>=0?arr[idx]:null;
+    let next=snapshots[key];
+    next.originMonth=origin.monthKey;
+    next.campaignStockTotal=masterTotal;
+    next.masterTotal=masterTotal;
+    next.stockModelVersion=3;
+    next.monthlySnapshotVersion=3;
+    const initialQuota=Math.max(0,num(fixed[key]?baselineQuota[key]:next.total));
+    next.monthlyInitialTotal=previous?.stockModelVersion>=3
+      ?Math.max(0,num(previous.monthlyInitialTotal ?? initialQuota))
+      :initialQuota;
+    next.monthlyAdjusted=num(next.total)!==num(next.monthlyInitialTotal);
+    next.monthlyEdited=!!next.monthlyAdjusted || !!previous?.monthlyEdited;
+    next.monthlyRevision=Math.max(1,num(previous?.monthlyRevision)||1);
+    next.legacyStockModelMigrated=true;
+    next.stockMigratedAt=new Date().toISOString();
+    next=mergeLegacyMonthlyMetadata(previous,next);
+    if(idx>=0)arr[idx]=next;else arr.push(next);changed++;
+  });
+  return changed;
+}
+function hydrateLegacyDistributionSnapshots(data){
+  if(!data?.months) return 0;
+  const groups=new Map();
+  Object.entries(data.months).forEach(([monthKey,m])=>(m?.distributions||[]).forEach((d,index)=>{
+    if(!d?.id)return;const rows=groups.get(d.id)||[];rows.push({monthKey,d,index});groups.set(d.id,rows);
+  }));
+  let changed=0;
+  groups.forEach((rows,distId)=>{changed+=migrateLegacyDistributionGroup(data,distId,rows);});
+  return changed;
+}
+function emptyDistributionMonthCopy(source,monthKey){
+  const master=distributionCampaignMasterTotal(source);const copy=blankMonthlyOperationalCopy(source,monthKey,distributionSnapshotOriginMonth(source,monthKey),master,0,0);copy.monthlyExtension=true;return copy;
+}
+function ensureDistributionSnapshotForMonth(distId,monthKey,sourceHint=null){
+  if(!distId||!monthKey)return null;
+  const m=monthDataForKey(monthKey);m.distributions ||= [];
+  let existing=m.distributions.find(d=>d.id===distId);if(existing)return existing;
+  const copies=distributionCampaignCopies(distId);const source=sourceHint||copies.find(row=>row.monthKey===distributionSnapshotOriginMonth(row.d,row.monthKey))?.d||copies[0]?.d;
+  if(!source)return null;existing=emptyDistributionMonthCopy(source,monthKey);m.distributions.push(existing);return existing;
+}
+function propagateCampaignMasterTotal(distId,masterTotal){
+  const value=Math.max(0,num(masterTotal));
+  distributionCampaignCopies(distId).forEach(({d})=>{d.campaignStockTotal=value;d.masterTotal=value;d.stockModelVersion=3;d.updatedAt=new Date().toISOString();});
+}
+function storeDistributionAcrossMonths(d,editingMonth=state.currentMonth,isNew=false,masterTotalOverride=null){
+  const keys=distributionPeriodMonthKeys(d);
+  const existingCopies=distributionCampaignCopies(d.id);
+  if(isNew || !existingCopies.length){
+    const masterTotal=Math.max(0,num(masterTotalOverride ?? d.total));
+    const quotaMap=balancedIntegerSplit(masterTotal,keys);
+    const source={...clone(d),campaignStockTotal:masterTotal,masterTotal};
+    const snapshots=allocateCampaignOperationalValues(source,keys,quotaMap,{});
+    keys.forEach(key=>{
+      const m=monthDataForKey(key);m.distributions ||= [];
+      const snapshot=snapshots[key];snapshot.createdAt=d.createdAt||snapshot.createdAt;snapshot.monthlyInitialTotal=num(snapshot.total);snapshot.monthlyAdjusted=false;snapshot.monthlyRevision=1;
+      const idx=m.distributions.findIndex(x=>x.id===d.id);if(idx>=0)m.distributions[idx]=snapshot;else m.distributions.push(snapshot);
+    });
+    return;
+  }
+  const currentMaster=Math.max(0,num(masterTotalOverride ?? distributionCampaignMasterTotal(d)));
+  const originMonth=existingCopies[0]?.d?.originMonth || String(d.startDate||d.date||editingMonth).slice(0,7) || editingMonth;
+  const m=monthDataForKey(editingMonth);m.distributions ||= [];
+  const idx=m.distributions.findIndex(x=>x.id===d.id);const previous=idx>=0?m.distributions[idx]:null;
+  const snapshot=distributionMonthlySnapshot({...d,campaignStockTotal:currentMaster,masterTotal:currentMaster},editingMonth,originMonth);
+  snapshot.createdAt=previous?.createdAt||snapshot.createdAt;snapshot.snapshotCreatedAt=previous?.snapshotCreatedAt||snapshot.snapshotCreatedAt;
+  snapshot.monthlyInitialTotal=Math.max(0,num(previous?.monthlyInitialTotal ?? previous?.total ?? snapshot.total));
+  snapshot.monthlyAdjusted=num(snapshot.total)!==num(snapshot.monthlyInitialTotal);snapshot.monthlyRevision=Math.max(1,num(previous?.monthlyRevision)||1)+1;snapshot.monthlyEdited=true;
+  if(idx>=0)m.distributions[idx]=snapshot;else m.distributions.push(snapshot);
+  // Global physical stock is explicit; changing it never alters monthly quotas.
+  propagateCampaignMasterTotal(d.id,currentMaster);
+  // Extending validity creates zero-quota months. The operator reallocates stock explicitly.
+  keys.forEach(key=>{if(!(monthDataForKey(key).distributions||[]).some(x=>x.id===d.id)){const fresh=emptyDistributionMonthCopy(snapshot,key);monthDataForKey(key).distributions.push(fresh);}});
+}
+function distributionCampaignSegmentTotal(distId,key,monthKey=state.currentMonth){
+  const exact=distributionByIdForMonth(distId,monthKey);
+  if(exact) return num(exact?.[key]);
+  const copies=distributionCampaignCopies(distId);
+  return num(copies[0]?.d?.[key]);
 }
 function editDist(distId){
   const d=distributionById(distId); if(!d) return;
-  clearDistForm(); $('distDrawerTitle').textContent='EDITAR DISTRIBUIÇÃO'; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total); if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; renderDistDestinations(destinationsFromDistribution(d)); if($('distDailyLimit')) $('distDailyLimit').value=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1)); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
+  clearDistForm(); $('distDrawerTitle').textContent=`EDITAR DISTRIBUIÇÃO · ${labelMonth(state.currentMonth)}`; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total);
+  if($('distTotalLabel')) $('distTotalLabel').textContent=`QUANTIDADE DE ${labelMonth(state.currentMonth)}`;
+  if($('distTotalHint')) $('distTotalHint').textContent='ALTERA SOMENTE A COTA DESTA COMPETÊNCIA. OS OUTROS MESES NÃO SÃO MODIFICADOS.';
+  if($('distMasterStockField')) $('distMasterStockField').hidden=false;
+  if($('distMasterTotal')) $('distMasterTotal').value=distributionCampaignMasterTotal(d);
+  if($('distMonthlyStockOverview')) $('distMonthlyStockOverview').hidden=false;
+  if($('distMonthlyStockOverviewText')){const g=distributionCampaignGlobalBalance(d),m=distributionMonthStockStatus(d,state.currentMonth);$('distMonthlyStockOverviewText').innerHTML=`<strong>CONTROLE DE ESTOQUE:</strong> ESTOQUE FÍSICO ${g.master} · SOMA DAS COTAS ${g.planned} · ${g.balance<0?`DÉFICIT GLOBAL ${Math.abs(g.balance)}`:g.balance>0?`NÃO ALOCADO ${g.balance}`:'GLOBAL FECHADO'} · REALIZADO NESTE MÊS ${m.realized} · ${m.executionBalance<0?`DÉFICIT DO MÊS ${Math.abs(m.executionBalance)}`:`SALDO DO MÊS ${m.executionBalance}`}`;}
+  if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; renderDistDestinations(destinationsFromDistribution(d)); if($('distDailyLimit')) $('distDailyLimit').value=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1)); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
   $('distDescription').dataset.catalogAutofilled='0';
   $('distDescription').dataset.catalogKey=prizeCatalogKey(d.title||d.prize||'');
   if($('distCatalogHint')) $('distCatalogHint').textContent='DESCRIÇÃO DESTA DISTRIBUIÇÃO. AO SALVAR, ELA TAMBÉM SERÁ A NOVA DESCRIÇÃO PADRÃO DO TÍTULO.';
@@ -11352,19 +11676,23 @@ function distributionDependencies(distId){
   return {items,promos,pendingWithdrawals};
 }
 function deleteDist(distId){
-  const copies=[];
-  Object.entries(state.months||{}).forEach(([monthKey,m])=>(m.distributions||[]).filter(d=>d.id===distId).forEach(d=>copies.push({monthKey,data:clone(d)})));
-  if(!copies.length) return;
+  const monthKey=state.currentMonth;
+  const m=monthDataForKey(monthKey);
+  const current=(m.distributions||[]).find(d=>d.id===distId);
+  if(!current) return;
   const dep=distributionDependencies(distId);
-  const activePromos=[...new Map(dep.promos.map(x=>[x.p.id,x])).values()].filter(({p})=>!p.endDate||p.endDate>=todayISO());
-  if(dep.items.length||activePromos.length){
-    alert(`ESTE PRÊMIO POSSUI VÍNCULOS ATIVOS E NÃO PODE SER EXCLUÍDO.\n\nPROGRAMAÇÃO: ${dep.items.length}\nPROMOÇÕES ATIVAS: ${activePromos.length}\n\nCANCELE OU REORGANIZE OS VÍNCULOS ANTES DA EXCLUSÃO.`); return;
+  const monthItems=dep.items.filter(entry=>entry.monthKey===monthKey);
+  const monthPromos=dep.promos.filter(entry=>entry.monthKey===monthKey);
+  const activePromos=[...new Map(monthPromos.map(x=>[x.p.id,x])).values()].filter(({p})=>!p.endDate||p.endDate>=monthStartDate(monthKey));
+  if(monthItems.length||activePromos.length){
+    alert(`ESTE PRÊMIO POSSUI VÍNCULOS ATIVOS EM ${labelMonth(monthKey)} E NÃO PODE SER EXCLUÍDO.\n\nPROGRAMAÇÃO: ${monthItems.length}\nPROMOÇÕES ATIVAS: ${activePromos.length}\n\nCANCELE OU REORGANIZE OS VÍNCULOS DESTE MÊS ANTES DA EXCLUSÃO.`); return;
   }
-  const label=distributionLabel(copies[0].data);
-  if(!confirm(`REMOVER ${label}?\n\nO REGISTRO SERÁ MOVIDO PARA A LIXEIRA E PODERÁ SER RESTAURADO.`)) return;
-  trashRecord('DISTRIBUIÇÃO',label,{id:distId,copies},{sourceId:distId,monthKey:state.currentMonth});
-  Object.values(state.months||{}).forEach(m=>{ m.distributions=(m.distributions||[]).filter(d=>d.id!==distId); });
-  saveState(true); render(); toast('DISTRIBUIÇÃO REMOVIDA DA OPERAÇÃO · SINCRONIZANDO COM FIREBASE...');
+  const label=distributionLabel(current);
+  if(!confirm(`REMOVER ${label} SOMENTE DE ${labelMonth(monthKey)}?\n\nOS OUTROS MESES SERÃO PRESERVADOS. ESTE REGISTRO MENSAL IRÁ PARA A LIXEIRA.`)) return;
+  trashRecord('DISTRIBUIÇÃO',label,{id:distId,copies:[{monthKey,data:clone(current)}]},{sourceId:distId,monthKey});
+  m.distributions=(m.distributions||[]).filter(d=>d.id!==distId);
+  auditEvent('EXCLUSÃO MENSAL DE DISTRIBUIÇÃO',label,{targetId:distId,before:current,note:`COMPETÊNCIA ${monthKey} · OUTROS MESES PRESERVADOS`});
+  saveState(true); render(); toast('DISTRIBUIÇÃO REMOVIDA SOMENTE DESTE MÊS · SINCRONIZANDO COM FIREBASE...');
 }
 function saveDistributionFromForm(generate=false){
   const idVal=$('distId').value || id('DST');
@@ -11382,34 +11710,33 @@ function saveDistributionFromForm(generate=false){
   const distributedPackages=allocatedPackages(d);
   const availablePackages=totalDeliverable(d);
   const consumedReal=allocated(d);
-  if(num(d.total)>=0 && consumedReal>num(d.total)){ alert(`DISTRIBUIÇÃO MAIOR QUE O TOTAL DISPONÍVEL.
-
-TOTAL UNITÁRIO: ${num(d.total)}
-MODO: ${distributionDeliveryLabel(d)}
-DISPONÍVEL PARA DISTRIBUIR: ${availablePackages}
-DISTRIBUÍDO: ${distributedPackages}
-CONSUMIDO REAL: ${consumedReal}`); return null; }
-  const commitmentIssues=validateDistributionCampaignCommitments(d,state.currentMonth);
-  if(commitmentIssues.length){ alert(`ALTERAÇÃO BLOQUEADA. EXISTEM PROMOÇÕES VINCULADAS A ESTA DISTRIBUIÇÃO.
-
-${commitmentIssues.join('\n')}
-
-REDUZA/CANCELE OS SORTEIOS VINCULADOS ANTES DE DIMINUIR A QUANTIDADE.`); return null; }
   const wasNew=!existing.id;
+  if(wasNew && num(d.total)>=0 && consumedReal>num(d.total)){ alert(`DISTRIBUIÇÃO INICIAL MAIOR QUE O ESTOQUE FÍSICO.\n\nESTOQUE TOTAL: ${num(d.total)}\nMODO: ${distributionDeliveryLabel(d)}\nDISTRIBUÍVEL: ${availablePackages}\nDISTRIBUÍDO: ${distributedPackages}\nCONSUMIDO REAL: ${consumedReal}`); return null; }
+  const commitmentIssues=validateDistributionCampaignCommitments(d,state.currentMonth);
   const before=existing.id?clone(existing):'';
-  storeDistributionAcrossMonths(d,state.currentMonth,wasNew);
+  const masterTotal=wasNew?num(d.total):Math.max(0,num($('distMasterTotal')?.value ?? distributionCampaignMasterTotal(existing)));
+  storeDistributionAcrossMonths(d,state.currentMonth,wasNew,masterTotal);
   rememberPrizeCatalog(d);
   syncDistributionToLinkedRadioItems(d);
-  auditEvent(wasNew?'CADASTRO DE PRÊMIO':'ALTERAÇÃO DE DISTRIBUIÇÃO',distributionLabel(d),{targetId:d.id,before,after:d,note:`COMPETÊNCIA ${state.currentMonth}`});
+  const savedMonth=distributionByIdForMonth(d.id,state.currentMonth)||d;
+  const monthStock=distributionMonthStockStatus(savedMonth,state.currentMonth),globalStock=distributionCampaignGlobalBalance(savedMonth);
+  const deficitNotes=[];
+  if(monthStock.planningBalance<0) deficitNotes.push(`DÉFICIT DE PLANEJAMENTO ${Math.abs(monthStock.planningBalance)}`);
+  if(monthStock.executionBalance<0) deficitNotes.push(`DÉFICIT EXECUTADO ${Math.abs(monthStock.executionBalance)}`);
+  if(globalStock.balance<0) deficitNotes.push(`DÉFICIT GLOBAL ${Math.abs(globalStock.balance)}`);
+  if(commitmentIssues.length) deficitNotes.push(`COMPROMISSOS ACIMA DA COTA: ${commitmentIssues.join(' | ')}`);
+  auditEvent(wasNew?'CADASTRO DE PRÊMIO':'ALTERAÇÃO MENSAL DE DISTRIBUIÇÃO',distributionLabel(savedMonth),{targetId:d.id,before,after:savedMonth,note:`COMPETÊNCIA ${state.currentMonth}${deficitNotes.length?' · '+deficitNotes.join(' · '):''}`});
   saveState(true);
   closeDrawer('distDrawer');
   render();
   if(generate){
     generateRadioFromDist(d.id);
   }else{
-    toast('DISTRIBUIÇÃO ALTERADA · SINCRONIZANDO COM FIREBASE...');
+    const current=distributionByIdForMonth(d.id,state.currentMonth)||d;
+    const ms=distributionMonthStockStatus(current,state.currentMonth),gs=distributionCampaignGlobalBalance(current);
+    toast(ms.planningBalance<0||ms.executionBalance<0||gs.balance<0?'DISTRIBUIÇÃO SALVA COM DÉFICIT REGISTRADO · FIREBASE':'DISTRIBUIÇÃO ALTERADA · SINCRONIZANDO COM FIREBASE...');
   }
-  return d;
+  return distributionByIdForMonth(d.id,state.currentMonth)||d;
 }
 let pendingRadioGenerationRequest=null;
 function defaultRadioFocusWindow(d){
@@ -11470,15 +11797,9 @@ $('distTable').addEventListener('input',e=>{
   const d=distributionById(input.dataset.distId); if(!d) return;
   const key=input.dataset.key, previous=num(d[key]), next=num(input.value);
   d[key]=next; d.clientes=0; d.outros=0;
-  const consumed=allocated(d);
-  if(num(d.total)>=0 && consumed>num(d.total)){
-    d[key]=previous; input.value=previous;
-    alert(`QUANTIDADE INDISPONÍVEL.\n\nTOTAL UNITÁRIO: ${num(d.total)}\nJÁ COMPROMETIDO: ${allocated(d)}\nA ALTERAÇÃO SOLICITADA ULTRAPASSARIA O SALDO.`);
-    return;
-  }
+  d.monthlyAdjusted=true;d.monthlyEdited=true;d.monthlyRevision=Math.max(1,num(d.monthlyRevision)||1)+1;d.monthlyUpdatedAt=new Date().toISOString();d.updatedAt=d.monthlyUpdatedAt;
   const commitmentIssues=validateDistributionCampaignCommitments(d,state.currentMonth);
-  if(commitmentIssues.length){ d[key]=previous; input.value=previous; alert(`ALTERAÇÃO BLOQUEADA POR VÍNCULO COM PROMOÇÃO.\n\n${commitmentIssues.join('\n')}`); return; }
-  d.updatedAt=new Date().toISOString();
+  auditEvent('AJUSTE MENSAL DE DESTINO',distributionLabel(d),{targetId:d.id,before:{[key]:previous},after:{[key]:next},note:`COMPETÊNCIA ${state.currentMonth}${commitmentIssues.length?' · DÉFICIT/COMPROMISSO REGISTRADO':''}`});
   saveState(true); updateDistributionRow(d.id);
 });
 $('distTable').addEventListener('change',e=>{
@@ -11489,8 +11810,8 @@ $('distTable').addEventListener('change',e=>{
     d.ticketUnits ||= {};
     const key=unit.dataset.unitKey, previous=d.ticketUnits[key]||distributionDeliveryUnit(d);
     d.ticketUnits[key]=unit.value;
-    if(allocated(d)>num(d.total)){ d.ticketUnits[key]=previous; unit.value=previous; alert('ALTERAÇÃO DO MODO DE ENTREGA BLOQUEADA: A CONVERSÃO EM PARES ULTRAPASSARIA O TOTAL DISPONÍVEL.'); return; }
-    d.updatedAt=new Date().toISOString();
+    d.monthlyAdjusted=true;d.monthlyEdited=true;d.monthlyRevision=Math.max(1,num(d.monthlyRevision)||1)+1;d.monthlyUpdatedAt=new Date().toISOString();d.updatedAt=d.monthlyUpdatedAt;
+    auditEvent('AJUSTE MENSAL DE ENTREGA',distributionLabel(d),{targetId:d.id,before:{unit:previous},after:{unit:unit.value},note:`COMPETÊNCIA ${state.currentMonth}${allocated(d)>num(d.total)?' · DÉFICIT MENSAL REGISTRADO':''}`});
     saveState(true);
     renderDistribuicao();
     return;
@@ -11535,6 +11856,7 @@ if($('radioPlannerSuggestions')) $('radioPlannerSuggestions').addEventListener('
 });
 if($('distStartDate')) $('distStartDate').addEventListener('change',()=>{ if($('distEndDate') && $('distEndDate').value < $('distStartDate').value) $('distEndDate').value=$('distStartDate').value; });
 if($('distTotal')) $('distTotal').addEventListener('input',updateDistPairsPreview);
+if($('distMasterTotal')) $('distMasterTotal').addEventListener('input',()=>{const d=distributionById($('distId')?.value||'');if(!d||!$('distMonthlyStockOverviewText'))return;const currentPlanned=distributionCampaignPlannedTotal(d.id),master=Math.max(0,num($('distMasterTotal').value));$('distMonthlyStockOverviewText').innerHTML=`<strong>ESTOQUE:</strong> NOVO ESTOQUE FÍSICO ${master} · COTAS MENSAIS ATUAIS ${currentPlanned} · ${master-currentPlanned<0?`DÉFICIT GLOBAL ${Math.abs(master-currentPlanned)}`:master-currentPlanned>0?`NÃO ALOCADO ${master-currentPlanned}`:'GLOBAL FECHADO'}.`;});
 if($('distPrizeType')) $('distPrizeType').addEventListener('change',updateDistPairsPreview);
 if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').addEventListener('change',updateDistPairsPreview);
 if($('distPrize')) $('distPrize').addEventListener('input',autoDetectTicketType);
@@ -11819,13 +12141,58 @@ function promoMonthKeys(p){
   }
   return keys;
 }
-function storePromoAcrossMonths(p){
-  Object.values(state.months||{}).forEach(m=>{ m.promos=(m.promos||[]).filter(row=>row?.id!==p.id); });
-  promoMonthKeys(p).forEach(key=>{
-    const target=monthDataForKey(key);
-    target.promos ||= [];
-    target.promos.push(clone(p));
-  });
+function promoByIdForMonth(idValue,monthKey=state.currentMonth){
+  if(!idValue||!monthKey) return null;
+  return (state.months?.[monthKey]?.promos||[]).find(row=>row?.id===idValue)||null;
+}
+function promoSnapshotOriginMonth(p,fallbackMonth=''){
+  const explicit=String(p?.originMonth||'');
+  if(/^\d{4}-(0[1-9]|1[0-2])$/.test(explicit)) return explicit;
+  const start=String(p?.startDate||p?.drawDate||'').slice(0,7);
+  if(/^\d{4}-(0[1-9]|1[0-2])$/.test(start)) return start;
+  return fallbackMonth||state.currentMonth||todayISO().slice(0,7);
+}
+function promoMonthlySnapshot(p,monthKey,originMonth=''){
+  const copy=clone(p||{}),now=new Date().toISOString();
+  copy.snapshotMonth=monthKey;
+  copy.originMonth=promoSnapshotOriginMonth(copy,originMonth||monthKey);
+  copy.monthlySnapshotVersion=2;
+  copy.monthlyRevision=Math.max(1,num(copy.monthlyRevision)||1);
+  copy.snapshotCreatedAt=copy.snapshotCreatedAt||now;
+  copy.monthlyUpdatedAt=now;
+  return copy;
+}
+function ensurePromoSnapshotForMonth(p,monthKey,originMonth=''){
+  if(!p?.id||!monthKey) return null;
+  const target=monthDataForKey(monthKey); target.promos ||= [];
+  const current=target.promos.find(row=>row?.id===p.id);
+  if(current) return current;
+  const copy=promoMonthlySnapshot(p,monthKey,originMonth||promoSnapshotOriginMonth(p,monthKey));
+  target.promos.push(copy);
+  return copy;
+}
+function storePromoAcrossMonths(p,editingMonth=state.currentMonth,isNew=false){
+  if(!p?.id) return;
+  const originMonth=promoSnapshotOriginMonth(p,editingMonth);
+  const keys=promoMonthKeys(p);
+  if(isNew){
+    keys.forEach(key=>{
+      const target=monthDataForKey(key); target.promos ||= [];
+      target.promos=target.promos.filter(row=>row?.id!==p.id);
+      target.promos.push(promoMonthlySnapshot(p,key,originMonth));
+    });
+    return;
+  }
+  const target=monthDataForKey(editingMonth); target.promos ||= [];
+  const existingIndex=target.promos.findIndex(row=>row?.id===p.id);
+  const previous=existingIndex>=0?target.promos[existingIndex]:null;
+  const edited=promoMonthlySnapshot({...p,originMonth:previous?.originMonth||originMonth},editingMonth,originMonth);
+  edited.monthlyRevision=Math.max(1,num(previous?.monthlyRevision)||1)+1;
+  edited.monthlyEdited=true;
+  edited.monthlyUpdatedAt=new Date().toISOString();
+  if(existingIndex>=0) target.promos[existingIndex]=edited; else target.promos.push(edited);
+  // Meses que ainda não existiam recebem a fotografia vigente; meses já existentes nunca são sobrescritos.
+  keys.forEach(key=>{ if(key!==editingMonth) ensurePromoSnapshotForMonth(p,key,originMonth); });
 }
 function fullHourTimeValue(value){
   const match=String(value||'').match(/^(\d{1,2})(?::?(\d{2}))?$/);
@@ -11835,7 +12202,7 @@ function fullHourTimeValue(value){
 }
 
 function editPromo(pid){
-  const p=consolidatedPromoById(pid) || monthData().promos.find(x=>x.id===pid); if(!p)return;
+  const p=promoByIdForMonth(pid,state.currentMonth) || consolidatedPromoById(pid); if(!p)return;
   clearPromoForm();
   $('promoDrawerTitle').textContent='EDITAR PROMOÇÃO';
   $('promoId').value=p.id;
@@ -11875,20 +12242,23 @@ function editPromo(pid){
   openDrawer('promoDrawer');
 }
 async function deletePromo(pid){
-  const copies=promoCopiesById(pid).map(({monthKey,p})=>({monthKey,data:clone(p)})); if(!copies.length) return;
-  const p=consolidatedPromoById(pid)||copies[0].data;
-  const future=(p.occurrences||[]).some(o=>o.date>=todayISO()&&!['REALIZADO','CANCELADO'].includes(normalizeStatus(o.status)));
-  const winners=promoAllWinnerObjects(p).filter(w=>w.name&&!w.deliveredAt);
-  if(future||winners.length){ alert(`ESTA PROMOÇÃO POSSUI VÍNCULOS ATIVOS E NÃO PODE SER EXCLUÍDA.\n\nSORTEIOS FUTUROS: ${future?'SIM':'NÃO'}\nRETIRADAS PENDENTES: ${winners.length}\n\nENCERRE/CANCELE AS INSERÇÕES E RESOLVA AS RETIRADAS ANTES.`); return; }
-  if(!confirm('REMOVER ESTA PROMOÇÃO EM TODOS OS MESES? ELA FICARÁ DISPONÍVEL PARA RESTAURAÇÃO.')) return;
-  trashRecord('PROMOÇÃO',p.name||p.title||'PROMOÇÃO',{id:pid,copies},{sourceId:pid,monthKey:state.currentMonth});
-  Object.values(state.months||{}).forEach(m=>{ m.promos=(m.promos||[]).filter(row=>row.id!==pid); });
-  removePromoResultFromProgram(pid);
+  const monthKey=state.currentMonth;
+  const current=promoByIdForMonth(pid,monthKey); if(!current) return;
+  const p=clone(current);
+  const future=(p.occurrences||[]).some(o=>String(o.date||'').slice(0,7)===monthKey&&o.date>=todayISO()&&!['REALIZADO','CANCELADO'].includes(normalizeStatus(o.status)));
+  const monthWinnerKeys=new Set((p.occurrences||[]).filter(o=>String(o.date||'').slice(0,7)===monthKey).flatMap(o=>[o.id,readHourKeyForAdmin(o.date,o.time)].filter(Boolean)));
+  const winners=promoAllWinnerObjects(p).filter(w=>w.name&&!w.deliveredAt&&(!w.occurrenceKey||monthWinnerKeys.has(w.occurrenceKey)||String(w.occurrenceDate||p.resultDate||p.drawDate||'').slice(0,7)===monthKey));
+  if(future||winners.length){ alert(`ESTA PROMOÇÃO POSSUI VÍNCULOS ATIVOS NESTE MÊS E NÃO PODE SER EXCLUÍDA.\n\nSORTEIOS FUTUROS: ${future?'SIM':'NÃO'}\nRETIRADAS PENDENTES: ${winners.length}\n\nENCERRE/CANCELE AS INSERÇÕES E RESOLVA AS RETIRADAS DE ${labelMonth(monthKey)} ANTES.`); return; }
+  if(!confirm(`REMOVER ESTA PROMOÇÃO SOMENTE DE ${labelMonth(monthKey)}?\n\nOS OUTROS MESES SERÃO PRESERVADOS.`)) return;
+  trashRecord('PROMOÇÃO',p.name||p.title||'PROMOÇÃO',{id:pid,copies:[{monthKey,data:clone(p)}]},{sourceId:pid,monthKey});
+  const target=monthDataForKey(monthKey); target.promos=(target.promos||[]).filter(row=>row.id!==pid);
+  removePromoResultFromProgram(pid,monthKey);
+  auditEvent('EXCLUSÃO MENSAL DE PROMOÇÃO/PAUTA',p.name||p.title||'PROMOÇÃO',{targetId:pid,before:p,note:`COMPETÊNCIA ${monthKey}. OUTROS MESES PRESERVADOS.`});
   try{
     if(!saveState(true)) throw new Error('FIREBASE INDISPONÍVEL.');
-    await flushFirebaseNow('EXCLUSÃO DE PROMOÇÃO/PAUTA');
+    await flushFirebaseNow('EXCLUSÃO MENSAL DE PROMOÇÃO/PAUTA');
     render();
-    toast('EXCLUSÃO CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO.');
+    toast(`EXCLUSÃO DE ${labelMonth(monthKey)} CONFIRMADA · OUTROS MESES PRESERVADOS.`);
   }catch(error){
     console.warn('EXCLUSÃO NÃO CONFIRMADA NO FIREBASE',error);
     rollbackToFirebaseBaseline('EXCLUSÃO CANCELADA: FIREBASE NÃO CONFIRMOU.');
@@ -11987,7 +12357,7 @@ function promoOccurrenceEditsFromForm(){
   });
   return edits;
 }
-function promoOccurrencesFromForm(draft=promoDraftFromForm(),existing=consolidatedPromoById(draft.id)||{}){
+function promoOccurrencesFromForm(draft=promoDraftFromForm(),existing=promoByIdForMonth(draft.id,state.currentMonth)||consolidatedPromoById(draft.id)||{}){
   const edits=promoOccurrenceEditsFromForm();
   return generatePromoOccurrences(draft,existing).map(o=>{
     const edit=edits.get(`${o.date}|${timeToHHMM(o.time)}`);
@@ -12000,7 +12370,7 @@ function renderPromoOccurrencesEditor(preserveEdits=true){
   if(!host) return;
   const draft=promoDraftFromForm();
   if(draft.kind!=='promo'){ if(field) field.classList.add('hidden'); host.innerHTML='<div class="promoOccurrenceEmpty">NÃO SE APLICA A ESTE TIPO DE CONTEÚDO.</div>'; return; }
-  const existing=consolidatedPromoById(draft.id)||{};
+  const existing=promoByIdForMonth(draft.id,state.currentMonth)||consolidatedPromoById(draft.id)||{};
   const generated=generatePromoOccurrences(draft,existing);
   const showAgenda=(draft.recurrenceMode||'single')!=='single' || generated.length>1;
   if(field) field.classList.toggle('hidden',!showAgenda);
@@ -12033,23 +12403,51 @@ function uniqueConsolidatedPromos(){
   const ids=new Set(); Object.values(state.months||{}).forEach(m=>(m.promos||[]).forEach(p=>p?.id&&ids.add(p.id)));
   return [...ids].map(idValue=>consolidatedPromoById(idValue)).filter(Boolean);
 }
+function promoSnapshotsForMonth(monthKey=state.currentMonth){
+  const map=new Map();
+  (state.months?.[monthKey]?.promos||[]).forEach((promo,index)=>{if(!promo)return;map.set(String(promo.id||`LEGACY_${monthKey}_${index}`),promo);});
+  // Compatibilidade: campanhas antigas podem existir apenas no mês físico de cadastro.
+  uniqueConsolidatedPromos().forEach((promo,index)=>{
+    const idValue=String(promo.id||`LEGACY_GLOBAL_${index}`);if(map.has(idValue))return;
+    const start=String(promo.startDate||promo.drawDate||monthKey).slice(0,7),end=String(promo.endDate||promo.drawDate||promo.startDate||monthKey).slice(0,7);
+    if(start<=monthKey&&end>=monthKey)map.set(idValue,promo);
+  });
+  return [...map.values()];
+}
+function promoCommitmentQtyForMonth(p,monthKey,referenceDate=todayISO()){
+  if(!p||!monthKey) return 0;
+  const occurrences=Array.isArray(p.occurrences)?p.occurrences:[];
+  if(occurrences.length){
+    const scoped={...p,occurrences:occurrences.filter(o=>String(o?.date||p.drawDate||p.startDate||'').slice(0,7)===monthKey)};
+    return promoCommitmentQty(scoped,referenceDate);
+  }
+  const refMonth=String(p.drawDate||p.resultDate||p.startDate||'').slice(0,7);
+  return refMonth===monthKey?promoCommitmentQty(p,referenceDate):0;
+}
+function promoSegmentReferenceMonth(p){
+  const snapshot=String(p?.snapshotMonth||'');if(/^\d{4}-(0[1-9]|1[0-2])$/.test(snapshot))return snapshot;
+  const current=String(state.currentMonth||'');if(/^\d{4}-(0[1-9]|1[0-2])$/.test(current)&&(p?.occurrences||[]).some(o=>String(o?.date||'').slice(0,7)===current))return current;
+  const occurrence=(p?.occurrences||[]).find(o=>normalizeStatus(o?.status)!=='CANCELADO'&&o?.date);
+  return String(occurrence?.date||p?.drawDate||p?.resultDate||p?.startDate||state.currentMonth).slice(0,7)||state.currentMonth;
+}
 function promoSegmentStatus(p){
   if(!p?.distributionId||!p?.segmentKey) return null;
-  const allocatedTotal=distributionCampaignSegmentTotal(p.distributionId,p.segmentKey);
-  const others=uniqueConsolidatedPromos().filter(other=>other.id!==p.id&&other.distributionId===p.distributionId&&other.segmentKey===p.segmentKey);
-  const committedOther=others.reduce((sum,other)=>sum+promoCommitmentQty(other),0);
-  const forecast=promoForecastQty(p), commitment=promoCommitmentQty(p), used=promoUsedQty(p), available=Math.max(0,allocatedTotal-committedOther);
-  return {allocatedTotal,committedOther,forecast,commitment,used,available,remaining:available-commitment,label:DESTINATION_LABELS[p.segmentKey]||p.segmentKey};
+  const monthKey=promoSegmentReferenceMonth(p);
+  const allocatedTotal=distributionCampaignSegmentTotal(p.distributionId,p.segmentKey,monthKey);
+  const others=promoSnapshotsForMonth(monthKey).filter(other=>other.id!==p.id&&other.distributionId===p.distributionId&&other.segmentKey===p.segmentKey);
+  const committedOther=others.reduce((sum,other)=>sum+promoCommitmentQtyForMonth(other,monthKey),0);
+  const forecast=promoForecastQty(p), commitment=promoCommitmentQtyForMonth(p,monthKey), used=promoUsedQty(p), available=Math.max(0,allocatedTotal-committedOther);
+  return {allocatedTotal,committedOther,forecast,commitment,used,available,remaining:available-commitment,label:DESTINATION_LABELS[p.segmentKey]||p.segmentKey,monthKey};
 }
-function segmentPromoCommitment(distId,key,excludePromoId=''){
-  return uniqueConsolidatedPromos().filter(p=>p.id!==excludePromoId&&p.distributionId===distId&&p.segmentKey===key).reduce((sum,p)=>sum+promoCommitmentQty(p),0);
+function segmentPromoCommitment(distId,key,excludePromoId='',monthKey=state.currentMonth){
+  return promoSnapshotsForMonth(monthKey).filter(p=>p.id!==excludePromoId&&p.distributionId===distId&&p.segmentKey===key).reduce((sum,p)=>sum+promoCommitmentQtyForMonth(p,monthKey),0);
 }
 function validateDistributionCampaignCommitments(d,editingMonth=state.currentMonth){
   const issues=[];
   CHANNELS.forEach(([key,label])=>{
-    const other=distributionCampaignCopies(d.id).filter(row=>row.monthKey!==editingMonth).reduce((sum,row)=>sum+num(row.d?.[key]),0);
-    const proposed=other+num(d[key]); const committed=segmentPromoCommitment(d.id,key);
-    if(committed>proposed) issues.push(`${label}: ${committed} COMPROMETIDO(S) EM PROMOÇÕES / ${proposed} DISPONÍVEL(IS) APÓS A ALTERAÇÃO`);
+    const proposed=num(d[key]);
+    const committed=segmentPromoCommitment(d.id,key,'',editingMonth);
+    if(committed>proposed) issues.push(`${label}: ${committed} COMPROMETIDO(S) EM PROMOÇÕES NESTE MÊS / ${proposed} DISPONÍVEL(IS) APÓS A ALTERAÇÃO`);
   });
   return issues;
 }
@@ -12059,7 +12457,7 @@ function updatePromoSegmentBalance(){
   if(!distId||!segmentKey){ out.value='SEM VÍNCULO'; return; }
   const draft=promoDraftFromForm();
   draft.distributionId=distId; draft.segmentKey=segmentKey;
-  draft.occurrences=promoOccurrencesFromForm(draft,consolidatedPromoById(draft.id)||{});
+  draft.occurrences=promoOccurrencesFromForm(draft,promoByIdForMonth(draft.id,state.currentMonth)||consolidatedPromoById(draft.id)||{});
   const st=promoSegmentStatus(draft); out.value=st?`${st.available} DISP. · ${st.commitment} RESERV. · ${Math.max(0,st.remaining)} LIVRE`:'SELECIONE O PRÊMIO'; promoUpdateMechanics();
 }
 function promoAllWinnerObjects(p){
@@ -12088,12 +12486,12 @@ function existingPromoResultItems(promoId){
   });
   return rows;
 }
-function syncPromoResultToProgram(p){
+function syncPromoResultToProgram(p,scopeMonth=''){
   if(!p || !p.id) return;
-  const occurrences=(p.occurrences&&p.occurrences.length)?p.occurrences:generatePromoOccurrences(p,p);
-  const old=existingPromoResultItems(p.id);
+  const occurrences=((p.occurrences&&p.occurrences.length)?p.occurrences:generatePromoOccurrences(p,p)).filter(o=>!scopeMonth||String(o.date||'').slice(0,7)===scopeMonth);
+  const old=existingPromoResultItems(p.id).filter(r=>!scopeMonth||String(r.item?.date||'').slice(0,7)===scopeMonth||r.monthKey===scopeMonth);
   const oldMap=new Map(old.map(r=>[`${r.item.station||'JP1017'}|${r.item.occurrenceId||promoOccurrenceKey(p,r.item.date,r.item.slot)}`,r.item]));
-  Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===p.id)); });
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===p.id && (!scopeMonth||String(i.date||'').slice(0,7)===scopeMonth||monthKey===scopeMonth))); });
   occurrences.filter(o=>normalizeStatus(o.status)!=='CANCELADO').forEach(o=>{
     const key=String(o.date).slice(0,7)||state.currentMonth, targetMonth=monthDataForKey(key), slot=normalizeSlot(o.time||p.drawTime), occurrenceId=o.id||promoOccurrenceKey(p,o.date,slot);
     promoResultStations(p).forEach(station=>{
@@ -12107,8 +12505,8 @@ function syncPromoResultToProgram(p){
   });
 }
 function readHourKeyForAdmin(date,slot){ const t=timeToHHMM(slot); return `${date}-${t.slice(0,2)}${t.slice(3,5)}`; }
-function removePromoResultFromProgram(promoId){
-  Object.values(state.months||{}).forEach(m=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===promoId)); });
+function removePromoResultFromProgram(promoId,scopeMonth=''){
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===promoId && (!scopeMonth||String(i.date||'').slice(0,7)===scopeMonth||monthKey===scopeMonth))); });
 }
 function clearPromoValidationState(){
   document.querySelectorAll('#promoForm [aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
@@ -12158,7 +12556,8 @@ $('promoForm').addEventListener('submit',async e=>{
     if(!validatePromoFormExplicit()) return;
     await promoImageLoadPromise;
   const idVal=$('promoId').value||id('PR');
-  const existing=consolidatedPromoById(idVal) || {};
+  const existing=promoByIdForMonth(idVal,state.currentMonth) || consolidatedPromoById(idVal) || {};
+  const isNewPromoRecord=!promoCopiesById(idVal).length;
   const startDate=$('promoStartDate').value;
   const drawDate=$('promoDrawDate').value;
   const endDate=$('promoEndDate')?.value||drawDate;
@@ -12221,8 +12620,8 @@ $('promoForm').addEventListener('submit',async e=>{
     if(seg&&seg.commitment>seg.available){ alert(`SALDO INSUFICIENTE NO SEGMENTO ${seg.label}.\n\nDISPONÍVEL PARA ESTA PROMOÇÃO: ${seg.available}\nCOMPROMETIDO PELOS SORTEIOS: ${seg.commitment}\n\nAUMENTE A QUANTIDADE NA ABA DISTRIBUIÇÃO.`); return; }
   }
   delete p.__months;
-  if(isPromo)syncPromoResultToProgram(p);else removePromoResultFromProgram(p.id);
-  storePromoAcrossMonths(p);
+  if(isPromo)syncPromoResultToProgram(p,isNewPromoRecord?'':state.currentMonth);else removePromoResultFromProgram(p.id,isNewPromoRecord?'':state.currentMonth);
+  storePromoAcrossMonths(p,state.currentMonth,isNewPromoRecord);
   auditEvent(existing.id?`ALTERAÇÃO DE ${promoKindLabel(kind)}`:`CADASTRO DE ${promoKindLabel(kind)}`,p.name||p.title||promoKindLabel(kind),{targetId:p.id,before:existing.id?existing:'',after:p});
   if(!saveState(true)) throw new Error('FIREBASE INDISPONÍVEL. A PROMOÇÃO NÃO FOI SALVA.');
   await flushFirebaseNow(`${promoKindLabel(kind)} SALVA`);
@@ -12393,7 +12792,7 @@ function toCsv(){
   const lines=[];
   lines.push(['TIPO','DATA','CAMPO 1','CAMPO 2','CAMPO 3','QTD/TOTAL','CANAL/DESTINO','STATUS/SALDO'].map(csvCell).join(';'));
   monthData().items.forEach(i=>lines.push(['PROGRAMAÇÃO',formatBR(i.date),i.program,i.slot,i.prize,i.title||'',i.notes||'',i.qty,i.channel,i.status].map(csvCell).join(';')));
-  monthData().distributions.forEach(d=>lines.push(['DISTRIBUIÇÃO',distributionLabel(d),'INÍCIO',distStartDate(d),'TÉRMINO',distEndDate(d),'TOTAL',d.total,'APP',d.app,'CAMAROTE',d.camarote,'CAMARIM',d.camarim,'EXTERNA',d.rua,'RÁDIO',d.ar,'REDES SOCIAIS',d.rs,'RESERVADO',reservationPackageTotal(d),'RESERVA UNID.',reservationConsumed(d),'OBS RESERVA',reservationEntries(d).map(r=>`${r.qty} ${reservationUnitText(r.unit)} ${r.note||''}`).join(' | '),'PROG RADIO',programmed(d.id,'RÁDIO'),'SALDO',leftTotal(d)].map(csvCell).join(';')));
+  monthData().distributions.forEach(d=>{const ms=distributionMonthStockStatus(d,state.currentMonth),gs=distributionCampaignGlobalBalance(d);lines.push(['DISTRIBUIÇÃO',distributionLabel(d),'INÍCIO',distStartDate(d),'TÉRMINO',distEndDate(d),'COTA MÊS',d.total,'ESTOQUE GLOBAL',gs.master,'COTAS MESES',gs.planned,'SALDO GLOBAL',gs.balance,'REALIZADO MÊS',ms.realized,'SALDO EXEC. MÊS',ms.executionBalance,'APP',d.app,'CAMAROTE',d.camarote,'CAMARIM',d.camarim,'EXTERNA',d.rua,'RÁDIO',d.ar,'REDES SOCIAIS',d.rs,'RESERVADO',reservationPackageTotal(d),'RESERVA UNID.',reservationConsumed(d),'OBS RESERVA',reservationEntries(d).map(r=>`${r.qty} ${reservationUnitText(r.unit)} ${r.note||''}`).join(' | '),'PROG RADIO',programmed(d.id,'RÁDIO'),'SALDO PLANO',leftTotal(d)].map(csvCell).join(';'));});
   monthData().promos.forEach(p=>lines.push(['PROMOÇÕES',p.name||p.title||'',formatBR(p.startDate||''),formatBR(p.drawDate),p.drawTime||'',p.local||'',p.description||'',p.imageData ? 'COM IMAGEM' : 'SEM IMAGEM'].map(csvCell).join(';')));
   return '\ufeff'+lines.join('\n');
 }
@@ -12423,6 +12822,7 @@ window.addEventListener('offline',handleBrowserConnectionChange);
 populatePromoReadHours();
 updatePromoReadScheduleState();
 setOfficialCalendarMonth(true);
+console.info('JP WORKSPACE AV57.6.6.27 · ESTOQUE MENSAL INDEPENDENTE · FIREBASE SOURCE OF TRUTH');
 console.info('PAINEL JP — MÊS OFICIAL:', currentCalendarMonth(), 'MÊS ABERTO:', state.currentMonth);
 initFirebaseSync();
 startFirebaseAutoConnectSequence();

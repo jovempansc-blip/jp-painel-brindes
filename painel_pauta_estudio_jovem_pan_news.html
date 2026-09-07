@@ -2367,6 +2367,8 @@ function studioRecordMonths(collection,idValue,date=''){
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
     if(valid(monthKey)&&newsRows(m?.[collection]).some(row=>row?.id===idValue)) keys.push(monthKey);
   });
+  const preferred=String(date||'').slice(0,7);
+  if(valid(preferred)&&keys.includes(preferred)) return [preferred];
   return keys.length?keys:[newsMonthKey(date)];
 }
 function pickStudioFields(record,fields){
@@ -2482,7 +2484,16 @@ function newsConsolidatedCollection(collection){
   Object.entries(state.months||{}).forEach(([monthKey,month])=>newsRows(month?.[collection]).forEach((row,index)=>{if(!row)return;const idValue=String(row.id||`LEGACY_${collection}_${monthKey}_${index}`),previous=copies.get(idValue);if(!previous){copies.set(idValue,{row,monthKey});return;}const a=newsRecordFreshness(previous.row,previous.monthKey),b=newsRecordFreshness(row,monthKey);if(b.updated>a.updated||(b.updated===a.updated&&b.canonicalBonus>a.canonicalBonus))copies.set(idValue,{row,monthKey});}));
   return [...copies.values()].map(entry=>entry.row);
 }
-function newsPromoPool(date=''){const rows=newsConsolidatedCollection('promos');return date?rows.filter(row=>promoDateAllowed(row,date)):rows;}
+function newsPromoPool(date=''){
+  const requestedMonth=String(date||'').slice(0,7),map=new Map(),pinned=new Set();
+  if(/^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)){
+    newsRows(state.months?.[requestedMonth]?.promos).forEach((row,index)=>{if(!row)return;const id=String(row.id||`LEGACY_promos_${requestedMonth}_${index}`);map.set(id,row);pinned.add(id);});
+  }
+  Object.entries(state.months||{}).forEach(([month,m])=>newsRows(m?.promos).forEach((row,index)=>{
+    if(!row)return;const id=String(row.id||`LEGACY_promos_${month}_${index}`);if(pinned.has(id))return;const current=map.get(id);if(!current){map.set(id,row);return;}const a=Date.parse(current.monthlyUpdatedAt||current.updatedAt||current.createdAt||'')||0,b=Date.parse(row.monthlyUpdatedAt||row.updatedAt||row.createdAt||'')||0;if(b>=a)map.set(id,row);
+  }));
+  const rows=[...map.values()];return date?rows.filter(row=>promoDateAllowed(row,date)):rows;
+}
 function studioPublishedPrizeItems(){return newsConsolidatedCollection('items');}
 function pad(n){return String(n).padStart(2,'0');}
 function formatBR(iso){if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}
@@ -2756,7 +2767,7 @@ function studioOpecVisible(p){const status=upper(p?.status||'PENDENTE');return !
 function studioOpecPriority(p){const type=studioOpecTextType(p);return type==='promotional'?30:type==='institutional'?20:10;}
 function studioOpecVersion(p){return Math.max(1,Number(p?.opecTextVersion)||1);}
 function studioOpecRawEligible(p,item){if(!isMerchan(p)||!studioOpecVisible(p)||!stationAllowed(p)||!promoDateAllowed(p,item?.date||''))return false;if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item)||!promoHourAllowed(p,item))return false;return true;}
-function studioEffectiveOpecTextFor(p,item){const clientId=studioOpecClientId(p);if(!clientId)return p;const candidates=[...(newsPromoPool())].filter(row=>studioOpecClientId(row)===clientId&&normalizeStationValue(row?.station||STUDIO_STATION)===normalizeStationValue(p?.station||STUDIO_STATION)&&upper(row?.program||'')===upper(p?.program||'')&&studioOpecRawEligible(row,item));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')||String(b.id||'').localeCompare(String(a.id||'')))[0];}
+function studioEffectiveOpecTextFor(p,item){const clientId=studioOpecClientId(p);if(!clientId)return p;const candidates=[...(newsPromoPool(item?.date||todayISO()))].filter(row=>studioOpecClientId(row)===clientId&&normalizeStationValue(row?.station||STUDIO_STATION)===normalizeStationValue(p?.station||STUDIO_STATION)&&upper(row?.program||'')===upper(p?.program||'')&&studioOpecRawEligible(row,item));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')||String(b.id||'').localeCompare(String(a.id||'')))[0];}
 function studioEffectiveOpecTextAllows(p,item){const chosen=studioEffectiveOpecTextFor(p,item);return !chosen||chosen.id===p.id;}
 function studioMerchanScheduleMode(p){return String(p?.merchanScheduleMode||p?.rotationMode||'fixed').toLowerCase()==='rotation'?'rotation':'fixed';}
 function studioRotationHours(p){return (p?.readHours||[]).map(value=>formatStudioTime(value)).filter(Boolean).sort((a,b)=>minutesOf(a)-minutesOf(b));}
@@ -2764,7 +2775,7 @@ function studioRotationSignature(p){return `${normalizeStationValue(p?.station||
 function studioRotationMembers(p,item){
   if(studioMerchanScheduleMode(p)!=='rotation') return [p];
   const sig=studioRotationSignature(p),date=item?.date||todayISO();
-  return [...(newsPromoPool())].filter(row=>isMerchan(row)&&studioMerchanScheduleMode(row)==='rotation'&&studioRotationSignature(row)===sig&&studioOpecRawEligible(row,item)&&studioEffectiveOpecTextAllows(row,item)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
+  return [...(newsPromoPool(item?.date||todayISO()))].filter(row=>isMerchan(row)&&studioMerchanScheduleMode(row)==='rotation'&&studioRotationSignature(row)===sig&&studioOpecRawEligible(row,item)&&studioEffectiveOpecTextAllows(row,item)).sort((a,b)=>String(a.id||'').localeCompare(String(b.id||''))||upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
 }
 function studioRotationAssignedPromo(p,item){
   if(studioMerchanScheduleMode(p)!=='rotation') return p;
@@ -2775,7 +2786,7 @@ function studioRotationAssignedPromo(p,item){
   return members[(serial+slotIndex)%members.length]||members[0];
 }
 function studioRotationAllows(p,item){const assigned=studioRotationAssignedPromo(p,item);return !assigned||assigned.id===p.id;}
-function findPromoById(id){return newsPromoPool().find(p=>p.id===id)||null;}
+function findPromoById(id){return newsPromoPool(currentDisplayItem?.date||todayISO()).find(p=>p.id===id)||newsPromoPool().find(p=>p.id===id)||null;}
 function studioStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS' : 'JOVEMPAN';
 }
@@ -2832,7 +2843,7 @@ function studioAV57RawCandidates(p,date){
   studioAV57RecordPrograms(p,date).forEach(config=>{const allowed=studioAV57ProgramHours(config.program,date);if(!allowed.length)return;const hours=config.hours.length?config.hours:allowed;hours.forEach(slot=>{const normalized=studioAV57HourSlot(slot);if(allowed.includes(normalized)&&!studioAV57PauseBlocksSlot(p,date,normalized))out.push({program:config.program,slot:normalized});});});
   return out.filter((v,i,a)=>a.findIndex(x=>x.program===v.program&&x.slot===v.slot)===i);
 }
-function studioAV57EffectiveMerchan(p,date,program,slot){const clientId=studioOpecClientId(p);if(!clientId||!isMerchan(p))return p;const candidates=[...(newsPromoPool())].filter(row=>isMerchan(row)&&studioOpecClientId(row)===clientId&&studioAV57RawCandidates(row,date).some(c=>c.program===upper(program)&&c.slot===studioAV57HourSlot(slot)));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0];}
+function studioAV57EffectiveMerchan(p,date,program,slot){const clientId=studioOpecClientId(p);if(!clientId||!isMerchan(p))return p;const candidates=[...(newsPromoPool(date))].filter(row=>isMerchan(row)&&studioOpecClientId(row)===clientId&&studioAV57RawCandidates(row,date).some(c=>c.program===upper(program)&&c.slot===studioAV57HourSlot(slot)));if(!candidates.length)return null;return candidates.sort((a,b)=>studioOpecPriority(b)-studioOpecPriority(a)||studioOpecVersion(b)-studioOpecVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0];}
 function studioAV57Candidates(p,date){return studioAV57RawCandidates(p,date).filter(c=>{const chosen=studioAV57EffectiveMerchan(p,date,c.program,c.slot);return !chosen||chosen.id===p.id;});}
 function studioAV57Logs(p,item){const date=item?.date||'',slot=studioAV57HourSlot(item?.slot||''),program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');return (p?.readLog||[]).filter(log=>{if(!log)return false;if(normalizeStationValue(log.station||STUDIO_STATION)!==normalizeStationValue(STUDIO_STATION))return false;const logDate=log.date||String(log.key||'').slice(0,10);if(logDate!==date)return false;const logSlot=studioAV57HourSlot(log.slot||log.scheduledHour||'');if(logSlot&&logSlot!==slot)return false;const lp=upper(log.program||'');if(lp&&program&&!genericProgramName(lp)&&lp!==program)return false;return !!validReadTimestamp(log.confirmedAt||log.readAt||'');}).sort((a,b)=>String(a.confirmedAt||a.readAt||'').localeCompare(String(b.confirmedAt||b.readAt||'')));}
 function studioAV57LogProgram(log){return upper(programFromSchedule(log?.date||'',log?.slot||log?.scheduledHour||'',STUDIO_STATION)||log?.program||'');}
@@ -2848,13 +2859,13 @@ function studioAV57Tokens(p,date){
   return out.map((token,index)=>({...token,sequence:index+1}));
 }
 function studioAV57LegacyHourAllowed(p,item){const itemHour=studioAV57HourSlot(item?.slot||''),date=item?.date||'';if(!itemHour||!studioAV57DateAllowed(p,date)||!stationAllowed(p))return false;if(!isMerchan(p)&&isPromoResultForItem(p,item))return true;const configured=(p?.readHours||[]).map(studioAV57HourSlot).filter(Boolean);if(configured.length&&!configured.includes(itemHour))return false;if((p.readMode||'all')==='selected'&&!configured.length)return false;if(isMerchan(p)){const configs=studioAV57RecordPrograms(p,date);if(configs.length){const program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');if(!configs.some(c=>c.program===program&&(!c.hours.length||c.hours.includes(itemHour))))return false;}else if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item))return false;}return true;}
-function studioAV57FixedLoad(date){const load=new Map();(newsPromoPool()).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='fixed').forEach(p=>{const candidates=studioAV57Candidates(p,date),scope=studioAV57Scope(p),count=scope==='hour'?studioAV57Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
+function studioAV57FixedLoad(date){const load=new Map();(newsPromoPool(date)).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='fixed').forEach(p=>{const candidates=studioAV57Candidates(p,date),scope=studioAV57Scope(p),count=scope==='hour'?studioAV57Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
 function studioAV57OverrideFor(p,date,sequence){
   const rows=(Array.isArray(p?.opecOverrides)?p.opecOverrides:[]).filter(o=>!o?.disabled&&o?.date===date&&Number(o?.occurrence||o?.sequence||1)===Number(sequence));
   if(!rows.length)return null;const row=rows[rows.length-1];return{program:upper(row.program||''),slot:studioAV57HourSlot(row.slot||''),reason:String(row.reason||'')};
 }
 function studioAV57SmartPlan(date){
-  const records=(newsPromoPool()).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='rotation'&&stationAllowed(p)),load=studioAV57FixedLoad(date),out=new Map(),tokens=[];
+  const records=(newsPromoPool(date)).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='rotation'&&stationAllowed(p)),load=studioAV57FixedLoad(date),out=new Map(),tokens=[];
   records.forEach(p=>studioAV57Tokens(p,date).forEach(t=>tokens.push(t)));
   tokens.sort((a,b)=>a.candidates.length-b.candidates.length||String(a.p.endDate||a.p.drawDate||'9999').localeCompare(String(b.p.endDate||b.p.drawDate||'9999'))||((studioAV57Hash(`${date}|${a.p.id}|${a.ordinal}`)%997)-(studioAV57Hash(`${date}|${b.p.id}|${b.ordinal}`)%997)));
   tokens.forEach(token=>{const own=out.get(token.p.id)||[],last=studioAV57LastCandidate(token.p,date),override=studioAV57OverrideFor(token.p,date,token.sequence);let best=null,bestScore=Infinity;
@@ -2868,7 +2879,7 @@ function studioReadCountForHour(p,item){const logs=studioAV57Logs(p,item);if(log
 function readTimestampForHour(p,item){const logs=studioAV57Logs(p,item);if(logs.length)return validReadTimestamp(logs[logs.length-1]?.confirmedAt||logs[logs.length-1]?.readAt||'');return validReadTimestamp(hourMapValue(p?.readByHour,item,p));}
 function promoEligibleForItemHour(p,item){return studioRequiredReadsForHour(p,item)>0;}
 function isPromoReadForHour(p,item){const required=studioRequiredReadsForHour(p,item);return required>0&&studioReadCountForHour(p,item)>=required;}
-function pautasForItemHour(item,includeRead=false,kind='all'){return [...(newsPromoPool())].filter(p=>promoEligibleForItemHour(p,item)).filter(p=>kind==='all'||(kind==='merchan'?isMerchan(p):!isMerchan(p))).filter(p=>includeRead||!isPromoResolvedForHour(p,item)).sort((a,b)=>upper(a.name||a.title).localeCompare(upper(b.name||b.title)));}
+function pautasForItemHour(item,includeRead=false,kind='all'){return [...(newsPromoPool(item?.date||todayISO()))].filter(p=>promoEligibleForItemHour(p,item)).filter(p=>kind==='all'||(kind==='merchan'?isMerchan(p):!isMerchan(p))).filter(p=>includeRead||!isPromoResolvedForHour(p,item)).sort((a,b)=>upper(a.name||a.title).localeCompare(upper(b.name||b.title)));}
 function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
 function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
 function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
@@ -2889,7 +2900,7 @@ function studioProgramMerchanRows(item){
   const date=item?.date||todayISO(),program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');
   if(!program||genericProgramName(program))return[];
   const rows=[];
-  studioAV57ProgramHours(program,date).forEach(slot=>{const target={date,slot,program,__virtual:true};(newsPromoPool()).filter(isMerchan).forEach(p=>{const required=studioRequiredReadsForHour(p,target);if(required<1)return;rows.push({p,item:target,progress:studioAV57Progress(p,target)});});});
+  studioAV57ProgramHours(program,date).forEach(slot=>{const target={date,slot,program,__virtual:true};(newsPromoPool(date)).filter(isMerchan).forEach(p=>{const required=studioRequiredReadsForHour(p,target);if(required<1)return;rows.push({p,item:target,progress:studioAV57Progress(p,target)});});});
   return rows.sort((a,b)=>minutesOf(a.item.slot)-minutesOf(b.item.slot)||upper(a.p.name||a.p.title||'').localeCompare(upper(b.p.name||b.p.title||'')));
 }
 function buildMerchanList(item){
@@ -2951,7 +2962,7 @@ function pautaTypeLabel(p){
 }
 function readLogRowsForDate(date=todayISO()){
   const rows=[];
-  (newsPromoPool()).forEach(p=>{
+  (newsPromoPool(date)).forEach(p=>{
     (p.readLog||[]).forEach(r=>{
       if((r.station||STUDIO_STATION)!==STUDIO_STATION) return;
       if((r.date||'')!==date) return;
@@ -3112,7 +3123,7 @@ function historyRowsForDate(date){
       result:upper(i.winnerName||'REALIZADO')
     }));
 
-  (newsPromoPool())
+  (newsPromoPool(date))
     .filter(p=>p && !isMerchan(p))
     .filter(p=>stationAllowed(p))
     .forEach(p=>{
