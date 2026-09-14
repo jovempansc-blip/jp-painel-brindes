@@ -3681,8 +3681,8 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
             <div class="field"><label>ORDENAR NOMES</label><select class="control" id="distOrderFilter"><option value="alpha">ALFABÉTICA</option><option value="created">CADASTRO</option></select></div>
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
-          <div class="distContinuityNotice"><strong>VISÃO OPERACIONAL</strong><span>ESTA TABELA MOSTRA SOMENTE AS CONTINUIDADES DE MESES ANTERIORES QUE AINDA ESTÃO VIGENTES NESTA COMPETÊNCIA. PRÊMIOS NOVOS DO MÊS NÃO ENTRAM NESTA VISÃO. A COTA, O REALIZADO E O SALDO SÃO EXCLUSIVOS DESTE MÊS; ALTERAÇÕES NÃO MODIFICAM OUTRAS COMPETÊNCIAS.</span></div>
-          <div class="tableWrap"><table class="distMainTable distCompactTable"><colgroup><col class="distPrizeCol"><col class="distMidCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO / VIGÊNCIA</th><th>ORIGEM</th><th class="num">COTA MÊS</th><th class="num">REALIZADO</th><th class="num">SALDO</th><th class="num">PROG. RÁDIO</th><th class="num">RETORNO</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
+          <div class="distContinuityNotice"><strong>CONTINUIDADES ATIVAS</strong><span>MOSTRA SOMENTE PRÊMIOS INICIADOS EM MESES ANTERIORES QUE AINDA ESTÃO ATIVOS NA COMPETÊNCIA. NO MÊS ATUAL, ITENS COM VIGÊNCIA JÁ ENCERRADA SAEM AUTOMATICAMENTE DESTA TELA. AS COLUNAS ABAIXO MANTÊM A DISTRIBUIÇÃO POR SEGMENTO DA COMPETÊNCIA ABERTA.</span></div>
+          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -8304,13 +8304,28 @@ function distributionIsCarryover(d,monthKey=state.currentMonth){
   const monthStart=`${monthKey}-01`;
   return !!(start && end && start < monthStart && end >= monthStart);
 }
+function distributionIsActiveForOpenedMonth(d,monthKey=state.currentMonth){
+  const start=distStartDate(d);
+  const end=distEndDate(d);
+  if(!start||!end) return false;
+  const monthStart=`${monthKey}-01`;
+  const [y,m]=String(monthKey).split('-').map(Number);
+  const monthEnd=`${monthKey}-${String(new Date(y,m,0).getDate()).padStart(2,'0')}`;
+  if(start>monthEnd || end<monthStart) return false;
+  const official=(typeof currentCalendarMonth==='function' ? currentCalendarMonth() : todayISO().slice(0,7));
+  if(monthKey===official){
+    return end>=todayISO();
+  }
+  return true;
+}
 function filteredDistributions(monthKey=state.currentMonth){
   const text=norm($('distSearchInput')?.value||'');
   const status=$('distStatusFilter')?.value||'';
   const order=$('distOrderFilter')?.value || 'alpha';
   const rows = monthDataForKey(monthKey).distributions.filter(d=>{
-    /* A DISTRIBUIÇÃO GERAL FOCA APENAS EM CONTINUIDADES: PRÊMIOS INICIADOS ANTES DA COMPETÊNCIA ABERTA E AINDA VIGENTES NELA. */
+    /* CONTINUIDADES OPERACIONAIS: INICIADAS ANTES DA COMPETÊNCIA E AINDA ATIVAS. */
     if(!distributionIsCarryover(d,monthKey)) return false;
+    if(!distributionIsActiveForOpenedMonth(d,monthKey)) return false;
     const left=leftTotal(d),stock=distributionMonthStockStatus(d,monthKey),global=distributionCampaignGlobalBalance(d);
     const deficit=left<0||stock.executionBalance<0||global.balance<0;
     const passStatus = !status || (status==='OK' && !deficit && left>=0) || (status==='SOBRA' && !deficit && left>0) || (status==='ZERADO' && !deficit && left===0) || (status==='ESTOURO' && deficit);
@@ -8624,14 +8639,15 @@ function renderDistribuicao(){
     const currentTotal=(openedMonth.distributions||[]).length;
     const otherMonths=monthSummaryList(state).filter(m=>m.key!==monthKey && m.distributions>0);
     if(currentTotal===0 && otherMonths.length){
-      tb.innerHTML=`<tr><td colspan="8"><div class="monthDataNotice"><strong>NENHUMA DISTRIBUIÇÃO NO MÊS ${esc(monthKey)}.</strong><span>EXISTEM DISTRIBUIÇÕES SALVAS EM OUTRO(S) MÊS(ES). ABRA O MÊS CORRETO ABAIXO.</span><div class="monthDataButtons">${otherMonths.map(m=>`<button class="btn small" type="button" onclick="openMonthKey('${esc(m.key)}')">${esc(m.key)} · ${m.distributions} DISTR.</button>`).join('')}</div></div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA DISTRIBUIÇÃO NO MÊS ${esc(monthKey)}.</strong><span>EXISTEM DISTRIBUIÇÕES SALVAS EM OUTRO(S) MÊS(ES). ABRA O MÊS CORRETO ABAIXO.</span><div class="monthDataButtons">${otherMonths.map(m=>`<button class="btn small" type="button" onclick="openMonthKey('${esc(m.key)}')">${esc(m.key)} · ${m.distributions} DISTR.</button>`).join('')}</div></div></td></tr>`;
     }else if(currentTotal>0){
-      tb.innerHTML=`<tr><td colspan="8"><div class="monthDataNotice"><strong>NENHUMA CONTINUIDADE DE MESES ANTERIORES NESTA COMPETÊNCIA.</strong><span>OS PRÊMIOS INICIADOS NO MÊS ATUAL NÃO APARECEM NESTA VISÃO.</span></div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA CONTINUIDADE ATIVA NESTA COMPETÊNCIA.</strong><span>ITENS DE MESES ANTERIORES QUE JÁ ENCERRARAM A VIGÊNCIA NÃO SÃO MAIS EXIBIDOS NESTA TELA.</span></div></td></tr>`;
     }else{
-      tb.innerHTML=`<tr><td colspan="8"><div class="empty">NENHUMA DISTRIBUIÇÃO CADASTRADA PARA ESTE MÊS.</div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="15"><div class="empty">NENHUMA CONTINUIDADE ATIVA CADASTRADA PARA ESTE MÊS.</div></td></tr>`;
     }
     return;
   }
+  const inlineNum = (d,key,label) => `<div class="distNumStack"><input class="distInlineNum" type="number" min="0" step="1" value="${num(d[key])}" data-dist-id="${esc(d.id)}" data-key="${esc(key)}" aria-label="${esc(label || key)}">${ticketUnitSelect(d,key)}</div>`;
   let distributionReturnCounts={};
   try{
     distributionReturnCounts=returnCountsByDistribution();
@@ -8639,27 +8655,26 @@ function renderDistribuicao(){
     console.warn('DISTRIBUTION RETURN COUNT ERROR',error);
   }
   tb.innerHTML = rows.map(d=>{
-    const stock=distributionMonthStockStatus(d,monthKey);
-    const prog=programmed(d.id,'RÁDIO');
-    const carryover=distributionIsCarryover(d,monthKey);
-    const origin=distributionSnapshotOriginMonth(d,monthKey);
-    const end=distEndDate(d);
+    const left=leftTotal(d); const prog=programmed(d.id,'RÁDIO');
     const titleLine = norm(d.title || '') ? `<span>${esc(d.title)}</span>` : '';
-    const periodLine = `<em class="distPeriodLine">${esc(distPeriodLabel(d))}</em>`;
-    const statusLine = carryover
-      ? `<span class="distCarryoverBadge">CONTINUIDADE · INÍCIO ${esc(formatBR(d.startDate||d.date||''))}</span>`
-      : `<span class="distNewMonthBadge">INICIADO NESTE MÊS</span>`;
-    const stockClass=stock.executionBalance<0||stock.planningBalance<0?'red':stock.executionBalance===0?'amber':'green';
-    const returnHtml=returnCell(d,distributionReturnCounts);
-    return `<tr data-dist-row="${esc(d.id)}" class="${carryover?'isCarryoverRow':'isCurrentMonthRow'}">
-      <td class="distPrizeCell"><div class="distPrizeWrap"><strong>${esc(distributionLabel(d))}</strong>${titleLine}${periodLine}${statusLine}<small class="distEndLine">TÉRMINO ${esc(formatBR(end||''))}</small></div></td>
-      <td><div class="distOriginCell"><strong>${esc(labelMonth(origin))}</strong><small>${carryover?'CADASTRADO ANTERIORMENTE':'CADASTRO ATUAL'}</small></div></td>
-      <td class="num"><strong>${num(d.total)}</strong></td>
-      <td class="num"><strong>${stock.realized}</strong></td>
-      <td class="num"><span class="distCompactBalance ${stockClass}">${stock.executionBalance}</span></td>
-      <td class="num" data-prog-id="${esc(d.id)}"><strong>${prog}</strong></td>
-      <td class="num returnCell" data-return-id="${esc(d.id)}">${returnHtml}</td>
-      <td class="distActionsCell"><div class="actions distActions"><button class="actionIcon ghost" title="PROGRAMAR MANUAL" aria-label="PROGRAMAR MANUAL" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR ESTA COMPETÊNCIA" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR SOMENTE ESTE MÊS" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
+    const periodLine = `<em class="distPeriodLine">${esc(distPeriodLabel(d))}${esc(ticketSummaryText(d))}</em>`;
+    const stockLine=distributionStockMetaHtml(d,monthKey);
+    return `<tr data-dist-row="${esc(d.id)}">
+      <td class="distPrizeCell"><div class="distPrizeWrap"><strong>${esc(distributionLabel(d))}</strong>${titleLine}${periodLine}${stockLine}</div></td>
+      <td class="num">${num(d.total)}</td>
+      <td class="num distPairCell" data-pairs-id="${esc(d.id)}">${ticketPairsCell(d)}</td>
+      <td class="num">${inlineNum(d,'app','APP')}</td>
+      <td class="num">${inlineNum(d,'camarote','CAMAROTE')}</td>
+      <td class="num">${inlineNum(d,'camarim','CAMARIM')}</td>
+      <td class="num">${inlineNum(d,'rua','EXTERNA')}</td>
+      <td class="num">${inlineNum(d,'ar','RÁDIO')}</td>
+      <td class="num">${inlineNum(d,'rs','REDES SOCIAIS')}</td>
+      <td class="num reserveSummaryDistCell">${reservationSummaryCell(d)}</td>
+      <td class="num" data-prog-id="${esc(d.id)}">${programmed(d.id,'RÁDIO')}</td>
+      <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${distributionBalanceCell(d)}</td>
+      <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d,distributionReturnCounts)}</td>
+      <td class="distGenerateCell"><button class="btn small distGenerateBtn" type="button" title="GERAR RODÍZIO" aria-label="GERAR RODÍZIO" onclick="generateRadioFromDist('${d.id}')">GERAR</button></td>
+      <td class="distActionsCell"><div class="actions distActions"><button class="actionIcon ghost" title="PROGRAMAR MANUAL" aria-label="PROGRAMAR MANUAL" onclick="programFromDist('${d.id}')"><span class="iconGlyph">＋</span></button><button class="actionIcon" title="VER GRADE" aria-label="VER GRADE" onclick="filterProgramByDist('${d.id}')"><span class="iconGlyph">▦</span></button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editDist('${d.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deleteDist('${d.id}')"><span class="iconGlyph">🗑</span></button></div></td>
     </tr>`;
   }).join('');
 }
@@ -12847,7 +12862,7 @@ window.addEventListener('offline',handleBrowserConnectionChange);
 populatePromoReadHours();
 updatePromoReadScheduleState();
 setOfficialCalendarMonth(true);
-console.info('JP WORKSPACE AV57.6.6.27 · ESTOQUE MENSAL INDEPENDENTE · FIREBASE SOURCE OF TRUTH');
+console.info('JP WORKSPACE AV57.6.6.29 · DISTRIBUIÇÃO ATIVA + SEGMENTOS · FIREBASE SOURCE OF TRUTH');
 console.info('PAINEL JP — MÊS OFICIAL:', currentCalendarMonth(), 'MÊS ABERTO:', state.currentMonth);
 initFirebaseSync();
 startFirebaseAutoConnectSequence();
@@ -12862,6 +12877,7 @@ setInterval(()=>syncStateFromApi(false),15000);
 window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded)syncStateFromApi(true);});
 </script>
 
+<!-- AV-57.6.6.29 · DISTRIBUIÇÃO: SOMENTE CONTINUIDADES ATIVAS + COLUNAS DE SEGMENTO RESTAURADAS -->
 <!-- AV-57.6.6.16 · AÇÕES DA PROGRAMAÇÃO UNIFICADAS; SCRIPT DE CAPTURA LEGADO REMOVIDO -->
 
 <!-- AV-57.6.6.16 · PROGRAMAÇÃO COM ARRASTE + BOTÕES UNIFICADOS + SAVE PROMO EXPLÍCITO -->
