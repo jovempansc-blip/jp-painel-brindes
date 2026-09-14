@@ -2249,6 +2249,66 @@ th,td{padding:9px 10px!important;font-size:11px!important}th{font-size:9.5px!imp
 }
 
 
+
+/* AV57.6.6.30 · IDENTIFICAÇÃO LIMPA + STATUS DE VIGÊNCIA */
+.distPrizeWrap{max-height:none!important;overflow:visible!important;padding:0!important}
+.distPrizeStatusCard{
+  position:relative;
+  width:100%;
+  min-height:58px;
+  padding:8px 10px;
+  border:1px solid #dfe5ec;
+  border-radius:12px;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(32,43,56,.035);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:3px;
+}
+.distPrizeStatusCard.active{
+  border-color:#b9ddc8;
+  background:linear-gradient(180deg,#fbfefc 0%,#f5fbf7 100%);
+  box-shadow:0 0 0 1px rgba(28,132,76,.035),0 2px 8px rgba(28,132,76,.04);
+}
+.distPrizeStatusCard.ended{
+  border-color:#ecc4ca;
+  background:linear-gradient(180deg,#fffdfd 0%,#fff7f8 100%);
+  box-shadow:0 0 0 1px rgba(183,47,64,.025),0 2px 8px rgba(183,47,64,.035);
+}
+.distPrizeStatusCard.scheduled{
+  border-color:#d8dee8;
+  background:linear-gradient(180deg,#fff 0%,#f8f9fb 100%);
+}
+.distPrizeStatusTop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}
+.distPrizeStatusTop strong{
+  flex:1;min-width:0;margin:0!important;
+  font-size:11.5px!important;line-height:1.18!important;color:#202733!important;
+  display:block!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;
+  -webkit-line-clamp:unset!important;
+}
+.distLifecycleBadge{
+  flex:0 0 auto;display:inline-flex!important;align-items:center;justify-content:center;
+  margin:0!important;padding:3px 7px;border-radius:999px;font-size:7.6px!important;
+  font-weight:1000!important;letter-spacing:.075em;line-height:1!important;white-space:nowrap!important;
+}
+.distLifecycleBadge.active{background:#eaf7ef;color:#147444;border:1px solid #c5e6d1}
+.distLifecycleBadge.ended{background:#fff0f2;color:#b3283d;border:1px solid #f0c7cd}
+.distLifecycleBadge.scheduled{background:#f0f3f7;color:#596577;border:1px solid #dbe1e9}
+.distPrizeSubtitle{
+  display:block!important;margin:0!important;font-size:9.4px!important;line-height:1.15!important;
+  font-weight:800!important;color:#596577!important;white-space:normal!important;overflow:visible!important;
+  -webkit-line-clamp:unset!important;
+}
+.distPrizePeriodClean{
+  display:block!important;margin:1px 0 0!important;font-size:8.4px!important;line-height:1.1!important;
+  font-weight:900!important;letter-spacing:.025em;color:#6d7785!important;text-transform:uppercase;
+  white-space:normal!important;overflow:visible!important;-webkit-line-clamp:unset!important;
+}
+.distLifecycleRow.active td{background-color:rgba(246,251,248,.22)}
+.distLifecycleRow.ended td{background-color:rgba(255,248,249,.25)}
+.distLifecycleRow.active td.distPrizeCell,.distLifecycleRow.ended td.distPrizeCell{background:#f8f9fc!important}
+
 /* AJUSTE — TABELA DE DISTRIBUIÇÃO ESCALÁVEL
    Evita colunas largas/linhas altas quando houver muitos produtos cadastrados. */
 .distributionTableWrap,
@@ -7061,13 +7121,19 @@ function ticketSummaryText(d){
 function distributionBalanceCell(d){
   const monthKey=d?.snapshotMonth||state.currentMonth;
   const unit=distributionDeliveryUnit(d);
-  const pkgLeft=leftDeliverable(d);
-  const realLeft=leftTotal(d);
+  const planningLeft=leftTotal(d);
   const stock=distributionMonthStockStatus(d,monthKey);
-  const cls=realLeft<0||pkgLeft<0||stock.executionBalance<0?'red':(pkgLeft===0?'amber':'green');
-  const execText=stock.executionBalance<0?`EXEC. -${Math.abs(stock.executionBalance)}`:`EXEC. ${stock.executionBalance}`;
-  if(unit==='pair') return `<div class="distSaldoStack"><span class="badge ${cls}">${pkgLeft} PAR${Math.abs(pkgLeft)===1?'':'ES'}</span><small>${realLeft} UNID. · ${execText}</small></div>`;
-  return `<div class="distSaldoStack">${balanceBadge(realLeft)}<small>${execText}</small></div>`;
+  const executionLeft=stock.executionBalance;
+  const cls=executionLeft<0||planningLeft<0?'red':(executionLeft===0?'amber':'green');
+  const realizedText=`${stock.realized} REALIZ.`;
+  const planningAlert=planningLeft<0?` · PLANO -${Math.abs(planningLeft)}`:'';
+  if(unit==='pair'){
+    if(executionLeft<0) return `<div class="distSaldoStack"><span class="badge red">DÉFICIT ${Math.abs(executionLeft)}</span><small>${realizedText}${planningAlert}</small></div>`;
+    const pairBalance=Math.floor(executionLeft/2);
+    const odd=executionLeft%2;
+    return `<div class="distSaldoStack"><span class="badge ${cls}">${pairBalance} PAR${pairBalance===1?'':'ES'}${odd?' +1':''}</span><small>${realizedText}${planningAlert}</small></div>`;
+  }
+  return `<div class="distSaldoStack"><span class="badge ${cls}">${executionLeft}</span><small>${realizedText}${planningAlert}</small></div>`;
 }
 function programmed(distId, channel=''){
   const target = channel ? normalizeChannel(channel) : '';
@@ -8323,9 +8389,9 @@ function filteredDistributions(monthKey=state.currentMonth){
   const status=$('distStatusFilter')?.value||'';
   const order=$('distOrderFilter')?.value || 'alpha';
   const rows = monthDataForKey(monthKey).distributions.filter(d=>{
-    /* CONTINUIDADES OPERACIONAIS: INICIADAS ANTES DA COMPETÊNCIA E AINDA ATIVAS. */
+    /* CONTINUIDADES DA COMPETÊNCIA: INICIADAS EM MÊS ANTERIOR E COM VIGÊNCIA QUE ALCANÇA O MÊS ABERTO.
+       ITENS ENCERRADOS PERMANECEM VISÍVEIS COM STATUS VISUAL, SEM POLUIR A IDENTIFICAÇÃO DO PRÊMIO. */
     if(!distributionIsCarryover(d,monthKey)) return false;
-    if(!distributionIsActiveForOpenedMonth(d,monthKey)) return false;
     const left=leftTotal(d),stock=distributionMonthStockStatus(d,monthKey),global=distributionCampaignGlobalBalance(d);
     const deficit=left<0||stock.executionBalance<0||global.balance<0;
     const passStatus = !status || (status==='OK' && !deficit && left>=0) || (status==='SOBRA' && !deficit && left>0) || (status==='ZERADO' && !deficit && left===0) || (status==='ESTOURO' && deficit);
@@ -8627,6 +8693,25 @@ function markReturnedAsSobra(recordId){
   toast('PRÊMIO MARCADO COMO SOBRA.');
 }
 
+function distributionLifecycleStatus(d){
+  const start=distStartDate(d), end=distEndDate(d), today=todayISO();
+  if(end && end < today) return {key:'ended',label:'ENCERRADO'};
+  if(start && start > today) return {key:'scheduled',label:'PROGRAMADO'};
+  return {key:'active',label:'ATIVO'};
+}
+function distributionPrizeIdentityHtml(d){
+  const lifecycle=distributionLifecycleStatus(d);
+  const title=norm(d.title||'');
+  const prize=distributionLabel(d);
+  const extra=title && norm(title)!==norm(prize) ? `<span class="distPrizeSubtitle">${esc(title)}</span>` : '';
+  const start=distStartDate(d), end=distEndDate(d);
+  const period=(start||end) ? `PERÍODO: ${formatBR(start)} A ${formatBR(end)}` : 'PERÍODO NÃO INFORMADO';
+  return `<div class="distPrizeStatusCard ${lifecycle.key}">
+    <div class="distPrizeStatusTop"><strong>${esc(prize)}</strong><span class="distLifecycleBadge ${lifecycle.key}">${lifecycle.label}</span></div>
+    ${extra}
+    <em class="distPrizePeriodClean">${esc(period)}</em>
+  </div>`;
+}
 function renderDistribuicao(){
   alignPanelMonthWithInput();
   refreshDistProgramSearchCatalog();
@@ -8641,9 +8726,9 @@ function renderDistribuicao(){
     if(currentTotal===0 && otherMonths.length){
       tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA DISTRIBUIÇÃO NO MÊS ${esc(monthKey)}.</strong><span>EXISTEM DISTRIBUIÇÕES SALVAS EM OUTRO(S) MÊS(ES). ABRA O MÊS CORRETO ABAIXO.</span><div class="monthDataButtons">${otherMonths.map(m=>`<button class="btn small" type="button" onclick="openMonthKey('${esc(m.key)}')">${esc(m.key)} · ${m.distributions} DISTR.</button>`).join('')}</div></div></td></tr>`;
     }else if(currentTotal>0){
-      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA CONTINUIDADE ATIVA NESTA COMPETÊNCIA.</strong><span>ITENS DE MESES ANTERIORES QUE JÁ ENCERRARAM A VIGÊNCIA NÃO SÃO MAIS EXIBIDOS NESTA TELA.</span></div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA CONTINUIDADE CADASTRADA NESTA COMPETÊNCIA.</strong><span>APENAS PRÊMIOS INICIADOS EM MESES ANTERIORES E COM VIGÊNCIA NESTA COMPETÊNCIA SÃO EXIBIDOS AQUI.</span></div></td></tr>`;
     }else{
-      tb.innerHTML=`<tr><td colspan="15"><div class="empty">NENHUMA CONTINUIDADE ATIVA CADASTRADA PARA ESTE MÊS.</div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="15"><div class="empty">NENHUMA CONTINUIDADE CADASTRADA PARA ESTE MÊS.</div></td></tr>`;
     }
     return;
   }
@@ -8656,11 +8741,9 @@ function renderDistribuicao(){
   }
   tb.innerHTML = rows.map(d=>{
     const left=leftTotal(d); const prog=programmed(d.id,'RÁDIO');
-    const titleLine = norm(d.title || '') ? `<span>${esc(d.title)}</span>` : '';
-    const periodLine = `<em class="distPeriodLine">${esc(distPeriodLabel(d))}${esc(ticketSummaryText(d))}</em>`;
-    const stockLine=distributionStockMetaHtml(d,monthKey);
-    return `<tr data-dist-row="${esc(d.id)}">
-      <td class="distPrizeCell"><div class="distPrizeWrap"><strong>${esc(distributionLabel(d))}</strong>${titleLine}${periodLine}${stockLine}</div></td>
+    const lifecycle=distributionLifecycleStatus(d);
+    return `<tr data-dist-row="${esc(d.id)}" class="distLifecycleRow ${lifecycle.key}">
+      <td class="distPrizeCell"><div class="distPrizeWrap">${distributionPrizeIdentityHtml(d)}</div></td>
       <td class="num">${num(d.total)}</td>
       <td class="num distPairCell" data-pairs-id="${esc(d.id)}">${ticketPairsCell(d)}</td>
       <td class="num">${inlineNum(d,'app','APP')}</td>
