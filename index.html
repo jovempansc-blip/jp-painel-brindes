@@ -6324,8 +6324,10 @@ function syncCalendarMonthIfChanged(){
 function openMonthKey(key){
   if(!key) return;
   manualMonthOverride=true;
+  calendarMonthOpened=key;
   if(!state.months[key]) createBlankMonth(key);
   state.currentMonth=key;
+  if($('monthInput')) $('monthInput').value=key;
   render();
   toast(`MÊS ${key} ABERTO.`);
 }
@@ -6333,9 +6335,10 @@ function alignPanelMonthWithInput({persist=false}={}){
   const key=$('monthInput')?.value||'';
   if(!key || key===state.currentMonth) return false;
   manualMonthOverride=true;
+  calendarMonthOpened=key;
   if(!state.months[key]) createBlankMonth(key);
   state.currentMonth=key;
-  // seleção de mês é apenas estado de interface em memória
+  // seleção de mês é apenas estado de interface em memória e não é sobrescrita por snapshots do mês atual
   return true;
 }
 function commitMonthInputSelection(){
@@ -8176,7 +8179,7 @@ function render(){
   else if(activeView==='backup')renderBackup();
   else if(activeView==='sistema')renderSystemView();
   else if(activeView==='relatorios')renderAdminReports();
-  renderReturnAlerts();renderMiniAlerts();populateDatalists();populateProgramSelects();populateDistributionSelect();populatePromoDistributionSelect();updatePromoSegmentBalance();setEmptyDateFieldsToToday();
+  renderReturnAlerts(); if($('miniAlertHost')) $('miniAlertHost').innerHTML=''; populateDatalists();populateProgramSelects();populateDistributionSelect();populatePromoDistributionSelect();updatePromoSegmentBalance();setEmptyDateFieldsToToday();
 }
 function renderFilters(){
   const weekSet = monthWeekRanges(state.currentMonth).map(w=>w.label);
@@ -8388,10 +8391,13 @@ function filteredDistributions(monthKey=state.currentMonth){
   const text=norm($('distSearchInput')?.value||'');
   const status=$('distStatusFilter')?.value||'';
   const order=$('distOrderFilter')?.value || 'alpha';
+  const official=(typeof currentCalendarMonth==='function' ? currentCalendarMonth() : todayISO().slice(0,7));
+  const isHistorical=String(monthKey||'') < String(official||'');
   const rows = monthDataForKey(monthKey).distributions.filter(d=>{
-    /* CONTINUIDADES DA COMPETÊNCIA: INICIADAS EM MÊS ANTERIOR E COM VIGÊNCIA QUE ALCANÇA O MÊS ABERTO.
-       ITENS ENCERRADOS PERMANECEM VISÍVEIS COM STATUS VISUAL, SEM POLUIR A IDENTIFICAÇÃO DO PRÊMIO. */
-    if(!distributionIsCarryover(d,monthKey)) return false;
+    /* AV57.6.6.31
+       COMPETÊNCIA HISTÓRICA = FOTOGRAFIA COMPLETA DO QUE EXISTIU/FOI FEITO NAQUELE MÊS.
+       COMPETÊNCIA ATUAL/FUTURA = VISÃO OPERACIONAL DE CONTINUIDADES, COMO DEFINIDO NO PAINEL. */
+    if(!isHistorical && !distributionIsCarryover(d,monthKey)) return false;
     const left=leftTotal(d),stock=distributionMonthStockStatus(d,monthKey),global=distributionCampaignGlobalBalance(d);
     const deficit=left<0||stock.executionBalance<0||global.balance<0;
     const passStatus = !status || (status==='OK' && !deficit && left>=0) || (status==='SOBRA' && !deficit && left>0) || (status==='ZERADO' && !deficit && left===0) || (status==='ESTOURO' && deficit);
@@ -8503,8 +8509,13 @@ function returnCell(d,counts=null){
   const label=c.pending?`${c.pending} PEND.`:(c.sobra?`${c.sobra} SOBRA`:`${c.realocado} REAP.`);
   return `<span class="badge ${cls}">${esc(label)}</span>${c.pending?'<small>VENCIDO</small>':''}`;
 }
+function activeBellNotifications(){
+  const returns=pendingReturnRecords().map(r=>({type:'return',record:r}));
+  const promos=promoEndingAlerts().map(p=>({type:'promoEnd',record:p}));
+  return [...returns,...promos];
+}
 function updateReturnBell(){
-  const count=pendingReturnRecords().length;
+  const count=activeBellNotifications().length;
   const btn=$('returnBellBtn'), badge=$('returnBellCount');
   if(btn) btn.classList.toggle('hasReturn',count>0);
   if(badge) badge.textContent=count;
@@ -8519,12 +8530,15 @@ function renderReturnAlerts(){
   const box=$('returnAlertList');
   if(!box) return;
   const rows=pendingReturnRecords();
-  if(!rows.length){ box.innerHTML='<div class="returnDrawerEmpty">NENHUM PRÊMIO VENCIDO AGUARDANDO REAPROVEITAMENTO.</div>'; return; }
-  box.innerHTML=rows.map(r=>`<div class="returnAlertCard">
+  const promos=promoEndingAlerts();
+  if(!rows.length && !promos.length){ box.innerHTML='<div class="returnDrawerEmpty">NENHUMA NOTIFICAÇÃO VIGENTE.</div>'; return; }
+  const returnHtml=rows.map(r=>`<div class="returnAlertCard">
     <div class="returnAlertTop"><strong>${esc(r.prize)}</strong><span>GANHADOR: ${esc(r.winner)}<br>ORIGEM: ${esc(r.source)}<br>REGISTRADO: ${esc(r.registeredLabel)} · PRAZO VENCEU: ${esc(r.deadlineLabel)}</span></div>
     <div class="returnAlertMeta"><em>SEM RETIRADA APÓS ${r.deadlineDays} DIA(S) ÚTEIS</em><em>DISPONÍVEL PARA REAPROVEITAMENTO</em></div>
     <div class="returnAlertActions"><button class="btn red small" onclick="reuseReturnedPrize('${esc(r.id)}')">CONFIRMAR REAPROVEITAMENTO</button><button class="btn ghost small" onclick="markReturnedAsSobra('${esc(r.id)}')">DEIXAR COMO SOBRA</button></div>
   </div>`).join('');
+  const promoHtml=promos.map(a=>`<div class="returnAlertCard"><div class="returnAlertTop"><strong>${esc(a.title)}</strong><span>${esc(a.text)}</span></div><div class="returnAlertMeta"><em>NOTIFICAÇÃO VIGENTE</em><em>PROMO / MERCHAN</em></div><div class="returnAlertActions"><button class="btn small" type="button" onclick="closeDrawer('returnDrawer');setView('digital')">ABRIR PROMO / MERCHAN</button></div></div>`).join('');
+  box.innerHTML=returnHtml+promoHtml;
 }
 function findReturnRecordById(idValue){
   return returnRecords(false).find(r=>r.id===idValue) || returnRecords(true).find(r=>r.id===idValue);
