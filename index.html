@@ -8391,13 +8391,11 @@ function filteredDistributions(monthKey=state.currentMonth){
   const text=norm($('distSearchInput')?.value||'');
   const status=$('distStatusFilter')?.value||'';
   const order=$('distOrderFilter')?.value || 'alpha';
-  const official=(typeof currentCalendarMonth==='function' ? currentCalendarMonth() : todayISO().slice(0,7));
-  const isHistorical=String(monthKey||'') < String(official||'');
   const rows = monthDataForKey(monthKey).distributions.filter(d=>{
-    /* AV57.6.6.31
-       COMPETÊNCIA HISTÓRICA = FOTOGRAFIA COMPLETA DO QUE EXISTIU/FOI FEITO NAQUELE MÊS.
-       COMPETÊNCIA ATUAL/FUTURA = VISÃO OPERACIONAL DE CONTINUIDADES, COMO DEFINIDO NO PAINEL. */
-    if(!isHistorical && !distributionIsCarryover(d,monthKey)) return false;
+    /* AV57.6.6.32
+       PRINCIPAL E DIREÇÃO/PREVIEW USAM A MESMA REGRA DE COMPETÊNCIA:
+       EXIBIR EXCLUSIVAMENTE A FOTOGRAFIA SALVA NO MÊS SELECIONADO.
+       NÃO FILTRAR POR MÊS DE ORIGEM NEM POR CONTINUIDADE. */
     const left=leftTotal(d),stock=distributionMonthStockStatus(d,monthKey),global=distributionCampaignGlobalBalance(d);
     const deficit=left<0||stock.executionBalance<0||global.balance<0;
     const passStatus = !status || (status==='OK' && !deficit && left>=0) || (status==='SOBRA' && !deficit && left>0) || (status==='ZERADO' && !deficit && left===0) || (status==='ESTOURO' && deficit);
@@ -8740,9 +8738,9 @@ function renderDistribuicao(){
     if(currentTotal===0 && otherMonths.length){
       tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA DISTRIBUIÇÃO NO MÊS ${esc(monthKey)}.</strong><span>EXISTEM DISTRIBUIÇÕES SALVAS EM OUTRO(S) MÊS(ES). ABRA O MÊS CORRETO ABAIXO.</span><div class="monthDataButtons">${otherMonths.map(m=>`<button class="btn small" type="button" onclick="openMonthKey('${esc(m.key)}')">${esc(m.key)} · ${m.distributions} DISTR.</button>`).join('')}</div></div></td></tr>`;
     }else if(currentTotal>0){
-      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA CONTINUIDADE CADASTRADA NESTA COMPETÊNCIA.</strong><span>APENAS PRÊMIOS INICIADOS EM MESES ANTERIORES E COM VIGÊNCIA NESTA COMPETÊNCIA SÃO EXIBIDOS AQUI.</span></div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="15"><div class="monthDataNotice"><strong>NENHUMA DISTRIBUIÇÃO ENCONTRADA COM OS FILTROS ATUAIS.</strong><span>OS REGISTROS DESTA COMPETÊNCIA PERMANECEM PRESERVADOS NO FIREBASE E VOLTAM A APARECER AO LIMPAR OS FILTROS.</span></div></td></tr>`;
     }else{
-      tb.innerHTML=`<tr><td colspan="15"><div class="empty">NENHUMA CONTINUIDADE CADASTRADA PARA ESTE MÊS.</div></td></tr>`;
+      tb.innerHTML=`<tr><td colspan="15"><div class="empty">NENHUMA DISTRIBUIÇÃO CADASTRADA PARA ESTE MÊS.</div></td></tr>`;
     }
     return;
   }
