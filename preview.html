@@ -684,6 +684,7 @@ let firebaseConnectionRef=null;
 let firebaseListenerAttached=false;
 let firebaseBootstrapInFlight=false;
 let firebaseRetryTimer=null;
+let directionRealtimeRenderTimer=null;
 let firebaseRestInFlight=false;
 let firebaseLastServerActivity=0;
 let firebaseLastError='';
@@ -1481,12 +1482,24 @@ function directionAttachFirebaseListeners(){
     if(!directionHasRecentServerActivity())directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');
     directionScheduleFirebaseRetry(1800);
   });
-  firebaseRef.child('months').on('value',snapshot=>{
-    try{directionApplyRealtimePart('months',snapshot.val());}
-    catch(error){firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR MESES');console.warn('DIRECTION FIREBASE MONTHS ERROR',error);directionScheduleFirebaseRetry(1200);}
-  },error=>{firebaseLastError=String(error?.message||error||'LISTENER MESES');console.warn('DIRECTION FIREBASE MONTHS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);});
+  const queueDirectionRealtimeRender=()=>{
+    clearTimeout(directionRealtimeRenderTimer);
+    directionRealtimeRenderTimer=setTimeout(()=>{
+      state=directionNormalizeState(state);
+      const requestedMonth=currentMonth||String($('dateFilter')?.value||liveTodayISO()).slice(0,7);
+      if(state.months?.[requestedMonth])currentMonth=requestedMonth;
+      else currentMonth=availableMonths().at(-1)||liveTodayISO().slice(0,7);
+      state.currentMonth=currentMonth;fillMonthFilter();directionMarkFirebaseActivity();render();
+    },40);
+  };
+  const monthsRef=firebaseRef.child('months');
+  const monthError=error=>{firebaseLastError=String(error?.message||error||'LISTENER MESES');console.warn('DIRECTION FIREBASE MONTHS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);};
+  const applyMonth=(snapshot,removed=false)=>{const key=snapshot.key;if(!key)return;state.months ||= {};if(removed)delete state.months[key];else state.months[key]=snapshot.val()||{};queueDirectionRealtimeRender();};
+  monthsRef.on('child_added',snapshot=>applyMonth(snapshot,false),monthError);
+  monthsRef.on('child_changed',snapshot=>applyMonth(snapshot,false),monthError);
+  monthsRef.on('child_removed',snapshot=>applyMonth(snapshot,true),monthError);
   firebaseRef.child('programSchedules').on('value',snapshot=>{
-    try{directionApplyRealtimePart('programSchedules',snapshot.val());}
+    try{state.programSchedules=directionList(snapshot.val());queueDirectionRealtimeRender();}
     catch(error){firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR GRADE');console.warn('DIRECTION FIREBASE PROGRAMS ERROR',error);directionScheduleFirebaseRetry(1200);}
   },error=>{firebaseLastError=String(error?.message||error||'LISTENER GRADE');console.warn('DIRECTION FIREBASE PROGRAMS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);});
 }

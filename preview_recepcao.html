@@ -845,6 +845,7 @@ if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();
 const firebaseRef=receptionDatabase.ref(FIREBASE_ROOT_PATH);
 const receptionConnectionRef=receptionDatabase.ref('.info/connected');
 let receptionReconnectTimer=null;
+let receptionRealtimeRenderTimer=null;
 let receptionConnected=false;
 const receptionPendingSaves=new Set();
 const receptionSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -876,6 +877,17 @@ function receptionRecordMonths(collection,idValue,date=''){
   // Se for registro legado fisicamente salvo em outro mês, mantém compatibilidade com a localização real.
   return keys.length?keys:[fallback];
 }
+function receptionFastLocatedRef(collection,monthKey,idValue){
+  const rows=state.months?.[monthKey]?.[collection];
+  if(Array.isArray(rows)){
+    const index=rows.findIndex(row=>row?.id===idValue);
+    if(index<0)return null;
+    return {ref:firebaseRef.child('months').child(monthKey).child(collection).child(String(index)),record:rows[index],localIndex:index};
+  }
+  const match=Object.entries(rows||{}).find(([,row])=>row?.id===idValue);
+  if(!match)return null;
+  return {ref:firebaseRef.child('months').child(monthKey).child(collection).child(match[0]),record:match[1],localIndex:match[0]};
+}
 async function locateReceptionRecord(collection,monthKey,idValue){
   const collectionRef=firebaseRef.child('months').child(monthKey).child(collection);
   const snapshot=await collectionRef.get();
@@ -897,7 +909,7 @@ async function saveReceptionRecord(source,record,operationDate=''){
     for(const key of keys){
       try{
         const result=await receptionRetry(async()=>{
-          const located=await locateReceptionRecord(collection,key,record.id);
+          const located=receptionFastLocatedRef(collection,key,record.id)||await locateReceptionRecord(collection,key,record.id);
           if(!located){const error=new Error('REGISTRO NÃO ENCONTRADO NA BASE OFICIAL.');error.retryable=true;throw error;}
           const tx=await located.ref.transaction(current=>{
             if(!current||current.id!==record.id)return;
@@ -1229,8 +1241,14 @@ receptionConnectionRef.on('value',snap=>{
   if(receptionConnected){clearTimeout(receptionReconnectTimer);receptionReconnectTimer=null;}
   else if(navigator.onLine!==false)receptionScheduleReconnect();
 });
-firebaseRef.child('months').on('value',snap=>{state.months=snap.val()||{};selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');},error=>{console.warn('RECEPTION MONTHS LOAD ERROR',error);receptionScheduleReconnect();});
-firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);render();},error=>{console.warn('RECEPTION PROGRAM SCHEDULE LOAD ERROR',error);receptionScheduleReconnect();});
+function queueReceptionRealtimeRender(){clearTimeout(receptionRealtimeRenderTimer);receptionRealtimeRenderTimer=setTimeout(()=>{selectMonthForDate($('dateFilter').value);render();refreshOpenReceptionSheet();$('updated').textContent='ATUALIZADO: '+new Date().toLocaleString('pt-BR');},40);}
+const receptionMonthsRef=firebaseRef.child('months');
+const receptionMonthError=error=>{console.warn('RECEPTION MONTHS LOAD ERROR',error);receptionScheduleReconnect();};
+const receptionApplyMonth=(snap,removed=false)=>{const key=snap.key;if(!key)return;state.months ||= {};if(removed)delete state.months[key];else state.months[key]=snap.val()||{};queueReceptionRealtimeRender();};
+receptionMonthsRef.on('child_added',snap=>receptionApplyMonth(snap,false),receptionMonthError);
+receptionMonthsRef.on('child_changed',snap=>receptionApplyMonth(snap,false),receptionMonthError);
+receptionMonthsRef.on('child_removed',snap=>receptionApplyMonth(snap,true),receptionMonthError);
+firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);queueReceptionRealtimeRender();},error=>{console.warn('RECEPTION PROGRAM SCHEDULE LOAD ERROR',error);receptionScheduleReconnect();});
 window.addEventListener('online',()=>{try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){}receptionScheduleReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!receptionConnected)receptionScheduleReconnect(250);});
 </script>

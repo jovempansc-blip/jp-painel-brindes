@@ -2338,6 +2338,7 @@ let firebaseDatabase=null;
 let firebaseConnectionRef=null;
 let firebaseReconnectTimer=null;
 let newsRealtimeBound=false;
+let newsRealtimeRenderTimer=null;
 let firebaseApplyingRemote=false;
 let firebaseServerLoaded=false;
 
@@ -2377,18 +2378,36 @@ function pickStudioFields(record,fields){
   patch.updatedAt=new Date().toISOString();
   return patch;
 }
+async function newsFastRecordTransaction(monthKey,collection,record,patch){
+  const rows=newsRows(state.months?.[monthKey]?.[collection]);
+  const index=rows.findIndex(row=>row?.id===record.id);
+  if(index<0)return null;
+  const rowRef=firebaseRef.child('months').child(monthKey).child(collection).child(String(index));
+  const tx=await rowRef.transaction(current=>{
+    if(!current||current.id!==record.id)return;
+    return {...current,...patch};
+  },undefined,false);
+  if(!tx?.committed)return null;
+  state.months[monthKey][collection]=rows;
+  rows[index]=tx.snapshot.val();
+  return tx;
+}
 async function persistStudioRecord(collection,record,fields){
   if(!record?.id) throw new Error('REGISTRO SEM ID');
   await ensureStudioFirebaseOnline();
   const patch=pickStudioFields(record,fields);
   const keys=studioRecordMonths(collection,record.id,record.resultDate||record.drawDate||record.date||record.startDate);
-  await Promise.all(keys.map(monthKey=>studioRetry(()=>firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
-    const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
-    const index=rows.findIndex(row=>row?.id===record.id);
-    if(index<0) rows.push({...record,...patch});
-    else rows[index]={...rows[index],...patch};
-    return rows;
-  },undefined,false))));
+  await Promise.all(keys.map(monthKey=>studioRetry(async()=>{
+    const fast=await newsFastRecordTransaction(monthKey,collection,record,patch);
+    if(fast)return fast;
+    return firebaseRef.child('months').child(monthKey).child(collection).transaction(current=>{
+      const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+      const index=rows.findIndex(row=>row?.id===record.id);
+      if(index<0) rows.push({...record,...patch});
+      else rows[index]={...rows[index],...patch};
+      return rows;
+    },undefined,false);
+  })));
   await Promise.allSettled([firebaseRef.update({
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
@@ -2425,16 +2444,29 @@ async function handleEmptyFirebase(){
   selectedIndex=-1;selectedPromoId=null;currentDisplayItem=null;
   render();
 }
+function queueNewsRealtimeRender(){
+  clearTimeout(newsRealtimeRenderTimer);
+  newsRealtimeRenderTimer=setTimeout(()=>{firebaseServerLoaded=true;selectStudioMonth();if(!manual)selectedIndex=-1;render();},35);
+}
 function attachNewsRealtimeListeners(){
   if(newsRealtimeBound||!firebaseRef)return;
   newsRealtimeBound=true;
-  const applyPart=(key,value)=>{
-    if(key==='months')state.months=value||{};
-    else if(key==='programSchedules')state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);
-    else if(key==='publishedPrograms')state.publishedPrograms=value||{};
-    firebaseServerLoaded=true;selectStudioMonth();if(!manual)selectedIndex=-1;render();
+  const fail=(key,error)=>{console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleNewsFirebaseReconnect(900);};
+  const monthsRef=firebaseRef.child('months');
+  const applyMonth=(snapshot,removed=false)=>{
+    const key=snapshot.key;if(!key)return;state.months ||= {};
+    if(removed)delete state.months[key];else state.months[key]=snapshot.val()||{};
+    queueNewsRealtimeRender();
   };
-  ['months','programSchedules','publishedPrograms'].forEach(key=>firebaseRef.child(key).on('value',snapshot=>applyPart(key,snapshot.val()),error=>{console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleNewsFirebaseReconnect(900);}));
+  monthsRef.on('child_added',snapshot=>applyMonth(snapshot,false),error=>fail('months',error));
+  monthsRef.on('child_changed',snapshot=>applyMonth(snapshot,false),error=>fail('months',error));
+  monthsRef.on('child_removed',snapshot=>applyMonth(snapshot,true),error=>fail('months',error));
+  const applyPart=(key,value)=>{
+    if(key==='programSchedules')state.programSchedules=Array.isArray(value)?value:Object.values(value||{}).filter(Boolean);
+    else if(key==='publishedPrograms')state.publishedPrograms=value||{};
+    queueNewsRealtimeRender();
+  };
+  ['programSchedules','publishedPrograms'].forEach(key=>firebaseRef.child(key).on('value',snapshot=>applyPart(key,snapshot.val()),error=>fail(key,error)));
 }
 function initFirebaseSync(){
   if(firebaseStarted) return;

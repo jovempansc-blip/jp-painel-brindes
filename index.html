@@ -4595,6 +4595,8 @@ let firebaseDatabase = null;
 let firebaseBootstrapInFlight = false;
 let firebaseRetryTimer = null;
 let firebaseLastServerActivity = 0;
+let firebaseGranularListenersStarted = false;
+let firebaseUiRefreshTimer = null;
 let winnerBankRef = null;
 let winnerBankStarted = false;
 let winnerBankReady = false;
@@ -4845,16 +4847,36 @@ function mergeAuditRows(remoteRows,localRows){
   });
   return [...map.values()].sort((a,b)=>String(a.createdAt||a.timestamp||'').localeCompare(String(b.createdAt||b.timestamp||''))).slice(-2500);
 }
+function refreshFirebaseBaselineAfterSave(baseline,dirtyMonthKeys,dirtyRootKeys){
+  const next=baseline?.months ? baseline : emptyWorkspaceState();
+  next.months ||= {};
+  dirtyMonthKeys.forEach(key=>{
+    const localMonth=state.months?.[key];
+    next.months[key]=clone(localMonth||{label:key,items:[],promos:[],distributions:[]});
+  });
+  dirtyRootKeys.forEach(key=>{
+    const fallback=['schedules','programSchedules','auditLog','trash','pendingOps'].includes(key)?[]:{};
+    next[key]=clone(state[key]===undefined?fallback:state[key]);
+  });
+  next.currentMonth=state.currentMonth;
+  firebaseBaselineState=next;
+}
 async function persistGranularState(){
-  const baseline=normalizePanelState(clone(firebaseBaselineState || {months:{},schedules:[],programSchedules:[]}),{hydrateSnapshots:false});
-  normalizePanelState(state);
+  // firebaseBaselineState já chega normalizado pelo bootstrap/listeners.
+  // Usar a referência confirmada evita clonar/normalizar toda a árvore antes de cada gravação.
+  const baseline=firebaseBaselineState?.months ? firebaseBaselineState : emptyWorkspaceState();
   const writeRoot=firebaseStateRootRef();
   if(!writeRoot) throw new Error('FIREBASE INDISPONÍVEL PARA GRAVAÇÃO.');
   const tasks=[];
+  const dirtyMonthKeys=new Set();
+  const dirtyRootKeys=new Set();
   const monthKeys=new Set([...Object.keys(baseline.months||{}),...Object.keys(state.months||{})]);
   monthKeys.forEach(key=>{
     const baseMonth=baseline.months?.[key]||{items:[],promos:[],distributions:[]};
     const localMonth=state.months?.[key]||{items:[],promos:[],distributions:[]};
+    // FAST SYNC: meses sem alteração não entram no diff de coleções.
+    if(sameValue(baseMonth,localMonth)) return;
+    dirtyMonthKeys.add(key);
     ['items','promos','distributions'].forEach(collection=>{
       const plan=collectionPlan(baseMonth[collection]||[],localMonth[collection]||[]);
       if(plan.replace||plan.changes.length||plan.deleted.length){
@@ -4868,16 +4890,21 @@ async function persistGranularState(){
   [['schedules','AGENDAMENTOS'],['programSchedules','HORÁRIOS']].forEach(([collection])=>{
     const baseRows=baseline[collection]||[],localRows=state[collection]||[];
     const plan=collectionPlan(baseRows,localRows);
-    if(plan.replace||plan.changes.length||plan.deleted.length) tasks.push(persistCollectionDiff(collection,baseRows,localRows));
+    if(plan.replace||plan.changes.length||plan.deleted.length){
+      dirtyRootKeys.add(collection);
+      tasks.push(persistCollectionDiff(collection,baseRows,localRows));
+    }
   });
   const mergeLogNode=(path,baseRows,localRows)=>{
     if(sameValue(baseRows||[],localRows||[])) return;
+    dirtyRootKeys.add(path);
     tasks.push(writeRoot.child(path).transaction(current=>mergeAuditRows(current||[],localRows||[]),undefined,false));
   };
   mergeLogNode('auditLog',baseline.auditLog,state.auditLog);
   mergeLogNode('trash',baseline.trash,state.trash);
   mergeLogNode('pendingOps',baseline.pendingOps,state.pendingOps);
   if(!sameValue(baseline.prizeCatalog||{},state.prizeCatalog||{})){
+    dirtyRootKeys.add('prizeCatalog');
     tasks.push(writeRoot.child('prizeCatalog').transaction(current=>applyKeyedObjectPlan(current||{},baseline.prizeCatalog||{},state.prizeCatalog||{},'CATÁLOGO DE PRÊMIOS'),undefined,false));
   }
   if(tasks.length) await Promise.all(tasks);
@@ -4886,14 +4913,23 @@ async function persistGranularState(){
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
     source:'PAINEL_PRINCIPAL',
-    version:'FIREBASE_RTDB_AV57_6_3_FAST_SYNC'
+    version:'FIREBASE_RTDB_AV57_6_6_34_FAST_SYNC'
   };
-  if(!sameValue(baseline.publishedPrograms||{},state.publishedPrograms||{})) metadata.publishedPrograms=clone(state.publishedPrograms||{});
-  if(!sameValue(baseline.programVersions||{},state.programVersions||{})) metadata.programVersions=clone(state.programVersions||{});
-  if(!sameValue(baseline.systemMeta||{},state.systemMeta||{})) metadata.systemMeta=clone(state.systemMeta||{});
+  if(!sameValue(baseline.publishedPrograms||{},state.publishedPrograms||{})){
+    metadata.publishedPrograms=clone(state.publishedPrograms||{});
+    dirtyRootKeys.add('publishedPrograms');
+  }
+  if(!sameValue(baseline.programVersions||{},state.programVersions||{})){
+    metadata.programVersions=clone(state.programVersions||{});
+    dirtyRootKeys.add('programVersions');
+  }
+  if(!sameValue(baseline.systemMeta||{},state.systemMeta||{})){
+    metadata.systemMeta=clone(state.systemMeta||{});
+    dirtyRootKeys.add('systemMeta');
+  }
   await writeRoot.update(metadata);
-  firebaseBaselineState=normalizePanelState(clone(state));
-  return clone(state);
+  refreshFirebaseBaselineAfterSave(baseline,dirtyMonthKeys,dirtyRootKeys);
+  return true;
 }
 async function forceSetStateToApi(source='PAINEL_PRINCIPAL'){
   normalizePanelState(state);
@@ -4991,6 +5027,76 @@ function firebaseApplySnapshot(snapshot,source='listener'){
   firebasePendingSave=false;
   updateSyncStatus('online','FIREBASE ONLINE');
 }
+function queueFirebaseUiRefresh(){
+  clearTimeout(firebaseUiRefreshTimer);
+  firebaseUiRefreshTimer=setTimeout(()=>{
+    if(firebasePendingSave) return;
+    setOfficialCalendarMonth(false);
+    render();
+    updateSyncStatus('online','FIREBASE ONLINE');
+  },45);
+}
+function firebaseNormalizeMonthValue(monthKey,value){
+  const temp={currentMonth:monthKey,months:{[monthKey]:clone(value||{})},schedules:[],programSchedules:[],auditLog:[],trash:[],pendingOps:[],publishedPrograms:{},programVersions:{},systemMeta:{},prizeCatalog:{}};
+  normalizePanelState(temp,{hydrateSnapshots:false});
+  const month=temp.months[monthKey]||{};
+  month.label ||= monthKey;
+  month.items=firebaseList(month.items);
+  month.promos=firebaseList(month.promos);
+  month.distributions=firebaseList(month.distributions);
+  return month;
+}
+function firebaseGranularValue(key,value){
+  if(['schedules','programSchedules','auditLog','trash','pendingOps'].includes(key)) return firebaseList(value);
+  if(['prizeCatalog','publishedPrograms','programVersions','systemMeta'].includes(key)) return value&&typeof value==='object'?clone(value):{};
+  return clone(value);
+}
+function applyFirebaseMonthEvent(monthKey,value,removed=false){
+  if(!monthKey||firebasePendingSave) return;
+  const current=state.months?.[monthKey];
+  if(removed){
+    if(current===undefined) return;
+    delete state.months[monthKey];
+    if(firebaseBaselineState?.months) delete firebaseBaselineState.months[monthKey];
+  }else{
+    if(sameValue(current,value)) return;
+    state.months ||= {};
+    state.months[monthKey]=firebaseNormalizeMonthValue(monthKey,value);
+    firebaseBaselineState ||= emptyWorkspaceState();
+    firebaseBaselineState.months ||= {};
+    firebaseBaselineState.months[monthKey]=clone(state.months[monthKey]);
+  }
+  firebaseMarkServerActivity();
+  queueFirebaseUiRefresh();
+}
+function applyFirebaseRootEvent(key,value){
+  if(firebasePendingSave) return;
+  const normalized=firebaseGranularValue(key,value);
+  if(sameValue(state[key],normalized)) return;
+  state[key]=normalized;
+  firebaseBaselineState ||= emptyWorkspaceState();
+  firebaseBaselineState[key]=clone(normalized);
+  firebaseMarkServerActivity();
+  queueFirebaseUiRefresh();
+}
+function startGranularFirebaseListeners(){
+  if(firebaseGranularListenersStarted||!firebaseRef||!firebaseServerLoaded) return;
+  firebaseGranularListenersStarted=true;
+  const root=firebaseStateRootRef();
+  if(!root) return;
+  const monthsRef=root.child('months');
+  const monthError=error=>{console.warn('FIREBASE MONTH LISTENER ERROR',error);scheduleFirebaseRetry(1500);};
+  monthsRef.on('child_added',snapshot=>applyFirebaseMonthEvent(snapshot.key,snapshot.val(),false),monthError);
+  monthsRef.on('child_changed',snapshot=>applyFirebaseMonthEvent(snapshot.key,snapshot.val(),false),monthError);
+  monthsRef.on('child_removed',snapshot=>applyFirebaseMonthEvent(snapshot.key,null,true),monthError);
+  ['schedules','programSchedules','auditLog','trash','pendingOps','prizeCatalog','publishedPrograms','programVersions','systemMeta'].forEach(key=>{
+    root.child(key).on('value',snapshot=>applyFirebaseRootEvent(key,snapshot.val()),error=>{
+      console.warn(`FIREBASE ${key} LISTENER ERROR`,error);
+      scheduleFirebaseRetry(1500);
+    });
+  });
+  root.child('savedAt').on('value',()=>firebaseMarkServerActivity('FIREBASE ONLINE'),()=>{});
+}
 function scheduleFirebaseRetry(delay=3000){
   clearTimeout(firebaseRetryTimer);
   if(navigator.onLine===false) return;
@@ -5010,6 +5116,7 @@ async function firebaseBootstrapRead(force=false){
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONECTAR AO FIREBASE.')),9000))
     ]);
     firebaseApplySnapshot(snapshot,'bootstrap');
+    startGranularFirebaseListeners();
     clearTimeout(firebaseRetryTimer);
     if(firebasePendingSave && firebaseServerLoaded) queueApiSave(100);
   }catch(error){
@@ -5082,27 +5189,9 @@ function initFirebaseSync(){
       scheduleFirebaseRetry(1800);
     });
 
-    firebaseRef.on('value',snapshot=>{
-      try{ firebaseApplySnapshot(snapshot,'listener'); }
-      catch(err){
-        console.warn('FIREBASE SNAPSHOT APPLY ERROR',err);
-        updateSyncStatus('error','ERRO AO CARREGAR');
-      }
-    },err=>{
-      console.warn('FIREBASE LOAD ERROR',err);
-      if(navigator.onLine===false){
-        firebaseConnected=false;
-        updateSyncStatus('offline','FIREBASE OFFLINE');
-      }else{
-        firebaseConnected=false;
-        updateSyncStatus('saving','RECONECTANDO');
-        scheduleFirebaseRetry(2200);
-      }
-    });
-
-    // Leitura explícita única na abertura: não depende do primeiro evento do listener
-    // e evita o painel ficar indefinidamente em "conectando".
-    firebaseBootstrapRead(true);
+    // Uma leitura completa ocorre somente no bootstrap. Depois dela, o painel
+    // passa a receber alterações por nó/mês, evitando retransmitir a base inteira.
+    firebaseBootstrapRead(true).then(()=>startGranularFirebaseListeners());
   }catch(err){
     firebaseStarted=false;
     firebaseReady=false;
@@ -5194,13 +5283,9 @@ async function saveStateToApi(){
       updateSyncStatus('saving','CARREGANDO BASE');
       throw new Error('BASE OFICIAL AINDA NÃO FOI CARREGADA DO FIREBASE.');
     }
-    const openMonth=state.currentMonth;
-    const latest=await persistGranularState();
-    if(latest?.months){
-      firebaseBaselineState=clone(latest);
-      state=normalizePanelState(clone(latest));
-      if(openMonth && state.months?.[openMonth]) state.currentMonth=openMonth;
-    }
+    await persistGranularState();
+    // O estado local já é exatamente o que acabou de ser confirmado. Evita
+    // clonar + normalizar toda a base novamente após cada gravação.
     lastFirebaseSaveLabel=new Date().toLocaleString('pt-BR');
     firebaseBaseEmpty=false;
     firebaseServerLoaded=true;
@@ -6651,18 +6736,18 @@ function restoreTrashRecord(trashId){
   auditEvent('RESTAURAÇÃO',row.label,{targetId:row.sourceId,after:payload});
   saveState(true); render(); toast('RESTAURAÇÃO PREPARADA · SINCRONIZANDO COM FIREBASE...');
 }
+let globalSearchIndexCache=null;
+let globalSearchRenderTimer=null;
 function globalSearchNorm(value){
   return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase();
 }
-function globalSearchRows(query){
-  const q=globalSearchNorm(query); if(!q) return [];
+function invalidateGlobalSearchIndex(){ globalSearchIndexCache=null; }
+function buildGlobalSearchIndex(){
+  if(globalSearchIndexCache) return globalSearchIndexCache;
   const rows=[];
   const add=(type,title,detail,view,meta={})=>{
     const safeTitle=String(title||'').trim(),safeDetail=String(detail||'').trim();
-    const titleKey=globalSearchNorm(safeTitle),detailKey=globalSearchNorm(safeDetail);
-    if(!titleKey.includes(q)&&!detailKey.includes(q)) return;
-    const score=titleKey===q?0:titleKey.startsWith(q)?1:titleKey.includes(q)?2:detailKey.startsWith(q)?3:4;
-    rows.push({type,safeTitle,detail:safeDetail,view,score,...meta,title:safeTitle});
+    rows.push({type,safeTitle,detail:safeDetail,view,...meta,title:safeTitle,titleKey:globalSearchNorm(safeTitle),detailKey:globalSearchNorm(safeDetail)});
   };
   Object.entries(state.months||{}).forEach(([key,m])=>{
     (m.distributions||[]).forEach(d=>add('PRÊMIO',distributionLabel(d),`${labelMonth(key)} · TOTAL ${d.total} · SALDO ${leftTotal(d)} · ${d.description||d.notes||''}`,'distribuicao',{monthKey:key,id:d.id||''}));
@@ -6673,7 +6758,21 @@ function globalSearchRows(query){
   (state.programSchedules||[]).forEach(r=>add('HORÁRIO',r.name||r.program||'PROGRAMA',`${r.station||''} · ${r.startTime||''}–${r.endTime||''} · ${(r.days||[]).join(' ')}`,'horarios',{id:r.id||''}));
   (winnerBankRecords||[]).forEach(r=>add('GANHADOR',r.name||'GANHADOR',`${formatBR(r.date)} · ${r.program||''} · ${winnerResolvedPrize(r)}`,'ganhadores',{id:r.id||'',date:r.date||''}));
   prizeCatalogRows().forEach(entry=>add('CATÁLOGO DE PRÊMIOS',entry.title,`${entry.description||'SEM DESCRIÇÃO PADRÃO'} · ÚLTIMO SORTEIO ${formatBR(entry.lastDrawDate)||'NÃO LOCALIZADO'}`,'premios',{prizeKey:entry.key,date:entry.lastDrawDate||entry.latestUseDate||''}));
-  return rows.sort((a,b)=>a.score-b.score||globalSearchNorm(a.title).localeCompare(globalSearchNorm(b.title))||globalSearchNorm(a.detail).localeCompare(globalSearchNorm(b.detail))).slice(0,100);
+  globalSearchIndexCache=rows;
+  return rows;
+}
+function globalSearchRows(query){
+  const q=globalSearchNorm(query); if(!q) return [];
+  return buildGlobalSearchIndex().reduce((rows,row)=>{
+    if(!row.titleKey.includes(q)&&!row.detailKey.includes(q)) return rows;
+    const score=row.titleKey===q?0:row.titleKey.startsWith(q)?1:row.titleKey.includes(q)?2:row.detailKey.startsWith(q)?3:4;
+    rows.push({...row,score});
+    return rows;
+  },[]).sort((a,b)=>a.score-b.score||a.titleKey.localeCompare(b.titleKey)||a.detailKey.localeCompare(b.detailKey)).slice(0,100);
+}
+function scheduleGlobalSearchRender(){
+  clearTimeout(globalSearchRenderTimer);
+  globalSearchRenderTimer=setTimeout(renderGlobalSearch,75);
 }
 function globalSearchResultHtml(r,index,compact=false){
   if(compact) return `<button class="globalSearchItem" type="button" role="option" data-global-result="${index}"><span class="globalSearchType">${esc(r.type)}</span><span class="globalSearchText"><strong>${esc(r.title)}</strong><span>${esc(r.detail)}</span></span></button>`;
@@ -8163,6 +8262,7 @@ function clearProgramScope(scope){
 }
 
 function render(){
+  invalidateGlobalSearchIndex();
   const repairedInvalidAuto=repairInvalidAutoRadioItems(false);
   if(repairedInvalidAuto.length) saveState(true);
   if(typeof autoConvertDueSchedulesForCurrentMonth==='function'){const convertedCount=autoConvertDueSchedulesForCurrentMonth();if(convertedCount>0)saveState(true);}
@@ -12899,7 +12999,7 @@ bind('winnerRecordSimilarity','click',event=>{
 bind('refreshWinnerBankBtn','click',()=>initWinnerBank(true));
 bind('winnerBankSearch','input',renderWinnerBank); bind('winnerBankStatusFilter','change',renderWinnerBank); bind('winnerBankOrder','change',renderWinnerBank);
 
-bind('globalSearchInput','input',renderGlobalSearch);
+bind('globalSearchInput','input',scheduleGlobalSearchRender);
 bind('globalSearchInput','focus',renderGlobalSearch);
 bind('globalSearchInput','keydown',event=>{
   if(event.key==='Escape'){ closeGlobalSearchDropdown(); return; }
@@ -12968,7 +13068,7 @@ try{
   console.error('INITIAL PANEL RENDER ERROR',error);
 }
 setInterval(()=>{ syncCalendarMonthIfChanged(); },60000);
-setInterval(()=>syncStateFromApi(false),15000);
+setInterval(()=>{ if(!firebaseConnected||!firebaseServerLoaded) syncStateFromApi(false); },30000);
 window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoaded)syncStateFromApi(true);});
 </script>
 
