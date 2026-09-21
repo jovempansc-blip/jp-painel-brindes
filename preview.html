@@ -574,6 +574,27 @@ tbody tr:focus-within td{background:#fff8fa}
 .syncBadge{appearance:none;cursor:pointer}
 .syncBadge:focus-visible,.tab:focus-visible,main button:focus-visible{outline:2px solid rgba(185,13,47,.34);outline-offset:2px}
 
+
+/* AV57.6.6.33 · PREVIEW USA A MESMA IDENTIDADE VISUAL DA DISTRIBUIÇÃO PRINCIPAL */
+#view-distribuicao .distPrizeWrap{max-height:none!important;overflow:visible!important;padding:0!important}
+#view-distribuicao .distPrizeStatusCard{position:relative;width:100%;min-height:58px;padding:8px 10px;border:1px solid #dfe5ec;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(32,43,56,.035);display:flex;flex-direction:column;justify-content:center;gap:3px}
+#view-distribuicao .distPrizeStatusCard.active{border-color:#b9ddc8;background:linear-gradient(180deg,#fbfefc 0%,#f5fbf7 100%);box-shadow:0 0 0 1px rgba(28,132,76,.035),0 2px 8px rgba(28,132,76,.04)}
+#view-distribuicao .distPrizeStatusCard.ended{border-color:#ecc4ca;background:linear-gradient(180deg,#fffdfd 0%,#fff7f8 100%);box-shadow:0 0 0 1px rgba(183,47,64,.025),0 2px 8px rgba(183,47,64,.035)}
+#view-distribuicao .distPrizeStatusCard.scheduled{border-color:#d8dee8;background:linear-gradient(180deg,#fff 0%,#f8f9fb 100%)}
+#view-distribuicao .distPrizeStatusTop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0}
+#view-distribuicao .distPrizeStatusTop strong{flex:1;min-width:0;margin:0!important;font-size:11.5px!important;line-height:1.18!important;color:#202733!important;display:block!important;white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+#view-distribuicao .distLifecycleBadge{flex:0 0 auto;display:inline-flex!important;align-items:center;justify-content:center;margin:0!important;padding:3px 7px;border-radius:999px;font-size:7.6px!important;font-weight:1000!important;letter-spacing:.075em;line-height:1!important;white-space:nowrap!important}
+#view-distribuicao .distLifecycleBadge.active{background:#eaf7ef;color:#147444;border:1px solid #c5e6d1}
+#view-distribuicao .distLifecycleBadge.ended{background:#fff0f2;color:#b3283d;border:1px solid #f0c7cd}
+#view-distribuicao .distLifecycleBadge.scheduled{background:#f0f3f7;color:#596577;border:1px solid #dbe1e9}
+#view-distribuicao .distPrizeSubtitle{display:block!important;margin:0!important;font-size:9.4px!important;line-height:1.15!important;font-weight:800!important;color:#596577!important;white-space:normal!important;overflow:visible!important}
+#view-distribuicao .distPrizePeriodClean{display:block!important;margin:1px 0 0!important;font-size:8.4px!important;line-height:1.1!important;font-weight:900!important;letter-spacing:.025em;color:#6d7785!important;text-transform:uppercase;white-space:normal!important;overflow:visible!important}
+#view-distribuicao .distLifecycleRow.active td{background-color:rgba(246,251,248,.22)}
+#view-distribuicao .distLifecycleRow.ended td{background-color:rgba(255,248,249,.25)}
+#view-distribuicao .distLifecycleRow.active td.distPrizeCell,#view-distribuicao .distLifecycleRow.ended td.distPrizeCell{background:#f8f9fc!important}
+#view-distribuicao .distGenerateCol{width:68px!important}
+#view-distribuicao .distActionCol{width:92px!important}
+#view-distribuicao .directionGenerateReadonly{height:30px;padding:0 10px;border:1px solid #dce2eb;border-radius:10px;background:#f5f7fa;color:#8993a0;font-size:8px;font-weight:1000;cursor:not-allowed}
 </style>
 <meta name="direction-build-marker" content="AV-57.6.6.10-DIRECAO-ESPELHO-REAL-POA">
 </head>
@@ -1090,16 +1111,40 @@ function directionPeriodIcon(key){return key==='manha'?'☀':key==='tarde'?'☼'
 function directionWeekItems(date){let rows=directionAllItems().filter(i=>i.date===date&&normalizeChannel(i.channel)==='RÁDIO'&&stationMatches(i.station||'JP1017')).sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot)||upper(a.program||'').localeCompare(upper(b.program||'')));if(directionDrilldown?.tab==='programacao'&&directionDrilldown.kind==='distribution'&&directionDrilldown.key)rows=rows.filter(i=>i.distributionId===directionDrilldown.key);return rows;}
 function directionProgramCard(item,date){const program=resolvedProgramForItem(item,date),title=itemTitle(item,currentMonth),current=date===liveTodayISO()&&Math.floor(slotMinutes(item.slot)/60)===liveNow().getHours(),promo=item.sourceType==='promo-result';return `<article class="directionProgramCard ${current?'current':''} ${promo?'promoResult':''}"><div class="directionProgramTime">${esc(formatTime(item.slot))}</div><div class="directionProgramInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="directionProgramMeta"><span class="badge">${esc(stationName(item.station))}</span>${statusBadge(item.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="directionProgramQty">QTD <b>${Math.max(1,num(item.qty)||1)}</b></span></div></div></article>`;}
 
+function directionDistributionLifecycleStatus(d){
+  const start=d?.startDate||d?.date||`${currentMonth}-01`,end=d?.endDate||d?.startDate||d?.date||start,today=liveTodayISO();
+  if(end&&end<today)return{key:'ended',label:'ENCERRADO'};
+  if(start&&start>today)return{key:'scheduled',label:'PROGRAMADO'};
+  return{key:'active',label:'ATIVO'};
+}
+function directionDistributionPrizeIdentityHtml(d){
+  const lifecycle=directionDistributionLifecycleStatus(d),title=upper(d?.title||''),prize=directionDistLabel(d),extra=title&&title!==prize?`<span class="distPrizeSubtitle">${esc(title)}</span>`:'';
+  return `<div class="distPrizeStatusCard ${lifecycle.key}"><div class="distPrizeStatusTop"><strong>${esc(prize)}</strong><span class="distLifecycleBadge ${lifecycle.key}">${lifecycle.label}</span></div>${extra}<em class="distPrizePeriodClean">${esc(directionDistPeriod(d))}</em></div>`;
+}
+function directionMonthRealizedUnits(distId,monthKey=currentMonth){
+  if(!distId||!monthKey)return 0;const seen=new Set();let total=0;
+  Object.values(state.months||{}).forEach(m=>(m?.items||[]).forEach(item=>{
+    if(!item||item.distributionId!==distId||String(item.date||'').slice(0,7)!==monthKey||upper(item.status||'')!=='REALIZADO')return;
+    const key=String(item.id||`${item.date}|${item.slot}|${item.prize||''}`);if(seen.has(key))return;seen.add(key);
+    const units=Number(item.stockUnits);total+=Number.isFinite(units)&&units>0?units:Math.max(1,num(item.qty)||1);
+  }));return total;
+}
+function directionExecutionBalanceCell(d){
+  const realized=directionMonthRealizedUnits(d?.id,currentMonth),balance=Math.max(0,num(d?.total))-realized,unit=directionDeliveryUnit(d);
+  if(balance<0)return `<div class="directionDistValue"><span class="badge cancelado">DÉFICIT ${Math.abs(balance)}</span><small>${realized} REALIZ.</small></div>`;
+  if(unit==='pair'){const pairs=Math.floor(balance/2),odd=balance%2;return `<div class="directionDistValue"><span class="badge noar">${pairs} PAR${pairs===1?'':'ES'}${odd?' +1':''}</span><small>${realized} REALIZ.</small></div>`;}
+  return `<div class="directionDistValue"><span class="badge noar">${balance}</span><small>${realized} REALIZ.</small></div>`;
+}
 function renderDistribuicao(){
   let rows=[...(monthData().distributions||[])].sort((a,b)=>directionDistLabel(a).localeCompare(directionDistLabel(b)));
   if(directionDrilldown?.tab==='distribuicao'){
-    if(directionDrilldown.kind==='saldo')rows=rows.filter(r=>distributionBalance(r)<=2);
+    if(directionDrilldown.kind==='saldo')rows=rows.filter(r=>(Math.max(0,num(r?.total))-directionMonthRealizedUnits(r?.id,currentMonth))<=2);
     else if(directionDrilldown.kind==='distribution'&&directionDrilldown.key)rows=rows.filter(r=>String(r.id||directionDistLabel(r))===directionDrilldown.key);
   }
   const body=rows.length?rows.map(d=>{
-    const prog=directionProgrammedCount(d.id),title=directionDistTitle(d);
-    return `<tr class="${directionDrilldown?.tab==='distribuicao'?'drillTarget':''}">
-      <td class="distPrizeCell"><div class="distPrizeWrap"><strong>${esc(directionDistLabel(d))}</strong>${title?`<span>${esc(title)}</span>`:''}<em>${esc(directionDistPeriod(d))}</em></div></td>
+    const prog=directionProgrammedCount(d.id),lifecycle=directionDistributionLifecycleStatus(d);
+    return `<tr class="distLifecycleRow ${lifecycle.key} ${directionDrilldown?.tab==='distribuicao'?'drillTarget':''}">
+      <td class="distPrizeCell"><div class="distPrizeWrap">${directionDistributionPrizeIdentityHtml(d)}</div></td>
       <td class="num"><div class="directionDistValue"><b>${num(d.total)}</b></div></td>
       <td class="num">${directionDeliveryCell(d)}</td>
       <td class="num">${directionSegmentCell(d,'app')}</td>
@@ -1110,13 +1155,15 @@ function renderDistribuicao(){
       <td class="num">${directionSegmentCell(d,'rs')}</td>
       <td class="num">${directionReservationCell(d)}</td>
       <td class="num"><div class="directionDistValue"><b>${prog}</b></div></td>
-      <td class="num">${directionBalanceCell(d)}</td>
+      <td class="num">${directionExecutionBalanceCell(d)}</td>
       <td class="num">${directionReturnCell(d)}</td>
+      <td class="num"><button class="directionGenerateReadonly" type="button" disabled>GERAR</button></td>
       <td><button class="directionReadonlyAction" type="button" title="VER GRADE" aria-label="VER GRADE" onclick="directionViewDistSchedule('${esc(d.id)}','${esc(directionDistLabel(d))}')">▦</button></td>
     </tr>`;
-  }).join(''):`<tr><td colspan="14"><div class="empty">SEM DISTRIBUIÇÕES PARA O FILTRO ATUAL.</div></td></tr>`;
-  $("view-distribuicao").innerHTML=`${offlineNotice()}${drillContextBar('distribuicao')}<section class="panel"><div class="panelHead"><div><h2>DISTRIBUIÇÃO GERAL</h2><p>CONTROLE MASTER DO MÊS · VISUALIZAÇÃO DA DIREÇÃO.</p></div></div><div class="panelBody"><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th>AÇÕES</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
+  }).join(''):`<tr><td colspan="15"><div class="empty">SEM DISTRIBUIÇÕES PARA O MÊS SELECIONADO.</div></td></tr>`;
+  $("view-distribuicao").innerHTML=`${offlineNotice()}${drillContextBar('distribuicao')}<section class="panel"><div class="panelHead"><div><h2>DISTRIBUIÇÃO GERAL</h2><p>MESMA DISTRIBUIÇÃO DO PAINEL PRINCIPAL · VISUALIZAÇÃO DA DIREÇÃO.</p></div></div><div class="panelBody"><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
 }
+
 function renderProgramacao(){
   const monthKey=currentMonth||String($("dateFilter").value||liveTodayISO()).slice(0,7);
   const allDates=directionMonthDates(monthKey),weeks=directionMonthWeeks(monthKey),selectedWeekKey=directionResolveProgramWeek(monthKey);
