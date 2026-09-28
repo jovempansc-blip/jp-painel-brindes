@@ -2524,7 +2524,7 @@ function newsPromoPool(date=''){
   Object.entries(state.months||{}).forEach(([month,m])=>newsRows(m?.promos).forEach((row,index)=>{
     if(!row)return;const id=String(row.id||`LEGACY_promos_${month}_${index}`);if(pinned.has(id))return;const current=map.get(id);if(!current){map.set(id,row);return;}const a=Date.parse(current.monthlyUpdatedAt||current.updatedAt||current.createdAt||'')||0,b=Date.parse(row.monthlyUpdatedAt||row.updatedAt||row.createdAt||'')||0;if(b>=a)map.set(id,row);
   }));
-  const rows=[...map.values()];return date?rows.filter(row=>promoDateAllowed(row,date)):rows;
+  const rows=[...map.values()];return date?rows.filter(row=>studioMaterialInForce(row,date)):rows;
 }
 function studioPublishedPrizeItems(){return newsConsolidatedCollection('items');}
 function pad(n){return String(n).padStart(2,'0');}
@@ -2602,13 +2602,9 @@ function promoRefDate(p){return p.drawDate||p.startDate||'';}
 function promoHour(p){return slotHour(p.drawTime||'');}
 function promoStartDate(p){return p?.startDate || p?.date || p?.drawDate || p?.resultDate || '';}
 function promoEndDate(p){return p?.endDate || p?.drawDate || p?.resultDate || p?.startDate || p?.date || '';}
-function promoDateAllowed(p,date){
-  const start=promoStartDate(p);
-  const end=promoEndDate(p);
-  if(start && date<start) return false;
-  if(end && date>end) return false;
-  return true;
-}
+function studioMaterialInForce(p,date){const start=promoStartDate(p),end=promoEndDate(p);return !!p&&(!start||date>=start)&&(!end||date<=end);}
+function promoDateAllowed(p,date){return studioMaterialInForce(p,date);}
+function studioValidityLabel(p){const start=promoStartDate(p),end=promoEndDate(p);if(!start&&!end)return 'VIGÊNCIA NÃO INFORMADA';return `VIGÊNCIA: ${formatBR(start||end)} A ${formatBR(end||start)}`;}
 function promoHourAllowed(p,item){
   const itemTime=timeToHHMM(item?.slot||'');
   const hour=itemTime.slice(0,2);
@@ -2915,6 +2911,11 @@ function pautasForItemHour(item,includeRead=false,kind='all'){return [...(newsPr
 function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
 function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
 function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
+function buildStudioReadCenter(item){
+  const rows=allPautasForItemHour(item,true),pending=rows.filter(p=>!isPromoResolvedForHour(p,item)),program=upper(programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||item?.program||'PROGRAMA');
+  const cards=rows.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||'')==='PAUTA'?'PAUTA':'PROMOÇÃO'),typeClass=isMerchan(p)?'merchan':'pauta',name=upper(p?.name||p?.title||type),client=upper(p?.opecClientName||p?.clientName||'');return `<button class="studioReadCenterCard ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}"><span class="studioReadType ${typeClass}">${esc(type)}</span><b>${esc(client&&isMerchan(p)?`${client} · ${name}`:name)}</b><small>PROGRAMA: ${esc(program)} · HORÁRIO: ${esc(formatStudioTime(item?.slot||''))}</small><em>${esc(studioValidityLabel(p))}</em><small>${read?'LEITURA CONFIRMADA':failed?'NÃO REALIZADA':`PENDENTE${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · CLIQUE PARA ABRIR`}</small></button>`;}).join('');
+  return `<aside class="studioReadCenter"><div class="studioReadCenterHead"><div><strong>LEITURAS DO HORÁRIO</strong><span>MATERIAIS VÁLIDOS PARA ESTE PROGRAMA</span></div><span class="studioReadPendingCount">${pending.reduce((sum,p)=>sum+studioAV57Progress(p,item).remaining,0)} PENDENTE(S)</span></div><div class="studioReadSlot"><strong>${esc(formatStudioTime(item?.slot||''))}</strong><span>${esc(program)}</span></div><div class="studioReadCenterList">${cards||'<div class="studioReadCenterEmpty">SEM PROMOÇÃO, PAUTA OU MERCHAN VÁLIDO PARA ESTE HORÁRIO.</div>'}</div></aside>`;
+}
 function studioAV57MissedLogs(p,item){
   const date=item?.date||'',slot=studioAV57HourSlot(item?.slot||''),program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');
   return (Array.isArray(p?.missedLog)?p.missedLog:[]).filter(log=>{if(!log||log.cancelledAt)return false;if(normalizeStationValue(log.station||STUDIO_STATION)!==normalizeStationValue(STUDIO_STATION))return false;if((log.date||'')!==date)return false;const logSlot=studioAV57HourSlot(log.slot||log.scheduledHour||'');if(logSlot&&logSlot!==slot)return false;const lp=upper(log.program||'');if(lp&&program&&!genericProgramName(lp)&&lp!==program)return false;return true;}).sort((a,b)=>Number(a.occurrenceIndex||0)-Number(b.occurrenceIndex||0)||String(a.markedAt||'').localeCompare(String(b.markedAt||'')));
@@ -2926,7 +2927,7 @@ function studioMissedReasonForHour(p,item){const rows=studioAV57MissedLogs(p,ite
 function studioAV57Progress(p,item){const required=studioRequiredReadsForHour(p,item),done=Math.min(required,studioReadCountForHour(p,item)),missed=Math.min(Math.max(0,required-done),studioMissedCountForHour(p,item));return{required,done,missed,remaining:Math.max(0,required-done-missed),label:required>1?`${done}/${required}`:(done?'OK':missed?'NÃO REALIZADA':'PENDENTE')};}
 function studioOpecContextLabel(p){if(!isMerchan(p)||studioOpecTextType(p)==='legacy')return studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE · DISTRIBUIÇÃO BALANCEADA':'';const base=studioOpecTextType(p)==='promotional'?`PROMOCIONAL ATÉ ${formatBR(p.endDate||p.drawDate||'')} · RETORNO INSTITUCIONAL AUTOMÁTICO`:`INSTITUCIONAL · VERSÃO ${studioOpecVersion(p)}`;return `${base} · ${studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE':'HORÁRIO FIXO'}`;}
 function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),clientLabel=upper(p.opecClientName||p.clientName||p.client||p.advertiser||''),tickerLabel=isMerchan(p)?(clientLabel||name):name,typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');const register=`LIDO: ${time}${progress.required>1?` · ${progress.done}/${progress.required}`:''}`;return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(tickerLabel+' · '+register)}"><span class="busTickerViewport"><span class="busTickerTrack"><span class="busTickerSeq"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span><span class="busTickerSeq" aria-hidden="true"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span></span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(tickerLabel)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+tickerLabel)}"><span>${esc(tickerLabel)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
-function buildPautaList(item,kind){const pautas=pautasForItemHour(item,true,kind),emptyLabel=kind==='merchan'?'SEM MERCHAN PROGRAMADO PARA ESTE HORÁRIO':'SEM PROMO / PAUTA PROGRAMADA PARA ESTE HORÁRIO';if(!pautas.length)return `<button class="promoListItem" type="button">${emptyLabel}</button>`;return pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;}).join('');}
+function buildPautaList(item,kind){const pautas=pautasForItemHour(item,true,kind),emptyLabel=kind==='merchan'?'SEM MERCHAN PROGRAMADO PARA ESTE HORÁRIO':'SEM PROMO / PAUTA PROGRAMADA PARA ESTE HORÁRIO';if(!pautas.length)return `<button class="promoListItem" type="button">${emptyLabel}</button>`;return pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${studioValidityLabel(p)} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;}).join('');}
 function buildPromoList(item){return buildPautaList(item,'promo');}
 function studioProgramMerchanRows(item){
   const date=item?.date||todayISO(),program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');
@@ -2942,7 +2943,7 @@ function buildMerchanList(item){
 }
 function studioProgramMerchanClick(event,promoId,date,slot){if(event){event.preventDefault();event.stopPropagation();}hideStudioShortcutLists('');jumpToStudioPending(date,slot,promoId);}
 window.studioProgramMerchanClick=studioProgramMerchanClick;
-function buildHourReadList(item){const pautas=allPautasForItemHour(item,true);if(!pautas.length)return `<div class="promoListItem">SEM PROMOÇÕES OU MERCHAN PROGRAMADOS PARA ESTE HORÁRIO</div>`;return `<div class="hourReadList">${pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''}</small></button>`;}).join('')}</div>`;}
+function buildHourReadList(item){const pautas=allPautasForItemHour(item,true);if(!pautas.length)return `<div class="promoListItem">SEM PROMOÇÕES OU MERCHAN PROGRAMADOS PARA ESTE HORÁRIO</div>`;return `<div class="hourReadList">${pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${studioValidityLabel(p)}</small></button>`;}).join('')}</div>`;}
 
 let studioPendingMissedContext=null;
 function studioPendingBellRows(){
@@ -3505,7 +3506,7 @@ function render(){
   const winnerBlock = item.winnerName ? `<div class="winnerBox"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
-      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1><small class="rotationInfo av57 studioValidityInfo">${esc(studioValidityLabel(promo))}</small>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
       <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required>1?`${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done+1}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}`:''}</button></div>
@@ -3518,6 +3519,7 @@ function render(){
       <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'EDITAR GANHADOR' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'EDITAR GANHADOR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
     `;
   $('pautaPanel').innerHTML=`
+    <div class="studioLayoutShell"><div class="studioMainColumn">
     <div class="pautaHead">
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
       <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PROMO / PAUTA') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
@@ -3539,7 +3541,7 @@ function render(){
     </div>
     ${buildStudioContext(item,promo)}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
-    ${buildPromoFooter(item)}`;
+    ${buildPromoFooter(item)}</div>${buildStudioReadCenter(item)}</div>`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
@@ -3556,7 +3558,7 @@ function render(){
   const promoBtn=$('promoListBtn'); if(promoBtn) promoBtn.addEventListener('click',()=>{$('promoList')?.classList.toggle('show');$('merchanList')?.classList.remove('show');});
   const merchanBtn=$('merchanListBtn'); if(merchanBtn) merchanBtn.addEventListener('click',()=>{$('merchanList')?.classList.toggle('show');$('promoList')?.classList.remove('show');});
   const historyBtn=$('historyListBtn'); if(historyBtn) historyBtn.addEventListener('click',()=>{$('promoList')?.classList.remove('show');$('merchanList')?.classList.remove('show');openHistoryModal();});
-  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>{if(btn.dataset.programSlot)btn.onclick=e=>studioProgramMerchanClick(e,btn.dataset.promoId,btn.dataset.programDate,btn.dataset.programSlot);else btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId);});
+  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioReadCenterCard[data-promo-id]').forEach(btn=>{if(btn.dataset.programSlot)btn.onclick=e=>studioProgramMerchanClick(e,btn.dataset.promoId,btn.dataset.programDate,btn.dataset.programSlot);else btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId);});
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
@@ -3574,7 +3576,7 @@ document.addEventListener('click',e=>{
     if(shortcut.id==='merchanListBtn') return studioShortcutClick(e,'merchan');
     if(shortcut.id==='historyListBtn') return studioShortcutClick(e,'history');
   }
-  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]');
+  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioReadCenterCard[data-promo-id]');
   if(pauta){if(pauta.dataset.programSlot)return studioProgramMerchanClick(e,pauta.dataset.promoId,pauta.dataset.programDate,pauta.dataset.programSlot);return studioPautaItemClick(e,pauta.dataset.promoId);}
 });
 

@@ -3680,6 +3680,27 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 .distPrizeFilterMenu button.active[data-dist-lifecycle="active"]{background:#eef8f2;color:#167845}
 .distPrizeFilterMenu button.active[data-dist-lifecycle="ended"]{background:#fff1f3;color:#b4233b}
 .distPrizeGroupHint{display:block;margin-top:3px;color:#8b96a4;font-size:7.5px;font-weight:900;letter-spacing:.025em}
+
+/* === AV57.6.6.36 · PROMO / MERCHAN CENTRAL OPERACIONAL === */
+.promoHubPanel{overflow:visible}
+.promoHubHead{align-items:center}
+.promoHubTitle{display:flex;align-items:center;gap:12px}.promoHubTitle::before{content:"";display:block;width:5px;height:50px;border-radius:999px;background:linear-gradient(180deg,#c9002b,#8d001d)}
+.promoHubTitle h2{font-size:30px!important;letter-spacing:-.045em!important}.promoHubTitle p{max-width:760px}
+.promoHubKpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.promoSummaryCard{appearance:none;width:100%;text-align:left;border:1px solid #e1e6ee;border-radius:18px;background:#f8fafc;padding:14px 15px;display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;cursor:pointer;transition:.14s ease}
+.promoSummaryCard:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(17,23,34,.065);background:#fff}.promoSummaryCard.active{border-color:#efbac6;background:#fff5f7}
+.promoSummaryIcon{grid-row:1/3;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#eef2f7;color:#5f6d80;font-size:17px}.promoSummaryCard[data-quick="active"] .promoSummaryIcon,.promoSummaryCard[data-quick="merchan"] .promoSummaryIcon{background:#fff0f4;color:#b90d2f}
+.promoSummaryCard span{display:block;color:#667283;font-size:9px;font-weight:1000;letter-spacing:.06em}.promoSummaryCard strong{display:block;color:#171c26;font-size:24px;line-height:1;letter-spacing:-.04em}.promoSummaryArrow{grid-column:3;grid-row:1/3;color:#8792a0;font-size:18px}
+.promoHubToolbar{display:grid;grid-template-columns:minmax(260px,1.7fr) repeat(4,minmax(110px,.55fr)) minmax(138px,.7fr) auto;gap:8px;align-items:end;margin-bottom:12px;padding:10px;border:1px solid #e4e9f0;border-radius:18px;background:#fafbfd}
+.promoHubToolbar .field{min-width:0}.promoHubToolbar .field label{font-size:8.5px}.promoHubToolbar .control{min-height:38px;padding:8px 10px;border-radius:12px;font-size:10px}.promoSearchField{position:relative}.promoSearchField::before{content:'⌕';position:absolute;left:12px;bottom:9px;color:#6c7888;font-size:18px;z-index:1}.promoSearchField .control{padding-left:37px}
+#addPromoBtn.promoNewMainBtn{height:38px;min-height:38px;border-radius:12px;padding:0 15px;font-size:10px;box-shadow:0 7px 16px rgba(185,13,47,.13)}
+.promoCampaignTable{min-width:1130px!important}.promoCampaignTable col.pctType{width:9%}.promoCampaignTable col.pctCampaign{width:22%}.promoCampaignTable col.pctStation{width:10%}.promoCampaignTable col.pctPeriod{width:13%}.promoCampaignTable col.pctProgram{width:21%}.promoCampaignTable col.pctExecution{width:11%}.promoCampaignTable col.pctStatus{width:7%}.promoCampaignTable col.pctActions{width:7%}
+.promoCampaignTable tbody tr:hover td{background:#fffafb!important}.campaignExecutionBox{display:grid;gap:5px;min-width:84px}.campaignExecutionBox strong{font-size:11px;color:#273140}.campaignExecutionBox small{font-size:7.5px;color:#798494}.campaignExecutionBar{height:5px;border-radius:999px;background:#edf0f4;overflow:hidden}.campaignExecutionBar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#b90d2f,#d94261)}
+.badge.future{background:#edf6ff;color:#1767ad;border-color:#c5ddf3}.badge.draft{background:#fff5e6;color:#a85d00;border-color:#ffd7a8}.badge.cancelled{background:#fff1f3;color:#ad1728;border-color:#f3b5c0}.badge.archived,.badge.ended{background:#f2f4f7;color:#67717f;border-color:#dce2eb}
+.promoActions.merchanActions{min-width:116px}.promoActionText{width:auto!important;min-width:auto!important;padding:0 8px!important;font-size:7.5px!important;font-weight:1000!important}.promoActionText .iconGlyph{margin-right:4px}
+.promoStartChoices{grid-template-columns:repeat(3,minmax(0,1fr))!important}.promoStartChoice.merchan{border-top:3px solid #c77b19}.promoStartChoice.merchan em{background:#fff5e6;color:#9d5a05}
+@media(max-width:1150px){.promoHubToolbar{grid-template-columns:repeat(3,minmax(150px,1fr))}.promoSearchField{grid-column:1/-1}.promoHubKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.promoHubToolbar{grid-template-columns:1fr 1fr}.promoHubKpis{grid-template-columns:1fr 1fr}.promoStartChoices{grid-template-columns:1fr!important}.promoHubTitle h2{font-size:24px!important}}
 </style>
 </head>
 <body>
@@ -3782,20 +3803,22 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
     </section>
 
     <section class="view" id="view-digital">
-      <div class="panel">
-        <div class="panelHead">
-          <div><h2>PROMO / MERCHAN</h2><p>CONTROLE DAS PROMOÇÕES, MERCHANS, SORTEIOS E PAUTAS PROMOCIONAIS PARA O LOCUTOR.</p></div>
-          <div class="panelActions"><button class="btn red iconBtn promoAddIconBtn" id="addPromoBtn" type="button" title="NOVA PROMOÇÃO / PAUTA" aria-label="NOVA PROMOÇÃO / PAUTA" data-tip="NOVO CADASTRO"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVA PROMOÇÃO</span></button></div>
+      <div class="panel promoHubPanel">
+        <div class="panelHead promoHubHead">
+          <div class="promoHubTitle"><div><h2>PROMO / MERCHAN</h2><p>CADASTRE, ACOMPANHE E GERENCIE PROMOÇÕES, PAUTAS E MERCHANS PUBLICADOS PARA OS ESTÚDIOS.</p></div></div>
         </div>
         <div class="panelBody">
-          <div class="promoSummaryGrid" id="promoSummaryGrid"></div>
-          <div class="filterBar promoFilterBar">
-            <div class="field"><label>TIPO</label><select class="control" id="promoTypeFilter"><option value="">TODOS</option><option value="promo">PROMOÇÕES</option><option value="merchan">MERCHANS</option><option value="pauta">PAUTAS ESPECIAIS</option><option value="aviso">AVISOS</option></select></div>
+          <div class="promoHubKpis promoSummaryGrid" id="promoSummaryGrid"></div>
+          <div class="promoHubToolbar">
+            <div class="field promoSearchField"><label>BUSCA RÁPIDA</label><input class="control" id="promoSearchInput" autocomplete="off" placeholder="CLIENTE, CAMPANHA, PROGRAMA OU TEXTO"></div>
             <div class="field"><label>RÁDIO</label><select class="control" id="promoStationFilter"><option value="">TODAS</option><option value="JP1017">JOVEMPAN</option><option value="JPNEWS983">JPNEWS</option><option value="ALL">AMBAS</option></select></div>
-            <div class="field"><label>STATUS</label><select class="control" id="promoStatusFilter"><option value="">TODOS</option><option value="active">ATIVAS</option><option value="paused">PAUSADAS</option><option value="ended">ENCERRADAS</option></select></div>
-            <div class="field"><label>ORDENAR</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option></select></div>
+            <div class="field"><label>TIPO</label><select class="control" id="promoTypeFilter"><option value="">TODOS</option><option value="promo">PROMOÇÕES</option><option value="pauta">PAUTAS</option><option value="merchan">MERCHANS</option><option value="aviso">AVISOS</option></select></div>
+            <div class="field"><label>STATUS</label><select class="control" id="promoStatusFilter"><option value="">TODOS</option><option value="active">ATIVAS</option><option value="future">FUTURAS</option><option value="paused">PAUSADAS</option><option value="draft">RASCUNHOS</option><option value="ended">ENCERRADAS</option><option value="cancelled">CANCELADAS</option><option value="archived">ARQUIVADAS</option></select></div>
+            <div class="field"><label>PERÍODO</label><input class="control" type="month" id="promoPeriodFilter"></div>
+            <div class="field"><label>ORDENAR</label><select class="control" id="promoOrderFilter"><option value="created">CADASTRO</option><option value="alpha">ALFABÉTICA</option><option value="end">ENCERRAMENTO</option></select></div>
+            <button class="btn red promoNewMainBtn" id="addPromoBtn" type="button">＋ NOVO CADASTRO</button>
           </div>
-          <div class="tableWrap"><table class="promoMainTable promoCampaignTable"><colgroup><col class="pctType"><col class="pctCampaign"><col class="pctStation"><col class="pctPeriod"><col class="pctProgram"><col class="pctExecution"><col class="pctStatus"><col class="pctActions"></colgroup><thead><tr><th>TIPO</th><th>CLIENTE / CAMPANHA</th><th>RÁDIO</th><th>VEICULAÇÃO</th><th>PROGRAMA / HORÁRIOS</th><th>EXECUÇÃO</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div>
+          <div class="tableWrap"><table class="promoMainTable promoCampaignTable"><colgroup><col class="pctType"><col class="pctCampaign"><col class="pctStation"><col class="pctPeriod"><col class="pctProgram"><col class="pctExecution"><col class="pctStatus"><col class="pctActions"></colgroup><thead><tr><th>TIPO</th><th>CLIENTE / CAMPANHA</th><th>RÁDIO</th><th>VIGÊNCIA</th><th>PROGRAMA / HORÁRIOS</th><th>EXECUÇÃO</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="promoTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -4353,6 +4376,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
     <div class="promoStartChoices">
       <button class="promoStartChoice promo" type="button" data-promo-start-kind="promo" onclick="startPromoRegistration('promo')"><b>PROMOÇÃO</b><small>PRÊMIO VINCULADO À DISTRIBUIÇÃO, SORTEIO, GANHADORES, DATA/HORA DO RESULTADO E PRAZO DE RETIRADA.</small><em>CONTINUAR COMO PROMOÇÃO</em></button>
       <button class="promoStartChoice pauta" type="button" data-promo-start-kind="pauta" onclick="startPromoRegistration('pauta')"><b>PAUTA</b><small>LEITURA OPERACIONAL COM PROGRAMA, HORÁRIOS, DIAS, FREQUÊNCIA E RODÍZIO INTELIGENTE, SEM MECÂNICA DE SORTEIO.</small><em>CONTINUAR COMO PAUTA</em></button>
+      <button class="promoStartChoice merchan" type="button" data-promo-start-kind="merchan" onclick="startPromoRegistration('merchan')"><b>MERCHAN</b><small>ABRE O OMR PARA CADASTRO, PLANEJAMENTO, RODÍZIO, VERSÕES DE TEXTO E RELATÓRIO DE LEITURAS.</small><em>ABRIR OMR</em></button>
     </div>
   </section>
 </div>
@@ -6445,6 +6469,7 @@ function alignPanelMonthWithInput({persist=false}={}){
 }
 function commitMonthInputSelection(){
   if(!alignPanelMonthWithInput({persist:false})) return;
+  if($('promoPeriodFilter')) $('promoPeriodFilter').value=state.currentMonth;
   render();
   toast('MÊS ABERTO.');
 }
@@ -8964,12 +8989,18 @@ function promoTypeClass(p){
   return promoTypeKey(p)==='merchan' ? 'merchan' : 'promo';
 }
 function promoStatusData(p){
+  const status=norm(p?.status||'PENDENTE');
+  if(p?.opecArchived)return {label:'ARQUIVADA',cls:'archived',key:'archived'};
+  if(String(p?.opecPublicationStatus||'published').toLowerCase()==='draft')return {label:'RASCUNHO',cls:'draft',key:'draft'};
+  if(status==='CANCELADO'||status==='CANCELADA')return {label:'CANCELADA',cls:'cancelled',key:'cancelled'};
+  if(p?.opecForceEnded)return {label:'ENCERRADA',cls:'ended',key:'ended'};
   if(p?.opecPaused)return {label:'PAUSADA',cls:'amber',key:'paused'};
-  const now = new Date();
-  let isEnded = false;
-  const endDate = p.drawDate || p.endDate || '';
-  if(endDate){const dt = new Date(`${endDate}T${p.drawTime || '23:59'}:00`);if(!Number.isNaN(dt.getTime())) isEnded = dt < now;}
-  return isEnded ? {label:'ENCERRADA', cls:'green', key:'ended'} : {label:'ATIVA', cls:'blue', key:'active'};
+  const today=todayISO();
+  const startDate=p?.startDate||p?.date||p?.drawDate||'';
+  const endDate = p.endDate || p.drawDate || p.resultDate || startDate || '';
+  if(startDate&&startDate>today)return {label:'FUTURA',cls:'future',key:'future'};
+  if(endDate&&endDate<today)return {label:'ENCERRADA',cls:'ended',key:'ended'};
+  return {label:'ATIVA',cls:'green',key:'active'};
 }
 function promoReadHoursLabel(p){
   if((p.readMode||'all')==='selected'){
@@ -8978,17 +9009,52 @@ function promoReadHoursLabel(p){
   }
   return 'TODOS OS HORÁRIOS';
 }
-function renderPromoSummary(){
-  const host=$('promoSummaryGrid');
-  if(!host) return;
-  const rows=monthData().promos||[];
-  const count=key=>rows.filter(p=>promoTypeKey(p)===key).length;
-  host.innerHTML=[
-    ['PROMOÇÕES',count('promo')],
-    ['MERCHANS',count('merchan')],
-    ['PAUTAS ESPECIAIS',count('pauta')],
-    ['AVISOS',count('aviso')]
-  ].map(([label,total])=>`<div class="promoSummaryCard"><span>${label}</span><strong>${total}</strong></div>`).join('');
+function promoStationMatchesFilter(p,filter){
+  if(!filter)return true;
+  const station=stationCanonical(p?.station||'JP1017');
+  if(filter==='ALL')return station==='ALL';
+  return station==='ALL'||station===stationCanonical(filter);
+}
+function promoPeriodMatches(p,monthKey){
+  if(!monthKey)return true;
+  const start=(p?.startDate||p?.drawDate||monthKey).slice(0,7);
+  const end=(p?.endDate||p?.drawDate||p?.startDate||monthKey).slice(0,7);
+  return start<=monthKey&&end>=monthKey;
+}
+function promoSearchHaystack(p){
+  const cc=promoClientCampaignData(p),programs=promoProgramConfigsDisplay(p).map(c=>`${c.program} ${c.hours.join(' ')}`).join(' ');
+  return norm(`${cc.client} ${cc.campaign} ${p?.name||''} ${p?.title||''} ${p?.description||''} ${programs} ${promoStationDisplay(p)} ${promoTypeDisplay(p)}`);
+}
+function promoExecutionData(p){
+  const reads=Array.isArray(p?.readLog)?p.readLog.filter(log=>log&&(log.confirmedAt||log.readAt)):[];
+  const done=reads.length;
+  const start=p?.startDate||'',end=p?.endDate||p?.drawDate||start;
+  let planned=0;
+  if(Array.isArray(p?.occurrences)&&p.occurrences.length&&promoTypeKey(p)==='promo') planned=p.occurrences.filter(o=>normalizeStatus(o?.status)!=='CANCELADO').length;
+  const configuredHours=promoProgramConfigsDisplay(p).reduce((sum,c)=>sum+Math.max(1,c.hours.length),0)||Math.max(1,(p?.readHours||[]).length);
+  if(!planned&&start&&end){const a=new Date(`${start}T12:00:00`),b=new Date(`${end}T12:00:00`);const days=Math.max(1,Math.floor((b-a)/86400000)+1);const scope=String(p?.promoFrequencyScope||p?.opecFrequencyScope||'').toLowerCase();const count=Math.max(1,Number(p?.promoFrequencyCount||p?.opecFrequencyCount||1)||1);planned=scope==='period'?Math.max(1,Number(p?.promoPeriodTotal||p?.opecPeriodTotal||1)||1):scope==='day'?days*count:scope==='program'?days*count*Math.max(1,promoProgramConfigsDisplay(p).length):scope==='hour'?days*count*configuredHours:days*configuredHours;}
+  planned=Math.max(done,planned||0);
+  return {done,planned,pct:planned?Math.min(100,Math.round(done/planned*100)):0};
+}
+function promoQuickFilter(kind){
+  if(kind==='active'){$('promoStatusFilter').value='active';$('promoTypeFilter').value='';}
+  if(kind==='pauta'){$('promoTypeFilter').value='pauta';$('promoStatusFilter').value='';}
+  if(kind==='merchan'){$('promoTypeFilter').value='merchan';$('promoStatusFilter').value='';}
+  if(kind==='ended'){$('promoStatusFilter').value='ended';$('promoTypeFilter').value='';}
+  renderPromos();
+}
+function renderPromoSummary(monthKey=state.currentMonth){
+  const host=$('promoSummaryGrid');if(!host)return;
+  const rows=promoSnapshotsForMonth(monthKey||state.currentMonth);
+  const countStatus=key=>rows.filter(p=>promoStatusData(p).key===key).length;
+  const countType=key=>rows.filter(p=>promoTypeKey(p)===key).length;
+  const cards=[
+    ['active','◉','ATIVAS',countStatus('active'),'EM VEICULAÇÃO / LEITURA'],
+    ['pauta','▣','PAUTAS',countType('pauta'),'PROGRAMADAS'],
+    ['merchan','◖','MERCHANS',countType('merchan'),'CADASTRADOS NO OMR'],
+    ['ended','✓','ENCERRADAS',countStatus('ended'),'FINALIZADAS']
+  ];
+  host.innerHTML=cards.map(([key,icon,label,total,sub])=>`<button class="promoSummaryCard" type="button" data-quick="${key}" onclick="promoQuickFilter('${key}')"><span class="promoSummaryIcon">${icon}</span><span>${label}<small style="display:block;margin-top:3px;font-size:7px;color:#8a94a3">${sub}</small></span><strong>${total}</strong><i class="promoSummaryArrow">›</i></button>`).join('');
 }
 function promoClientCampaignData(p){
   const raw=norm(p.name||p.title||'');
@@ -8999,7 +9065,7 @@ function promoClientCampaignData(p){
     if(parts.length>1){client=parts.shift();campaign=parts.join(' - ');}
   }
   if(client){
-    const re=new RegExp(`^${client.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\s*[-–—:]?\\s*`,'i');
+    const re=new RegExp(`^${client.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\s*[-–—:]?\s*`,'i');
     campaign=norm(raw.replace(re,''))||raw;
   }
   if(!client){client=raw||promoTypeDisplay(p);campaign=promoTypeDisplay(p);}
@@ -9029,25 +9095,35 @@ function promoFrequencyDisplay(p){
   if(scope==='period')return `${Math.max(1,Number(p.promoPeriodTotal||p.opecPeriodTotal||1)||1)}X / PERÍODO · RODÍZIO`;
   return `${count}X / ${labels[scope]||'DIA'} · RODÍZIO`;
 }
+function promoRowActionsMarkup(p){
+  if(promoTypeKey(p)==='merchan')return `<div class="promoActions merchanActions"><button class="actionIcon promoActionText" title="ABRIR NO OMR" aria-label="ABRIR NO OMR" onclick="openMerchanFromMain('${esc(p.id)}','edit')"><span class="iconGlyph">↗</span>OMR</button><button class="actionIcon" title="HISTÓRICO" aria-label="HISTÓRICO" onclick="openMerchanFromMain('${esc(p.id)}','history')"><span class="iconGlyph">↶</span></button></div>`;
+  return `<div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${esc(p.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon" title="DUPLICAR" aria-label="DUPLICAR" onclick="duplicatePromo('${esc(p.id)}')"><span class="iconGlyph">⧉</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${esc(p.id)}')"><span class="iconGlyph">🗑</span></button></div>`;
+}
+function duplicatePromo(idValue){
+  const source=promoByIdForMonth(idValue,state.currentMonth)||consolidatedPromoById(idValue);if(!source)return;
+  editPromo(idValue);if($('promoId'))$('promoId').value='';if($('promoName'))$('promoName').value=`${norm(source.name||source.title||'PROMOÇÃO')} - CÓPIA`;updatePromoPreview();
+}
 function renderPromos(){
-  renderPromoSummary();
-  const order=$('promoOrderFilter')?.value || 'created';
-  const typeFilter=$('promoTypeFilter')?.value || '';
-  const stationFilter=$('promoStationFilter')?.value || '';
-  const statusFilter=$('promoStatusFilter')?.value || '';
-  let rows=[...monthData().promos];
-  if(typeFilter) rows=rows.filter(p=>promoTypeKey(p)===typeFilter);
-  if(stationFilter) rows=rows.filter(p=>(p.station||'JP1017')===stationFilter);
-  if(statusFilter) rows=rows.filter(p=>promoStatusData(p).key===statusFilter);
-  if(order==='alpha') rows.sort((a,b)=> norm(a.name || a.title || '').localeCompare(norm(b.name || b.title || '')));
+  const order=$('promoOrderFilter')?.value||'created',typeFilter=$('promoTypeFilter')?.value||'',stationFilter=$('promoStationFilter')?.value||'',statusFilter=$('promoStatusFilter')?.value||'',periodFilter=$('promoPeriodFilter')?.value||state.currentMonth,search=norm($('promoSearchInput')?.value||'');
+  renderPromoSummary(periodFilter);
+  let rows=[...promoSnapshotsForMonth(periodFilter||state.currentMonth)];
+  if(typeFilter)rows=rows.filter(p=>promoTypeKey(p)===typeFilter);
+  if(stationFilter)rows=rows.filter(p=>promoStationMatchesFilter(p,stationFilter));
+  if(statusFilter)rows=rows.filter(p=>promoStatusData(p).key===statusFilter);
+  if(periodFilter)rows=rows.filter(p=>promoPeriodMatches(p,periodFilter));
+  if(search)rows=rows.filter(p=>promoSearchHaystack(p).includes(search));
+  if(order==='alpha')rows.sort((a,b)=>norm(a.name||a.title||'').localeCompare(norm(b.name||b.title||'')));
+  if(order==='end')rows.sort((a,b)=>String(a.endDate||a.drawDate||'9999-12-31').localeCompare(String(b.endDate||b.drawDate||'9999-12-31')));
   const tb=$('promoTable');
-  if(!rows.length){ tb.innerHTML=`<tr><td colspan="8"><div class="empty">NENHUMA PAUTA CADASTRADA PARA ESSE FILTRO.</div></td></tr>`; return; }
-  tb.innerHTML = rows.map(p=>{
-    const st=promoStatusData(p),typeLabel=promoTypeDisplay(p),typeClass=promoTypeClass(p),cc=promoClientCampaignData(p);
-    const endOrDraw=p.drawDate||p.endDate||'',period=`${formatBR(p.startDate||'')}${endOrDraw?' → '+formatBR(endOrDraw):''}`;
-    return `<tr class="${typeClass}Row campaignRow"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td class="campaignIdentity"><strong>${esc(cc.client)}</strong><span>${esc(cc.campaign)}</span></td><td><span class="campaignStation">${esc(promoStationDisplay(p))}</span></td><td><span class="campaignPeriod">${esc(period)}</span></td><td class="campaignPrograms">${promoProgramHoursMarkup(p)}</td><td><span class="campaignExecution ${String(p.promoScheduleMode||p.merchanScheduleMode||'').toLowerCase().match(/smart|rotation/)?'smart':''}">${esc(promoFrequencyDisplay(p))}</span></td><td><span class="badge ${st.cls}">${st.label}</span></td><td><div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${p.id}')"><span class="iconGlyph">✎</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${p.id}')"><span class="iconGlyph">🗑</span></button></div></td></tr>`;
+  if(!rows.length){tb.innerHTML=`<tr><td colspan="8"><div class="empty">NENHUM MATERIAL ENCONTRADO PARA ESTES FILTROS.</div></td></tr>`;return;}
+  tb.innerHTML=rows.map(p=>{
+    const st=promoStatusData(p),typeLabel=promoTypeDisplay(p),typeClass=promoTypeClass(p),cc=promoClientCampaignData(p),exec=promoExecutionData(p),endOrDraw=p.endDate||p.drawDate||'',period=`${formatBR(p.startDate||'')}${endOrDraw?' → '+formatBR(endOrDraw):''}`;
+    return `<tr class="${typeClass}Row campaignRow"><td><span class="typeBadge ${typeClass}">${typeLabel}</span></td><td class="campaignIdentity"><strong>${esc(cc.client)}</strong><span>${esc(cc.campaign)}</span></td><td><span class="campaignStation">${esc(promoStationDisplay(p))}</span></td><td><span class="campaignPeriod">${esc(period)}</span></td><td class="campaignPrograms">${promoProgramHoursMarkup(p)}</td><td><div class="campaignExecutionBox"><strong>${exec.done}${exec.planned?' / '+exec.planned:''}</strong><div class="campaignExecutionBar"><i style="width:${exec.pct}%"></i></div><small>${exec.pct}% REALIZADO · ${esc(promoFrequencyDisplay(p))}</small></div></td><td><span class="badge ${st.cls}">${st.label}</span></td><td>${promoRowActionsMarkup(p)}</td></tr>`;
   }).join('');
 }
+window.promoQuickFilter=promoQuickFilter;
+window.openMerchanFromMain=openMerchanFromMain;
+window.duplicatePromo=duplicatePromo;
 function formatStudioTime(slot){
   return normalizeSlot(slot) || norm(slot || '').replace(/\s+/g,' ');
 }
@@ -12366,7 +12442,18 @@ function closePromoStartModal(){
   const modal=$('promoStartModal');if(modal)modal.hidden=true;
   if(!document.querySelector('.drawer.open')) document.body.style.overflow='';
 }
+function openMerchanFromMain(idValue='',mode='edit'){
+  const idPart=idValue?`&${mode==='history'?'history':'edit'}=${encodeURIComponent(idValue)}`:(mode==='new'?'&new=1':'');
+  const url=`merchan_radios.html?from=workspace${idPart}`;
+  const opened=window.open(url,'_blank','noopener');
+  if(!opened) window.location.href=url;
+}
 function startPromoRegistration(kind){
+  if(kind==='merchan'){
+    closePromoStartModal();
+    openMerchanFromMain('','new');
+    return;
+  }
   const selected=kind==='pauta'?'pauta':'promo';
   try{
     clearPromoForm();
@@ -12396,6 +12483,7 @@ function startPromoRegistration(kind){
 window.openPromoStartModal=openPromoStartModal;
 window.closePromoStartModal=closePromoStartModal;
 window.startPromoRegistration=startPromoRegistration;
+window.openMerchanFromMain=openMerchanFromMain;
 function promoCopiesById(idValue){
   const rows=[];
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
@@ -12995,7 +13083,9 @@ bind('distProgramMoveDate','change',()=>updateDistributionProgramMoveTarget());
 bind('distProgramMoveSlot','change',()=>updateDistributionProgramMoveTarget());
 bind('distProgramMoveApplyBtn','click',applyDistributionProgramMove);
 bind('distProgramMoveCancelBtn','click',cancelDistributionProgramMove);
-['promoOrderFilter','promoTypeFilter','promoStationFilter','promoStatusFilter'].forEach(id=>bind(id,'input',renderPromos));
+['promoOrderFilter','promoTypeFilter','promoStationFilter','promoStatusFilter','promoPeriodFilter'].forEach(id=>bind(id,'input',renderPromos));
+bind('promoSearchInput','input',renderPromos);
+if($('promoPeriodFilter')) $('promoPeriodFilter').value=state.currentMonth||todayISO().slice(0,7);
 bind('studioDateFilter','input',renderStudioPauta);
 bind('studioPautaType','input',renderStudioPauta);
 bind('studioStationFilter','input',renderStudioPauta);

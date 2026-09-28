@@ -2366,6 +2366,18 @@ tbody tr:focus-within td{background:#fff8fa}
 .promoPill.pending.merchan{background:#fff2dd!important;border-color:#efb36d!important;color:#915313!important;animation:studioPautaOrangePulse 1.05s ease-in-out infinite!important}
 @keyframes studioPautaOrangePulse{0%,100%{transform:scale(1);filter:brightness(1);box-shadow:0 0 0 0 rgba(238,139,31,0)}50%{transform:scale(1.018);filter:brightness(1.06);box-shadow:0 0 0 5px rgba(238,139,31,.17),0 0 18px rgba(238,139,31,.22)}}
 @media(max-width:760px){.promoFooter .promoPill.pending{min-width:190px!important;max-width:72vw!important}.promoPill.pending .pendingName{font-size:8.5px!important}}
+
+.studioValidityInfo{color:#a45b00!important;background:#fff4df!important;border-color:#f4d39e!important}
+.promoListItem small{line-height:1.38}
+
+/* AV57.6.6.36 · CENTRAL DE LEITURAS DO HORÁRIO */
+.studioLayoutShell{display:grid;grid-template-columns:minmax(0,1fr) 360px;min-height:420px;flex:1}
+.studioMainColumn{min-width:0;display:flex;flex-direction:column}
+.studioReadCenter{border-left:1px solid #e0e5ec;background:linear-gradient(180deg,#fbfcfe,#f6f8fb);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.studioReadCenterHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid #e2e7ee}.studioReadCenterHead strong{font-size:16px;letter-spacing:-.03em}.studioReadCenterHead span{display:block;margin-top:3px;color:#7a8493;font-size:8.5px;letter-spacing:.05em}.studioReadPendingCount{display:inline-flex!important;align-items:center;justify-content:center;min-height:27px;padding:0 9px;border:1px solid #ffd39f;border-radius:999px;background:#fff5e6;color:#a45a00!important;font-size:8.5px!important;font-weight:1000}
+.studioReadSlot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:3px 1px 1px}.studioReadSlot strong{font-size:15px}.studioReadSlot span{font-size:9px;color:#778293;text-align:right}
+.studioReadCenterList{display:grid;gap:8px;overflow:auto;max-height:560px;padding-right:2px}.studioReadCenterCard{appearance:none;width:100%;border:1px solid #e1e6ed;border-radius:15px;background:#fff;padding:11px;text-align:left;color:#202733;cursor:pointer;display:grid;gap:6px;transition:.14s ease}.studioReadCenterCard:hover{transform:translateY(-1px);border-color:#d3dce7;box-shadow:0 8px 18px rgba(17,23,34,.055)}.studioReadCenterCard.read{background:#f3fbf6;border-color:#c9ead6}.studioReadCenterCard.missed{background:#fff4f5;border-color:#f1c3ca}.studioReadType{display:inline-flex;width:max-content;align-items:center;min-height:20px;border-radius:999px;padding:0 7px;background:#eef5ff;color:#2f69c9;font-size:7.5px;font-weight:1000}.studioReadType.merchan{background:#f3edff;color:#6745a6}.studioReadType.pauta{background:#fff3df;color:#a45a00}.studioReadCenterCard b{font-size:11px;line-height:1.2}.studioReadCenterCard small{font-size:8px;color:#748091;line-height:1.35}.studioReadCenterCard em{font-style:normal;font-size:8px;color:#9c5c08;background:#fff4df;border-radius:8px;padding:5px 6px}.studioReadCenterCard.read em{color:#147345;background:#eaf8f0}.studioReadCenterEmpty{padding:22px 12px;border:1px dashed #d9e0e8;border-radius:14px;background:#fff;color:#7b8593;text-align:center;font-size:9px;line-height:1.45}
+@media(max-width:1120px){.studioLayoutShell{grid-template-columns:1fr}.studioReadCenter{border-left:0;border-top:1px solid #e0e5ec}.studioReadCenterList{max-height:330px}}
 </style>
 </head>
 <body>
@@ -3224,7 +3236,7 @@ function studioPromoPool(date=''){
     });
   });
   const rows=[...copies.values()];
-  return date?rows.filter(row=>promoDateAllowed(row,date)):rows;
+  return date?rows.filter(row=>studioMaterialInForce(row,date)):rows;
 }
 function studioPublishedPrizeItems(){
   // A programação operacional vem sempre de months/*/items no Firebase.
@@ -3341,13 +3353,9 @@ function promoRefDate(p){return p.drawDate||p.startDate||'';}
 function promoHour(p){return slotHour(p.drawTime||'');}
 function promoStartDate(p){return p?.startDate || p?.date || p?.drawDate || p?.resultDate || '';}
 function promoEndDate(p){return p?.endDate || p?.drawDate || p?.resultDate || p?.startDate || p?.date || '';}
-function promoDateAllowed(p,date){
-  const start=promoStartDate(p);
-  const end=promoEndDate(p);
-  if(start && date<start) return false;
-  if(end && date>end) return false;
-  return true;
-}
+function studioMaterialInForce(p,date){const start=promoStartDate(p),end=promoEndDate(p);return !!p&&(!start||date>=start)&&(!end||date<=end);}
+function promoDateAllowed(p,date){return studioMaterialInForce(p,date);}
+function studioValidityLabel(p){const start=promoStartDate(p),end=promoEndDate(p);if(!start&&!end)return 'VIGÊNCIA NÃO INFORMADA';return `VIGÊNCIA: ${formatBR(start||end)} A ${formatBR(end||start)}`;}
 function promoHourAllowed(p,item){
   const itemTime=timeToHHMM(item?.slot||'');
   const hour=itemTime.slice(0,2);
@@ -3761,6 +3769,11 @@ function pautasForItemHour(item,includeRead=false,kind='all'){return studioPromo
 function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
 function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
 function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
+function buildStudioReadCenter(item){
+  const rows=allPautasForItemHour(item,true),pending=rows.filter(p=>!isPromoResolvedForHour(p,item)),program=upper(programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||item?.program||'PROGRAMA');
+  const cards=rows.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||'')==='PAUTA'?'PAUTA':'PROMOÇÃO'),typeClass=isMerchan(p)?'merchan':'pauta',name=upper(p?.name||p?.title||type),client=upper(p?.opecClientName||p?.clientName||'');return `<button class="studioReadCenterCard ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}"><span class="studioReadType ${typeClass}">${esc(type)}</span><b>${esc(client&&isMerchan(p)?`${client} · ${name}`:name)}</b><small>PROGRAMA: ${esc(program)} · HORÁRIO: ${esc(formatStudioTime(item?.slot||''))}</small><em>${esc(studioValidityLabel(p))}</em><small>${read?'LEITURA CONFIRMADA':failed?'NÃO REALIZADA':`PENDENTE${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · CLIQUE PARA ABRIR`}</small></button>`;}).join('');
+  return `<aside class="studioReadCenter"><div class="studioReadCenterHead"><div><strong>LEITURAS DO HORÁRIO</strong><span>MATERIAIS VÁLIDOS PARA ESTE PROGRAMA</span></div><span class="studioReadPendingCount">${pending.reduce((sum,p)=>sum+studioAV57Progress(p,item).remaining,0)} PENDENTE(S)</span></div><div class="studioReadSlot"><strong>${esc(formatStudioTime(item?.slot||''))}</strong><span>${esc(program)}</span></div><div class="studioReadCenterList">${cards||'<div class="studioReadCenterEmpty">SEM PROMOÇÃO, PAUTA OU MERCHAN VÁLIDO PARA ESTE HORÁRIO.</div>'}</div></aside>`;
+}
 function studioAV57MissedLogs(p,item){
   const date=item?.date||'',slot=studioAV57HourSlot(item?.slot||''),program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');
   return (Array.isArray(p?.missedLog)?p.missedLog:[]).filter(log=>{if(!log||log.cancelledAt)return false;if(normalizeStationValue(log.station||STUDIO_STATION)!==normalizeStationValue(STUDIO_STATION))return false;if((log.date||'')!==date)return false;const logSlot=studioAV57HourSlot(log.slot||log.scheduledHour||'');if(logSlot&&logSlot!==slot)return false;const lp=upper(log.program||'');if(lp&&program&&!genericProgramName(lp)&&lp!==program)return false;return true;}).sort((a,b)=>Number(a.occurrenceIndex||0)-Number(b.occurrenceIndex||0)||String(a.markedAt||'').localeCompare(String(b.markedAt||'')));
@@ -3772,7 +3785,7 @@ function studioMissedReasonForHour(p,item){const rows=studioAV57MissedLogs(p,ite
 function studioAV57Progress(p,item){const required=studioRequiredReadsForHour(p,item),done=Math.min(required,studioReadCountForHour(p,item)),missed=Math.min(Math.max(0,required-done),studioMissedCountForHour(p,item));return{required,done,missed,remaining:Math.max(0,required-done-missed),label:required>1?`${done}/${required}`:(done?'OK':missed?'NÃO REALIZADA':'PENDENTE')};}
 function studioOpecContextLabel(p){if(!isMerchan(p)||studioOpecTextType(p)==='legacy')return studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE · DISTRIBUIÇÃO BALANCEADA':'';const base=studioOpecTextType(p)==='promotional'?`PROMOCIONAL ATÉ ${formatBR(p.endDate||p.drawDate||'')} · RETORNO INSTITUCIONAL AUTOMÁTICO`:`INSTITUCIONAL · VERSÃO ${studioOpecVersion(p)}`;return `${base} · ${studioAV57Mode(p)==='rotation'?'RODÍZIO INTELIGENTE':'HORÁRIO FIXO'}`;}
 function buildPromoFooter(item){const pautas=allPautasForItemHour(item,true),emptyClass=pautas.length?'':' isEmpty';return `<div class="promoFooter"><div class="promoFooterList${emptyClass}">${pautas.map(p=>{const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=pautaTypeLabel(p),name=upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')),clientLabel=upper(p.opecClientName||p.clientName||p.client||p.advertiser||''),tickerLabel=isMerchan(p)?(clientLabel||name):name,typeClass=isMerchan(p)?'merchan':'promo';if(done){const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');const register=`LIDO: ${time}${progress.required>1?` · ${progress.done}/${progress.required}`:''}`;return `<button class="promoPill read ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(tickerLabel+' · '+register)}"><span class="busTickerViewport"><span class="busTickerTrack"><span class="busTickerSeq"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span><span class="busTickerSeq" aria-hidden="true"><b>${esc(tickerLabel)}</b><em>${esc(register)}</em></span></span></span></button>`;}if(failed){const reason=studioMissedReasonForHour(p,item);return `<button class="promoPill missed ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(reason||'LEITURA MARCADA COMO NÃO REALIZADA')}"><span class="av57Marquee"><span>${esc(tickerLabel)} · NÃO REALIZADA${reason?` · ${esc(reason)}`:''}</span></span></button>`;}return `<button class="promoPill pending ${typeClass}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')" title="${esc(type+' · '+tickerLabel)}"><span class="pendingCall">${isMerchan(p)?'MERCHAN AGORA':'LER PAUTA'}</span><span class="pendingName">${esc(tickerLabel)}</span>${progress.required>1?`<span class="readCounter">${progress.done+progress.missed}/${progress.required}</span>`:''}</button>`;}).join('')}</div></div>`;}
-function buildPautaList(item,kind){const pautas=pautasForItemHour(item,true,kind),emptyLabel=kind==='merchan'?'SEM MERCHAN PROGRAMADO PARA ESTE HORÁRIO':'SEM PROMO / PAUTA PROGRAMADA PARA ESTE HORÁRIO';if(!pautas.length)return `<button class="promoListItem" type="button">${emptyLabel}</button>`;return pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;}).join('');}
+function buildPautaList(item,kind){const pautas=pautasForItemHour(item,true,kind),emptyLabel=kind==='merchan'?'SEM MERCHAN PROGRAMADO PARA ESTE HORÁRIO':'SEM PROMO / PAUTA PROGRAMADA PARA ESTE HORÁRIO';if(!pautas.length)return `<button class="promoListItem" type="button">${emptyLabel}</button>`;return pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}">${esc(upper(p.name||p.title||(isMerchan(p)?'MERCHAN':'PROMOÇÃO')))}<small>${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${studioValidityLabel(p)} · ${esc(upper(p.local||'LOCAL'))}</small></button>`;}).join('');}
 function buildPromoList(item){return buildPautaList(item,'promo');}
 function studioProgramMerchanRows(item){
   const date=item?.date||todayISO(),program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');
@@ -3788,7 +3801,7 @@ function buildMerchanList(item){
 }
 function studioProgramMerchanClick(event,promoId,date,slot){if(event){event.preventDefault();event.stopPropagation();}hideStudioShortcutLists('');jumpToStudioPending(date,slot,promoId);}
 window.studioProgramMerchanClick=studioProgramMerchanClick;
-function buildHourReadList(item){const pautas=allPautasForItemHour(item,true);if(!pautas.length)return `<div class="promoListItem">SEM PROMOÇÕES OU MERCHAN PROGRAMADOS PARA ESTE HORÁRIO</div>`;return `<div class="hourReadList">${pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''}</small></button>`;}).join('')}</div>`;}
+function buildHourReadList(item){const pautas=allPautasForItemHour(item,true);if(!pautas.length)return `<div class="promoListItem">SEM PROMOÇÕES OU MERCHAN PROGRAMADOS PARA ESTE HORÁRIO</div>`;return `<div class="hourReadList">${pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${studioValidityLabel(p)}</small></button>`;}).join('')}</div>`;}
 
 let studioPendingMissedContext=null;
 function studioPendingBellRows(){
@@ -4593,7 +4606,7 @@ function render(){
   const winnerBlock = item.winnerName ? `<div class="winnerBox" data-has-winner="1" title="BOTÃO DIREITO: AÇÕES DO GANHADOR"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
-      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1><small class="rotationInfo av57 studioValidityInfo">${esc(studioValidityLabel(promo))}</small>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
       <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required>1?`${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done+1}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}`:''}</button></div>
@@ -4606,6 +4619,7 @@ function render(){
       <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'GANHADOR REGISTRADO' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'GANHADOR REGISTRADO · BOTÃO DIREITO NO NOME PARA CORRIGIR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
     `;
   $('pautaPanel').innerHTML=`
+    <div class="studioLayoutShell"><div class="studioMainColumn">
     <div class="pautaHead">
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
       <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PROMO / PAUTA') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
@@ -4627,7 +4641,7 @@ function render(){
     </div>
     ${buildStudioContext(item,promo)}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
-    ${buildPromoFooter(item)}`;
+    ${buildPromoFooter(item)}</div>${buildStudioReadCenter(item)}</div>`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
@@ -4670,7 +4684,7 @@ function render(){
   if(merchanBtn) merchanBtn.onclick=e=>studioShortcutClick(e,'merchan');
   const historyBtn=$('historyListBtn');
   if(historyBtn) historyBtn.onclick=e=>studioShortcutClick(e,'history');
-  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]').forEach(btn=>{if(btn.dataset.programSlot)btn.onclick=e=>studioProgramMerchanClick(e,btn.dataset.promoId,btn.dataset.programDate,btn.dataset.programSlot);else btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId);});
+  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioReadCenterCard[data-promo-id]').forEach(btn=>{if(btn.dataset.programSlot)btn.onclick=e=>studioProgramMerchanClick(e,btn.dataset.promoId,btn.dataset.programDate,btn.dataset.programSlot);else btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId);});
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
@@ -4704,7 +4718,7 @@ document.addEventListener('click',e=>{
     if(shortcut.id==='merchanListBtn') return studioShortcutClick(e,'merchan');
     if(shortcut.id==='historyListBtn') return studioShortcutClick(e,'history');
   }
-  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id]');
+  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioReadCenterCard[data-promo-id]');
   if(pauta){if(pauta.dataset.programSlot)return studioProgramMerchanClick(e,pauta.dataset.promoId,pauta.dataset.programDate,pauta.dataset.programSlot);return studioPautaItemClick(e,pauta.dataset.promoId);}
 });
 

@@ -567,6 +567,17 @@ function activeRows(){const search=norm($('listSearch').value);const station=$('
 function readsSummary(promo){const start=promo.startDate||todayISO();const end=promo.endDate||promo.drawDate||start;const rows=expectedRowsFor(promo,start,end);const stats=reportStats(rows);return`${stats.counts.LIDO}/${stats.total}`;}
 function textBankRows(){const search=norm($('bankSearch')?.value);const station=$('bankStation')?.value||'';const type=$('bankType')?.value||'';const status=$('bankStatus')?.value||'';return allMerchans().filter(row=>(!station||opecStationCanonical(row.station)===opecStationCanonical(station))&&(!type||opecTextType(row)===type)&&(!status||operationalStatus(row)===status)&&(!search||norm(`${opecClientName(row)} ${row.name||row.title} ${row.description||''} ${row.program||''}`).includes(search))).sort((a,b)=>opecClientName(a).localeCompare(opecClientName(b))||opecTextPriority(b)-opecTextPriority(a)||(b.startDate||'').localeCompare(a.startDate||''));}
 function lastReadLabel(p){const logs=[...(p.readLog||[])].filter(Boolean).sort((a,b)=>String(b.confirmedAt||b.readAt||'').localeCompare(String(a.confirmedAt||a.readAt||'')));const last=logs[0];return last?.confirmedAt?new Date(last.confirmedAt).toLocaleString('pt-BR'):p.readAtLabel||'SEM LEITURA';}
+
+function applyWorkspaceDeepLink(){
+  const params=new URLSearchParams(window.location.search);
+  const editId=params.get('edit')||'';
+  const historyId=params.get('history')||'';
+  if(editId){const found=findMerchan(editId);if(found){editMerchan(editId);activeTab='cadastro';switchTab();setTimeout(()=>$('title')?.focus(),30);return true;}}
+  if(historyId){const found=findMerchan(historyId);if(found){activeTab='ativas';switchTab();openCampaignHistory(historyId);return true;}}
+  if(params.has('new')){activeTab='cadastro';switchTab();resetForm();setTimeout(()=>$('clientName')?.focus(),30);return true;}
+  return false;
+}
+
 function render(){fillClientDatalist();fillPrograms();renderList();renderTextBank();renderReport();}
 function newTextVersion(id){const found=findMerchan(id);if(!found)return;editMerchan(id);const p=found.p;$('merchanId').value='';$('supersedesId').value=p.id;$('merchanForm').dataset.nextVersion=String(opecTextVersion(p)+1);const start=todayISO()<($('contractStartDate').value||todayISO())?$('contractStartDate').value:todayISO();if(start<=($('contractEndDate').value||start))$('startDate').value=start;$('textEndDate').value=$('endDate').value;$('saveMerchanBtn').textContent='PUBLICAR NOVA VERSÃO';$('text').focus();updatePreview();}
 function newPromotionalFromClient(id){const found=findMerchan(id);if(!found||opecTextType(found.p)!=='institutional')return;editMerchan(id);const p=found.p;$('merchanId').value='';$('supersedesId').value='';$('textType').value='promotional';const versions=allMerchans().filter(row=>opecClientId(row)===opecClientId(p)&&opecTextType(row)==='promotional').map(opecTextVersion);$('merchanForm').dataset.nextVersion=String(Math.max(0,...versions)+1);const today=todayISO();$('startDate').value=today;$('endDate').value=today;$('textEndDate').value=today;$('title').value='';$('text').value='';textTypeChanged(false);fillFallbackOptions();if([...$('fallbackTextId').options].some(option=>option.value===p.id))$('fallbackTextId').value=p.id;$('saveMerchanBtn').textContent='PUBLICAR PROMOCIONAL';updatePreview();$('title').focus();}
@@ -676,7 +687,8 @@ function scheduleOpecFirebaseReconnect(delay=1400){
   },delay);
 }
 opecConnectionRef.on('value',snapshot=>{opecConnected=snapshot.val()===true;if(opecConnected){clearTimeout(opecReconnectTimer);opecReconnectTimer=null;}else{setSaveState('error','FIREBASE RECONECTANDO');scheduleOpecFirebaseReconnect();}});
-function queueOpecRealtimeRender(){clearTimeout(opecRealtimeRenderTimer);opecRealtimeRenderTimer=setTimeout(()=>{setSaveState('','FIREBASE ONLINE');render();},40);}
+let opecDeepLinkApplied=false;
+function queueOpecRealtimeRender(){clearTimeout(opecRealtimeRenderTimer);opecRealtimeRenderTimer=setTimeout(()=>{setSaveState('','FIREBASE ONLINE');render();if(!opecDeepLinkApplied){opecDeepLinkApplied=applyWorkspaceDeepLink();}},40);}
 const opecMonthsRef=ref.child('months');
 const opecMonthError=error=>{console.error(error);setSaveState('error','FIREBASE OFFLINE');scheduleOpecFirebaseReconnect();};
 const opecApplyMonth=(snapshot,removed=false)=>{const key=snapshot.key;if(!key)return;state.months ||= {};if(removed)delete state.months[key];else state.months[key]=snapshot.val()||{};queueOpecRealtimeRender();};
