@@ -3701,6 +3701,35 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 .promoStartChoices{grid-template-columns:repeat(3,minmax(0,1fr))!important}.promoStartChoice.merchan{border-top:3px solid #c77b19}.promoStartChoice.merchan em{background:#fff5e6;color:#9d5a05}
 @media(max-width:1150px){.promoHubToolbar{grid-template-columns:repeat(3,minmax(150px,1fr))}.promoSearchField{grid-column:1/-1}.promoHubKpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.promoHubToolbar{grid-template-columns:1fr 1fr}.promoHubKpis{grid-template-columns:1fr 1fr}.promoStartChoices{grid-template-columns:1fr!important}.promoHubTitle h2{font-size:24px!important}}
+
+/* === AV57.6.6.37 · PROMO / MERCHAN COMPACTO === */
+.promoHubKpis{gap:8px;margin-bottom:10px}
+.promoSummaryCard{min-height:82px;padding:11px 13px;border-radius:16px}
+.promoSummaryIcon{width:34px;height:34px;font-size:15px}
+.promoSummaryCard strong{font-size:21px}.promoSummaryCard span{font-size:8.5px}
+.promoHubToolbar{padding:9px;margin-bottom:10px;border-radius:16px}
+.promoCampaignTable{min-width:1160px!important}
+.promoCampaignTable col.pctType{width:8%}.promoCampaignTable col.pctCampaign{width:22%}.promoCampaignTable col.pctStation{width:9%}.promoCampaignTable col.pctPeriod{width:13%}.promoCampaignTable col.pctProgram{width:22%}.promoCampaignTable col.pctExecution{width:12%}.promoCampaignTable col.pctStatus{width:7%}.promoCampaignTable col.pctActions{width:7%}
+.promoCampaignTable .campaignRow td{height:82px;vertical-align:middle!important;padding:9px 9px!important}
+.promoCampaignTable .campaignIdentity strong{font-size:11px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.promoCampaignTable .campaignIdentity span{font-size:8.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.promoCampaignTable .campaignStation,.promoCampaignTable .campaignPeriod{display:block;font-size:9px;line-height:1.25}
+.campaignPrograms{padding-top:7px!important;padding-bottom:7px!important}
+.campaignProgramsCompact{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"main action" "sub action";gap:3px 8px;align-items:center;min-width:0;max-width:100%}
+.campaignProgramsCompact>strong{grid-area:main;color:#263243;font-size:9.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.campaignProgramsCompact>span{grid-area:sub;color:#778394;font-size:7.5px;font-weight:900;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.campaignProgramsCompact .campaignProgramOpen{grid-area:action;align-self:center;min-height:27px;border:1px solid #dce4ed;border-radius:9px;background:#f7f9fc;color:#4f6074;padding:0 8px;font-size:7.5px;font-weight:1000;white-space:nowrap;cursor:pointer}
+.campaignProgramsCompact .campaignProgramOpen:hover{background:#fff;border-color:#cbd6e2;color:#26384d}
+.campaignSingleProgram{display:grid;gap:5px;min-width:0}.campaignSingleProgram strong{font-size:9.5px;color:#263243;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.campaignSingleProgram .campaignHourChips{flex-wrap:nowrap;overflow:hidden}.campaignSingleProgram .campaignHourChips i{height:19px;min-width:28px;font-size:7px}
+.campaignExecutionBox{gap:4px;justify-items:center}.campaignExecutionBox strong{font-size:10.5px}.campaignExecutionBox small{font-size:7px;text-align:center;line-height:1.15}.campaignExecutionBar{width:100%;max-width:104px}
+.promoActions{gap:4px}.promoActions .actionIcon{width:27px;min-width:27px;min-height:27px}.promoActions.merchanActions{min-width:100px}
+.promoScheduleBackdrop{position:fixed;inset:0;z-index:19000;display:grid;place-items:center;padding:18px;background:rgba(17,23,34,.58);backdrop-filter:blur(5px)}
+.promoScheduleBackdrop[hidden]{display:none!important}
+.promoScheduleDialog{width:min(660px,94vw);max-height:88vh;overflow:auto;border:1px solid #dfe5ec;border-radius:22px;background:#fff;box-shadow:0 28px 90px rgba(17,23,34,.28)}
+.promoScheduleHead{position:sticky;top:0;z-index:2;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:15px 17px;border-bottom:1px solid #e6eaf0;background:rgba(255,255,255,.97);backdrop-filter:blur(8px)}
+.promoScheduleHead strong{display:block;color:#171c26;font-size:15px;line-height:1.15}.promoScheduleHead span{display:block;margin-top:4px;color:#748091;font-size:8px;line-height:1.3}.promoScheduleClose{width:32px;min-width:32px;height:32px;border:1px solid #dfe5ec;border-radius:10px;background:#f5f7fa;color:#5f6978;font-size:17px;font-weight:900;cursor:pointer}
+.promoScheduleBody{padding:13px 15px 16px}.promoScheduleMeta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.promoScheduleMeta .badge{font-size:8px}.promoScheduleList{display:grid;gap:7px}.promoScheduleItem{display:grid;grid-template-columns:minmax(160px,1fr) minmax(0,1.5fr);gap:10px;align-items:center;border:1px solid #e3e8ef;border-radius:13px;background:#fafbfd;padding:9px 10px}.promoScheduleItem strong{font-size:9.5px;color:#27313e}.promoScheduleItem .campaignHourChips{justify-content:flex-start}
+@media(max-width:760px){.promoCampaignTable .campaignRow td{height:76px}.promoScheduleItem{grid-template-columns:1fr}.campaignProgramsCompact{grid-template-columns:1fr;grid-template-areas:"main" "sub" "action"}.campaignProgramsCompact .campaignProgramOpen{justify-self:start;margin-top:3px}}
 </style>
 </head>
 <body>
@@ -9079,11 +9108,41 @@ function promoProgramConfigsDisplay(p){
   const hours=(p.readHours||[]).map(adminAV572HourSlot).filter(Boolean);
   return program?[{program,hours}]:[];
 }
-function promoProgramHoursMarkup(p){
+function promoProgramScheduleSummary(p){
   const configs=promoProgramConfigsDisplay(p);
-  if(!configs.length)return `<span class="campaignProgramName">${esc(norm(p.local||'SEM PROGRAMA'))}</span>`;
-  return configs.map(c=>`<div class="campaignProgramLine"><strong>${esc(c.program)}</strong><span class="campaignHourChips">${c.hours.length?c.hours.map(h=>`<i>${esc(h)}</i>`).join(''):'<i>GRADE</i>'}</span></div>`).join('');
+  const hourCount=configs.reduce((sum,c)=>sum+(c.hours?.length||0),0);
+  const programCount=configs.length;
+  const names=configs.map(c=>c.program).filter(Boolean);
+  return{configs,hourCount,programCount,names,label:`${programCount} ${programCount===1?'PROGRAMA':'PROGRAMAS'} · ${hourCount} ${hourCount===1?'HORÁRIO':'HORÁRIOS'}`};
 }
+function promoProgramHoursMarkup(p){
+  const summary=promoProgramScheduleSummary(p),configs=summary.configs;
+  if(!configs.length)return `<span class="campaignProgramName">${esc(norm(p.local||'SEM PROGRAMA'))}</span>`;
+  if(configs.length===1 && summary.hourCount<=4){
+    const c=configs[0];
+    return `<div class="campaignSingleProgram"><strong>${esc(c.program)}</strong><span class="campaignHourChips">${c.hours.length?c.hours.map(h=>`<i>${esc(h)}</i>`).join(''):'<i>GRADE</i>'}</span></div>`;
+  }
+  const preview=summary.names.slice(0,2).join(' · ')+(summary.names.length>2?` +${summary.names.length-2}`:'');
+  return `<div class="campaignProgramsCompact"><strong>${esc(summary.label)}</strong><span>${esc(preview||'PROGRAMAÇÃO DEFINIDA')}</span><button class="campaignProgramOpen" type="button" onclick="openPromoScheduleDetails('${esc(p.id)}')">VER PROGRAMAÇÃO</button></div>`;
+}
+function ensurePromoScheduleDialog(){
+  let host=$('promoScheduleBackdrop');if(host)return host;
+  host=document.createElement('div');host.id='promoScheduleBackdrop';host.className='promoScheduleBackdrop';host.hidden=true;host.innerHTML=`<section class="promoScheduleDialog" role="dialog" aria-modal="true" aria-labelledby="promoScheduleTitle"><header class="promoScheduleHead"><div><strong id="promoScheduleTitle">PROGRAMAÇÃO</strong><span id="promoScheduleSubtitle"></span></div><button class="promoScheduleClose" type="button" aria-label="FECHAR" onclick="closePromoScheduleDetails()">×</button></header><div class="promoScheduleBody"><div class="promoScheduleMeta" id="promoScheduleMeta"></div><div class="promoScheduleList" id="promoScheduleList"></div></div></section>`;
+  host.addEventListener('click',event=>{if(event.target===host)closePromoScheduleDetails();});
+  document.body.appendChild(host);return host;
+}
+function openPromoScheduleDetails(idValue){
+  const monthKey=$('promoPeriodFilter')?.value||state.currentMonth;
+  const p=promoByIdForMonth(idValue,monthKey)||promoSnapshotsForMonth(monthKey).find(row=>row?.id===idValue)||consolidatedPromoById(idValue);if(!p)return;
+  const host=ensurePromoScheduleDialog(),cc=promoClientCampaignData(p),summary=promoProgramScheduleSummary(p),end=p.endDate||p.drawDate||'';
+  $('promoScheduleTitle').textContent=cc.client||p.name||p.title||'PROGRAMAÇÃO';
+  $('promoScheduleSubtitle').textContent=cc.campaign||promoTypeDisplay(p);
+  $('promoScheduleMeta').innerHTML=`<span class="badge">${esc(promoStationDisplay(p))}</span><span class="badge">${esc(formatBR(p.startDate||''))} → ${esc(formatBR(end))}</span><span class="badge">${esc(promoFrequencyDisplay(p))}</span>`;
+  $('promoScheduleList').innerHTML=summary.configs.length?summary.configs.map(c=>`<div class="promoScheduleItem"><strong>${esc(c.program)}</strong><span class="campaignHourChips">${c.hours?.length?c.hours.map(h=>`<i>${esc(h)}</i>`).join(''):'<i>GRADE</i>'}</span></div>`).join(''):`<div class="empty">SEM PROGRAMAÇÃO DETALHADA.</div>`;
+  host.hidden=false;document.body.style.overflow='hidden';
+}
+function closePromoScheduleDetails(){const host=$('promoScheduleBackdrop');if(host)host.hidden=true;document.body.style.overflow='';}
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('promoScheduleBackdrop')?.hidden)closePromoScheduleDetails();});
 function promoStationDisplay(p){return stationCanonical(p?.station||'JP1017')==='ALL'?'AMBAS':stationLabel(p?.station||'JP1017');}
 function promoFrequencyDisplay(p){
   const mode=String(p.promoScheduleMode||p.merchanScheduleMode||p.scheduleMode||'fixed').toLowerCase();
@@ -9124,6 +9183,8 @@ function renderPromos(){
 window.promoQuickFilter=promoQuickFilter;
 window.openMerchanFromMain=openMerchanFromMain;
 window.duplicatePromo=duplicatePromo;
+window.openPromoScheduleDetails=openPromoScheduleDetails;
+window.closePromoScheduleDetails=closePromoScheduleDetails;
 function formatStudioTime(slot){
   return normalizeSlot(slot) || norm(slot || '').replace(/\s+/g,' ');
 }
