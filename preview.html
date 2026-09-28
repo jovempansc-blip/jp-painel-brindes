@@ -597,6 +597,21 @@ tbody tr:focus-within td{background:#fff8fa}
 #view-distribuicao .directionGenerateReadonly{height:30px;padding:0 10px;border:1px solid #dce2eb;border-radius:10px;background:#f5f7fa;color:#8993a0;font-size:8px;font-weight:1000;cursor:not-allowed}
 </style>
 <meta name="direction-build-marker" content="AV-57.6.6.10-DIRECAO-ESPELHO-REAL-POA">
+
+<style>
+/* AV57.6.6.35 · FILTRO ATIVOS/ENCERRADOS + CONSOLIDAÇÃO VISUAL MULTIMESES */
+#view-distribuicao .distPrizeFilterHead{position:sticky!important;left:0;z-index:12!important;overflow:visible!important}
+#view-distribuicao .distPrizeFilterButton{width:100%;min-height:34px;border:0;background:transparent;color:#566171;font:1000 9px/1.1 inherit;letter-spacing:.045em;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0 8px}
+#view-distribuicao .distPrizeFilterButton em{font-style:normal;font-size:7.5px;color:#16814a;background:#eef8f2;border:1px solid #cce8d6;border-radius:999px;padding:3px 6px}
+#view-distribuicao .distPrizeFilterButton b{font-size:10px;color:#8893a1}
+#view-distribuicao .distPrizeFilterMenu{position:absolute;top:calc(100% - 2px);left:10px;z-index:250;min-width:148px;padding:6px;border:1px solid #dce3eb;border-radius:12px;background:#fff;box-shadow:0 14px 32px rgba(24,31,42,.14);text-align:left}
+#view-distribuicao .distPrizeFilterMenu[hidden]{display:none!important}
+#view-distribuicao .distPrizeFilterMenu button{display:flex;width:100%;min-height:31px;align-items:center;border:0;border-radius:8px;background:transparent;padding:0 9px;color:#536071;font:950 9px/1 inherit;cursor:pointer}
+#view-distribuicao .distPrizeFilterMenu button:hover,#view-distribuicao .distPrizeFilterMenu button.active{background:#f3f6f9;color:#141a23}
+#view-distribuicao .distPrizeFilterMenu button.active[data-dist-lifecycle="active"]{background:#eef8f2;color:#167845}
+#view-distribuicao .distPrizeFilterMenu button.active[data-dist-lifecycle="ended"]{background:#fff1f3;color:#b4233b}
+#view-distribuicao .distPrizeGroupHint{display:block;margin-top:3px;color:#8b96a4;font-size:7.5px;font-weight:900;letter-spacing:.025em}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -674,6 +689,7 @@ const dateAdd=(iso,days)=>{const [y,m,d]=String(iso).split("-").map(Number);cons
 let state={months:{}};
 let currentMonth="";
 let activeTab="distribuicao";
+let directionDistributionLifecycleFilter="active";
 let firebaseReady=false;
 let firebaseStarted=false;
 let firebaseConnected=false;
@@ -1062,8 +1078,9 @@ function directionSegmentCell(d,key){const raw=directionSegmentRaw(d,key),consum
 function directionReservationPackageTotal(d){return reservationEntries(d).reduce((sum,row)=>sum+num(row.qty),0);}
 function directionReservationCell(d){const packages=directionReservationPackageTotal(d),consumed=reservationConsumed(d);return `<div class="directionDistValue">${packages?`<span class="badge promo">${packages} RES.</span><small>${consumed} UNID.</small>`:'<b>0</b>'}</div>`;}
 function directionProgrammedCount(distId){return directionAllItems().filter(i=>String(i.date||'').slice(0,7)===currentMonth&&i.distributionId===distId&&isRadioItem(i)).reduce((sum,i)=>sum+Math.max(1,num(i.qty)||1),0);}
+function directionVisualProgrammedCount(d){return directionDistributionVisualIds(d).reduce((sum,id)=>sum+directionProgrammedCount(id),0);}
 function directionBalanceCell(d){const balance=distributionBalance(d),unit=directionDeliveryUnit(d);if(unit==='pair'){const pairs=Math.floor(balance/2);return `<div class="directionDistValue">${distributionStatusBadge(d)}<small>${pairs} PAR${Math.abs(pairs)===1?'':'ES'} · ${balance} UNID.</small></div>`;}return `<div class="directionDistValue">${distributionStatusBadge(d)}<small>${balance} UNID.</small></div>`;}
-function directionReturnCount(d){let total=0;Object.values(state.months||{}).forEach(m=>{(m.items||[]).forEach(i=>{if(i.distributionId===d.id&&i.reuseStatus)total++;});(m.promos||[]).forEach(p=>{if(p.distributionId!==d.id)return;(p.resultWinners||[]).forEach(w=>{if(w?.reuseStatus)total++;});});});return total;}
+function directionReturnCount(d){const ids=new Set(directionDistributionVisualIds(d));let total=0;Object.values(state.months||{}).forEach(m=>{(m.items||[]).forEach(i=>{if(ids.has(String(i.distributionId||''))&&i.reuseStatus)total++;});(m.promos||[]).forEach(p=>{if(!ids.has(String(p.distributionId||'')))return;(p.resultWinners||[]).forEach(w=>{if(w?.reuseStatus)total++;});});});return total;}
 function directionReturnCell(d){const count=directionReturnCount(d);return `<div class="directionDistValue"><b>${count}</b>${count?'<small>RETORNO(S)</small>':''}</div>`;}
 function directionViewDistSchedule(id,label){returnContext={date:$("dateFilter").value||liveTodayISO(),station:$("stationFilter").value||'ALL',month:currentMonth,tab:'distribuicao'};directionDrilldown={tab:'programacao',kind:'distribution',key:id,label:label||'DISTRIBUIÇÃO'};directionProgramWeek='AUTO';directionProgramWeekMonth='';directionProgramScrollPending=true;activeTab='programacao';render();}
 function directionDayName(iso){const d=new Date(`${iso}T12:00:00`);return Number.isNaN(d.getTime())?'':['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'][d.getDay()];}
@@ -1112,15 +1129,23 @@ function directionPeriodIcon(key){return key==='manha'?'☀':key==='tarde'?'☼'
 function directionWeekItems(date){let rows=directionAllItems().filter(i=>i.date===date&&normalizeChannel(i.channel)==='RÁDIO'&&stationMatches(i.station||'JP1017')).sort((a,b)=>slotMinutes(a.slot)-slotMinutes(b.slot)||upper(a.program||'').localeCompare(upper(b.program||'')));if(directionDrilldown?.tab==='programacao'&&directionDrilldown.kind==='distribution'&&directionDrilldown.key)rows=rows.filter(i=>i.distributionId===directionDrilldown.key);return rows;}
 function directionProgramCard(item,date){const program=resolvedProgramForItem(item,date),title=itemTitle(item,currentMonth),current=date===liveTodayISO()&&Math.floor(slotMinutes(item.slot)/60)===liveNow().getHours(),promo=item.sourceType==='promo-result';return `<article class="directionProgramCard ${current?'current':''} ${promo?'promoResult':''}"><div class="directionProgramTime">${esc(formatTime(item.slot))}</div><div class="directionProgramInfo"><strong>${esc(title)}</strong><em>${esc(program)}</em><div class="directionProgramMeta"><span class="badge">${esc(stationName(item.station))}</span>${statusBadge(item.status)}${promo?'<span class="badge promo">RESULTADO</span>':''}<span class="directionProgramQty">QTD <b>${Math.max(1,num(item.qty)||1)}</b></span></div></div></article>`;}
 
-function directionDistributionLifecycleStatus(d){
-  const start=d?.startDate||d?.date||`${currentMonth}-01`,end=d?.endDate||d?.startDate||d?.date||start,today=liveTodayISO();
-  if(end&&end<today)return{key:'ended',label:'ENCERRADO'};
-  if(start&&start>today)return{key:'scheduled',label:'PROGRAMADO'};
-  return{key:'active',label:'ATIVO'};
+function directionMonthBounds(monthKey=currentMonth){const match=String(monthKey||'').match(/^(\d{4})-(\d{2})$/);if(!match)return{start:'',end:''};const y=Number(match[1]),m=Number(match[2]),last=new Date(y,m,0).getDate();return{start:`${monthKey}-01`,end:`${monthKey}-${String(last).padStart(2,'0')}`};}
+function directionDistributionLifecycleStatus(d,monthKey=currentMonth){
+  const start=d?.startDate||d?.date||`${monthKey}-01`,end=d?.endDate||d?.startDate||d?.date||start,today=liveTodayISO(),official=today.slice(0,7),bounds=directionMonthBounds(monthKey);
+  if(monthKey===official){if(end&&end<today)return{key:'ended',label:'ENCERRADO'};if(start&&start>today)return{key:'scheduled',label:'PROGRAMADO'};return{key:'active',label:'ATIVO'};}
+  if(monthKey<official){if(end&&bounds.end&&end<=bounds.end)return{key:'ended',label:'ENCERRADO'};return{key:'active',label:'ATIVO'};}
+  return{key:'scheduled',label:'PROGRAMADO'};
 }
+function directionDistributionVisualGroupKey(d){const explicit=upper(d?.masterPrizeId||d?.masterDistributionId||d?.campaignId||d?.campaignKey||'');if(explicit)return`MASTER|${explicit}`;return`LEGACY|${directionDistLabel(d)}|${upper(d?.title||'')}|${d?.startDate||d?.date||''}`;}
+function directionDistributionVisualIds(d){const ids=Array.isArray(d?.__visualGroupIds)?d.__visualGroupIds:[d?.id];return[...new Set(ids.map(String).filter(Boolean))];}
+function directionConsolidateDistributionRows(rows,monthKey=currentMonth){const groups=new Map();(rows||[]).filter(Boolean).forEach(d=>{const key=directionDistributionVisualGroupKey(d),list=groups.get(key)||[];list.push(d);groups.set(key,list);});return[...groups.entries()].map(([groupKey,list])=>{const ranked=[...list].sort((a,b)=>{const end=String(b?.endDate||b?.startDate||b?.date||'').localeCompare(String(a?.endDate||a?.startDate||a?.date||''));if(end)return end;return String(b?.monthlyUpdatedAt||b?.updatedAt||b?.createdAt||'').localeCompare(String(a?.monthlyUpdatedAt||a?.updatedAt||a?.createdAt||''));});const copy=JSON.parse(JSON.stringify(ranked[0]));const starts=list.map(x=>x?.startDate||x?.date||'').filter(Boolean).sort(),ends=list.map(x=>x?.endDate||x?.startDate||x?.date||'').filter(Boolean).sort();if(starts.length)copy.startDate=starts[0];if(ends.length)copy.endDate=ends[ends.length-1];copy.__visualGroupKey=groupKey;copy.__visualGroupIds=[...new Set(list.map(x=>x?.id).filter(Boolean))];copy.__visualGroupSize=list.length;copy.__visualMonth=monthKey;return copy;});}
+function directionDistributionMatchesLifecycle(d,filter=directionDistributionLifecycleFilter){if(filter==='all')return true;const lifecycle=directionDistributionLifecycleStatus(d,currentMonth);if(filter==='ended')return lifecycle.key==='ended';return lifecycle.key!=='ended';}
+function directionDistributionFilterLabel(){return directionDistributionLifecycleFilter==='ended'?'ENCERRADOS':directionDistributionLifecycleFilter==='all'?'TODOS':'ATIVOS';}
+function directionToggleDistributionLifecycleMenu(event){if(event){event.preventDefault();event.stopPropagation();}const menu=$('directionDistPrizeFilterMenu'),button=$('directionDistPrizeFilterButton');if(!menu)return;menu.hidden=!menu.hidden;if(button)button.setAttribute('aria-expanded',menu.hidden?'false':'true');}
+function directionSetDistributionLifecycleFilter(value,event){if(event){event.preventDefault();event.stopPropagation();}directionDistributionLifecycleFilter=['active','ended','all'].includes(value)?value:'active';renderDistribuicao();}
 function directionDistributionPrizeIdentityHtml(d){
   const lifecycle=directionDistributionLifecycleStatus(d),title=upper(d?.title||''),prize=directionDistLabel(d),extra=title&&title!==prize?`<span class="distPrizeSubtitle">${esc(title)}</span>`:'';
-  return `<div class="distPrizeStatusCard ${lifecycle.key}"><div class="distPrizeStatusTop"><strong>${esc(prize)}</strong><span class="distLifecycleBadge ${lifecycle.key}">${lifecycle.label}</span></div>${extra}<em class="distPrizePeriodClean">${esc(directionDistPeriod(d))}</em></div>`;
+  return `<div class="distPrizeStatusCard ${lifecycle.key}"><div class="distPrizeStatusTop"><strong>${esc(prize)}</strong><span class="distLifecycleBadge ${lifecycle.key}">${lifecycle.label}</span></div>${extra}<em class="distPrizePeriodClean">${esc(directionDistPeriod(d))}</em>${num(d.__visualGroupSize)>1?`<small class="distPrizeGroupHint">CAMPANHA CONSOLIDADA · ${num(d.__visualGroupSize)} REGISTROS HISTÓRICOS</small>`:''}</div>`;
 }
 function directionMonthRealizedUnits(distId,monthKey=currentMonth){
   if(!distId||!monthKey)return 0;const seen=new Set();let total=0;
@@ -1131,19 +1156,19 @@ function directionMonthRealizedUnits(distId,monthKey=currentMonth){
   }));return total;
 }
 function directionExecutionBalanceCell(d){
-  const realized=directionMonthRealizedUnits(d?.id,currentMonth),balance=Math.max(0,num(d?.total))-realized,unit=directionDeliveryUnit(d);
+  const realized=directionDistributionVisualIds(d).reduce((sum,id)=>sum+directionMonthRealizedUnits(id,currentMonth),0),balance=Math.max(0,num(d?.total))-realized,unit=directionDeliveryUnit(d);
   if(balance<0)return `<div class="directionDistValue"><span class="badge cancelado">DÉFICIT ${Math.abs(balance)}</span><small>${realized} REALIZ.</small></div>`;
   if(unit==='pair'){const pairs=Math.floor(balance/2),odd=balance%2;return `<div class="directionDistValue"><span class="badge noar">${pairs} PAR${pairs===1?'':'ES'}${odd?' +1':''}</span><small>${realized} REALIZ.</small></div>`;}
   return `<div class="directionDistValue"><span class="badge noar">${balance}</span><small>${realized} REALIZ.</small></div>`;
 }
 function renderDistribuicao(){
-  let rows=[...(monthData().distributions||[])].sort((a,b)=>directionDistLabel(a).localeCompare(directionDistLabel(b)));
+  let rows=directionConsolidateDistributionRows([...(monthData().distributions||[])],currentMonth).filter(d=>directionDistributionMatchesLifecycle(d)).sort((a,b)=>directionDistLabel(a).localeCompare(directionDistLabel(b)));
   if(directionDrilldown?.tab==='distribuicao'){
     if(directionDrilldown.kind==='saldo')rows=rows.filter(r=>(Math.max(0,num(r?.total))-directionMonthRealizedUnits(r?.id,currentMonth))<=2);
     else if(directionDrilldown.kind==='distribution'&&directionDrilldown.key)rows=rows.filter(r=>String(r.id||directionDistLabel(r))===directionDrilldown.key);
   }
   const body=rows.length?rows.map(d=>{
-    const prog=directionProgrammedCount(d.id),lifecycle=directionDistributionLifecycleStatus(d);
+    const prog=directionVisualProgrammedCount(d),lifecycle=directionDistributionLifecycleStatus(d);
     return `<tr class="distLifecycleRow ${lifecycle.key} ${directionDrilldown?.tab==='distribuicao'?'drillTarget':''}">
       <td class="distPrizeCell"><div class="distPrizeWrap">${directionDistributionPrizeIdentityHtml(d)}</div></td>
       <td class="num"><div class="directionDistValue"><b>${num(d.total)}</b></div></td>
@@ -1162,7 +1187,7 @@ function renderDistribuicao(){
       <td><button class="directionReadonlyAction" type="button" title="VER GRADE" aria-label="VER GRADE" onclick="directionViewDistSchedule('${esc(d.id)}','${esc(directionDistLabel(d))}')">▦</button></td>
     </tr>`;
   }).join(''):`<tr><td colspan="15"><div class="empty">SEM DISTRIBUIÇÕES PARA O MÊS SELECIONADO.</div></td></tr>`;
-  $("view-distribuicao").innerHTML=`${offlineNotice()}${drillContextBar('distribuicao')}<section class="panel"><div class="panelHead"><div><h2>DISTRIBUIÇÃO GERAL</h2><p>MESMA DISTRIBUIÇÃO DO PAINEL PRINCIPAL · VISUALIZAÇÃO DA DIREÇÃO.</p></div></div><div class="panelBody"><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
+  $("view-distribuicao").innerHTML=`${offlineNotice()}${drillContextBar('distribuicao')}<section class="panel"><div class="panelHead"><div><h2>DISTRIBUIÇÃO GERAL</h2><p>MESMA DISTRIBUIÇÃO DO PAINEL PRINCIPAL · VISUALIZAÇÃO DA DIREÇÃO.</p></div></div><div class="panelBody"><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th class="distPrizeFilterHead"><button class="distPrizeFilterButton" id="directionDistPrizeFilterButton" type="button" onclick="directionToggleDistributionLifecycleMenu(event)" aria-haspopup="menu" aria-expanded="false"><span>PRÊMIO</span><em>${directionDistributionFilterLabel()}</em><b>⌄</b></button><div class="distPrizeFilterMenu" id="directionDistPrizeFilterMenu" role="menu" hidden><button type="button" class="${directionDistributionLifecycleFilter==='active'?'active':''}" data-dist-lifecycle="active" onclick="directionSetDistributionLifecycleFilter('active',event)">ATIVOS</button><button type="button" class="${directionDistributionLifecycleFilter==='ended'?'active':''}" data-dist-lifecycle="ended" onclick="directionSetDistributionLifecycleFilter('ended',event)">ENCERRADOS</button><button type="button" class="${directionDistributionLifecycleFilter==='all'?'active':''}" data-dist-lifecycle="all" onclick="directionSetDistributionLifecycleFilter('all',event)">TODOS</button></div></th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody>${body}</tbody></table></div></div></section>`;
 }
 
 function renderProgramacao(){
@@ -1239,7 +1264,7 @@ function renderRelatorios(){
   $("view-relatorios").innerHTML=`${offlineNotice()}<div class="reportHeader"><strong>RELATÓRIO EXECUTIVO</strong><span>PERÍODO: ${formatBR(r.from)} A ${formatBR(r.to)} · EMISSORA: ${esc(stationLabel)}</span></div><div class="sectionToolbar"><div class="toolbarTitle"><h2>RELATÓRIOS CONSOLIDADOS</h2><p>VISÃO EXECUTIVA DO PERÍODO EXATO, INCLUSIVE ENTRE COMPETÊNCIAS</p></div><div class="toolbarStats"><button class="badge" type="button" onclick="window.print()">EXPORTAR PDF</button><button class="badge" type="button" onclick="window.print()">IMPRIMIR</button></div></div><section class="panel"><div class="panelBody"><div class="reportFilters"><div class="field"><label>DE</label><input class="control" type="date" id="reportFrom" value="${esc(r.from)}"></div><div class="field"><label>ATÉ</label><input class="control" type="date" id="reportTo" value="${esc(r.to)}"></div><div class="field"><label>ATALHOS</label><div class="reportShortcuts"><button class="badge" type="button" onclick="setReportRange('today')">HOJE</button><button class="badge" type="button" onclick="setReportRange('week')">SEMANA</button><button class="badge" type="button" onclick="setReportRange('month')">MÊS</button></div></div></div></div></section><div class="kpiGrid"><div class="kpi"><span>PRÊMIOS RECEBIDOS</span><strong>${totalReceived}</strong><small>ENTRADAS REGISTRADAS NO PERÍODO</small></div><div class="kpi"><span>MOVIMENTAÇÃO / CONSUMO</span><strong>${totalConsumed}</strong><small>SALDO ATUAL ${currentBalance}</small></div><div class="kpi"><span>PROGRAMAÇÃO</span><strong>${items.length}</strong><small>ITENS NO PERÍODO</small></div><div class="kpi"><span>MERCHAN</span><strong>${merchanConfirmed}/${merchanPlanned}</strong><small>${merchanUnconfirmed} NÃO CONFIRMADA(S)</small></div><div class="kpi"><span>GANHADORES</span><strong>${promoWins+itemWins}</strong><small>RESULTADOS CONFIRMADOS</small></div><div class="kpi"><span>RETIRADAS</span><strong>${delivered}</strong><small>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</small></div></div><section class="panel"><div class="tableWrap"><table class="table"><thead><tr><th>INDICADOR</th><th class="num">TOTAL</th><th>OBSERVAÇÃO</th></tr></thead><tbody><tr><td>PRÊMIOS RECEBIDOS</td><td class="num">${totalReceived}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>MOVIMENTAÇÃO / CONSUMO</td><td class="num">${totalConsumed}</td><td>SALDO ATUAL DA ÚLTIMA COMPETÊNCIA: ${currentBalance}</td></tr><tr><td>MERCHANS PREVISTOS</td><td class="num">${merchanPlanned}</td><td>${merchanConfirmed} CONFIRMADOS · ${merchanUnconfirmed} NÃO CONFIRMADOS</td></tr><tr><td>RESULTADOS / GANHADORES</td><td class="num">${promoWins+itemWins}</td><td>${formatBR(r.from)} A ${formatBR(r.to)}</td></tr><tr><td>RETIRADAS CONFIRMADAS</td><td class="num">${delivered}</td><td>${pending} PENDENTE(S) · ${expired} VENCIDO(S)</td></tr></tbody></table></div></section>`;
   $("reportFrom")?.addEventListener("change",e=>{reportFrom=e.target.value;renderRelatorios();});$("reportTo")?.addEventListener("change",e=>{reportTo=e.target.value;renderRelatorios();});
 }
-window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.__JP_DIRECTION_BUILD__='AV-57.6.6.25';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),months:availableMonths(),currentMonth,programItems:directionAllItems().filter(i=>String(i.date||'').slice(0,7)===currentMonth&&normalizeChannel(i.channel)==='RÁDIO').length,firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
+window.directionViewDistSchedule=directionViewDistSchedule;window.setReportRange=setReportRange;window.setDirectionPickupFilter=setDirectionPickupFilter;window.directionNavigateFromElement=directionNavigateFromElement;window.returnToExecutiveContext=returnToExecutiveContext;window.directionToggleDistributionLifecycleMenu=directionToggleDistributionLifecycleMenu;window.directionSetDistributionLifecycleFilter=directionSetDistributionLifecycleFilter;document.addEventListener('click',event=>{if(!event.target.closest('.distPrizeFilterHead')){const menu=$('directionDistPrizeFilterMenu'),button=$('directionDistPrizeFilterButton');if(menu)menu.hidden=true;if(button)button.setAttribute('aria-expanded','false');}});window.__JP_DIRECTION_BUILD__='AV-57.6.6.35';window.__JP_DIRECTION_SELFTEST__=()=>({build:window.__JP_DIRECTION_BUILD__,activeTab,tabs:[...document.querySelectorAll('.tab')].map(b=>b.dataset.tab),months:availableMonths(),currentMonth,programItems:directionAllItems().filter(i=>String(i.date||'').slice(0,7)===currentMonth&&normalizeChannel(i.channel)==='RÁDIO').length,firebase:{ready:firebaseReady,connected:firebaseConnected,loaded:firebaseServerLoaded,lastActivity:firebaseLastServerActivity}});
 function fillMonthFilter(){const months=availableMonths();$("monthFilter").innerHTML=(months.length?months:[liveTodayISO().slice(0,7)]).map(key=>`<option value="${key}" ${key===currentMonth?"selected":""}>${monthLabel(key)}</option>`).join("");}
 function setMonthFromDate(date){const key=String(date||liveTodayISO()).slice(0,7);currentMonth=state.months?.[key]?key:(state.currentMonth||availableMonths().at(-1)||key);}
 function directionRenderError(tab,error){
@@ -1265,6 +1290,7 @@ function directionBindControls(){
     button.addEventListener('click',event=>{
       event.preventDefault();
       const nextTab=button.dataset.tab||'distribuicao';
+      if(nextTab==='distribuicao')directionDistributionLifecycleFilter='active';
       if(nextTab==='programacao'&&activeTab!=='programacao'){directionProgramWeek='AUTO';directionProgramWeekMonth='';directionProgramScrollPending=true;}
       activeTab=nextTab;
       directionResetNavigationContext();

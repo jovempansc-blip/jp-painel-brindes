@@ -3665,6 +3665,22 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 .isCarryoverRow{background:linear-gradient(90deg,rgba(255,248,240,.5),transparent 22%);}
 
 </style>
+
+<style>
+/* AV57.6.6.35 · FILTRO ATIVOS/ENCERRADOS + CONSOLIDAÇÃO VISUAL MULTIMESES */
+.distPrizeFilterHead{position:sticky!important;left:0;z-index:12!important;overflow:visible!important}
+.distPrizeFilterButton{width:100%;min-height:34px;border:0;background:transparent;color:#566171;font:1000 9px/1.1 inherit;letter-spacing:.045em;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;padding:0 8px}
+.distPrizeFilterButton em{font-style:normal;font-size:7.5px;color:#16814a;background:#eef8f2;border:1px solid #cce8d6;border-radius:999px;padding:3px 6px;letter-spacing:.035em}
+.distPrizeFilterButton b{font-size:10px;color:#8893a1;transition:.15s ease}
+.distPrizeFilterButton[aria-expanded="true"] b{transform:rotate(180deg)}
+.distPrizeFilterMenu{position:absolute;top:calc(100% - 2px);left:10px;z-index:250;min-width:148px;padding:6px;border:1px solid #dce3eb;border-radius:12px;background:#fff;box-shadow:0 14px 32px rgba(24,31,42,.14);text-align:left}
+.distPrizeFilterMenu[hidden]{display:none!important}
+.distPrizeFilterMenu button{display:flex;width:100%;min-height:31px;align-items:center;border:0;border-radius:8px;background:transparent;padding:0 9px;color:#536071;font:950 9px/1 inherit;cursor:pointer}
+.distPrizeFilterMenu button:hover,.distPrizeFilterMenu button.active{background:#f3f6f9;color:#141a23}
+.distPrizeFilterMenu button.active[data-dist-lifecycle="active"]{background:#eef8f2;color:#167845}
+.distPrizeFilterMenu button.active[data-dist-lifecycle="ended"]{background:#fff1f3;color:#b4233b}
+.distPrizeGroupHint{display:block;margin-top:3px;color:#8b96a4;font-size:7.5px;font-weight:900;letter-spacing:.025em}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -3741,8 +3757,8 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
             <div class="field"><label>ORDENAR NOMES</label><select class="control" id="distOrderFilter"><option value="alpha">ALFABÉTICA</option><option value="created">CADASTRO</option></select></div>
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
-          <div class="distContinuityNotice"><strong>CONTINUIDADES ATIVAS</strong><span>MOSTRA SOMENTE PRÊMIOS INICIADOS EM MESES ANTERIORES QUE AINDA ESTÃO ATIVOS NA COMPETÊNCIA. NO MÊS ATUAL, ITENS COM VIGÊNCIA JÁ ENCERRADA SAEM AUTOMATICAMENTE DESTA TELA. AS COLUNAS ABAIXO MANTÊM A DISTRIBUIÇÃO POR SEGMENTO DA COMPETÊNCIA ABERTA.</span></div>
-          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
+          <div class="distContinuityNotice"><strong>VISÃO DA COMPETÊNCIA</strong><span>A TABELA ABRE SEMPRE EM ATIVOS. CLIQUE EM PRÊMIO PARA ALTERNAR ENTRE ATIVOS, ENCERRADOS E TODOS. CAMPANHAS MULTIMESES SÃO CONSOLIDADAS EM UMA ÚNICA LINHA E OS VALORES ACOMPANHAM O MÊS SELECIONADO.</span></div>
+          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th class="distPrizeFilterHead"><button class="distPrizeFilterButton" id="distPrizeFilterButton" type="button" onclick="toggleDistributionLifecycleMenu(event)" aria-haspopup="menu" aria-expanded="false"><span>PRÊMIO</span><em id="distPrizeFilterLabel">ATIVOS</em><b>⌄</b></button><div class="distPrizeFilterMenu" id="distPrizeFilterMenu" role="menu" hidden><button type="button" data-dist-lifecycle="active" onclick="setDistributionLifecycleFilter('active',event)">ATIVOS</button><button type="button" data-dist-lifecycle="ended" onclick="setDistributionLifecycleFilter('ended',event)">ENCERRADOS</button><button type="button" data-dist-lifecycle="all" onclick="setDistributionLifecycleFilter('all',event)">TODOS</button></div></th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
         </div>
       </div>
     </section>
@@ -4558,6 +4574,7 @@ const WINNER_PROGRAM_VERSION_LIMIT = 10;
 let state = emptyWorkspaceState();
 let activeView = 'distribuicao';
 let activeDistributionFilter = '';
+let distributionLifecycleFilter = 'active';
 let radioPlannerDistId = '';
 
 
@@ -8491,18 +8508,15 @@ function filteredDistributions(monthKey=state.currentMonth){
   const text=norm($('distSearchInput')?.value||'');
   const status=$('distStatusFilter')?.value||'';
   const order=$('distOrderFilter')?.value || 'alpha';
-  const rows = monthDataForKey(monthKey).distributions.filter(d=>{
-    /* AV57.6.6.32
-       PRINCIPAL E DIREÇÃO/PREVIEW USAM A MESMA REGRA DE COMPETÊNCIA:
-       EXIBIR EXCLUSIVAMENTE A FOTOGRAFIA SALVA NO MÊS SELECIONADO.
-       NÃO FILTRAR POR MÊS DE ORIGEM NEM POR CONTINUIDADE. */
+  const sourceRows=monthDataForKey(monthKey).distributions.filter(d=>{
     const left=leftTotal(d),stock=distributionMonthStockStatus(d,monthKey),global=distributionCampaignGlobalBalance(d);
     const deficit=left<0||stock.executionBalance<0||global.balance<0;
-    const passStatus = !status || (status==='OK' && !deficit && left>=0) || (status==='SOBRA' && !deficit && left>0) || (status==='ZERADO' && !deficit && left===0) || (status==='ESTOURO' && deficit);
-    return passTextFilter(d,text) && passStatus;
+    const passStatus=!status||(status==='OK'&&!deficit&&left>=0)||(status==='SOBRA'&&!deficit&&left>0)||(status==='ZERADO'&&!deficit&&left===0)||(status==='ESTOURO'&&deficit);
+    return passTextFilter(d,text)&&passStatus;
   });
-  if(order==='alpha') rows.sort((a,b)=> norm(distributionLabel(a)).localeCompare(norm(distributionLabel(b))));
-  if(order==='created') rows.sort((a,b)=> String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  const rows=consolidateDistributionVisualRows(sourceRows,monthKey).filter(d=>distributionMatchesLifecycleFilter(d,monthKey));
+  if(order==='alpha') rows.sort((a,b)=>norm(distributionLabel(a)).localeCompare(norm(distributionLabel(b))));
+  if(order==='created') rows.sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
   return rows;
 }
 function renderReservations(monthKey=state.currentMonth){
@@ -8601,7 +8615,8 @@ function returnCountsByDistribution(){
   return counts;
 }
 function returnCell(d,counts=null){
-  const c=(counts||returnCountsByDistribution())[d.id] || {pending:0,sobra:0,realocado:0,total:0};
+  const map=counts||returnCountsByDistribution();
+  const c=distributionVisualIds(d).reduce((acc,id)=>{const row=map[id]||{};acc.pending+=num(row.pending);acc.sobra+=num(row.sobra);acc.realocado+=num(row.realocado);acc.total+=num(row.total);return acc;},{pending:0,sobra:0,realocado:0,total:0});
   if(!c.total) return '<span class="badge">0</span>';
   const cls=c.pending?'red':(c.sobra?'amber':'green');
   const label=c.pending?`${c.pending} PEND.`:(c.sobra?`${c.sobra} SOBRA`:`${c.realocado} REAP.`);
@@ -8805,12 +8820,69 @@ function markReturnedAsSobra(recordId){
   toast('PRÊMIO MARCADO COMO SOBRA.');
 }
 
-function distributionLifecycleStatus(d){
-  const start=distStartDate(d), end=distEndDate(d), today=todayISO();
-  if(end && end < today) return {key:'ended',label:'ENCERRADO'};
-  if(start && start > today) return {key:'scheduled',label:'PROGRAMADO'};
-  return {key:'active',label:'ATIVO'};
+function distributionMonthBounds(monthKey=state.currentMonth){
+  const match=String(monthKey||'').match(/^(\d{4})-(\d{2})$/);
+  if(!match)return {start:'',end:''};
+  const y=Number(match[1]),m=Number(match[2]),last=new Date(y,m,0).getDate();
+  return {start:`${monthKey}-01`,end:`${monthKey}-${String(last).padStart(2,'0')}`};
 }
+function distributionLifecycleStatusForMonth(d,monthKey=state.currentMonth){
+  const start=distStartDate(d),end=distEndDate(d),today=todayISO(),official=(typeof currentCalendarMonth==='function'?currentCalendarMonth():today.slice(0,7)),bounds=distributionMonthBounds(monthKey);
+  if(monthKey===official){
+    if(end&&end<today)return {key:'ended',label:'ENCERRADO'};
+    if(start&&start>today)return {key:'scheduled',label:'PROGRAMADO'};
+    return {key:'active',label:'ATIVO'};
+  }
+  if(monthKey<official){
+    if(end&&bounds.end&&end<=bounds.end)return {key:'ended',label:'ENCERRADO'};
+    return {key:'active',label:'ATIVO'};
+  }
+  if(start&&bounds.end&&start>bounds.end)return {key:'scheduled',label:'PROGRAMADO'};
+  return {key:'scheduled',label:'PROGRAMADO'};
+}
+function distributionLifecycleStatus(d){return distributionLifecycleStatusForMonth(d,state.currentMonth);}
+function distributionVisualGroupKey(d){
+  const explicit=norm(d?.masterPrizeId||d?.masterDistributionId||d?.campaignId||d?.campaignKey||'');
+  if(explicit)return `MASTER|${explicit}`;
+  return `LEGACY|${norm(distributionLabel(d))}|${norm(d?.title||'')}|${distStartDate(d)||''}`;
+}
+function distributionVisualIds(d){
+  const ids=Array.isArray(d?.__visualGroupIds)?d.__visualGroupIds:[d?.id];
+  return [...new Set(ids.map(String).filter(Boolean))];
+}
+function consolidateDistributionVisualRows(rows,monthKey=state.currentMonth){
+  const groups=new Map();
+  (rows||[]).filter(Boolean).forEach(d=>{const key=distributionVisualGroupKey(d);const list=groups.get(key)||[];list.push(d);groups.set(key,list);});
+  return [...groups.entries()].map(([groupKey,list])=>{
+    const ranked=[...list].sort((a,b)=>{
+      const end=String(distEndDate(b)||'').localeCompare(String(distEndDate(a)||''));if(end)return end;
+      const updated=String(b?.monthlyUpdatedAt||b?.updatedAt||b?.createdAt||'').localeCompare(String(a?.monthlyUpdatedAt||a?.updatedAt||a?.createdAt||''));if(updated)return updated;
+      return num(b?.monthlyRevision)-num(a?.monthlyRevision);
+    });
+    const copy=clone(ranked[0]);
+    const starts=list.map(distStartDate).filter(Boolean).sort(),ends=list.map(distEndDate).filter(Boolean).sort();
+    if(starts.length)copy.startDate=starts[0];if(ends.length)copy.endDate=ends[ends.length-1];
+    copy.__visualGroupKey=groupKey;copy.__visualGroupIds=[...new Set(list.map(x=>x?.id).filter(Boolean))];copy.__visualGroupSize=list.length;copy.__visualMonth=monthKey;
+    return copy;
+  });
+}
+function distributionMatchesLifecycleFilter(d,monthKey=state.currentMonth,filter=distributionLifecycleFilter){
+  if(filter==='all')return true;
+  const lifecycle=distributionLifecycleStatusForMonth(d,monthKey);
+  if(filter==='ended')return lifecycle.key==='ended';
+  return lifecycle.key!=='ended';
+}
+function distributionLifecycleFilterLabel(value=distributionLifecycleFilter){return value==='ended'?'ENCERRADOS':value==='all'?'TODOS':'ATIVOS';}
+function syncDistributionLifecycleFilterUI(){
+  const label=$('distPrizeFilterLabel'),button=$('distPrizeFilterButton'),menu=$('distPrizeFilterMenu');
+  if(label)label.textContent=distributionLifecycleFilterLabel();
+  if(button)button.setAttribute('aria-expanded',menu&&!menu.hidden?'true':'false');
+  if(menu)menu.querySelectorAll('[data-dist-lifecycle]').forEach(btn=>btn.classList.toggle('active',btn.dataset.distLifecycle===distributionLifecycleFilter));
+}
+function closeDistributionLifecycleMenu(){const menu=$('distPrizeFilterMenu'),button=$('distPrizeFilterButton');if(menu)menu.hidden=true;if(button)button.setAttribute('aria-expanded','false');}
+function toggleDistributionLifecycleMenu(event){if(event){event.preventDefault();event.stopPropagation();}const menu=$('distPrizeFilterMenu'),button=$('distPrizeFilterButton');if(!menu)return;menu.hidden=!menu.hidden;if(button)button.setAttribute('aria-expanded',menu.hidden?'false':'true');syncDistributionLifecycleFilterUI();}
+function setDistributionLifecycleFilter(value,event){if(event){event.preventDefault();event.stopPropagation();}distributionLifecycleFilter=['active','ended','all'].includes(value)?value:'active';closeDistributionLifecycleMenu();renderDistribuicao();}
+function distributionVisualProgrammed(d,channel=''){return distributionVisualIds(d).reduce((sum,id)=>sum+programmed(id,channel),0);}
 function distributionPrizeIdentityHtml(d){
   const lifecycle=distributionLifecycleStatus(d);
   const title=norm(d.title||'');
@@ -8821,12 +8893,13 @@ function distributionPrizeIdentityHtml(d){
   return `<div class="distPrizeStatusCard ${lifecycle.key}">
     <div class="distPrizeStatusTop"><strong>${esc(prize)}</strong><span class="distLifecycleBadge ${lifecycle.key}">${lifecycle.label}</span></div>
     ${extra}
-    <em class="distPrizePeriodClean">${esc(period)}</em>
+    <em class="distPrizePeriodClean">${esc(period)}</em>${num(d.__visualGroupSize)>1?`<small class="distPrizeGroupHint">CAMPANHA CONSOLIDADA · ${num(d.__visualGroupSize)} REGISTROS HISTÓRICOS</small>`:''}
   </div>`;
 }
 function renderDistribuicao(){
   alignPanelMonthWithInput();
   refreshDistProgramSearchCatalog();
+  syncDistributionLifecycleFilterUI();
   const monthKey=state.currentMonth;
   const openedMonth=monthDataForKey(monthKey);
   const rows=filteredDistributions(monthKey);
@@ -8852,7 +8925,7 @@ function renderDistribuicao(){
     console.warn('DISTRIBUTION RETURN COUNT ERROR',error);
   }
   tb.innerHTML = rows.map(d=>{
-    const left=leftTotal(d); const prog=programmed(d.id,'RÁDIO');
+    const left=leftTotal(d); const prog=distributionVisualProgrammed(d,'RÁDIO');
     const lifecycle=distributionLifecycleStatus(d);
     return `<tr data-dist-row="${esc(d.id)}" class="distLifecycleRow ${lifecycle.key}">
       <td class="distPrizeCell"><div class="distPrizeWrap">${distributionPrizeIdentityHtml(d)}</div></td>
@@ -8865,7 +8938,7 @@ function renderDistribuicao(){
       <td class="num">${inlineNum(d,'ar','RÁDIO')}</td>
       <td class="num">${inlineNum(d,'rs','REDES SOCIAIS')}</td>
       <td class="num reserveSummaryDistCell">${reservationSummaryCell(d)}</td>
-      <td class="num" data-prog-id="${esc(d.id)}">${programmed(d.id,'RÁDIO')}</td>
+      <td class="num" data-prog-id="${esc(d.id)}">${prog}</td>
       <td class="num distSaldoCell" data-saldo-id="${esc(d.id)}">${distributionBalanceCell(d)}</td>
       <td class="num returnCell" data-return-id="${esc(d.id)}">${returnCell(d,distributionReturnCounts)}</td>
       <td class="distGenerateCell"><button class="btn small distGenerateBtn" type="button" title="GERAR RODÍZIO" aria-label="GERAR RODÍZIO" onclick="generateRadioFromDist('${d.id}')">GERAR</button></td>
@@ -9243,7 +9316,8 @@ document.addEventListener('keydown',event=>{
   syncDrawerLayerState();
 });
 
-$$('.tabBtn').forEach(btn=>btn.addEventListener('click',()=>setView(btn.dataset.view)));
+$$('.tabBtn').forEach(btn=>btn.addEventListener('click',()=>{if(btn.dataset.view==='distribuicao')distributionLifecycleFilter='active';setView(btn.dataset.view);}));
+document.addEventListener('click',event=>{if(!event.target.closest('.distPrizeFilterHead'))closeDistributionLifecycleMenu();});
 
 
 function addProgramItemClick(event){
@@ -11625,7 +11699,8 @@ function distributionMonthRealizedUnits(distId,monthKey=state.currentMonth){
 function distributionMonthStockStatus(d,monthKey=d?.snapshotMonth||state.currentMonth){
   const quota=Math.max(0,num(d?.total));
   const allocatedUnits=allocated(d||{});
-  const realized=distributionMonthRealizedUnits(d?.id,monthKey);
+  const ids=distributionVisualIds(d);
+  const realized=ids.reduce((sum,id)=>sum+distributionMonthRealizedUnits(id,monthKey),0);
   return {
     quota,allocated:allocatedUnits,realized,
     planningBalance:quota-allocatedUnits,
@@ -13045,6 +13120,7 @@ window.confirmSmartRadioReport=confirmSmartRadioReport;
 window.redoSmartRadioReport=redoSmartRadioReport;
 window.openProgramScheduleForm=openProgramScheduleForm;
 window.editItem=editItem; window.duplicateItem=duplicateItem; window.deleteItem=deleteItem; window.programFromDist=programFromDist; window.filterProgramByDist=filterProgramByDist; window.editDist=editDist; window.deleteDist=deleteDist; window.editPromo=editPromo; window.deletePromo=deletePromo;
+window.toggleDistributionLifecycleMenu=toggleDistributionLifecycleMenu;window.setDistributionLifecycleFilter=setDistributionLifecycleFilter;
 window.addEventListener('online',handleBrowserConnectionChange);
 document.addEventListener('DOMContentLoaded',()=>{
   if(!firebaseConnected||!firebaseServerLoaded) startFirebaseAutoConnectSequence();
