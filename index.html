@@ -3770,7 +3770,6 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
     <button class="tabBtn" data-view="premios">PRÊMIOS</button>
     <button class="tabBtn" data-view="programacao">PROGRAMAÇÃO</button>
     <button class="tabBtn" data-view="digital">PROMO / MERCHAN</button>
-    <button class="tabBtn" data-view="pauta">PAUTA DE ESTÚDIO</button>
     <button class="tabBtn" data-view="horarios">HORÁRIOS</button>
     <button class="tabBtn" data-view="agendamento">AGENDAMENTO</button>
     <button class="tabBtn" data-view="ganhadores">BANCO DE GANHADORES</button>
@@ -3849,24 +3848,26 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
         </div>
       </div>
     </section>
-
     <section class="view" id="view-premios">
-      <div class="panel">
-        <div class="panelHead">
-          <div><h2>PRÊMIOS</h2><p>TÍTULOS CADASTRADOS NA DISTRIBUIÇÃO GERAL, DESCRIÇÃO PADRÃO E ÚLTIMO SORTEIO REALIZADO.</p></div>
-          <div class="panelActions"><button class="btn red" id="newDistFromCatalogBtn" type="button">+ NOVA DISTRIBUIÇÃO</button></div>
+      <div class="panel prizeCatalogPanelAV58">
+        <div class="panelHead prizeCatalogHeadAV58">
+          <div class="prizeCatalogHeadCopy"><h2>PRÊMIOS</h2><p>CATÁLOGO HISTÓRICO DE TÍTULOS, DESCRIÇÕES PADRÃO E ÚLTIMOS SORTEIOS.</p></div>
+          <button class="btn iconBtn prizeCatalogInfoBtn" id="prizeCatalogInfoBtn" type="button" title="REAPROVEITAMENTO AUTOMÁTICO: AO USAR UM TÍTULO JÁ CADASTRADO, A DESCRIÇÃO PADRÃO É CARREGADA NA NOVA DISTRIBUIÇÃO E PERMANECE EDITÁVEL. ALTERAÇÕES NO CATÁLOGO NÃO MODIFICAM O HISTÓRICO." aria-label="COMO FUNCIONA O REAPROVEITAMENTO AUTOMÁTICO">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>
+          </button>
+          <div class="panelActions prizeCatalogHeadActions"><button class="btn red iconBtn prizeCatalogNewBtn" id="newDistFromCatalogBtn" type="button" title="NOVA DISTRIBUIÇÃO" aria-label="NOVA DISTRIBUIÇÃO"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button></div>
         </div>
         <div class="panelBody">
           <div class="prizeCatalogKpis" id="prizeCatalogKpis"></div>
-          <div class="serverSourceBox"><strong>REAPROVEITAMENTO AUTOMÁTICO:</strong> ao selecionar um título já cadastrado, a descrição padrão é carregada na nova distribuição e permanece editável. Alterações no catálogo não modificam as descrições históricas.</div>
           <div class="prizeCatalogToolbar">
-            <div class="field"><label>PESQUISAR TÍTULO, DESCRIÇÃO OU GANHADOR</label><input class="control" id="prizeCatalogSearch" autocomplete="off" placeholder="DIGITE PARA PESQUISAR"></div>
-            <div class="field"><label>ORDENAR</label><select class="control" id="prizeCatalogOrder"><option value="recent" selected>USO MAIS RECENTE</option><option value="draw">SORTEIO MAIS RECENTE</option><option value="name">TÍTULO A-Z</option></select></div>
+            <div class="field prizeCatalogSearchField"><label>PESQUISAR</label><input class="control" id="prizeCatalogSearch" autocomplete="off" placeholder="TÍTULO, DESCRIÇÃO OU GANHADOR..."></div>
+            <div class="field prizeCatalogOrderField"><label>ORDENAR</label><select class="control" id="prizeCatalogOrder"><option value="recent" selected>MAIS RECENTE</option><option value="use">MAIS UTILIZADO</option><option value="name">A–Z</option><option value="draw">ÚLTIMO SORTEIO</option></select></div>
           </div>
-          <div class="tableWrap"><table class="promoMainTable prizeCatalogTable"><colgroup><col class="prizeCatalogTitleCol"><col class="prizeCatalogDescriptionCol"><col class="prizeCatalogCountCol"><col class="prizeCatalogDateCol"><col class="prizeCatalogDrawCol"><col class="prizeCatalogActionCol"></colgroup><thead><tr><th>TÍTULO</th><th>DESCRIÇÃO PADRÃO</th><th>CADASTROS</th><th>ÚLTIMO USO</th><th>ÚLTIMO SORTEIO</th><th>AÇÕES</th></tr></thead><tbody id="prizeCatalogTable"></tbody></table></div>
+          <div class="tableWrap"><table class="promoMainTable prizeCatalogTable"><colgroup><col class="prizeCatalogTitleCol"><col class="prizeCatalogDescriptionCol"><col class="prizeCatalogCountCol"><col class="prizeCatalogDateCol"><col class="prizeCatalogDrawCol"><col class="prizeCatalogActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th>DESCRIÇÃO PADRÃO</th><th>USOS</th><th>ÚLTIMO USO</th><th>ÚLTIMO SORTEIO</th><th>AÇÕES</th></tr></thead><tbody id="prizeCatalogTable"></tbody></table></div>
         </div>
       </div>
     </section>
+
 
     <section class="view" id="view-digital">
       <div class="panel promoHubPanel">
@@ -3889,41 +3890,6 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
       </div>
     </section>
 
-    <section class="view" id="view-pauta">
-      <div class="panel">
-        <div class="panelHead pautaHeroHead">
-          <img class="pautaHeroLogo" src="assets/logo-workspace-jp.png" alt="Workspace e Jovem Pan Floripa">
-          <div class="panelActions pautaHeroActions"><a class="btn iconBtn pautaHeroLink" id="studioLinkBtn" href="painel_pauta_estudio_jovem_pan_GITHUB_API.html" target="_blank" rel="noopener" aria-label="LINK DO ESTÚDIO" title="LINK DO ESTÚDIO" data-tip="LINK DO ESTÚDIO"><span class="iconGlyph">↗</span><span class="visuallyHidden">LINK DO ESTÚDIO</span></a><a class="btn iconBtn pautaHeroLink" href="painel_pauta_estudio_jovem_pan_news.html" target="_blank" rel="noopener" aria-label="LINK ESTÚDIO NEWS" title="LINK ESTÚDIO NEWS" data-tip="ESTÚDIO NEWS"><span class="iconGlyph">N</span><span class="visuallyHidden">LINK ESTÚDIO NEWS</span></a></div>
-        </div>
-        <div class="panelBody">
-          <div class="studioPautaTop">
-            <div class="studioPautaFilters">
-              <button class="btn studioDayNav" type="button" id="studioPrevDayBtn" title="DIA ANTERIOR" aria-label="DIA ANTERIOR">‹</button>
-              <div class="field studioDayField"><label>DIA DA PAUTA</label><input class="control" type="date" id="studioDateFilter"></div>
-              <button class="btn studioDayNav" type="button" id="studioNextDayBtn" title="PRÓXIMO DIA" aria-label="PRÓXIMO DIA">›</button>
-              <div class="field studioTypeField"><label>TIPO DE PAUTA</label><select class="control" id="studioPautaType"><option value="all">TODAS</option><option value="prize">PAUTAS PRÊMIOS</option><option value="promo">PAUTAS PROMO</option></select></div><div class="field studioTypeField"><label>EMISSORA</label><select class="control" id="studioStationFilter"><option value="ALL">TODAS</option><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option></select></div>
-            </div>
-            <div class="studioToolbar">
-              <div class="studioMetaCard"><span>TOTAL DE BLOCOS</span><strong id="studioBlockCount">0</strong></div>
-              <div class="studioMetaCard"><span>PRÊMIOS</span><strong id="studioPrizeCount">0</strong></div>
-              <div class="studioMetaCard"><span>PROMOÇÕES</span><strong id="studioPromoCount">0</strong></div>
-            </div>
-          </div>
-          <div class="studioSection" id="studioPrizeSection">
-            <div class="studioSectionHead"><strong>PAUTA DE PRÊMIOS</strong><span>RESUMO CLARO DOS PRÊMIOS PROGRAMADOS NO DIA.</span></div>
-            <div class="studioGrid" id="studioPrizeGrid"></div>
-          </div>
-          <div class="studioSection" id="studioPromoSection">
-            <div class="studioSectionHead"><strong>PAUTA DE PROMOÇÕES</strong><span>RESULTADOS E PROMOÇÕES CADASTRADOS PARA O DIA.</span></div>
-            <div class="studioPromoGrid" id="studioPromoGrid"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-
-    
 <section class="view" id="view-horarios">
   <div class="panel">
     <div class="panelHead">
@@ -4296,6 +4262,21 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
         </div>
         <div class="formActions"><button class="btn" type="button" id="generateDistRadioBtn">GERAR DISTRIBUIÇÃO INTELIGENTE</button><button class="btn red" type="submit">SALVAR DISTRIBUIÇÃO</button><button class="btn" type="button" data-close="distDrawer">CANCELAR</button></div>
       </form>
+    </div>
+  </div>
+</div>
+
+
+<div class="drawer prizeCatalogDetailDrawer" id="prizeCatalogDetailDrawer" aria-hidden="true">
+  <div class="drawerCard prizeCatalogDetailCardAV58">
+    <div class="drawerHead prizeCatalogDetailHeadAV58">
+      <div><h3 id="prizeCatalogDetailTitle">PRÊMIO</h3><span id="prizeCatalogDetailMeta"></span></div>
+      <button class="prizeCatalogDrawerIcon" type="button" data-close="prizeCatalogDetailDrawer" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>
+    </div>
+    <div class="drawerBody prizeCatalogDetailBodyAV58">
+      <section class="prizeCatalogGlassBlock"><strong>DESCRIÇÃO PADRÃO</strong><p id="prizeCatalogDetailDescription">—</p></section>
+      <section class="prizeCatalogGlassBlock"><strong>RESUMO</strong><p id="prizeCatalogDetailSummary">—</p></section>
+      <section class="prizeCatalogGlassBlock prizeCatalogHistoryBlock"><strong>HISTÓRICO</strong><div class="prizeCatalogDetailTimeline" id="prizeCatalogDetailHistory"></div></section>
     </div>
   </div>
 </div>
@@ -7138,12 +7119,13 @@ function renderPrizeCatalog(){
   if(!table||!kpis) return;
   const all=prizeCatalogRows();
   const described=all.filter(entry=>entry.description).length;
+  const missingCount=Math.max(0,all.length-described);
   const awardTotal=all.reduce((total,entry)=>total+entry.draws.reduce((drawSum,draw)=>drawSum+Math.max(1,(draw.names||[]).length),0),0);
   kpis.innerHTML=`
-    <div class="prizeCatalogKpi"><span>TÍTULOS DA DISTRIBUIÇÃO</span><strong>${all.length}</strong></div>
+    <div class="prizeCatalogKpi"><span>TÍTULOS</span><strong>${all.length}</strong></div>
+    <div class="prizeCatalogKpi"><span>PREMIAÇÕES REGISTRADAS</span><strong>${awardTotal}</strong></div>
     <div class="prizeCatalogKpi"><span>COM DESCRIÇÃO PADRÃO</span><strong>${described}</strong></div>
-    <div class="prizeCatalogKpi"><span>SEM DESCRIÇÃO PADRÃO</span><strong>${Math.max(0,all.length-described)}</strong></div>
-    <div class="prizeCatalogKpi"><span>PREMIAÇÕES REGISTRADAS</span><strong>${awardTotal}</strong></div>`;
+    ${missingCount?`<div class="prizeCatalogKpi attention"><span>SEM DESCRIÇÃO PADRÃO</span><strong>${missingCount}</strong></div>`:''}`;
   const query=prizeCatalogPlain($('prizeCatalogSearch')?.value||'');
   const order=$('prizeCatalogOrder')?.value||'recent';
   const rows=all.filter(entry=>{
@@ -7152,21 +7134,45 @@ function renderPrizeCatalog(){
     return haystack.includes(query);
   }).sort((a,b)=>{
     if(order==='name') return a.title.localeCompare(b.title,'pt-BR');
+    if(order==='use') return Number(b.usageCount||0)-Number(a.usageCount||0)||String(b.latestUseDate||'').localeCompare(String(a.latestUseDate||''))||a.title.localeCompare(b.title,'pt-BR');
     if(order==='draw') return String(b.lastDrawDate||'').localeCompare(String(a.lastDrawDate||''))||a.title.localeCompare(b.title,'pt-BR');
     return String(b.latestUseDate||b.lastDrawDate||'').localeCompare(String(a.latestUseDate||a.lastDrawDate||''))||a.title.localeCompare(b.title,'pt-BR');
   });
+  const svgUse='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg>';
+  const svgEdit='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4Z"></path><path d="m13 7 4 4"></path></svg>';
+  const svgHistory='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l3 2"></path></svg>';
   table.innerHTML=rows.length?rows.map(entry=>{
-    const description=entry.description||'SEM DESCRIÇÃO PADRÃO. USE EDITAR PADRÃO PARA CADASTRAR.';
+    const description=entry.description||'SEM DESCRIÇÃO PADRÃO.';
     const latestDraw=entry.draws[0]||null;
-    const drawHtml=latestDraw?`<div class="prizeCatalogDraw"><strong>${formatBR(latestDraw.date)||'DATA NÃO INFORMADA'} · ${esc(latestDraw.program||'PROGRAMA NÃO INFORMADO')}</strong><span>${esc(prizeCatalogDrawText(latestDraw))}</span></div>`:'<span class="prizeCatalogNoDraw">NENHUM SORTEIO LOCALIZADO.</span>';
-    return `<tr><td class="prizeCatalogTitle"><strong>${esc(entry.title)}</strong><small>${esc(entry.prize!==entry.title?entry.prize:'DISTRIBUIÇÃO GERAL')}</small></td><td><div class="prizeCatalogDescription ${entry.description?'':'empty'}" title="${esc(description)}">${esc(description)}</div></td><td class="num">${entry.usageCount}</td><td>${formatBR(entry.latestUseDate)||'-'}</td><td><div class="prizeCatalogDraws">${drawHtml}</div></td><td><div class="prizeCatalogActions"><button class="btn red" type="button" data-prize-catalog-action="use" data-prize-key="${esc(entry.key)}">USAR</button><button class="btn" type="button" data-prize-catalog-action="edit" data-prize-key="${esc(entry.key)}">EDITAR PADRÃO</button></div></td></tr>`;
+    const drawHtml=latestDraw?`<div class="prizeCatalogDraw"><strong>${formatBR(latestDraw.date)||'DATA NÃO INFORMADA'} · ${esc(latestDraw.program||'PROGRAMA NÃO INFORMADO')}</strong><span>${esc(prizeCatalogDrawText(latestDraw))}</span></div>`:'<span class="prizeCatalogNoDraw">—</span>';
+    return `<tr><td class="prizeCatalogTitle"><button class="prizeCatalogTitleButton" type="button" data-prize-catalog-action="details" data-prize-key="${esc(entry.key)}"><strong>${esc(entry.title)}</strong><small>${esc(entry.prize!==entry.title?entry.prize:'DISTRIBUIÇÃO GERAL')}</small></button></td><td><div class="prizeCatalogDescription ${entry.description?'':'empty'}" title="${esc(description)}">${esc(description)}</div></td><td class="num prizeCatalogUses">${entry.usageCount}</td><td>${formatBR(entry.latestUseDate)||'—'}</td><td><div class="prizeCatalogDraws">${drawHtml}</div></td><td><div class="prizeCatalogActions"><button class="prizeCatalogActionIcon primary" type="button" data-prize-catalog-action="use" data-prize-key="${esc(entry.key)}" title="USAR" aria-label="USAR">${svgUse}</button><button class="prizeCatalogActionIcon" type="button" data-prize-catalog-action="edit" data-prize-key="${esc(entry.key)}" title="EDITAR PADRÃO" aria-label="EDITAR PADRÃO">${svgEdit}</button><button class="prizeCatalogActionIcon" type="button" data-prize-catalog-action="details" data-prize-key="${esc(entry.key)}" title="HISTÓRICO" aria-label="HISTÓRICO">${svgHistory}</button></div></td></tr>`;
   }).join(''):'<tr><td colspan="6"><div class="winnerEmpty">NENHUM PRÊMIO ENCONTRADO.</div></td></tr>';
   populatePrizeCatalogDatalist(all);
 }
+
 function populatePrizeCatalogDatalist(entries=prizeCatalogRows()){
   const datalist=$('distTitleDatalist');
   if(!datalist) return;
   datalist.innerHTML=entries.slice().sort((a,b)=>a.title.localeCompare(b.title,'pt-BR')).map(entry=>`<option value="${esc(entry.title)}"></option>`).join('');
+}
+function prizeCatalogHistoryRows(entry){
+  if(!entry) return [];
+  const rows=[];
+  (entry.usages||[]).forEach(usage=>rows.push({date:usage.date||'',type:'DISTRIBUIÇÃO',title:usage.title||entry.title,detail:usage.description||'SEM DESCRIÇÃO NESTE REGISTRO.'}));
+  (entry.draws||[]).forEach(draw=>rows.push({date:draw.date||'',type:'SORTEIO',title:draw.program||'PROGRAMA NÃO INFORMADO',detail:prizeCatalogDrawText(draw)}));
+  return rows.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||a.type.localeCompare(b.type,'pt-BR'));
+}
+function openPrizeCatalogDetails(key){
+  const entry=prizeCatalogEntry(key);
+  if(!entry) return;
+  const title=$('prizeCatalogDetailTitle'),meta=$('prizeCatalogDetailMeta'),description=$('prizeCatalogDetailDescription'),summary=$('prizeCatalogDetailSummary'),history=$('prizeCatalogDetailHistory');
+  if(title) title.textContent=entry.title;
+  if(meta) meta.textContent=entry.prize!==entry.title?entry.prize:'CATÁLOGO DE PRÊMIOS';
+  if(description) description.textContent=entry.description||'SEM DESCRIÇÃO PADRÃO.';
+  if(summary) summary.textContent=`${entry.usageCount} USO(S) · ÚLTIMO USO ${formatBR(entry.latestUseDate)||'—'} · ÚLTIMO SORTEIO ${formatBR(entry.lastDrawDate)||'—'}`;
+  const rows=prizeCatalogHistoryRows(entry);
+  if(history) history.innerHTML=rows.length?rows.map(row=>`<div class="prizeCatalogTimelineRow"><span>${esc(row.type)}</span><div><strong>${esc((formatBR(row.date)||'DATA NÃO INFORMADA')+' · '+row.title)}</strong><small>${esc(row.detail)}</small></div></div>`).join(''):'<div class="winnerEmpty">NENHUM HISTÓRICO LOCALIZADO.</div>';
+  openDrawer('prizeCatalogDetailDrawer');
 }
 function openPrizeCatalogEditor(key){
   const entry=prizeCatalogEntry(key);
@@ -8389,7 +8395,6 @@ function render(){
   else if(activeView==='distribuicao')renderDistribuicao();
   else if(activeView==='premios')renderPrizeCatalog();
   else if(activeView==='digital')renderPromos();
-  else if(activeView==='pauta')renderStudioPauta();
   else if(activeView==='horarios')renderProgramSchedules();
   else if(activeView==='agendamento')renderSchedule();
   else if(activeView==='ganhadores')renderWinnerBank();
@@ -13333,6 +13338,7 @@ document.addEventListener('click',event=>{
   const key=button.dataset.prizeKey||'';
   if(action==='use') openNewDistributionFromCatalog(key);
   else if(action==='edit') openPrizeCatalogEditor(key);
+  else if(action==='details') openPrizeCatalogDetails(key);
 });
 
 if($('distRotationHours')) $('distRotationHours').addEventListener('change',()=>syncRotationAllFromHours('dist'));
