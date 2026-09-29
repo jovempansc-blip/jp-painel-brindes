@@ -8532,7 +8532,6 @@ function renderProgramCard(i){
   const resolvedProgram=programFromSchedule(i.date,i.slot,itemStation(i))||norm(i.program||'');
   const cardTitle=i.prize||i.title||resolvedProgram||'';
   const cardSubtitle=i.title?`${i.title}${resolvedProgram?' · '+resolvedProgram:''}`:resolvedProgram;
-  const winnerInfo=norm(i.winnerName||'')?`<span class="winnerInfo" title="GANHADOR: ${esc(i.winnerName)}">I</span>`:'';
   const promoResultBadge=i.sourceType==='promo-result'?`<span class="badge blue" title="RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR">RESULTADO</span>`:'';
   const radioConflict=normalizeChannel(i.channel)==='RÁDIO'?radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)):[];
   const rotationConflict=(normalizeChannel(i.channel)==='RÁDIO'&&d)?samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)):[];
@@ -8549,7 +8548,7 @@ function renderProgramCard(i){
     <div class="programInfo">
       <strong title="${esc(cardTitle)}">${esc(cardTitle)}</strong>
       <em title="${esc(cardSubtitle)}">${esc(cardSubtitle)}</em>
-      <div class="programMeta"><span class="badge dark">${esc(stationLabel(itemStation(i)))}</span>${statusBadge(i.status,i)}${promoResultBadge}${radioConflictBadge}${rotationInfo}${winnerInfo}<span class="programQtyInline">QUANTIDADE <strong>${num(i.qty)}</strong></span></div>
+      <div class="programMeta"><span class="badge dark">${esc(stationLabel(itemStation(i)))}</span>${statusBadge(i.status,i)}${promoResultBadge}${radioConflictBadge}${rotationInfo}<span class="programQtyInline">QUANTIDADE <strong>${num(i.qty)}</strong></span></div>
       ${conflictNote}
     </div>
     <div class="programSide">
