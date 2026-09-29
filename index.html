@@ -3765,7 +3765,8 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
   </header>
 
   <nav class="tabs" aria-label="NAVEGAÇÃO DO PAINEL">
-    <button class="tabBtn active" data-view="distribuicao">DISTRIBUIÇÃO GERAL</button>
+    <button class="tabBtn active" data-view="central">CENTRAL</button>
+    <button class="tabBtn" data-view="distribuicao">DISTRIBUIÇÃO GERAL</button>
     <button class="tabBtn" data-view="premios">PRÊMIOS</button>
     <button class="tabBtn" data-view="programacao">PROGRAMAÇÃO</button>
     <button class="tabBtn" data-view="digital">PROMO / MERCHAN</button>
@@ -3781,6 +3782,34 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
   <div class="miniAlertHost" id="miniAlertHost"></div>
 
   <main>
+    <section class="view active" id="view-central">
+      <div class="panel centralOperationPanel">
+        <div class="panelHead centralOperationHead">
+          <div><h2>CENTRAL DE OPERAÇÃO</h2><p>O QUE ESTÁ ACONTECENDO AGORA E O QUE PRECISA DA SUA ATENÇÃO.</p></div>
+          <div class="centralMonthBadge" id="centralMonthBadge">MÊS ATUAL</div>
+        </div>
+        <div class="panelBody">
+          <div class="centralOperationKpis" id="centralOperationKpis"></div>
+          <div class="centralOperationGrid">
+            <section class="centralOperationCard centralAttentionCard">
+              <div class="centralCardHead"><div><strong>PRECISA DA SUA ATENÇÃO</strong><span>SOMENTE EXCEÇÕES E PENDÊNCIAS OPERACIONAIS.</span></div><button class="btn small" type="button" onclick="setView('sistema')">VER SISTEMA</button></div>
+              <div class="centralAttentionList" id="centralAttentionList"></div>
+            </section>
+            <section class="centralOperationCard centralTodayCard">
+              <div class="centralCardHead"><div><strong>HOJE NA PROGRAMAÇÃO</strong><span id="centralTodayLabel">PROGRAMAÇÃO DO DIA</span></div><button class="btn small" type="button" onclick="setView('programacao')">ABRIR GRADE</button></div>
+              <div class="centralTodayList" id="centralTodayList"></div>
+            </section>
+          </div>
+          <div class="centralQuickGrid">
+            <button class="centralQuickCard" type="button" onclick="setView('distribuicao')"><span>DISTRIBUIÇÃO</span><strong>PRÊMIOS E SALDOS</strong><em>ABRIR →</em></button>
+            <button class="centralQuickCard" type="button" onclick="setView('digital')"><span>PROMO / MERCHAN</span><strong>CAMPANHAS E LEITURAS</strong><em>ABRIR →</em></button>
+            <button class="centralQuickCard" type="button" onclick="setView('ganhadores')"><span>GANHADORES</span><strong>BANCO E ELEGIBILIDADE</strong><em>ABRIR →</em></button>
+            <button class="centralQuickCard" type="button" onclick="setView('relatorios')"><span>RELATÓRIOS</span><strong>CONSULTA CONSOLIDADA</strong><em>ABRIR →</em></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="view" id="view-programacao">
       <div class="panel">
         <div class="panelBody">
@@ -3799,22 +3828,24 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
       </div>
     </section>
 
-    <section class="view active" id="view-distribuicao">
+    <section class="view" id="view-distribuicao">
       <div class="panel">
         <div class="panelHead">
           <div><h2>DISTRIBUIÇÃO GERAL</h2><p>CONTROLE MASTER DO MÊS COM SALDO DISPONÍVEL POR PRÊMIO.</p></div>
-          <div class="panelActions"><button class="btn red iconBtn addIconBtn distAddIconBtn" id="addDistBtn" title="NOVO BRINDE / SHOW" aria-label="NOVO BRINDE / SHOW" data-tip="NOVO BRINDE"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVO BRINDE / SHOW</span></button></div>
+          <div class="panelActions distHeaderActions"><div class="distViewSwitch" role="group" aria-label="MODO DE VISUALIZAÇÃO DA DISTRIBUIÇÃO"><button class="active" type="button" data-dist-view="compact" onclick="setDistributionViewMode('compact')">COMPACTA</button><button type="button" data-dist-view="detailed" onclick="setDistributionViewMode('detailed')">DETALHADA</button></div><button class="btn red iconBtn addIconBtn distAddIconBtn" id="addDistBtn" title="NOVO BRINDE / SHOW" aria-label="NOVO BRINDE / SHOW" data-tip="NOVO BRINDE"><span class="iconGlyph">＋</span><span class="visuallyHidden">NOVO BRINDE / SHOW</span></button></div>
         </div>
         <div class="panelBody">
           <div class="filterBar distFilterBar">
             <div class="field"><label>BUSCAR NA DISTRIBUIÇÃO</label><input class="control" id="distSearchInput"></div>
             <div class="field distProgramSearchField"><label>BUSCAR PROGRAMAÇÃO</label><div class="distProgramSearchControl"><input class="control" id="distProgramSearchInput" list="distProgramSearchDatalist" placeholder="DIGITE O PRÊMIO"><button class="btn" id="distProgramSearchBtn" type="button">VER PROGRAMAÇÃO</button></div><datalist id="distProgramSearchDatalist"></datalist></div>
             <div class="field"><label>STATUS DO SALDO</label><select class="control" id="distStatusFilter"><option value="">TODOS</option><option value="OK">OK</option><option value="SOBRA">COM SOBRA</option><option value="ZERADO">ZERADO</option><option value="ESTOURO">ESTOURO</option></select></div>
+            <div class="field"><label>CAMPANHAS</label><select class="control" id="distLifecycleFilterSelect" onchange="setDistributionLifecycleFilter(this.value)"><option value="active">ATIVOS</option><option value="ended">ENCERRADOS</option><option value="all">TODOS</option></select></div>
             <div class="field"><label>ORDENAR NOMES</label><select class="control" id="distOrderFilter"><option value="alpha">ALFABÉTICA</option><option value="created">CADASTRO</option></select></div>
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
           <div class="distContinuityNotice"><strong>VISÃO DA COMPETÊNCIA</strong><span>A TABELA ABRE SEMPRE EM ATIVOS. CLIQUE EM PRÊMIO PARA ALTERNAR ENTRE ATIVOS, ENCERRADOS E TODOS. CAMPANHAS MULTIMESES SÃO CONSOLIDADAS EM UMA ÚNICA LINHA E OS VALORES ACOMPANHAM O MÊS SELECIONADO.</span></div>
-          <div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th class="distPrizeFilterHead"><button class="distPrizeFilterButton" id="distPrizeFilterButton" type="button" onclick="toggleDistributionLifecycleMenu(event)" aria-haspopup="menu" aria-expanded="false"><span>PRÊMIO</span><em id="distPrizeFilterLabel">ATIVOS</em><b>⌄</b></button><div class="distPrizeFilterMenu" id="distPrizeFilterMenu" role="menu" hidden><button type="button" data-dist-lifecycle="active" onclick="setDistributionLifecycleFilter('active',event)">ATIVOS</button><button type="button" data-dist-lifecycle="ended" onclick="setDistributionLifecycleFilter('ended',event)">ENCERRADOS</button><button type="button" data-dist-lifecycle="all" onclick="setDistributionLifecycleFilter('all',event)">TODOS</button></div></th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div>
+          <div class="distViewPane" id="distCompactView"><div class="tableWrap"><table class="distCompactTable"><thead><tr><th>PRÊMIO</th><th class="num">DISPONÍVEL</th><th class="num">DISTRIBUÍDO</th><th class="num">REALIZADO</th><th class="num">SALDO</th><th class="num">PROGRAMAÇÃO</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="distCompactTable"></tbody></table></div></div>
+          <div class="distViewPane" id="distDetailedView" hidden><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th class="distPrizeFilterHead"><button class="distPrizeFilterButton" id="distPrizeFilterButton" type="button" onclick="toggleDistributionLifecycleMenu(event)" aria-haspopup="menu" aria-expanded="false"><span>PRÊMIO</span><em id="distPrizeFilterLabel">ATIVOS</em><b>⌄</b></button><div class="distPrizeFilterMenu" id="distPrizeFilterMenu" role="menu" hidden><button type="button" data-dist-lifecycle="active" onclick="setDistributionLifecycleFilter('active',event)">ATIVOS</button><button type="button" data-dist-lifecycle="ended" onclick="setDistributionLifecycleFilter('ended',event)">ENCERRADOS</button><button type="button" data-dist-lifecycle="all" onclick="setDistributionLifecycleFilter('all',event)">TODOS</button></div></th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div></div>
         </div>
       </div>
     </section>
@@ -4604,6 +4635,13 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
   </div>
 </div>
 
+<div class="drawer" id="distDetailDrawer" aria-hidden="true">
+  <div class="drawerCard distDetailDrawerCard">
+    <div class="drawerHead"><h3>DETALHES DO PRÊMIO</h3><button class="btn small" data-close="distDetailDrawer">FECHAR</button></div>
+    <div class="drawerBody" id="distDetailBody"></div>
+  </div>
+</div>
+
 <datalist id="programDatalist"></datalist>
 <datalist id="distTitleDatalist"></datalist>
 <div class="toast" id="toast"></div>
@@ -4631,9 +4669,10 @@ const OPERATOR_SESSION_KEY = 'jp_workspace_operator_v56';
 const WINNER_TRASH_RETENTION_DAYS = 30;
 const WINNER_PROGRAM_VERSION_LIMIT = 10;
 let state = emptyWorkspaceState();
-let activeView = 'distribuicao';
+let activeView = 'central';
 let activeDistributionFilter = '';
 let distributionLifecycleFilter = 'active';
+let distributionViewMode = 'compact';
 let radioPlannerDistId = '';
 
 
@@ -8345,7 +8384,8 @@ function render(){
   if(typeof autoConvertDueSchedulesForCurrentMonth==='function'){const convertedCount=autoConvertDueSchedulesForCurrentMonth();if(convertedCount>0)saveState(true);}
   if($('programDaysBox')&&!document.querySelector('#programDaysBox input:checked'))setProgramDaysControls([1,2,3,4,5]);
   $('monthInput').value=state.currentMonth;renderFilters();renderStats();
-  if(activeView==='programacao')renderProgramacao();
+  if(activeView==='central')renderCentralOperacao();
+  else if(activeView==='programacao')renderProgramacao();
   else if(activeView==='distribuicao')renderDistribuicao();
   else if(activeView==='premios')renderPrizeCatalog();
   else if(activeView==='digital')renderPromos();
@@ -8932,9 +8972,82 @@ function distributionMatchesLifecycleFilter(d,monthKey=state.currentMonth,filter
   if(filter==='ended')return lifecycle.key==='ended';
   return lifecycle.key!=='ended';
 }
+function centralOperationalIssues(monthKey=state.currentMonth){
+  const m=monthDataForKey(monthKey),issues=[];
+  const push=(level,title,detail,view)=>issues.push({level,title,detail,view});
+  (m.distributions||[]).forEach(d=>{
+    const stock=distributionMonthStockStatus(d,monthKey),globalStock=distributionCampaignGlobalBalance(d),left=leftTotal(d);
+    if(left<0)push('CRÍTICO',`${distributionLabel(d)} · PLANEJAMENTO`,`DESTINOS ULTRAPASSAM A COTA DO MÊS EM ${Math.abs(left)} UNIDADE(S).`,'distribuicao');
+    if(stock.executionBalance<0)push('CRÍTICO',`${distributionLabel(d)} · EXECUÇÃO`,`REALIZADO ULTRAPASSOU A COTA DO MÊS EM ${Math.abs(stock.executionBalance)} UNIDADE(S).`,'distribuicao');
+    if(globalStock.balance<0)push('ATENÇÃO',`${distributionLabel(d)} · ESTOQUE GLOBAL`,`COTAS MENSAIS ULTRAPASSAM O ESTOQUE FÍSICO EM ${Math.abs(globalStock.balance)} UNIDADE(S).`,'distribuicao');
+  });
+  (m.items||[]).filter(i=>normalizeStatus(i.status)!=='CANCELADO').forEach(i=>{
+    if(!i.distributionId&&norm(i.prize)!=='A DEFINIR'&&i.sourceType!=='promo-result')push('ATENÇÃO',`${i.prize||i.title||'ITEM'} · SEM VÍNCULO`,`${formatBR(i.date)} · ${normalizeSlot(i.slot||'')||'SEM HORÁRIO'}`,'programacao');
+  });
+  promoSnapshotsForMonth(monthKey).forEach(p=>{
+    const st=promoStatusData(p);if(st.key!=='active')return;
+    const cfg=promoProgramConfigsDisplay(p);
+    if(!cfg.length)push('ATENÇÃO',`${promoClientCampaignData(p).campaign||p.name||p.title||'CAMPANHA'} · SEM PROGRAMAÇÃO`,`CAMPANHA ATIVA SEM PROGRAMA/HORÁRIO DEFINIDO.`,'digital');
+  });
+  if(firebasePendingSave)push('INFORMATIVO','SINCRONIZAÇÃO EM ANDAMENTO','EXISTE UMA ALTERAÇÃO AGUARDANDO CONFIRMAÇÃO DO FIREBASE.','backup');
+  const rank={CRÍTICO:0,'ATENÇÃO':1,INFORMATIVO:2};
+  return issues.sort((a,b)=>(rank[a.level]??9)-(rank[b.level]??9));
+}
+function renderCentralOperacao(){
+  const monthKey=state.currentMonth,m=monthDataForKey(monthKey),today=todayISO();
+  const distributions=consolidateDistributionVisualRows(m.distributions||[],monthKey);
+  const activeDists=distributions.filter(d=>distributionLifecycleStatusForMonth(d,monthKey).key!=='ended');
+  const todayItems=allProgramItemsAcrossMonths().filter(i=>i&&i.date===today&&normalizeStatus(i.status)!=='CANCELADO').sort((a,b)=>slotOrder(a.slot)-slotOrder(b.slot));
+  const activePromos=promoSnapshotsForMonth(monthKey).filter(p=>promoStatusData(p).key==='active');
+  const issues=centralOperationalIssues(monthKey);
+  if($('centralMonthBadge'))$('centralMonthBadge').textContent=labelMonth(monthKey);
+  if($('centralTodayLabel'))$('centralTodayLabel').textContent=`${formatBR(today)} · ${todayItems.length} ITEM(NS)`;
+  const kpis=$('centralOperationKpis');
+  if(kpis)kpis.innerHTML=`
+    <button class="centralKpi" type="button" onclick="setView('distribuicao')"><span>PRÊMIOS ATIVOS</span><strong>${activeDists.length}</strong><em>NA COMPETÊNCIA</em></button>
+    <button class="centralKpi" type="button" onclick="setView('programacao')"><span>INSERÇÕES HOJE</span><strong>${todayItems.length}</strong><em>PROGRAMAÇÃO DO DIA</em></button>
+    <button class="centralKpi" type="button" onclick="setView('digital')"><span>PROMO / MERCHAN</span><strong>${activePromos.length}</strong><em>ATIVOS AGORA</em></button>
+    <button class="centralKpi ${issues.length?'attention':'ok'}" type="button" onclick="setView('sistema')"><span>PENDÊNCIAS</span><strong>${issues.length}</strong><em>${issues.length?'PRECISAM DE REVISÃO':'SISTEMA SEM ALERTAS'}</em></button>`;
+  const attention=$('centralAttentionList');
+  if(attention)attention.innerHTML=issues.length?issues.slice(0,7).map(x=>`<button class="centralAttentionItem ${x.level==='CRÍTICO'?'critical':x.level==='ATENÇÃO'?'warning':'info'}" type="button" onclick="setView('${esc(x.view)}')"><i></i><div><strong>${esc(x.title)}</strong><span>${esc(x.detail)}</span></div><b>›</b></button>`).join(''):`<div class="centralAllClear"><span>✓</span><div><strong>SEM PENDÊNCIAS CRÍTICAS</strong><small>A COMPETÊNCIA ESTÁ CONSISTENTE NESTE MOMENTO.</small></div></div>`;
+  const todayHost=$('centralTodayList');
+  if(todayHost)todayHost.innerHTML=todayItems.length?todayItems.slice(0,8).map(i=>`<button class="centralTodayItem" type="button" onclick="setView('programacao')"><time>${esc(normalizeSlot(i.slot||''))}</time><div><strong>${esc(i.prize||i.title||'ITEM')}</strong><span>${esc(i.program||'SEM PROGRAMA')} · ${esc(stationLabel(i.station||'JP1017'))}</span></div>${statusBadge(i.status,i)}</button>`).join(''):`<div class="centralEmpty">SEM ITENS PROGRAMADOS PARA HOJE.</div>`;
+}
+function setDistributionViewMode(mode){
+  distributionViewMode=mode==='detailed'?'detailed':'compact';
+  syncDistributionViewModeUI();
+}
+function syncDistributionViewModeUI(){
+  const compact=$('distCompactView'),detailed=$('distDetailedView');
+  if(compact)compact.hidden=distributionViewMode!=='compact';
+  if(detailed)detailed.hidden=distributionViewMode!=='detailed';
+  document.querySelectorAll('[data-dist-view]').forEach(btn=>btn.classList.toggle('active',btn.dataset.distView===distributionViewMode));
+}
+function distributionVisualRecord(id){
+  const rows=consolidateDistributionVisualRows(monthData().distributions||[],state.currentMonth);
+  return rows.find(d=>distributionVisualIds(d).includes(String(id)))||rows.find(d=>String(d.id)===String(id))||null;
+}
+function renderDistributionCompact(rows){
+  const tb=$('distCompactTable');if(!tb)return;
+  if(!rows.length){tb.innerHTML='<tr><td colspan="8"><div class="empty">NENHUMA DISTRIBUIÇÃO ENCONTRADA PARA A VISÃO ATUAL.</div></td></tr>';return;}
+  tb.innerHTML=rows.map(d=>{
+    const stock=distributionMonthStockStatus(d,state.currentMonth),lifecycle=distributionLifecycleStatus(d),prog=distributionVisualProgrammed(d,'RÁDIO');
+    const saldoClass=stock.executionBalance<0?'negative':stock.executionBalance===0?'zero':'positive';
+    return `<tr class="distCompactRow" data-dist-id="${esc(d.id)}"><td><button class="distCompactPrize" type="button" onclick="openDistributionDetail('${esc(d.id)}')">${distributionPrizeIdentityHtml(d)}</button></td><td class="num"><strong>${num(d.total)}</strong></td><td class="num">${allocated(d)}</td><td class="num">${stock.realized}</td><td class="num"><span class="distCompactBalance ${saldoClass}">${stock.executionBalance}</span></td><td class="num">${prog}</td><td><span class="distLifecycleBadge ${lifecycle.key}">${lifecycle.label}</span></td><td><div class="distCompactActions"><button class="actionIcon" type="button" title="VER DETALHES" aria-label="VER DETALHES" onclick="openDistributionDetail('${esc(d.id)}')"><span class="iconGlyph">›</span></button><button class="actionIcon ghost" type="button" title="PROGRAMAR" aria-label="PROGRAMAR" onclick="programFromDist('${esc(d.id)}')"><span class="iconGlyph">＋</span></button></div></td></tr>`;
+  }).join('');
+}
+function openDistributionDetail(id){
+  const d=distributionVisualRecord(id);if(!d)return;
+  const stock=distributionMonthStockStatus(d,state.currentMonth),global=distributionCampaignGlobalBalance(d),prog=distributionVisualProgrammed(d,'RÁDIO'),body=$('distDetailBody');
+  const channels=CHANNELS.map(([key,label])=>{const planned=num(d[key]),used=distributionVisualProgrammed(d,label);return `<div class="distDetailChannel"><span>${esc(label)}</span><strong>${planned}</strong><small>${used} PROGRAMADO(S)</small></div>`;}).join('');
+  if(body)body.innerHTML=`<div class="distDetailHero">${distributionPrizeIdentityHtml(d)}</div><div class="distDetailMetrics"><div><span>COTA DO MÊS</span><strong>${num(d.total)}</strong></div><div><span>DISTRIBUÍDO</span><strong>${allocated(d)}</strong></div><div><span>REALIZADO</span><strong>${stock.realized}</strong></div><div><span>SALDO</span><strong>${stock.executionBalance}</strong></div><div><span>PROG. RÁDIO</span><strong>${prog}</strong></div><div><span>SALDO GLOBAL</span><strong>${global.balance}</strong></div></div><div class="distDetailSection"><div class="distDetailSectionHead"><strong>DESTINAÇÃO</strong><span>QUANTIDADE DEFINIDA E PROGRAMAÇÃO ASSOCIADA.</span></div><div class="distDetailChannels">${channels}</div></div><div class="distDetailActions"><button class="btn red" type="button" onclick="closeDrawer('distDetailDrawer');programFromDist('${esc(d.id)}')">PROGRAMAR MANUAL</button><button class="btn" type="button" onclick="closeDrawer('distDetailDrawer');filterProgramByDist('${esc(d.id)}')">VER PROGRAMAÇÃO</button><button class="btn" type="button" onclick="closeDrawer('distDetailDrawer');editDist('${esc(d.id)}')">EDITAR PRÊMIO</button></div>`;
+  openDrawer('distDetailDrawer');
+}
+
 function distributionLifecycleFilterLabel(value=distributionLifecycleFilter){return value==='ended'?'ENCERRADOS':value==='all'?'TODOS':'ATIVOS';}
 function syncDistributionLifecycleFilterUI(){
-  const label=$('distPrizeFilterLabel'),button=$('distPrizeFilterButton'),menu=$('distPrizeFilterMenu');
+  const label=$('distPrizeFilterLabel'),button=$('distPrizeFilterButton'),menu=$('distPrizeFilterMenu'),select=$('distLifecycleFilterSelect');
+  if(select)select.value=distributionLifecycleFilter;
   if(label)label.textContent=distributionLifecycleFilterLabel();
   if(button)button.setAttribute('aria-expanded',menu&&!menu.hidden?'true':'false');
   if(menu)menu.querySelectorAll('[data-dist-lifecycle]').forEach(btn=>btn.classList.toggle('active',btn.dataset.distLifecycle===distributionLifecycleFilter));
@@ -8965,6 +9078,8 @@ function renderDistribuicao(){
   const rows=filteredDistributions(monthKey);
   const tb=$('distTable');
   renderReservations(monthKey);
+  syncDistributionViewModeUI();
+  renderDistributionCompact(rows);
   if(!rows.length){
     const currentTotal=(openedMonth.distributions||[]).length;
     const otherMonths=monthSummaryList(state).filter(m=>m.key!==monthKey && m.distributions>0);
@@ -13290,7 +13405,7 @@ window.addEventListener('offline',handleBrowserConnectionChange);
 populatePromoReadHours();
 updatePromoReadScheduleState();
 setOfficialCalendarMonth(true);
-console.info('JP WORKSPACE AV57.6.6.29 · DISTRIBUIÇÃO ATIVA + SEGMENTOS · FIREBASE SOURCE OF TRUTH');
+console.info('JP WORKSPACE AV58.1 · CENTRAL DE OPERAÇÃO + DISTRIBUIÇÃO COMPACTA · FIREBASE SOURCE OF TRUTH');
 console.info('PAINEL JP — MÊS OFICIAL:', currentCalendarMonth(), 'MÊS ABERTO:', state.currentMonth);
 initFirebaseSync();
 startFirebaseAutoConnectSequence();
