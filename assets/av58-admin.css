@@ -310,3 +310,105 @@ tbody tr:hover td{background:#fbfbfc!important}
 .distDetailDrawerCard{width:min(720px,95vw)!important}.distDetailHero{padding:4px 0 15px;border-bottom:1px solid var(--av58-line)}.distDetailHero .distPrizeStatusCard{background:transparent!important;border:0!important;padding:0!important}.distDetailMetrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:14px 0}.distDetailMetrics>div{border:1px solid var(--av58-line);border-radius:13px;background:#fafbfc;padding:11px 12px}.distDetailMetrics span{display:block;color:#8a929c;font-size:7.5px;font-weight:700;letter-spacing:.04em}.distDetailMetrics strong{display:block;margin-top:6px;color:#303741;font-size:18px;font-weight:700}.distDetailSection{border-top:1px solid var(--av58-line);padding-top:14px}.distDetailSectionHead strong{display:block;color:#343b45;font-size:10px}.distDetailSectionHead span{display:block;margin-top:3px;color:#89929d;font-size:8px}.distDetailChannels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}.distDetailChannel{display:grid;grid-template-columns:1fr auto;grid-template-areas:'label value' 'sub sub';gap:3px 8px;border:1px solid var(--av58-line);border-radius:12px;padding:9px 10px;background:#fff}.distDetailChannel span{grid-area:label;color:#68727e;font-size:8.5px;font-weight:700}.distDetailChannel strong{grid-area:value;color:#303741;font-size:11px}.distDetailChannel small{grid-area:sub;color:#939aa3;font-size:7px}.distDetailActions{display:flex;gap:7px;flex-wrap:wrap;padding-top:15px;margin-top:14px;border-top:1px solid var(--av58-line)}
 @media(max-width:1000px){.centralOperationKpis,.centralQuickGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.centralOperationGrid{grid-template-columns:1fr}.distHeaderActions{flex-wrap:wrap;justify-content:flex-end}}
 @media(max-width:640px){.centralOperationKpis,.centralQuickGrid{grid-template-columns:1fr}.distDetailMetrics,.distDetailChannels{grid-template-columns:1fr}.centralKpi{min-height:auto}.distViewSwitch{width:100%}.distViewSwitch button{flex:1}}
+
+
+/* AV58.1.1 · DISTRIBUIÇÃO RESPONSIVA / IDENTIDADE DO PRÊMIO */
+.distCompactTable{
+  width:100%!important;
+  min-width:900px!important;
+  table-layout:fixed!important;
+}
+.distCompactPrizeCol{width:clamp(280px,31vw,350px)!important}
+.distCompactMetricCol{width:88px!important}
+.distCompactBalanceCol{width:76px!important}
+.distCompactProgramCol{width:98px!important}
+.distCompactStatusCol{width:92px!important}
+.distCompactActionCol{width:72px!important}
+.distCompactPrize,
+.distCompactPrize .distPrizeStatusCard,
+.distCompactPrize .distPrizeStatusTop{min-width:0!important}
+.distCompactPrize .distPrizeStatusCard{
+  align-items:stretch!important;
+  justify-content:center!important;
+}
+.distCompactPrize .distPrizeStatusTop{
+  display:block!important;
+  text-align:left!important;
+}
+.distCompactPrize .distPrizeStatusTop strong{
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2!important;
+  overflow:hidden!important;
+  white-space:normal!important;
+  text-overflow:ellipsis!important;
+  max-width:100%!important;
+  min-height:0!important;
+  margin:0!important;
+  line-height:1.22!important;
+  text-align:left!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+}
+.distCompactPrize .distPrizeSubtitle{
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2!important;
+  overflow:hidden!important;
+  max-width:100%!important;
+  line-height:1.25!important;
+  text-align:left!important;
+}
+.distCompactPrize .distPrizePeriodClean,
+.distCompactPrize .distPrizeGroupHint{
+  display:block!important;
+  max-width:100%!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  text-align:left!important;
+}
+.distCompactTable td:first-child,
+.distCompactTable th:first-child{text-align:left!important}
+
+/* A visão detalhada preserva todas as colunas, mas dá prioridade real ao título. */
+.distMainTable .distPrizeCol{width:clamp(310px,25vw,360px)!important}
+.distMainTable .distPrizeStatusCard{min-width:0!important}
+.distMainTable .distPrizeStatusTop{min-width:0!important;align-items:flex-start!important;text-align:left!important}
+.distMainTable .distPrizeStatusTop strong{
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2!important;
+  overflow:hidden!important;
+  white-space:normal!important;
+  text-overflow:ellipsis!important;
+  line-height:1.2!important;
+  text-align:left!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+}
+.distMainTable .distPrizeSubtitle{
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2!important;
+  overflow:hidden!important;
+  line-height:1.2!important;
+  text-align:left!important;
+}
+.distMainTable .distPrizePeriodClean,
+.distMainTable .distPrizeGroupHint{text-align:left!important}
+
+@media(max-width:1180px){
+  .distCompactPrizeCol{width:300px!important}
+  .distMainTable .distPrizeCol{width:320px!important}
+}
+@media(max-width:980px){
+  .distCompactTable{min-width:860px!important}
+  .distCompactPrizeCol{width:285px!important}
+  .distCompactMetricCol{width:80px!important}
+  .distCompactProgramCol{width:90px!important}
+  .distCompactStatusCol{width:84px!important}
+  .distCompactActionCol{width:68px!important}
+  .distCompactTable th{padding-left:8px!important;padding-right:8px!important}
+  .distCompactTable td{padding-left:8px!important;padding-right:8px!important}
+}
