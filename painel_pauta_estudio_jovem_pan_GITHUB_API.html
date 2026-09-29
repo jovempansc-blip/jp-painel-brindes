@@ -2379,6 +2379,44 @@ tbody tr:focus-within td{background:#fff8fa}
 .studioReadCenterList{display:grid;gap:8px;overflow:auto;max-height:560px;padding-right:2px}.studioReadCenterCard{appearance:none;width:100%;border:1px solid #e1e6ed;border-radius:15px;background:#fff;padding:11px;text-align:left;color:#202733;cursor:pointer;display:grid;gap:6px;transition:.14s ease}.studioReadCenterCard:hover{transform:translateY(-1px);border-color:#d3dce7;box-shadow:0 8px 18px rgba(17,23,34,.055)}.studioReadCenterCard.read{background:#f3fbf6;border-color:#c9ead6}.studioReadCenterCard.missed{background:#fff4f5;border-color:#f1c3ca}.studioReadType{display:inline-flex;width:max-content;align-items:center;min-height:20px;border-radius:999px;padding:0 7px;background:#eef5ff;color:#2f69c9;font-size:7.5px;font-weight:1000}.studioReadType.merchan{background:#f3edff;color:#6745a6}.studioReadType.pauta{background:#fff3df;color:#a45a00}.studioReadCenterCard b{font-size:11px;line-height:1.2}.studioReadCenterCard small{font-size:8px;color:#748091;line-height:1.35}.studioReadCenterCard em{font-style:normal;font-size:8px;color:#9c5c08;background:#fff4df;border-radius:8px;padding:5px 6px}.studioReadCenterCard.read em{color:#147345;background:#eaf8f0}.studioReadCenterEmpty{padding:22px 12px;border:1px dashed #d9e0e8;border-radius:14px;background:#fff;color:#7b8593;text-align:center;font-size:9px;line-height:1.45}
 @media(max-width:1120px){.studioLayoutShell{grid-template-columns:1fr}.studioReadCenter{border-left:0;border-top:1px solid #e0e5ec}.studioReadCenterList{max-height:330px}}
 </style>
+
+<style id="av58-studio-glass-drawer-functional">
+/* === AV58_STUDIO_GLASS_DRAWER_FUNCTIONAL · GLASS SUAVE + P/M/H INTEGRADO === */
+html,body{font-family:"Segoe UI Variable Text","Segoe UI",Arial,Helvetica,sans-serif!important;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77)),url("assets/bg-estudio.jpg")!important}
+.hero{background:rgba(255,255,255,.46)!important;border:1px solid rgba(255,255,255,.78)!important;backdrop-filter:blur(12px)!important;box-shadow:0 10px 26px rgba(26,35,47,.06)!important}
+.panel{background:rgba(255,255,255,.80)!important;border:1px solid rgba(255,255,255,.92)!important;backdrop-filter:blur(13px)!important;box-shadow:0 14px 34px rgba(20,28,40,.07)!important;overflow:hidden!important}
+.pautaHead{background:rgba(237,240,244,.80)!important;border-bottom:1px solid rgba(208,215,223,.72)!important;backdrop-filter:blur(10px)!important}
+.pautaProgram{color:#626e7c!important;text-shadow:none!important}
+.titleBox{background:rgba(255,255,255,.88)!important;border:1px solid rgba(222,227,233,.92)!important;border-left:4px solid rgba(159,53,75,.78)!important;box-shadow:0 7px 22px rgba(24,32,46,.035)!important}
+.descBox{background:rgba(247,249,251,.80)!important;border-color:rgba(224,229,234,.90)!important}
+.promoFooter{display:none!important}
+.studioLayoutShell{--studio-drawer-width:0px;display:grid!important;grid-template-columns:minmax(0,1fr) var(--studio-drawer-width)!important;min-height:420px!important;transition:grid-template-columns .25s cubic-bezier(.2,.75,.2,1)!important}
+.studioLayoutShell.drawerOpen{--studio-drawer-width:min(365px,36vw)}
+.studioMainColumn{min-width:0!important;transition:width .25s cubic-bezier(.2,.75,.2,1)!important}
+.studioContextDrawer{min-width:0;overflow:hidden;border-left:1px solid transparent;background:rgba(247,249,251,.64);backdrop-filter:blur(13px);opacity:0;transform:translateX(14px);pointer-events:none;transition:opacity .18s ease,transform .25s cubic-bezier(.2,.75,.2,1),border-color .18s ease;display:flex;flex-direction:column}
+.studioLayoutShell.drawerOpen .studioContextDrawer{opacity:1;transform:none;pointer-events:auto;border-left-color:rgba(211,219,228,.82)}
+.studioDrawerHead{min-height:58px;padding:10px 12px 10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(215,223,232,.80)}
+.studioDrawerHeadIcon{width:34px;height:34px;flex:0 0 34px;border-radius:12px;background:rgba(255,255,255,.75);border:1px solid rgba(211,220,230,.82);color:#667486;display:flex;align-items:center;justify-content:center}
+.studioDrawerHeadIcon svg,.studioDrawerState svg,.studioDrawerArrow svg,.studioReadSheetIcon svg,.studioReadSheetAction svg{width:16px;height:16px;display:block;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.studioDrawerCount{margin-left:auto;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(210,219,229,.9);color:#667486;display:flex;align-items:center;justify-content:center;font:800 10px/1 "Segoe UI",Arial,sans-serif}
+.studioDrawerClose{appearance:none;border:0;background:transparent;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#8791a0;cursor:pointer;padding:0}
+.studioDrawerClose:hover{background:rgba(255,255,255,.66);color:#8f253d}.studioDrawerClose svg{width:15px;height:15px;display:block;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.studioDrawerBody{padding:12px;overflow:auto;display:flex;flex-direction:column;gap:9px}
+.studioDrawerItem{display:grid;grid-template-columns:24px minmax(0,1fr) 28px;align-items:center;gap:9px;min-height:60px;padding:10px 9px;border:1px solid rgba(215,223,232,.86);border-radius:14px;background:rgba(255,255,255,.69);box-shadow:0 5px 16px rgba(36,46,60,.025)}
+.studioDrawerState{width:22px;height:22px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#b67222;background:#fff6e8;border:1px solid #f0dfc3}.studioDrawerState.done{color:#2c8a60;background:#eff9f4;border-color:#d0eadc}.studioDrawerState.missed{color:#9a4455;background:#fff1f3;border-color:#ecc9d0}
+.studioDrawerTitle{appearance:none;border:0;background:transparent;padding:0;width:100%;text-align:left;cursor:pointer;color:#273447;font:800 12px/1.28 "Segoe UI",Arial,sans-serif;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-height:31px}.studioDrawerTitle:hover{color:#8f253d}.studioDrawerTitle.static{cursor:default}.studioDrawerTitle.static:hover{color:#273447}
+.studioDrawerMeta{margin-top:4px;color:#8290a0;font:600 9px/1.2 "Segoe UI",Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.studioDrawerArrow{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#98a1ae}.studioDrawerEmpty{padding:22px 14px;text-align:center;color:#8793a2;font:700 9px/1.45 "Segoe UI",Arial,sans-serif;border:1px dashed rgba(210,219,229,.9);border-radius:14px;background:rgba(255,255,255,.55)}
+.headNav .promoListBtn{position:relative!important;width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border-radius:50%!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font:800 14px/1 "Segoe UI",Arial,sans-serif!important;background:rgba(255,255,255,.58)!important;border:1px solid rgba(210,218,228,.76)!important;color:#657284!important;box-shadow:0 4px 16px rgba(38,48,62,.04)!important;backdrop-filter:blur(12px)!important}.headNav .promoListBtn small{display:none!important}.headNav .promoListBtn:hover,.headNav .promoListBtn.active{color:#8f253d!important;background:rgba(255,247,249,.86)!important;border-color:#e6cbd2!important}
+.studioShortcutBadge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:#bf5163;color:#fff;border:2px solid rgba(255,255,255,.96);font:800 9px/1 "Segoe UI",Arial,sans-serif;box-shadow:0 3px 8px rgba(143,37,61,.16)}
+.studioReadSheet{position:fixed;z-index:22000;inset:0;background:rgba(36,44,57,.22);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:22px}.studioReadSheet.show{display:flex}.studioReadSheetCard{width:min(760px,94vw);max-height:86vh;overflow:auto;background:rgba(255,255,255,.95);border:1px solid rgba(255,255,255,.97);border-radius:22px;box-shadow:0 24px 64px rgba(37,47,61,.18);backdrop-filter:blur(20px)}
+.studioReadSheetHead{min-height:58px;display:flex;align-items:center;padding:10px 12px 10px 18px;border-bottom:1px solid #e4e9ef}.studioReadSheetIcon{width:30px;height:30px;border-radius:10px;background:#f5f7fa;border:1px solid #e0e6ed;display:flex;align-items:center;justify-content:center;color:#687688}.studioReadSheetActions{margin-left:auto;display:flex;gap:6px}.studioReadSheetAction{appearance:none;border:1px solid rgba(210,218,228,.85);background:rgba(255,255,255,.72);color:#687586;width:36px;height:36px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}.studioReadSheetAction.confirm{color:#2d8a61;background:#f0faf5;border-color:#cee9dc}.studioReadSheetAction.confirm:hover{color:#237750;background:#e8f7ef;border-color:#bfe3d1}.studioReadSheetAction[hidden]{display:none!important}.studioReadSheetAction.busy{opacity:.55;pointer-events:none}
+.studioReadSheetContent{padding:24px 24px 20px}.studioReadSheetContent h2{margin:0;color:#243247;font:800 clamp(21px,2.5vw,30px)/1.08 "Segoe UI",Arial,sans-serif;letter-spacing:-.025em}.studioReadSheetMeta{margin-top:7px;color:#8994a3;font:600 10px/1.35 "Segoe UI",Arial,sans-serif}.studioReadSheetContext{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}.studioReadSheetContext span{display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border:1px solid #e0e6ed;border-radius:999px;background:#f7f9fb;color:#657284;font:700 9px/1 "Segoe UI",Arial,sans-serif}.studioReadSheetBanner{margin-top:16px;border:1px solid #e1e7ed;border-radius:15px;overflow:hidden;background:#f4f6f8}.studioReadSheetBanner img{display:block;width:100%;max-height:180px;object-fit:cover}.studioReadSheetText{margin-top:18px;padding:18px 20px;border:1px solid #e3e9ef;border-radius:16px;background:rgba(247,249,251,.82);color:#404e61;font:600 16px/1.55 "Segoe UI",Arial,sans-serif;white-space:pre-line}
+@media(max-width:1000px){.studioLayoutShell.drawerOpen{--studio-drawer-width:min(335px,39vw)}}
+@media(max-width:760px){.studioLayoutShell{grid-template-columns:1fr!important}.studioLayoutShell.drawerOpen{--studio-drawer-width:0px}.studioContextDrawer{position:absolute;z-index:40;top:60px;right:0;bottom:0;width:min(330px,88vw);transform:translateX(104%);box-shadow:-14px 0 30px rgba(39,50,66,.08)}.studioLayoutShell.drawerOpen .studioContextDrawer{transform:none}.headNav .promoListBtn{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important}}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -2457,6 +2495,8 @@ let currentMonth=state.currentMonth||Object.keys(state.months||{})[0]||'';
 let selectedIndex=-1;
 let manual=false;
 let selectedPromoId=null;
+let studioDrawerMode='';
+let studioReadSheetPromoId=null;
 let currentDisplayItem=null;
 let manualHourDateMs=null;
 let lastHourKey=currentHourKey();
@@ -3769,6 +3809,66 @@ function pautasForItemHour(item,includeRead=false,kind='all'){return studioPromo
 function promosForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'promo');}
 function merchansForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'merchan');}
 function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
+
+function studioDrawerIcon(kind){
+  if(kind==='promo')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h3l8 5V6l-8 5H4v2Z"></path><path d="M7 13v5h3l1-3"></path></svg>';
+  if(kind==='merchan')return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 7h6M9 11h6M9 15h4"></path></svg>';
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l3 2"></path></svg>';
+}
+function studioDrawerStateIcon(state){
+  if(state==='done')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>';
+  if(state==='missed')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>';
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4M12 16h.01"></path></svg>';
+}
+function studioDrawerPendingCount(kind,item){
+  const rows=kind==='merchan'?merchansForItemHour(item,true):promosForItemHour(item,true);
+  return rows.reduce((sum,p)=>sum+studioAV57Progress(p,item).remaining,0);
+}
+function studioShortcutBadge(kind,item){const count=studioDrawerPendingCount(kind,item);return count?`<span class="studioShortcutBadge" aria-hidden="true">${count}</span>`:'';}
+function studioDrawerRows(item,mode){
+  if(mode==='history'){
+    const rows=historyRowsForDate(item?.date||todayISO()).slice().reverse();
+    if(!rows.length)return '<div class="studioDrawerEmpty">NENHUM REGISTRO PARA ESTE DIA.</div>';
+    return rows.map(r=>`<div class="studioDrawerItem"><span class="studioDrawerState done">${studioDrawerStateIcon('done')}</span><div><div class="studioDrawerTitle static">${esc(r.title||'REGISTRO')}</div><div class="studioDrawerMeta">${esc(`${r.time||''}${r.type?` · ${r.type}`:''}`)}</div></div><span class="studioDrawerArrow">${studioDrawerStateIcon('done')}</span></div>`).join('');
+  }
+  const rows=mode==='merchan'?merchansForItemHour(item,true):promosForItemHour(item,true);
+  if(!rows.length)return `<div class="studioDrawerEmpty">${mode==='merchan'?'SEM MERCHAN':'SEM PAUTA PROMOCIONAL'} PROGRAMADO PARA ESTE HORÁRIO.</div>`;
+  const program=upper(programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||item?.program||'PROGRAMA');
+  return rows.map(p=>{
+    const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,missed=progress.remaining===0&&progress.missed>0,state=done?'done':missed?'missed':'pending';
+    const type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
+    const name=upper(p?.name||p?.title||type),client=upper(p?.opecClientName||p?.clientName||p?.client||p?.advertiser||'');
+    const title=isMerchan(p)&&client&&client!==name?`${client} · ${name}`:name;
+    return `<div class="studioDrawerItem" data-promo-id="${esc(p.id)}"><span class="studioDrawerState ${state}">${studioDrawerStateIcon(state)}</span><div><button class="studioDrawerTitle" type="button" data-promo-id="${esc(p.id)}" title="${esc(title)}">${esc(title)}</button><div class="studioDrawerMeta">${esc(program)} · ${esc(type)}</div></div><span class="studioDrawerArrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg></span></div>`;
+  }).join('');
+}
+function buildStudioDrawer(item){
+  const mode=studioDrawerMode||'promo',count=mode==='history'?historyRowsForDate(item?.date||todayISO()).length:studioDrawerPendingCount(mode,item);
+  return `<aside class="studioContextDrawer" id="studioContextDrawer" aria-hidden="${studioDrawerMode?'false':'true'}"><div class="studioDrawerHead"><div class="studioDrawerHeadIcon">${studioDrawerIcon(mode)}</div><span class="studioDrawerCount">${count}</span><button class="studioDrawerClose" type="button" id="studioDrawerClose" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div><div class="studioDrawerBody" id="studioDrawerBody">${studioDrawerRows(item,mode)}</div></aside>`;
+}
+function syncStudioDrawer(){
+  const shell=document.querySelector('.studioLayoutShell'),drawer=$('studioContextDrawer'),body=$('studioDrawerBody');
+  if(!shell||!drawer)return;
+  shell.classList.toggle('drawerOpen',!!studioDrawerMode);drawer.setAttribute('aria-hidden',studioDrawerMode?'false':'true');
+  ['promo','merchan','history'].forEach(mode=>{const id=mode==='promo'?'promoListBtn':mode==='merchan'?'merchanListBtn':'historyListBtn';$(id)?.classList.toggle('active',studioDrawerMode===mode);});
+  if(studioDrawerMode&&body&&currentDisplayItem){body.innerHTML=studioDrawerRows(currentDisplayItem,studioDrawerMode);const count=studioDrawerMode==='history'?historyRowsForDate(currentDisplayItem?.date||todayISO()).length:studioDrawerPendingCount(studioDrawerMode,currentDisplayItem);drawer.querySelector('.studioDrawerHeadIcon').innerHTML=studioDrawerIcon(studioDrawerMode);drawer.querySelector('.studioDrawerCount').textContent=count;}
+}
+function toggleStudioDrawer(mode){studioDrawerMode=studioDrawerMode===mode?'':mode;syncStudioDrawer();}
+function closeStudioDrawer(){studioDrawerMode='';syncStudioDrawer();}
+function ensureStudioReadSheet(){
+  let root=$('studioReadSheet');if(root)return root;
+  root=document.createElement('div');root.id='studioReadSheet';root.className='studioReadSheet';root.setAttribute('aria-hidden','true');root.innerHTML=`<div class="studioReadSheetCard" role="dialog" aria-modal="true" aria-labelledby="studioReadSheetTitle"><div class="studioReadSheetHead"><div class="studioReadSheetIcon" id="studioReadSheetIcon"></div><div class="studioReadSheetActions"><button class="studioReadSheetAction confirm studioReadSheetConfirm" id="studioReadSheetConfirm" type="button" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg></button><button class="studioReadSheetAction" id="studioReadSheetClose" type="button" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div></div><div class="studioReadSheetContent"><h2 id="studioReadSheetTitle"></h2><div class="studioReadSheetMeta" id="studioReadSheetMeta"></div><div class="studioReadSheetContext" id="studioReadSheetContext"></div><div class="studioReadSheetBanner" id="studioReadSheetBanner" hidden></div><div class="studioReadSheetText" id="studioReadSheetText"></div></div></div>`;document.body.appendChild(root);
+  $('studioReadSheetClose').onclick=closeStudioReadSheet;$('studioReadSheetConfirm').onclick=confirmPromoRead;root.addEventListener('click',e=>{if(e.target===root)closeStudioReadSheet();});return root;
+}
+function openStudioReadSheet(promoId){
+  const p=findPromoById(promoId),item=currentDisplayItem||virtualCurrentItem();if(!p||!item)return;
+  studioReadSheetPromoId=promoId;const root=ensureStudioReadSheet(),progress=studioAV57Progress(p,item),program=upper(programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||item?.program||'PROGRAMA'),type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
+  $('studioReadSheetIcon').innerHTML=studioDrawerIcon(isMerchan(p)?'merchan':'promo');$('studioReadSheetTitle').textContent=upper(p.name||p.title||type);$('studioReadSheetMeta').textContent=`${program} · ${type}`;$('studioReadSheetContext').innerHTML=`<span>${esc(studioValidityLabel(p))}</span>${studioOpecContextLabel(p)?`<span>${esc(studioOpecContextLabel(p))}</span>`:''}`;$('studioReadSheetText').textContent=p.description||'SEM TEXTO CADASTRADO.';
+  const banner=$('studioReadSheetBanner');if(p.imageData){banner.hidden=false;banner.innerHTML=`<img src="${p.imageData}" alt="IMAGEM DA PAUTA">`;}else{banner.hidden=true;banner.innerHTML='';}
+  const confirm=$('studioReadSheetConfirm');confirm.hidden=progress.remaining===0;confirm.classList.remove('busy');confirm.disabled=false;confirm.setAttribute('aria-busy','false');root.classList.add('show');root.setAttribute('aria-hidden','false');
+}
+function closeStudioReadSheet(){const root=$('studioReadSheet');studioReadSheetPromoId=null;if(root){root.classList.remove('show');root.setAttribute('aria-hidden','true');}}
+
 function buildStudioReadCenter(item){
   const rows=allPautasForItemHour(item,true),pending=rows.filter(p=>!isPromoResolvedForHour(p,item)),program=upper(programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||item?.program||'PROGRAMA');
   const cards=rows.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||'')==='PAUTA'?'PAUTA':'PROMOÇÃO'),typeClass=isMerchan(p)?'merchan':'pauta',name=upper(p?.name||p?.title||type),client=upper(p?.opecClientName||p?.clientName||'');return `<button class="studioReadCenterCard ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}"><span class="studioReadType ${typeClass}">${esc(type)}</span><b>${esc(client&&isMerchan(p)?`${client} · ${name}`:name)}</b><small>PROGRAMA: ${esc(program)} · HORÁRIO: ${esc(formatStudioTime(item?.slot||''))}</small><em>${esc(studioValidityLabel(p))}</em><small>${read?'LEITURA CONFIRMADA':failed?'NÃO REALIZADA':`PENDENTE${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · CLIQUE PARA ABRIR`}</small></button>`;}).join('');
@@ -3841,8 +3941,8 @@ function previousStudioPendencies(){
 }
 function studioOperationActive(){return !!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
 function scheduleManualReturn(){clearTimeout(manualReturnTimer);if(!manual)return;manualLastInteractionAt=Date.now();manualReturnTimer=setTimeout(()=>{if(!manual)return;if(studioOperationActive()){scheduleManualReturn();return;}returnStudioToNow();},MANUAL_RETURN_MS);}
-function returnStudioToNow(){clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;selectedPromoId=null;render();}
-function jumpToStudioPending(date,slot,promoId=''){const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=promoId||null;scheduleManualReturn();render();}
+function returnStudioToNow(){clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;selectedPromoId=null;studioReadSheetPromoId=null;studioDrawerMode='';closeStudioReadSheet();render();}
+function jumpToStudioPending(date,slot,promoId=''){const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=null;scheduleManualReturn();render();if(promoId)setTimeout(()=>startPromoRead(promoId),0);}
 window.returnStudioToNow=returnStudioToNow;window.jumpToStudioPending=jumpToStudioPending;
 function pautaTypeLabel(p){
   if(isMerchan(p)) return 'MERCHAN';
@@ -3888,7 +3988,7 @@ function renderReadHistoryTicker(){
   const loopRows=textRows.length>1 ? textRows.concat(textRows) : textRows;
   host.innerHTML=`<div class="readHistoryTickerTrack">${loopRows.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
 }
-function currentPromoForRead(){return selectedPromoId?findPromoById(selectedPromoId):null;}
+function currentPromoForRead(){return studioReadSheetPromoId?findPromoById(studioReadSheetPromoId):(selectedPromoId?findPromoById(selectedPromoId):null);}
 
 function promoResultForHour(p,item){
   if(!p) return '';
@@ -4263,16 +4363,8 @@ function closeHistoryModal(){
   $('historyModal').classList.remove('show');
 }
 
-function startPromoRead(promoId){
-  const p=findPromoById(promoId);
-  if(!p) return;
-  selectedPromoId=promoId;
-  render();
-}
-function closePromoReadModal(){
-  selectedPromoId=null;
-  render();
-}
+function startPromoRead(promoId){const p=findPromoById(promoId);if(!p)return;openStudioReadSheet(promoId);}
+function closePromoReadModal(){closeStudioReadSheet();}
 async function markPromoReadMissed(promoId,date,slot,program,reason){
   const p=findPromoById(promoId);if(!p)throw new Error('PAUTA NÃO LOCALIZADA.');
   const item={date,slot,program:upper(program||programFromSchedule(date,slot,STUDIO_STATION)||'PROGRAMA')},progress=studioAV57Progress(p,item);if(progress.remaining<1)return;
@@ -4288,10 +4380,10 @@ async function confirmPromoReadV56(event){
   const button=event?.currentTarget||$('confirmPromoReadInline'),p=currentPromoForRead(),item=currentDisplayItem||virtualCurrentItem();
   if(!p||!item||button?.dataset.busy==='1')return;
   const required=studioRequiredReadsForHour(p,item),before=studioReadCountForHour(p,item),beforeMissed=studioMissedCountForHour(p,item),beforeResolved=before+beforeMissed;
-  if(required<1){alert('ESTA PAUTA NÃO ESTÁ PROGRAMADA PARA ESTE HORÁRIO.');selectedPromoId=null;render();return;}
-  if(beforeResolved>=required){selectedPromoId=null;render();return;}
+  if(required<1){alert('ESTA PAUTA NÃO ESTÁ PROGRAMADA PARA ESTE HORÁRIO.');selectedPromoId=null;closeStudioReadSheet();render();return;}
+  if(beforeResolved>=required){selectedPromoId=null;closeStudioReadSheet();render();return;}
   const operator=studioOperatorIdentity(true);
-  if(button){button.dataset.busy='1';button.disabled=true;button.textContent='SALVANDO...';}
+  if(button){button.dataset.busy='1';button.disabled=true;if(button.classList.contains('studioReadSheetConfirm')){button.classList.add('busy');button.setAttribute('aria-busy','true');}else{button.dataset.originalText=button.textContent;button.textContent='SALVANDO...';}}
   let savedOccurrence=beforeResolved+1;
   try{
     await ensureStudioFirebaseOnline();
@@ -4314,9 +4406,9 @@ async function confirmPromoReadV56(event){
     });
     const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'AV57_SMART_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
-    selectedPromoId=(savedOccurrence<required)?p.id:null;render();
+    selectedPromoId=null;studioReadSheetPromoId=null;closeStudioReadSheet();render();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
-  finally{if(button){button.dataset.busy='0';button.disabled=false;button.textContent='CONFIRMAR LEITURA';}}
+  finally{if(button){button.dataset.busy='0';button.disabled=false;if(button.classList.contains('studioReadSheetConfirm')){button.classList.remove('busy');button.setAttribute('aria-busy','false');}else{button.textContent=button.dataset.originalText||'CONFIRMAR LEITURA';}}}
 }
 async function confirmPromoRead(event){ return confirmPromoReadV56(event); }
 window.confirmPromoRead=confirmPromoRead;
@@ -4532,44 +4624,9 @@ function step(delta){
   render();
 }
 
-function hideStudioShortcutLists(except=''){
-  const promoList=$('promoList');
-  const merchanList=$('merchanList');
-  if(promoList && except!=='promo') promoList.classList.remove('show');
-  if(merchanList && except!=='merchan') merchanList.classList.remove('show');
-}
-function studioShortcutClick(event,type){
-  if(event){ event.preventDefault(); event.stopPropagation(); }
-  if(type==='promo'){
-    if(!ALLOW_PROMO_SHORTCUT) return;
-    const list=$('promoList');
-    if(list){
-      const open=!list.classList.contains('show');
-      hideStudioShortcutLists('promo');
-      list.classList.toggle('show',open);
-    }
-    return;
-  }
-  if(type==='merchan'){
-    const list=$('merchanList');
-    if(list){
-      const open=!list.classList.contains('show');
-      hideStudioShortcutLists('merchan');
-      list.classList.toggle('show',open);
-    }
-    return;
-  }
-  if(type==='history'){
-    hideStudioShortcutLists('');
-    openHistoryModal();
-    return;
-  }
-}
-function studioPautaItemClick(event,promoId){
-  if(event){ event.preventDefault(); event.stopPropagation(); }
-  hideStudioShortcutLists('');
-  startPromoRead(promoId);
-}
+function hideStudioShortcutLists(except=''){if(!except)closeStudioDrawer();}
+function studioShortcutClick(event,type){if(event){event.preventDefault();event.stopPropagation();}if(type==='promo'&&!ALLOW_PROMO_SHORTCUT)return;toggleStudioDrawer(type);}
+function studioPautaItemClick(event,promoId){if(event){event.preventDefault();event.stopPropagation();}startPromoRead(promoId);}
 window.studioShortcutClick=studioShortcutClick;
 window.studioPautaItemClick=studioPautaItemClick;
 
@@ -4597,10 +4654,6 @@ function render(){
   if(!selectedPromoId && item && item.sourceType==='promo-result' && item.promoId){
     selectedPromoId=item.promoId;
   }
-  if(!selectedPromoId && item && item.__virtual){
-    const pending=allPautasForItemHour(item,false);
-    if(pending.length) selectedPromoId=pending[0].id;
-  }
   const promo=currentPromoForRead();
   const isVirtual=!!item.__virtual;
   const winnerBlock = item.winnerName ? `<div class="winnerBox" data-has-winner="1" title="BOTÃO DIREITO: AÇÕES DO GANHADOR"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
@@ -4619,21 +4672,14 @@ function render(){
       <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'GANHADOR REGISTRADO' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'GANHADOR REGISTRADO · BOTÃO DIREITO NO NOME PARA CORRIGIR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
     `;
   $('pautaPanel').innerHTML=`
-    <div class="studioLayoutShell"><div class="studioMainColumn">
+    <div class="studioLayoutShell ${studioDrawerMode?'drawerOpen':''}"><div class="studioMainColumn">
     <div class="pautaHead">
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
       <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PROMO / PAUTA') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
       <div class="headNav">
-        ${ALLOW_PROMO_SHORTCUT ? `
-        <div class="promoListWrap">
-          <button class="promoListBtn ${promo&&!isMerchan(promo)?'active':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PROMOÇÕES" title="P = PROMOÇÕES">P<small>PROMO</small></button>
-          <div class="promoList" id="promoList">${buildPromoList(item)}</div>
-        </div>` : ''}
-        <div class="promoListWrap">
-          <button class="promoListBtn ${promo&&isMerchan(promo)?'active':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHAN" title="M = MERCHAN">M<small>MERCHAN</small></button>
-          <div class="promoList" id="merchanList">${buildMerchanList(item)}</div>
-        </div>
-        <button class="promoListBtn history" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="SORTEIOS REALIZADOS" title="H = SORTEIOS REALIZADOS NO DIA">H<small>HIST.</small></button>
+        ${ALLOW_PROMO_SHORTCUT ? `<div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='promo'?'active':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PAUTAS PROMOCIONAIS" title="P = PAUTAS PROMOCIONAIS">P${studioShortcutBadge('promo',item)}</button></div>` : ''}
+        <div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='merchan'?'active':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHANS" title="M = MERCHANS">M${studioShortcutBadge('merchan',item)}</button></div>
+        <button class="promoListBtn history ${studioDrawerMode==='history'?'active':''}" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="HISTÓRICO" title="H = HISTÓRICO">H</button>
         ${studioPendingBellMarkup()}
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
         <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
@@ -4641,7 +4687,7 @@ function render(){
     </div>
     ${buildStudioContext(item,promo)}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
-    ${buildPromoFooter(item)}</div>${buildStudioReadCenter(item)}</div>`;
+    </div>${buildStudioDrawer(item)}</div>`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
@@ -4684,7 +4730,8 @@ function render(){
   if(merchanBtn) merchanBtn.onclick=e=>studioShortcutClick(e,'merchan');
   const historyBtn=$('historyListBtn');
   if(historyBtn) historyBtn.onclick=e=>studioShortcutClick(e,'history');
-  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioReadCenterCard[data-promo-id]').forEach(btn=>{if(btn.dataset.programSlot)btn.onclick=e=>studioProgramMerchanClick(e,btn.dataset.promoId,btn.dataset.programDate,btn.dataset.programSlot);else btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId);});
+  const drawerClose=$('studioDrawerClose'); if(drawerClose) drawerClose.onclick=closeStudioDrawer;
+  document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioDrawerItem[data-promo-id]').forEach(btn=>{if(btn.dataset.programSlot)btn.onclick=e=>studioProgramMerchanClick(e,btn.dataset.promoId,btn.dataset.programDate,btn.dataset.programSlot);else btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId);});
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
@@ -4718,11 +4765,11 @@ document.addEventListener('click',e=>{
     if(shortcut.id==='merchanListBtn') return studioShortcutClick(e,'merchan');
     if(shortcut.id==='historyListBtn') return studioShortcutClick(e,'history');
   }
-  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioReadCenterCard[data-promo-id]');
+  const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioDrawerItem[data-promo-id]');
   if(pauta){if(pauta.dataset.programSlot)return studioProgramMerchanClick(e,pauta.dataset.promoId,pauta.dataset.programDate,pauta.dataset.programSlot);return studioPautaItemClick(e,pauta.dataset.promoId);}
 });
 
-document.addEventListener('click',e=>{ const h=e.target.closest('#historyListBtn, #historyBtn, [data-history]'); if(h){ e.preventDefault(); openHistoryModal(); }});
+document.addEventListener('click',e=>{ const h=e.target.closest('#historyBtn, [data-history]'); if(h){ e.preventDefault(); openHistoryModal(); }});
 $('closeHistoryBtn').addEventListener('click',closeHistoryModal);
 $('historyTodayBtn').addEventListener('click',()=>{ $('historyDateInput').value=todayISO(); renderHistoryList(); });
 $('historyDateInput').addEventListener('change',renderHistoryList);

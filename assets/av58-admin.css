@@ -504,3 +504,50 @@ body.programDragActive #view-programacao .programPeriodLane[data-drop-date][data
     padding-right:42px!important;
   }
 }
+
+
+/* === AV58.1.5 · MENU DE AÇÕES DA PROGRAMAÇÃO — CAMADA FLUTUANTE === */
+#view-programacao .programDayBlock:has(.programActionMenu[open]),
+#view-programacao .programPeriodLane:has(.programActionMenu[open]),
+#view-programacao .periodItems:has(.programActionMenu[open]){
+  position:relative!important;
+  overflow:visible!important;
+  z-index:940!important;
+}
+#view-programacao .programCard:has(.programActionMenu[open]){
+  position:relative!important;
+  overflow:visible!important;
+  z-index:960!important;
+}
+#view-programacao .programActionMenu[open]{z-index:970!important}
+#view-programacao .programActionMenu .programActions{
+  z-index:980!important;
+  min-width:46px!important;
+  width:46px!important;
+  padding:5px!important;
+  grid-template-columns:1fr!important;
+  justify-items:center!important;
+  background:rgba(255,255,255,.82)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(116%);
+  backdrop-filter:blur(12px) saturate(116%);
+}
+#view-programacao .programActionMenu .programActions .programActionIconOnly{
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  min-height:34px!important;
+  padding:0!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  place-items:center!important;
+}
+#view-programacao .programActionIconOnly svg{
+  width:15px!important;
+  height:15px!important;
+  display:block!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:1.8!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+}
