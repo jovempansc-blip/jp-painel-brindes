@@ -3821,7 +3821,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
           </div>
           <div class="weeklyHeader">
             <div><strong>PROGRAMAÇÃO SEMANAL</strong><span id="weeklyRangeLabel">SEMANA SELECIONADA</span></div>
-            
+            <div class="programWeeklySummary" id="programWeeklySummary">0 ITENS · 0 ALERTAS · 0 REALIZADOS</div>
           </div>
           <div class="weeklyBoard" id="programWeekly"></div>
         </div>
@@ -3844,7 +3844,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
           </div>
           <div class="reservationBoard" id="reservationBoard"></div>
           <div class="distContinuityNotice"><strong>VISÃO DA COMPETÊNCIA</strong><span>A TABELA ABRE SEMPRE EM ATIVOS. CLIQUE EM PRÊMIO PARA ALTERNAR ENTRE ATIVOS, ENCERRADOS E TODOS. CAMPANHAS MULTIMESES SÃO CONSOLIDADAS EM UMA ÚNICA LINHA E OS VALORES ACOMPANHAM O MÊS SELECIONADO.</span></div>
-          <div class="distViewPane" id="distCompactView"><div class="tableWrap"><table class="distCompactTable"><colgroup><col class="distCompactPrizeCol"><col class="distCompactMetricCol"><col class="distCompactMetricCol"><col class="distCompactMetricCol"><col class="distCompactBalanceCol"><col class="distCompactProgramCol"><col class="distCompactStatusCol"><col class="distCompactActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">DISPONÍVEL</th><th class="num">DISTRIBUÍDO</th><th class="num">REALIZADO</th><th class="num">SALDO</th><th class="num">PROGRAMAÇÃO</th><th>STATUS</th><th>AÇÕES</th></tr></thead><tbody id="distCompactTable"></tbody></table></div></div>
+          <div class="distViewPane" id="distCompactView"><div class="tableWrap"><table class="distCompactTable"><colgroup><col class="distCompactPrizeCol"><col class="distCompactMetricCol"><col class="distCompactMetricCol"><col class="distCompactMetricCol"><col class="distCompactBalanceCol"><col class="distCompactProgramCol"><col class="distCompactActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">DISPONÍVEL</th><th class="num">DISTRIBUÍDO</th><th class="num">REALIZADO</th><th class="num">SALDO</th><th class="num">PROGRAMAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="distCompactTable"></tbody></table></div></div>
           <div class="distViewPane" id="distDetailedView" hidden><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th class="distPrizeFilterHead"><button class="distPrizeFilterButton" id="distPrizeFilterButton" type="button" onclick="toggleDistributionLifecycleMenu(event)" aria-haspopup="menu" aria-expanded="false"><span>PRÊMIO</span><em id="distPrizeFilterLabel">ATIVOS</em><b>⌄</b></button><div class="distPrizeFilterMenu" id="distPrizeFilterMenu" role="menu" hidden><button type="button" data-dist-lifecycle="active" onclick="setDistributionLifecycleFilter('active',event)">ATIVOS</button><button type="button" data-dist-lifecycle="ended" onclick="setDistributionLifecycleFilter('ended',event)">ENCERRADOS</button><button type="button" data-dist-lifecycle="all" onclick="setDistributionLifecycleFilter('all',event)">TODOS</button></div></th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div></div>
         </div>
       </div>
@@ -8530,58 +8530,49 @@ function periodIcon(key){
 function renderProgramCard(i){
   const d=distributionForProgramItem(i);
   const resolvedProgram=programFromSchedule(i.date,i.slot,itemStation(i))||norm(i.program||'');
-  const cardTitle = i.prize || i.title || resolvedProgram || '';
-  const cardSubtitle = i.title ? `${i.title}${resolvedProgram ? ' · ' + resolvedProgram : ''}` : resolvedProgram;
-  const winnerInfo = norm(i.winnerName || '') ? `<span class="winnerInfo" title="GANHADOR: ${esc(i.winnerName)}">I</span>` : '';
-  const promoResultBadge = i.sourceType==='promo-result' ? `<span class="badge blue" title="RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR">RESULTADO</span>` : '';
-  const radioConflict = normalizeChannel(i.channel)==='RÁDIO' ? radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)) : [];
-  const rotationConflict = (normalizeChannel(i.channel)==='RÁDIO' && d) ? samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)) : [];
-  const hasConflict = radioConflict.length || rotationConflict.length;
-  const conflictBadge = radioConflict.length
-    ? `<span class="badge red" title="HORÁRIO JÁ OCUPADO POR ${esc(conflictLabel(radioConflict))}">CONFLITO</span>`
-    : (rotationConflict.length ? `<span class="badge red" title="${esc(samePrizeRepeatLabel(rotationConflict))}">RODÍZIO</span>` : '');
-  const conflictNote = radioConflict.length
-    ? `<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`
-    : (rotationConflict.length ? `<span class="programConflictNote">RODÍZIO: ${esc(samePrizeRepeatLabel(rotationConflict))}</span>` : '');
-  const remapBtn = hasConflict ? `<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR" data-program-action="remap" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'remap','${esc(i.id)}')" onpointerdown="event.stopPropagation()"><span class="iconGlyph">↪</span></button>` : '';
-  const movable = !['REALIZADO','CANCELADO'].includes(itemEffectiveStatus(i)) && i.sourceType!=='promo-result' && normalizeChannel(i.channel)==='RÁDIO';
-  return `<article class="programCard ${hasConflict?'hasRadioConflict':''} ${i.sourceType==='promo-result'?'isPromoResult':''}" data-program-item-id="${esc(i.id)}" data-drop-date="${esc(i.date||'')}" data-drop-slot="${esc(normalizeSlot(i.slot)||'')}" data-drop-period="${esc(periodKey(i.slot))}">
-    <div class="programTime programDragHandle ${movable?'isMovable':'isLocked'}" ${movable?`data-drag-item-id="${esc(i.id)}" draggable="true" tabindex="0" title="ARRASTE O HORÁRIO PARA MOVER · BOTÃO DIREITO PARA DEFINIR HORÁRIO"`:'draggable="false" title="ITEM BLOQUEADO PARA MOVIMENTAÇÃO"'}>${esc(i.slot || '')}</div>
+  const cardTitle=i.prize||i.title||resolvedProgram||'';
+  const cardSubtitle=i.title?`${i.title}${resolvedProgram?' · '+resolvedProgram:''}`:resolvedProgram;
+  const winnerInfo=norm(i.winnerName||'')?`<span class="winnerInfo" title="GANHADOR: ${esc(i.winnerName)}">I</span>`:'';
+  const promoResultBadge=i.sourceType==='promo-result'?`<span class="badge blue" title="RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR">RESULTADO</span>`:'';
+  const radioConflict=normalizeChannel(i.channel)==='RÁDIO'?radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)):[];
+  const rotationConflict=(normalizeChannel(i.channel)==='RÁDIO'&&d)?samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)):[];
+  const hasConflict=radioConflict.length||rotationConflict.length;
+  const radioConflictBadge=radioConflict.length?`<span class="badge red" title="HORÁRIO JÁ OCUPADO POR ${esc(conflictLabel(radioConflict))}">CONFLITO</span>`:'';
+  const rotationInfo=rotationConflict.length?`<span class="programInfoIcon" tabindex="0" role="img" aria-label="${esc(samePrizeRepeatLabel(rotationConflict))}" title="${esc(samePrizeRepeatLabel(rotationConflict))}">i</span>`:'';
+  const conflictNote=radioConflict.length?`<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`:'';
+  const remapBtn=hasConflict?`<button type="button" class="actionIcon warn" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR PARA HORÁRIO LIVRE" data-program-action="remap" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'remap','${esc(i.id)}')" onpointerdown="event.stopPropagation()"><span class="iconGlyph">↪</span><span>REMANEJAR</span></button>`:'';
+  const movable=!['REALIZADO','CANCELADO'].includes(itemEffectiveStatus(i))&&i.sourceType!=='promo-result'&&normalizeChannel(i.channel)==='RÁDIO';
+  const effectiveStatus=itemEffectiveStatus(i);
+  const cardState=radioConflict.length?'hasRadioConflict':rotationConflict.length?'hasRotationRepeat':effectiveStatus==='REALIZADO'?'isRealized':effectiveStatus==='CANCELADO'?'isCancelled':'isScheduled';
+  return `<article class="programCard ${cardState} ${i.sourceType==='promo-result'?'isPromoResult':''}" data-program-item-id="${esc(i.id)}" data-drop-date="${esc(i.date||'')}" data-drop-slot="${esc(normalizeSlot(i.slot)||'')}" data-drop-period="${esc(periodKey(i.slot))}">
+    <div class="programTime programDragHandle ${movable?'isMovable':'isLocked'}" ${movable?`data-drag-item-id="${esc(i.id)}" draggable="true" tabindex="0" title="ARRASTE O HORÁRIO PARA MOVER · BOTÃO DIREITO PARA DEFINIR HORÁRIO"`:'draggable="false" title="ITEM BLOQUEADO PARA MOVIMENTAÇÃO"'}>${esc(i.slot||'')}</div>
     <div class="programInfo">
-      <strong>${esc(cardTitle)}</strong>
-      <em>${esc(cardSubtitle)}</em>
-      <div class="programMeta"><span class="badge dark">${esc(stationLabel(itemStation(i)))}</span>${statusBadge(i.status,i)}${promoResultBadge}${conflictBadge}${winnerInfo}<span class="programQtyInline">QTD <strong>${num(i.qty)}</strong></span></div>
+      <strong title="${esc(cardTitle)}">${esc(cardTitle)}</strong>
+      <em title="${esc(cardSubtitle)}">${esc(cardSubtitle)}</em>
+      <div class="programMeta"><span class="badge dark">${esc(stationLabel(itemStation(i)))}</span>${statusBadge(i.status,i)}${promoResultBadge}${radioConflictBadge}${rotationInfo}${winnerInfo}<span class="programQtyInline">QUANTIDADE <strong>${num(i.qty)}</strong></span></div>
       ${conflictNote}
     </div>
     <div class="programSide">
-      <div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" data-program-action="edit" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'edit','${esc(i.id)}')" onpointerdown="event.stopPropagation()"><span class="iconGlyph">✎</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" data-program-action="copy" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'copy','${esc(i.id)}')" onpointerdown="event.stopPropagation()"><span class="iconGlyph">⧉</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" data-program-action="delete" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'delete','${esc(i.id)}')" onpointerdown="event.stopPropagation()"><span class="iconGlyph">🗑</span></button></div>
+      <details class="programActionMenu" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()"><summary title="AÇÕES" aria-label="AÇÕES">⋯</summary><div class="programActions">${remapBtn}<button type="button" class="actionIcon" title="EDITAR" aria-label="EDITAR" data-program-action="edit" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'edit','${esc(i.id)}')"><span class="iconGlyph">✎</span><span>EDITAR</span></button><button type="button" class="actionIcon ghost" title="COPIAR" aria-label="COPIAR" data-program-action="copy" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'copy','${esc(i.id)}')"><span class="iconGlyph">⧉</span><span>COPIAR</span></button><button type="button" class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" data-program-action="delete" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'delete','${esc(i.id)}')"><span class="iconGlyph">🗑</span><span>EXCLUIR</span></button></div></details>
     </div>
   </article>`;
 }
 function renderProgramacao(){
-  const rows=filteredItems();
-  const board=$('programWeekly');
-  if(!board) return;
-  const selectedWeek = $('weekFilter')?.value || '';
-  const range=$('weeklyRangeLabel');
-  if(range) range.textContent = selectedWeek || 'TODAS AS SEMANAS';
-  let dates = selectedWeek ? weekDatesForLabel(selectedWeek) : [...new Set(rows.map(i=>i.date).filter(Boolean))].sort();
-  if(!dates.length && !selectedWeek){ board.innerHTML=`<div class="empty">NENHUM ITEM ENCONTRADO NA PROGRAMAÇÃO.</div>`; return; }
-  if(!dates.length && selectedWeek){ dates = weekDatesForLabel(selectedWeek); }
-  board.innerHTML = dates.map(date=>{
-    const byPeriod = {manha:[], tarde:[], noite:[]};
-    rows.filter(i=>i.date===date).forEach(i=>byPeriod[periodKey(i.slot)].push(i));
-    const renderPeriod = key => `<section class="periodCell ${key}" data-drop-date="${esc(date)}" data-drop-period="${esc(key)}">
-      <div class="periodTitle"><span class="periodIcon">${periodIcon(key)}</span><strong>${periodLabel(key)}</strong></div>
-      <div class="periodItems">${byPeriod[key].length ? byPeriod[key].map(renderProgramCard).join('') : '<div class="periodEmpty">SEM ITEM NESTE PERÍODO</div>'}</div>
-    </section>`;
-    const dayTotal = byPeriod.manha.length + byPeriod.tarde.length + byPeriod.noite.length;
-    return `<article class="weekDayRow">
-      <div class="dayCell"><div class="dayBadge"><strong>${esc(formatBR(date).slice(0,5))}</strong><span>${esc(dayName(date))}</span><small>${dayTotal} ITEM${dayTotal===1?'':'S'}</small></div></div>
-      ${renderPeriod('manha')}
-      ${renderPeriod('tarde')}
-      ${renderPeriod('noite')}
-    </article>`;
+  const rows=filteredItems(),board=$('programWeekly');if(!board)return;
+  const selectedWeek=$('weekFilter')?.value||'',range=$('weeklyRangeLabel');
+  if(range)range.textContent=selectedWeek||'TODAS AS SEMANAS';
+  const alerts=rows.filter(i=>{if(normalizeChannel(i.channel)!=='RÁDIO')return false;const d=distributionForProgramItem(i);return radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)).length||((d&&samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)).length)||0);}).length;
+  const realized=rows.filter(i=>itemEffectiveStatus(i)==='REALIZADO').length;
+  const summary=$('programWeeklySummary');if(summary)summary.textContent=`${rows.length} ${rows.length===1?'ITEM':'ITENS'} · ${alerts} ${alerts===1?'ALERTA':'ALERTAS'} · ${realized} REALIZADO${realized===1?'':'S'}`;
+  let dates=selectedWeek?weekDatesForLabel(selectedWeek):[...new Set(rows.map(i=>i.date).filter(Boolean))].sort();
+  if(!dates.length&&!selectedWeek){board.innerHTML=`<div class="empty">NENHUM ITEM ENCONTRADO NA PROGRAMAÇÃO.</div>`;return;}
+  if(!dates.length&&selectedWeek)dates=weekDatesForLabel(selectedWeek);
+  board.innerHTML=dates.map(date=>{
+    const byPeriod={manha:[],tarde:[],noite:[]};
+    rows.filter(i=>i.date===date).sort((a,b)=>slotOrder(a.slot)-slotOrder(b.slot)).forEach(i=>byPeriod[periodKey(i.slot)].push(i));
+    const renderPeriod=key=>`<section class="periodCell programPeriodLane ${key}" data-drop-date="${esc(date)}" data-drop-period="${esc(key)}"><div class="programPeriodLabel"><span class="periodIcon">${periodIcon(key)}</span><div><strong>${periodLabel(key)}</strong><small>${key==='manha'?'08H ÀS 12H':key==='tarde'?'15H ÀS 18H':'20H ÀS 21H'}</small></div></div><div class="periodItems">${byPeriod[key].length?byPeriod[key].map(renderProgramCard).join(''):'<div class="periodEmpty">SEM ITEM NESTE PERÍODO</div>'}</div></section>`;
+    const dayTotal=byPeriod.manha.length+byPeriod.tarde.length+byPeriod.noite.length;
+    return `<article class="programDayBlock"><div class="programDateBar"><div><strong>${esc(formatBR(date))}</strong><span>${esc(dayName(date))}</span></div><small>${dayTotal} ${dayTotal===1?'ITEM':'ITENS'}</small></div>${renderPeriod('manha')}${renderPeriod('tarde')}${renderPeriod('noite')}</article>`;
   }).join('');
 }
 function distributionIsCarryover(d,monthKey=state.currentMonth){
@@ -8972,24 +8963,51 @@ function distributionMatchesLifecycleFilter(d,monthKey=state.currentMonth,filter
   if(filter==='ended')return lifecycle.key==='ended';
   return lifecycle.key!=='ended';
 }
+function centralAlertKey(type,idValue,detail=''){
+  const raw=`${state.currentMonth}|${type}|${idValue||''}|${detail||''}`;
+  let hash=2166136261;
+  for(let i=0;i<raw.length;i++){hash^=raw.charCodeAt(i);hash=Math.imul(hash,16777619);}
+  return `ALERTA_${(hash>>>0).toString(36).toUpperCase()}`;
+}
+function centralDismissedAlerts(){
+  state.systemMeta ||= {};
+  const current=state.systemMeta.centralDismissedAlerts;
+  if(!current||typeof current!=='object'||Array.isArray(current))state.systemMeta.centralDismissedAlerts={};
+  return state.systemMeta.centralDismissedAlerts;
+}
+function dismissCentralAlert(key,event){
+  event?.preventDefault?.();event?.stopPropagation?.();
+  if(!key)return false;
+  centralDismissedAlerts()[String(key)]={dismissedAt:new Date().toISOString(),month:state.currentMonth};
+  const saved=saveState(true);
+  if(saved)renderCentralOperacao();
+  return saved;
+}
 function centralOperationalIssues(monthKey=state.currentMonth){
-  const m=monthDataForKey(monthKey),issues=[];
-  const push=(level,title,detail,view)=>issues.push({level,title,detail,view});
-  (m.distributions||[]).forEach(d=>{
-    const stock=distributionMonthStockStatus(d,monthKey),globalStock=distributionCampaignGlobalBalance(d),left=leftTotal(d);
-    if(left<0)push('CRÍTICO',`${distributionLabel(d)} · PLANEJAMENTO`,`DESTINOS ULTRAPASSAM A COTA DO MÊS EM ${Math.abs(left)} UNIDADE(S).`,'distribuicao');
-    if(stock.executionBalance<0)push('CRÍTICO',`${distributionLabel(d)} · EXECUÇÃO`,`REALIZADO ULTRAPASSOU A COTA DO MÊS EM ${Math.abs(stock.executionBalance)} UNIDADE(S).`,'distribuicao');
-    if(globalStock.balance<0)push('ATENÇÃO',`${distributionLabel(d)} · ESTOQUE GLOBAL`,`COTAS MENSAIS ULTRAPASSAM O ESTOQUE FÍSICO EM ${Math.abs(globalStock.balance)} UNIDADE(S).`,'distribuicao');
+  const m=monthDataForKey(monthKey),issues=[],dismissed=centralDismissedAlerts();
+  const push=(level,title,detail,view,key)=>{const issue={level,title,detail,view,key:key||centralAlertKey(view,title,detail)};if(!dismissed[issue.key])issues.push(issue);};
+  consolidateDistributionVisualRows(m.distributions||[],monthKey).forEach(d=>{
+    if(distributionLifecycleStatusForMonth(d,monthKey).key==='ended')return;
+    const stock=distributionMonthStockStatus(d,monthKey),globalStock=distributionCampaignGlobalBalance(d),left=leftTotal(d),idValue=d.__visualGroupKey||d.id||distributionLabel(d);
+    if(left<0)push('CRÍTICO',`${distributionLabel(d)} · PLANEJAMENTO`,`DESTINOS ULTRAPASSAM A COTA DO MÊS EM ${Math.abs(left)} UNIDADE(S).`,'distribuicao',centralAlertKey('DIST_PLANEJAMENTO',idValue,String(left)));
+    if(stock.executionBalance<0)push('CRÍTICO',`${distributionLabel(d)} · EXECUÇÃO`,`REALIZADO ULTRAPASSOU A COTA DO MÊS EM ${Math.abs(stock.executionBalance)} UNIDADE(S).`,'distribuicao',centralAlertKey('DIST_EXECUCAO',idValue,String(stock.executionBalance)));
+    if(globalStock.balance<0)push('ATENÇÃO',`${distributionLabel(d)} · ESTOQUE GLOBAL`,`COTAS MENSAIS ULTRAPASSAM O ESTOQUE FÍSICO EM ${Math.abs(globalStock.balance)} UNIDADE(S).`,'distribuicao',centralAlertKey('DIST_GLOBAL',idValue,String(globalStock.balance)));
   });
   (m.items||[]).filter(i=>normalizeStatus(i.status)!=='CANCELADO').forEach(i=>{
-    if(!i.distributionId&&norm(i.prize)!=='A DEFINIR'&&i.sourceType!=='promo-result')push('ATENÇÃO',`${i.prize||i.title||'ITEM'} · SEM VÍNCULO`,`${formatBR(i.date)} · ${normalizeSlot(i.slot||'')||'SEM HORÁRIO'}`,'programacao');
+    if(!i.distributionId&&norm(i.prize)!=='A DEFINIR'&&i.sourceType!=='promo-result'){
+      const detail=`${formatBR(i.date)} · ${normalizeSlot(i.slot||'')||'SEM HORÁRIO'}`;
+      push('ATENÇÃO',`${i.prize||i.title||'ITEM'} · SEM VÍNCULO`,detail,'programacao',centralAlertKey('ITEM_SEM_VINCULO',i.id||`${i.date}|${i.slot}|${i.prize}`,detail));
+    }
   });
   promoSnapshotsForMonth(monthKey).forEach(p=>{
     const st=promoStatusData(p);if(st.key!=='active')return;
     const cfg=promoProgramConfigsDisplay(p);
-    if(!cfg.length)push('ATENÇÃO',`${promoClientCampaignData(p).campaign||p.name||p.title||'CAMPANHA'} · SEM PROGRAMAÇÃO`,`CAMPANHA ATIVA SEM PROGRAMA/HORÁRIO DEFINIDO.`,'digital');
+    if(!cfg.length){
+      const title=`${promoClientCampaignData(p).campaign||p.name||p.title||'CAMPANHA'} · SEM PROGRAMAÇÃO`;
+      push('ATENÇÃO',title,'CAMPANHA ATIVA SEM PROGRAMA/HORÁRIO DEFINIDO.','digital',centralAlertKey('PROMO_SEM_PROGRAMACAO',p.id||title,'ATIVA'));
+    }
   });
-  if(firebasePendingSave)push('INFORMATIVO','SINCRONIZAÇÃO EM ANDAMENTO','EXISTE UMA ALTERAÇÃO AGUARDANDO CONFIRMAÇÃO DO FIREBASE.','backup');
+  if(firebasePendingSave)push('INFORMATIVO','SINCRONIZAÇÃO EM ANDAMENTO','EXISTE UMA ALTERAÇÃO AGUARDANDO CONFIRMAÇÃO DO FIREBASE.','backup',centralAlertKey('FIREBASE_PENDING','save','pending'));
   const rank={CRÍTICO:0,'ATENÇÃO':1,INFORMATIVO:2};
   return issues.sort((a,b)=>(rank[a.level]??9)-(rank[b.level]??9));
 }
@@ -9001,7 +9019,7 @@ function renderCentralOperacao(){
   const activePromos=promoSnapshotsForMonth(monthKey).filter(p=>promoStatusData(p).key==='active');
   const issues=centralOperationalIssues(monthKey);
   if($('centralMonthBadge'))$('centralMonthBadge').textContent=labelMonth(monthKey);
-  if($('centralTodayLabel'))$('centralTodayLabel').textContent=`${formatBR(today)} · ${todayItems.length} ITEM(NS)`;
+  if($('centralTodayLabel'))$('centralTodayLabel').textContent=`${formatBR(today)} · ${todayItems.length} ${todayItems.length===1?'ITEM':'ITENS'}`;
   const kpis=$('centralOperationKpis');
   if(kpis)kpis.innerHTML=`
     <button class="centralKpi" type="button" onclick="setView('distribuicao')"><span>PRÊMIOS ATIVOS</span><strong>${activeDists.length}</strong><em>NA COMPETÊNCIA</em></button>
@@ -9009,7 +9027,7 @@ function renderCentralOperacao(){
     <button class="centralKpi" type="button" onclick="setView('digital')"><span>PROMO / MERCHAN</span><strong>${activePromos.length}</strong><em>ATIVOS AGORA</em></button>
     <button class="centralKpi ${issues.length?'attention':'ok'}" type="button" onclick="setView('sistema')"><span>PENDÊNCIAS</span><strong>${issues.length}</strong><em>${issues.length?'PRECISAM DE REVISÃO':'SISTEMA SEM ALERTAS'}</em></button>`;
   const attention=$('centralAttentionList');
-  if(attention)attention.innerHTML=issues.length?issues.slice(0,7).map(x=>`<button class="centralAttentionItem ${x.level==='CRÍTICO'?'critical':x.level==='ATENÇÃO'?'warning':'info'}" type="button" onclick="setView('${esc(x.view)}')"><i></i><div><strong>${esc(x.title)}</strong><span>${esc(x.detail)}</span></div><b>›</b></button>`).join(''):`<div class="centralAllClear"><span>✓</span><div><strong>SEM PENDÊNCIAS CRÍTICAS</strong><small>A COMPETÊNCIA ESTÁ CONSISTENTE NESTE MOMENTO.</small></div></div>`;
+  if(attention)attention.innerHTML=issues.length?issues.slice(0,7).map(x=>`<div class="centralAttentionItem ${x.level==='CRÍTICO'?'critical':x.level==='ATENÇÃO'?'warning':'info'}"><button class="centralAttentionOpen" type="button" onclick="setView('${esc(x.view)}')"><i></i><div><strong>${esc(x.title)}</strong><span>${esc(x.detail)}</span></div><b>›</b></button><button class="centralAlertDismiss" type="button" title="DISPENSAR ALERTA" aria-label="DISPENSAR ALERTA" onclick="dismissCentralAlert('${esc(x.key)}',event)">×</button></div>`).join(''):`<div class="centralAllClear"><span>✓</span><div><strong>SEM PENDÊNCIAS CRÍTICAS</strong><small>A COMPETÊNCIA ESTÁ CONSISTENTE NESTE MOMENTO.</small></div></div>`;
   const todayHost=$('centralTodayList');
   if(todayHost)todayHost.innerHTML=todayItems.length?todayItems.slice(0,8).map(i=>`<button class="centralTodayItem" type="button" onclick="setView('programacao')"><time>${esc(normalizeSlot(i.slot||''))}</time><div><strong>${esc(i.prize||i.title||'ITEM')}</strong><span>${esc(i.program||'SEM PROGRAMA')} · ${esc(stationLabel(i.station||'JP1017'))}</span></div>${statusBadge(i.status,i)}</button>`).join(''):`<div class="centralEmpty">SEM ITENS PROGRAMADOS PARA HOJE.</div>`;
 }
@@ -9027,13 +9045,23 @@ function distributionVisualRecord(id){
   const rows=consolidateDistributionVisualRows(monthData().distributions||[],state.currentMonth);
   return rows.find(d=>distributionVisualIds(d).includes(String(id)))||rows.find(d=>String(d.id)===String(id))||null;
 }
+function distributionLifecycleVisualStyle(d,monthKey=state.currentMonth){
+  const lifecycle=distributionLifecycleStatusForMonth(d,monthKey),start=distStartDate(d),end=distEndDate(d),today=todayISO();
+  let progress=0;
+  if(lifecycle.key==='ended')progress=100;
+  else if(lifecycle.key==='active'&&start&&end){
+    const startMs=new Date(`${start}T12:00:00`).getTime(),endMs=new Date(`${end}T12:00:00`).getTime(),todayMs=new Date(`${today}T12:00:00`).getTime();
+    progress=endMs>startMs?Math.max(8,Math.min(100,Math.round(((todayMs-startMs)/(endMs-startMs))*100))):100;
+  }
+  return {key:lifecycle.key,progress};
+}
 function renderDistributionCompact(rows){
   const tb=$('distCompactTable');if(!tb)return;
-  if(!rows.length){tb.innerHTML='<tr><td colspan="8"><div class="empty">NENHUMA DISTRIBUIÇÃO ENCONTRADA PARA A VISÃO ATUAL.</div></td></tr>';return;}
+  if(!rows.length){tb.innerHTML='<tr><td colspan="7"><div class="empty">NENHUMA DISTRIBUIÇÃO ENCONTRADA PARA A VISÃO ATUAL.</div></td></tr>';return;}
   tb.innerHTML=rows.map(d=>{
-    const stock=distributionMonthStockStatus(d,state.currentMonth),lifecycle=distributionLifecycleStatus(d),prog=distributionVisualProgrammed(d,'RÁDIO');
+    const stock=distributionMonthStockStatus(d,state.currentMonth),prog=distributionVisualProgrammed(d,'RÁDIO'),life=distributionLifecycleVisualStyle(d,state.currentMonth);
     const saldoClass=stock.executionBalance<0?'negative':stock.executionBalance===0?'zero':'positive';
-    return `<tr class="distCompactRow" data-dist-id="${esc(d.id)}"><td><button class="distCompactPrize" type="button" onclick="openDistributionDetail('${esc(d.id)}')">${distributionPrizeIdentityHtml(d)}</button></td><td class="num"><strong>${num(d.total)}</strong></td><td class="num">${allocated(d)}</td><td class="num">${stock.realized}</td><td class="num"><span class="distCompactBalance ${saldoClass}">${stock.executionBalance}</span></td><td class="num">${prog}</td><td><span class="distLifecycleBadge ${lifecycle.key}">${lifecycle.label}</span></td><td><div class="distCompactActions"><button class="actionIcon" type="button" title="VER DETALHES" aria-label="VER DETALHES" onclick="openDistributionDetail('${esc(d.id)}')"><span class="iconGlyph">›</span></button><button class="actionIcon ghost" type="button" title="PROGRAMAR" aria-label="PROGRAMAR" onclick="programFromDist('${esc(d.id)}')"><span class="iconGlyph">＋</span></button></div></td></tr>`;
+    return `<tr class="distCompactRow" data-dist-id="${esc(d.id)}"><td class="distLifecycleCell ${life.key}" style="--life-progress:${life.progress}%"><button class="distCompactPrize" type="button" onclick="openDistributionDetail('${esc(d.id)}')">${distributionPrizeIdentityHtml(d)}</button></td><td class="num"><strong>${num(d.total)}</strong></td><td class="num">${allocated(d)}</td><td class="num">${stock.realized}</td><td class="num"><span class="distCompactBalance ${saldoClass}">${stock.executionBalance}</span></td><td class="num">${prog}</td><td><div class="distCompactActions"><button class="actionIcon" type="button" title="VER DETALHES" aria-label="VER DETALHES" onclick="openDistributionDetail('${esc(d.id)}')"><span class="iconGlyph">›</span></button><button class="actionIcon ghost" type="button" title="PROGRAMAR" aria-label="PROGRAMAR" onclick="programFromDist('${esc(d.id)}')"><span class="iconGlyph">＋</span></button></div></td></tr>`;
   }).join('');
 }
 function openDistributionDetail(id){
@@ -13405,7 +13433,7 @@ window.addEventListener('offline',handleBrowserConnectionChange);
 populatePromoReadHours();
 updatePromoReadScheduleState();
 setOfficialCalendarMonth(true);
-console.info('JP WORKSPACE AV58.1 · CENTRAL DE OPERAÇÃO + DISTRIBUIÇÃO COMPACTA · FIREBASE SOURCE OF TRUTH');
+console.info('JP WORKSPACE AV58.1.2 · CENTRAL + DISTRIBUIÇÃO + PROGRAMAÇÃO REFINADA · FIREBASE SOURCE OF TRUTH');
 console.info('PAINEL JP — MÊS OFICIAL:', currentCalendarMonth(), 'MÊS ABERTO:', state.currentMonth);
 initFirebaseSync();
 startFirebaseAutoConnectSequence();
