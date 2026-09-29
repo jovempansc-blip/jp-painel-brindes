@@ -1,0 +1,282 @@
+/* JP WORKSPACE AV58 · DESIGN SYSTEM ADMINISTRATIVO
+   Escopo: Principal, Direção/Preview, OMR e Recepção.
+   Os painéis de Estúdio não carregam este arquivo. */
+:root{
+  --av58-bg:#f6f7f9;
+  --av58-paper:#ffffff;
+  --av58-ink:#202630;
+  --av58-muted:#747d89;
+  --av58-line:#e4e8ee;
+  --av58-wine:#8f2942;
+  --av58-wine-dark:#742136;
+  --av58-wine-soft:#f7eef1;
+  --av58-green:#4f846e;
+  --av58-green-soft:#edf6f1;
+  --av58-amber:#b2864e;
+  --av58-amber-soft:#fbf5ea;
+  --av58-blue:#66819a;
+  --av58-blue-soft:#eef3f7;
+  --av58-danger:#b25b68;
+  --av58-danger-soft:#faeff1;
+  --av58-shadow:0 12px 34px rgba(32,38,48,.055);
+  --av58-soft-shadow:0 6px 18px rgba(32,38,48,.038);
+  --av58-radius:20px;
+  --av58-radius-sm:12px;
+
+  /* compatibilidade com as variáveis legadas */
+  --red:var(--av58-wine);
+  --red-dark:var(--av58-wine-dark);
+  --red-soft:var(--av58-wine-soft);
+  --wine:var(--av58-wine);
+  --wine-soft:var(--av58-wine-soft);
+  --ink:var(--av58-ink);
+  --muted:var(--av58-muted);
+  --line:var(--av58-line);
+  --bg:var(--av58-bg);
+  --soft:#f7f8fa;
+  --silver:#f0f2f5;
+  --panel:rgba(255,255,255,.965);
+  --green:var(--av58-green);
+  --green-soft:var(--av58-green-soft);
+  --amber:var(--av58-amber);
+  --orange:var(--av58-amber);
+  --orange-soft:var(--av58-amber-soft);
+  --blue:var(--av58-blue);
+  --blue-soft:var(--av58-blue-soft);
+  --danger:var(--av58-danger);
+  --danger-soft:var(--av58-danger-soft);
+  --shadow:var(--av58-shadow);
+  --soft-shadow:var(--av58-soft-shadow);
+  --font:"Inter","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif;
+}
+
+html{
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+  font-synthesis:none;
+}
+body{
+  font-family:"Inter","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif!important;
+  color:var(--av58-ink)!important;
+  background:linear-gradient(180deg,#fafbfc 0%,var(--av58-bg) 46%,#f0f2f5 100%)!important;
+  font-weight:700;
+}
+button,input,select,textarea{
+  font-family:"Inter","Segoe UI Variable","Segoe UI",Roboto,Arial,sans-serif!important;
+  font-kerning:normal;
+  text-rendering:optimizeLegibility;
+}
+
+/* superfícies */
+.appHeader,.executiveHeader,.top,.logoBar,.panel,.stat,.kpi,.sectionBlock,.formBlock,.preview,.tableWrap,.resultCard,.titleBox,.descBox{
+  border-color:var(--av58-line)!important;
+  box-shadow:var(--av58-soft-shadow)!important;
+}
+.appHeader,.executiveHeader,.top,.logoBar{
+  background:rgba(255,255,255,.965)!important;
+  backdrop-filter:blur(14px);
+}
+.panel,.stat,.kpi,.sectionBlock,.formBlock,.resultCard,.titleBox,.descBox{
+  background:rgba(255,255,255,.975)!important;
+}
+.panel{border-radius:20px!important}
+.panelHead{
+  background:linear-gradient(180deg,#fff,#fbfbfc)!important;
+  border-bottom-color:var(--av58-line)!important;
+}
+.panelHead h2,.brandTitle strong,.headCopy h1,.brand h1{
+  color:var(--av58-ink)!important;
+  font-weight:700!important;
+  letter-spacing:-.035em!important;
+}
+.panelHead p,.brandTitle span,.headCopy p,.updated,.helper{
+  color:var(--av58-muted)!important;
+  font-weight:600!important;
+}
+
+/* navegação */
+.tabs{
+  background:rgba(255,255,255,.86)!important;
+  border-color:var(--av58-line)!important;
+  box-shadow:none!important;
+}
+.tabBtn,.tab,.modeBtn{
+  font-weight:700!important;
+  color:#66707d!important;
+  transition:background .15s ease,color .15s ease,border-color .15s ease!important;
+}
+.tabBtn.active,.tab.active,.modeBtn.active{
+  background:var(--av58-wine)!important;
+  border-color:var(--av58-wine)!important;
+  color:#fff!important;
+  box-shadow:0 5px 14px rgba(143,41,66,.13)!important;
+}
+
+/* controles */
+.control,input,select,textarea{
+  border-color:var(--av58-line)!important;
+  background:#fff!important;
+  color:var(--av58-ink)!important;
+  box-shadow:none!important;
+}
+.control:focus,input:focus,select:focus,textarea:focus{
+  border-color:#c9a5af!important;
+  box-shadow:0 0 0 3px rgba(143,41,66,.065)!important;
+}
+.btn,.actionIcon,.iconBtn,.miniBtn,.pickupBtn{
+  box-shadow:none!important;
+  font-weight:700!important;
+  transition:background .15s ease,border-color .15s ease,color .15s ease,transform .15s ease!important;
+}
+.btn.red,.btn.primary{
+  background:var(--av58-wine)!important;
+  border-color:var(--av58-wine)!important;
+  color:#fff!important;
+}
+.btn.red:hover,.btn.primary:hover{background:var(--av58-wine-dark)!important}
+.btn:not(.red):not(.primary),.actionIcon,.iconBtn,.miniBtn{
+  background:#f7f8fa!important;
+  border-color:var(--av58-line)!important;
+  color:#566170!important;
+}
+.actionIcon:hover,.iconBtn:hover,.miniBtn:hover,.btn:not(.red):not(.primary):hover{
+  background:#f1f3f6!important;
+  border-color:#d8dde5!important;
+}
+.actionIcon.danger,.actionIcon.ghost{
+  background:var(--av58-danger-soft)!important;
+  border-color:#ead0d5!important;
+  color:var(--av58-danger)!important;
+}
+
+/* tabelas */
+.tableWrap{background:#fff!important;border-radius:16px!important;box-shadow:none!important}
+table th,th{
+  background:#f8f9fb!important;
+  color:#737d89!important;
+  border-color:var(--av58-line)!important;
+  font-weight:700!important;
+  letter-spacing:.045em!important;
+}
+table td,td{border-color:#edf0f3!important}
+tbody tr:hover td{background:#fbfbfc!important}
+.distPrizeCell{background:#fafbfc!important;border-right-color:var(--av58-line)!important}
+.distPrizeCell strong,.campaignIdentity strong,.primary,.info strong{font-weight:700!important;color:var(--av58-ink)!important}
+.distPrizeCell span,.campaignIdentity span,.secondary,.info span{color:var(--av58-muted)!important}
+
+/* cartões / indicadores */
+.stat,.kpi{
+  border-radius:16px!important;
+  background:#fcfcfd!important;
+}
+.stat strong,.kpi strong{font-weight:700!important;color:var(--av58-ink)!important}
+.kpi.ok,.stat.ok{background:linear-gradient(180deg,#fff,var(--av58-green-soft))!important;border-color:#d7e8df!important}
+.kpi.alert,.stat.warn{background:linear-gradient(180deg,#fff,var(--av58-amber-soft))!important;border-color:#ecdfca!important}
+.kpi.danger,.stat.bad{background:linear-gradient(180deg,#fff,var(--av58-danger-soft))!important;border-color:#ecd5da!important}
+
+/* badges dessaturados */
+.badge{font-weight:700!important;border-color:var(--av58-line)!important}
+.badge.green,.badge.read,.result,.pickupBtn.done{
+  background:var(--av58-green-soft)!important;
+  border-color:#d1e6da!important;
+  color:var(--av58-green)!important;
+}
+.badge.amber,.badge.pending,.opecAlert.warn,.expiredStamp{
+  background:var(--av58-amber-soft)!important;
+  border-color:#ebddc8!important;
+  color:#936d3e!important;
+}
+.badge.blue,.badge.future{
+  background:var(--av58-blue-soft)!important;
+  border-color:#d8e2ea!important;
+  color:#58758c!important;
+}
+.badge.red,.badge.missed,.badge.cancel,.badge.incomplete{
+  background:var(--av58-danger-soft)!important;
+  border-color:#ead0d5!important;
+  color:var(--av58-danger)!important;
+}
+
+/* sincronização */
+.syncBadge,.saveState,.syncStatusBtn{
+  box-shadow:none!important;
+  font-weight:700!important;
+}
+.syncBadge:not(.offline):not(.error),.saveState:not(.error):not(.saving){
+  background:var(--av58-green-soft)!important;
+  border-color:#d1e6da!important;
+  color:var(--av58-green)!important;
+}
+
+/* principal: suavização da densidade sem mudar arquitetura */
+.appHeader{border-radius:24px!important;box-shadow:var(--av58-shadow)!important}
+.appHeader .logo{filter:saturate(.92)}
+.stats{gap:8px!important}
+.stat{padding:13px 14px!important}
+.panelBody{background:transparent}
+.promoHubPanel .promoHubKpi,.promoSummaryCard,.promoHubKpi{
+  border-color:var(--av58-line)!important;
+  background:#fcfcfd!important;
+  box-shadow:none!important;
+}
+.promoCampaignTable .campaignRow td{background:#fff!important}
+.campaignExecution{font-weight:700!important}
+.campaignProgramChip,.campaignHourChip,.chip,.programQtyInline{
+  background:#f4f6f8!important;
+  border-color:#e5e8ed!important;
+  color:#66717e!important;
+  box-shadow:none!important;
+}
+.promoScheduleDialog,.drawerCard,.modalCard{
+  border-color:var(--av58-line)!important;
+  box-shadow:0 26px 70px rgba(32,38,48,.18)!important;
+}
+
+/* direção */
+.executiveHeader{border-radius:22px!important;box-shadow:var(--av58-shadow)!important}
+.nowCard,.alertCard,.listItem,.statusBox,.reportHeader,.sectionToolbar{
+  border-color:var(--av58-line)!important;
+  box-shadow:none!important;
+}
+
+/* OMR */
+.head{background:linear-gradient(180deg,#fff,#fbfbfc)!important;border-bottom-color:var(--av58-line)!important}
+.formBlock,.sectionBlock,.formCluster,.advanced,.preview,.planningPreview,.historySection,.historyHeroBox,.historyMeta,.balanceBox{
+  border-color:var(--av58-line)!important;
+  box-shadow:none!important;
+}
+.readHour span,.programChoice span,.weekdayChip span{
+  border-color:var(--av58-line)!important;
+  color:#687280!important;
+  background:#fff!important;
+}
+.readHour input:checked+span,.programChoice input:checked+span{
+  background:var(--av58-wine-soft)!important;
+  border-color:#d9b9c2!important;
+  color:var(--av58-wine)!important;
+  box-shadow:none!important;
+}
+
+/* recepção */
+.pickupBtn:not(.done){
+  background:var(--av58-wine)!important;
+  border-color:var(--av58-wine)!important;
+  color:#fff!important;
+}
+.pickupBtn:not(.done):hover{background:var(--av58-wine-dark)!important}
+.resultCard{border-radius:17px!important}
+.time{color:#6c7684!important;font-weight:700!important}
+.titleBox{box-shadow:inset 4px 0 0 var(--av58-wine),var(--av58-soft-shadow)!important}
+.brand span{color:var(--av58-wine)!important}
+
+/* scrollbars delicadas */
+*{scrollbar-color:#b9c0ca transparent;scrollbar-width:thin}
+*::-webkit-scrollbar{width:9px;height:9px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:#c5cbd3;border:2px solid transparent;background-clip:padding-box;border-radius:999px}
+*::-webkit-scrollbar-thumb:hover{background:#afb7c2;border:2px solid transparent;background-clip:padding-box}
+
+@media(max-width:900px){
+  .appHeader,.executiveHeader,.top{box-shadow:var(--av58-soft-shadow)!important}
+}
