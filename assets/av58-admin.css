@@ -461,3 +461,46 @@ body.programDragActive #view-programacao .programPeriodLane[data-drop-date][data
 
 /* AV58.1.3 · REFINAMENTO DE LEITURA */
 /* Gradientes da distribuição fluem da esquerda para a direita e o cabeçalho diário recebe rosé/cinza suave. */
+
+
+/* AV58.1.4 · PROGRAMAÇÃO — TÍTULO OPERACIONAL + MENU FLUTUANTE */
+/* O menu de ações não participa mais da geometria do card. */
+#view-programacao .programCard{
+  grid-template-columns:66px minmax(0,1fr)!important;
+  padding-right:44px!important;
+}
+#view-programacao .programSide{
+  position:absolute!important;
+  top:7px!important;
+  right:7px!important;
+  z-index:190!important;
+  min-width:29px!important;
+  padding:0!important;
+  align-self:auto!important;
+}
+#view-programacao .programCard:has(.programActionMenu[open]){z-index:220!important}
+#view-programacao .programActionMenu{position:relative!important;z-index:191!important}
+#view-programacao .programActionMenu .programActions{
+  position:absolute!important;
+  top:34px!important;
+  right:0!important;
+  z-index:230!important;
+  background:rgba(255,255,255,.84)!important;
+  -webkit-backdrop-filter:blur(10px) saturate(115%);
+  backdrop-filter:blur(10px) saturate(115%);
+  border-color:rgba(211,218,226,.88)!important;
+  box-shadow:0 12px 28px rgba(31,43,58,.13)!important;
+}
+#view-programacao .programInfo>strong{
+  font-weight:800!important;
+}
+#view-programacao .programInfo>em{
+  -webkit-line-clamp:1!important;
+  margin-top:3px!important;
+}
+@media(max-width:640px){
+  #view-programacao .programCard{
+    grid-template-columns:60px minmax(0,1fr)!important;
+    padding-right:42px!important;
+  }
+}

@@ -8530,8 +8530,8 @@ function periodIcon(key){
 function renderProgramCard(i){
   const d=distributionForProgramItem(i);
   const resolvedProgram=programFromSchedule(i.date,i.slot,itemStation(i))||norm(i.program||'');
-  const cardTitle=i.prize||i.title||resolvedProgram||'';
-  const cardSubtitle=i.title?`${i.title}${resolvedProgram?' · '+resolvedProgram:''}`:resolvedProgram;
+  const cardTitle=i.title||d?.title||distributionLabel(d)||'SEM TÍTULO CADASTRADO';
+  const cardSubtitle=resolvedProgram;
   const promoResultBadge=i.sourceType==='promo-result'?`<span class="badge blue" title="RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR">RESULTADO</span>`:'';
   const radioConflict=normalizeChannel(i.channel)==='RÁDIO'?radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)):[];
   const rotationConflict=(normalizeChannel(i.channel)==='RÁDIO'&&d)?samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)):[];
