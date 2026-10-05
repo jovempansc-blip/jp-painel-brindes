@@ -3262,28 +3262,35 @@ function studioLocatePrizeItem(idValue){
   return best;
 }
 function studioPromoPool(date=''){
-  const requestedMonth=String(date||'').slice(0,7),copies=new Map(),pinned=new Set();
-  // Para uma data concreta, a fotografia daquele mês sempre vence, mesmo que outra competência tenha updatedAt mais novo.
-  if(/^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)){
-    studioRows(state.months?.[requestedMonth]?.promos).forEach((row,index)=>{
-      if(!row)return;const idValue=String(row.id||`LEGACY_${requestedMonth}_${index}`);copies.set(idValue,row);pinned.add(idValue);
-    });
+  const requestedMonth=String(date||'').slice(0,7),requested=new Map(),freshest=new Map();
+  const validMonth=/^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth);
+  if(validMonth){
+    studioRows(state.months?.[requestedMonth]?.promos).forEach((row,index)=>{if(!row)return;const idValue=String(row.id||`LEGACY_${requestedMonth}_${index}`);requested.set(idValue,row);});
   }
   Object.entries(state.months||{}).forEach(([monthKey,month])=>{
     studioRows(month?.promos).forEach((row,index)=>{
-      if(!row)return;
-      const idValue=String(row.id||`LEGACY_${monthKey}_${index}`);
-      if(pinned.has(idValue))return;
-      const previous=copies.get(idValue);
-      if(!previous){copies.set(idValue,row);return;}
-      const previousTime=Date.parse(previous.monthlyUpdatedAt||previous.updatedAt||previous.createdAt||'')||0;
-      const incomingTime=Date.parse(row.monthlyUpdatedAt||row.updatedAt||row.createdAt||'')||0;
-      if(incomingTime>=previousTime) copies.set(idValue,row);
+      if(!row)return;const idValue=String(row.id||`LEGACY_${monthKey}_${index}`),previous=freshest.get(idValue);
+      if(!previous){freshest.set(idValue,row);return;}
+      const a=Date.parse(previous.monthlyUpdatedAt||previous.updatedAt||previous.createdAt||'')||0,b=Date.parse(row.monthlyUpdatedAt||row.updatedAt||row.createdAt||'')||0;
+      if(b>=a)freshest.set(idValue,row);
     });
   });
-  const rows=[...copies.values()];
-  return date?rows.filter(row=>studioMaterialInForce(row,date)):rows;
+  const operationalFields=['readByHour','readLog','missedLog','readAt','readAtLabel','readSlot','readStation','readProgram','resultByHour','resultWinnersByHour','resultWinners','resultName','resultNames','resultAt','resultAtLabel','resultSlot','resultDate','winnerName','winnerNames','deliveredAt','deliveredAtLabel'];
+  const metadataFields=['snapshotMonth','originMonth','monthlyRevision','monthlyEdited','snapshotCreatedAt'];
+  const map=new Map();
+  new Set([...freshest.keys(),...requested.keys()]).forEach(idValue=>{
+    const monthRow=requested.get(idValue),config=freshest.get(idValue)||monthRow;
+    if(!monthRow){map.set(idValue,config);return;}
+    const monthTime=Date.parse(monthRow.monthlyUpdatedAt||monthRow.updatedAt||monthRow.createdAt||'')||0,configTime=Date.parse(config?.monthlyUpdatedAt||config?.updatedAt||config?.createdAt||'')||0;
+    if(!config||configTime<=monthTime){map.set(idValue,monthRow);return;}
+    const merged={...config};
+    [...operationalFields,...metadataFields].forEach(field=>{if(Object.prototype.hasOwnProperty.call(monthRow,field))merged[field]=monthRow[field];else if(operationalFields.includes(field))delete merged[field];});
+    merged.configResolvedFromLatest=true;
+    map.set(idValue,merged);
+  });
+  const rows=[...map.values()];return date?rows.filter(row=>studioMaterialInForce(row,date)):rows;
 }
+
 function studioPublishedPrizeItems(){
   // A programação operacional vem sempre de months/*/items no Firebase.
   // Não limitar por currentMonth: itens de setembro podem ter sido cadastrados

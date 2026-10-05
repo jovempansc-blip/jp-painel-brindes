@@ -10519,6 +10519,21 @@ function distributionRadioTotal(d){
   const snapshotTotal=d?.id?distributionCampaignSegmentTotal(d.id,'ar',monthKey):0;
   return Math.max(0,snapshotTotal||num(d?.ar));
 }
+function radioGenerationAllocationOffer(d){
+  if(!d || distributionRadioTotal(d)>0) return {amount:0,source:'NONE',increaseMonthlyQuota:0};
+  const multiplier=typeof ticketMultiplier==='function'?Math.max(1,num(ticketMultiplier(d,'ar'))||1):1;
+  const monthlySpare=Math.max(0,num(d.total)-allocated(d));
+  const monthlyPackages=Math.floor(monthlySpare/multiplier);
+  if(monthlyPackages>0) return {amount:monthlyPackages,source:'MONTH_BALANCE',increaseMonthlyQuota:0};
+  const monthKey=String(d?.snapshotMonth||d?.monthKey||state.currentMonth||'').slice(0,7);
+  const originMonth=String(d?.originMonth||d?.startDate||d?.date||'').slice(0,7);
+  const autoExtension=d?.monthlyExtension===true || (!d?.monthlyEdited && num(d?.total)===0 && monthKey && originMonth && monthKey>originMonth);
+  const global=distributionCampaignGlobalBalance(d);
+  const globalFree=Math.max(0,num(global?.balance));
+  const globalPackages=Math.floor(globalFree/multiplier);
+  if(autoExtension && globalPackages>0) return {amount:globalPackages,source:'GLOBAL_UNALLOCATED',increaseMonthlyQuota:globalPackages*multiplier};
+  return {amount:0,source:'NONE',increaseMonthlyQuota:0};
+}
 function normalizeRadioGenerationStrategy(d,strategy={}){
   const range=radioGenerationEffectiveRange(d);
   let mode=strategy?.mode==='concentrated'?'concentrated':'balanced';
@@ -12354,7 +12369,36 @@ function updateRadioConcentrationMode(){
 function openRadioGenerationStrategy(distId){
   const d=distributionById(distId)||distributionCampaignCopies(distId)[0]?.d;
   if(!d){alert('DISTRIBUIÇÃO NÃO ENCONTRADA.');return false;}
-  if(distributionRadioTotal(d)<=0){alert('O DESTINO RÁDIO ESTÁ ZERADO. INFORME A QUANTIDADE DE RÁDIO PARA GERAR A PROGRAMAÇÃO.');return false;}
+  if(distributionRadioTotal(d)<=0){
+    const offer=radioGenerationAllocationOffer(d);
+    if(offer.amount>0){
+      const monthKey=String(d?.snapshotMonth||d?.monthKey||state.currentMonth||'').slice(0,7);
+      const sourceText=offer.source==='MONTH_BALANCE'
+        ? `EXISTEM ${offer.amount} PREMIAÇÃO(ÕES) LIVRES NA COTA DE ${labelMonth(monthKey)}.`
+        : `EXISTEM ${offer.amount} PREMIAÇÃO(ÕES) DISPONÍVEIS A PARTIR DO ESTOQUE GLOBAL NÃO ALOCADO.`;
+      const proceed=confirm(`O DESTINO RÁDIO DE ${labelMonth(monthKey)} ESTÁ ZERADO.
+
+${sourceText}
+
+DESEJA DESTINAR ESSAS ${offer.amount} PREMIAÇÃO(ÕES) AO RÁDIO DE ${labelMonth(monthKey)} E CONTINUAR A GERAÇÃO?`);
+      if(!proceed)return false;
+      const before={total:num(d.total),ar:num(d.ar)};
+      if(offer.increaseMonthlyQuota>0) d.total=num(d.total)+offer.increaseMonthlyQuota;
+      d.ar=num(d.ar)+offer.amount;
+      d.monthlyEdited=true;d.monthlyAdjusted=true;d.monthlyRevision=Math.max(1,num(d.monthlyRevision)||1)+1;d.monthlyUpdatedAt=new Date().toISOString();d.updatedAt=d.monthlyUpdatedAt;
+      auditEvent('ALOCAÇÃO EXPLÍCITA PARA GERAÇÃO DE RÁDIO',distributionLabel(d),{targetId:d.id,before,after:{total:num(d.total),ar:num(d.ar)},note:`COMPETÊNCIA ${monthKey} · ${offer.source}`});
+      saveState(true);
+    }else{
+      const monthKey=String(d?.snapshotMonth||d?.monthKey||state.currentMonth||'').slice(0,7);
+      const global=distributionCampaignGlobalBalance(d);
+      alert(`O DESTINO RÁDIO DE ${labelMonth(monthKey)} ESTÁ ZERADO E NÃO HÁ SALDO LIVRE NESTA COMPETÊNCIA.
+
+ESTOQUE GLOBAL NÃO ALOCADO: ${Math.max(0,num(global.balance))}.
+
+AJUSTE A COTA/DESTINO DE ${labelMonth(monthKey)} OU LIBERE ESTOQUE DE OUTRA COMPETÊNCIA ANTES DE GERAR.`);
+      return false;
+    }
+  }
   const needed=radioPlannerNeeded(d);
   if(needed<=0){filterProgramByDist(d.id);alert('ESSA DISTRIBUIÇÃO JÁ TEM TODOS OS HORÁRIOS DE RÁDIO PROGRAMADOS. A GRADE FOI ABERTA PARA CONFERÊNCIA.');return false;}
   const range=radioGenerationEffectiveRange(d);
@@ -12795,17 +12839,47 @@ function storePromoAcrossMonths(p,editingMonth=state.currentMonth,isNew=false){
     });
     return;
   }
-  const target=monthDataForKey(editingMonth); target.promos ||= [];
-  const existingIndex=target.promos.findIndex(row=>row?.id===p.id);
-  const previous=existingIndex>=0?target.promos[existingIndex]:null;
-  const edited=promoMonthlySnapshot({...p,originMonth:previous?.originMonth||originMonth},editingMonth,originMonth);
-  edited.monthlyRevision=Math.max(1,num(previous?.monthlyRevision)||1)+1;
-  edited.monthlyEdited=true;
-  edited.monthlyUpdatedAt=new Date().toISOString();
-  if(existingIndex>=0) target.promos[existingIndex]=edited; else target.promos.push(edited);
-  // Meses que ainda não existiam recebem a fotografia vigente; meses já existentes nunca são sobrescritos.
-  keys.forEach(key=>{ if(key!==editingMonth) ensurePromoSnapshotForMonth(p,key,originMonth); });
+  const targetSet=new Set(keys);
+  // A configuração da campanha é contínua durante a vigência. Fotografias passadas
+  // preservam o histórico; a competência editada e as seguintes recebem a regra atual.
+  Object.entries(state.months||{}).forEach(([monthKey,month])=>{
+    if(monthKey<editingMonth || targetSet.has(monthKey) || !Array.isArray(month?.promos)) return;
+    month.promos=month.promos.filter(row=>row?.id!==p.id);
+  });
+  const operationalFields=[
+    'readByHour','readLog','missedLog','readAt','readAtLabel','readSlot','readStation','readProgram',
+    'resultByHour','resultWinnersByHour','resultWinners','resultName','resultNames','resultAt','resultAtLabel','resultSlot','resultDate',
+    'winnerName','winnerNames','deliveredAt','deliveredAtLabel'
+  ];
+  const occurrenceOperationalFields=['status','winnerName','winnerNames','resultName','resultNames','resultAt','resultAtLabel','deliveredAt','deliveredAtLabel','cancelledAt','cancelledAtLabel'];
+  keys.filter(key=>key>=editingMonth).forEach(key=>{
+    const target=monthDataForKey(key); target.promos ||= [];
+    const idx=target.promos.findIndex(row=>row?.id===p.id);
+    const previous=idx>=0?target.promos[idx]:null;
+    const next=promoMonthlySnapshot({...p,originMonth:previous?.originMonth||originMonth},key,originMonth);
+    operationalFields.forEach(field=>{
+      delete next[field];
+      if(previous && Object.prototype.hasOwnProperty.call(previous,field)) next[field]=clone(previous[field]);
+    });
+    if(Array.isArray(next.occurrences) && Array.isArray(previous?.occurrences)){
+      const oldByKey=new Map(previous.occurrences.map(o=>[String(o?.id||`${o?.date||''}|${o?.time||o?.slot||''}`),o]));
+      next.occurrences=next.occurrences.map(o=>{
+        const old=oldByKey.get(String(o?.id||`${o?.date||''}|${o?.time||o?.slot||''}`));
+        if(!old)return o;
+        const merged={...o};
+        occurrenceOperationalFields.forEach(field=>{if(Object.prototype.hasOwnProperty.call(old,field))merged[field]=clone(old[field]);});
+        return merged;
+      });
+    }
+    next.snapshotCreatedAt=previous?.snapshotCreatedAt||next.snapshotCreatedAt;
+    next.monthlyRevision=Math.max(1,num(previous?.monthlyRevision)||1)+1;
+    next.monthlyEdited=key===editingMonth ? true : !!previous?.monthlyEdited;
+    next.configSyncedFromMonth=editingMonth;
+    next.configSyncedAt=new Date().toISOString();
+    if(idx>=0)target.promos[idx]=next;else target.promos.push(next);
+  });
 }
+
 function fullHourTimeValue(value){
   const match=String(value||'').match(/^(\d{1,2})(?::?(\d{2}))?$/);
   if(!match) return '';

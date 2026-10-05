@@ -2517,15 +2517,35 @@ function newsConsolidatedCollection(collection){
   return [...copies.values()].map(entry=>entry.row);
 }
 function newsPromoPool(date=''){
-  const requestedMonth=String(date||'').slice(0,7),map=new Map(),pinned=new Set();
-  if(/^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)){
-    newsRows(state.months?.[requestedMonth]?.promos).forEach((row,index)=>{if(!row)return;const id=String(row.id||`LEGACY_promos_${requestedMonth}_${index}`);map.set(id,row);pinned.add(id);});
+  const requestedMonth=String(date||'').slice(0,7),requested=new Map(),freshest=new Map();
+  const validMonth=/^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth);
+  if(validMonth){
+    newsRows(state.months?.[requestedMonth]?.promos).forEach((row,index)=>{if(!row)return;const idValue=String(row.id||`LEGACY_${requestedMonth}_${index}`);requested.set(idValue,row);});
   }
-  Object.entries(state.months||{}).forEach(([month,m])=>newsRows(m?.promos).forEach((row,index)=>{
-    if(!row)return;const id=String(row.id||`LEGACY_promos_${month}_${index}`);if(pinned.has(id))return;const current=map.get(id);if(!current){map.set(id,row);return;}const a=Date.parse(current.monthlyUpdatedAt||current.updatedAt||current.createdAt||'')||0,b=Date.parse(row.monthlyUpdatedAt||row.updatedAt||row.createdAt||'')||0;if(b>=a)map.set(id,row);
-  }));
+  Object.entries(state.months||{}).forEach(([monthKey,month])=>{
+    newsRows(month?.promos).forEach((row,index)=>{
+      if(!row)return;const idValue=String(row.id||`LEGACY_${monthKey}_${index}`),previous=freshest.get(idValue);
+      if(!previous){freshest.set(idValue,row);return;}
+      const a=Date.parse(previous.monthlyUpdatedAt||previous.updatedAt||previous.createdAt||'')||0,b=Date.parse(row.monthlyUpdatedAt||row.updatedAt||row.createdAt||'')||0;
+      if(b>=a)freshest.set(idValue,row);
+    });
+  });
+  const operationalFields=['readByHour','readLog','missedLog','readAt','readAtLabel','readSlot','readStation','readProgram','resultByHour','resultWinnersByHour','resultWinners','resultName','resultNames','resultAt','resultAtLabel','resultSlot','resultDate','winnerName','winnerNames','deliveredAt','deliveredAtLabel'];
+  const metadataFields=['snapshotMonth','originMonth','monthlyRevision','monthlyEdited','snapshotCreatedAt'];
+  const map=new Map();
+  new Set([...freshest.keys(),...requested.keys()]).forEach(idValue=>{
+    const monthRow=requested.get(idValue),config=freshest.get(idValue)||monthRow;
+    if(!monthRow){map.set(idValue,config);return;}
+    const monthTime=Date.parse(monthRow.monthlyUpdatedAt||monthRow.updatedAt||monthRow.createdAt||'')||0,configTime=Date.parse(config?.monthlyUpdatedAt||config?.updatedAt||config?.createdAt||'')||0;
+    if(!config||configTime<=monthTime){map.set(idValue,monthRow);return;}
+    const merged={...config};
+    [...operationalFields,...metadataFields].forEach(field=>{if(Object.prototype.hasOwnProperty.call(monthRow,field))merged[field]=monthRow[field];else if(operationalFields.includes(field))delete merged[field];});
+    merged.configResolvedFromLatest=true;
+    map.set(idValue,merged);
+  });
   const rows=[...map.values()];return date?rows.filter(row=>studioMaterialInForce(row,date)):rows;
 }
+
 function studioPublishedPrizeItems(){return newsConsolidatedCollection('items');}
 function pad(n){return String(n).padStart(2,'0');}
 function formatBR(iso){if(!iso)return'';const [y,m,d]=String(iso).split('-');return y&&m&&d?`${d}/${m}/${y}`:iso;}

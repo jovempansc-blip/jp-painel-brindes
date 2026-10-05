@@ -475,6 +475,13 @@ function findMerchan(id){
   const promo=allMerchans().find(row=>row.id===id);return promo?{p:promo,months:promo.__months||months,operationMonth}:null;
 }
 function targetMonths(record){return monthKeysBetween(record.startDate,record.endDate||record.drawDate||record.startDate).filter(validMonthKey);}
+function opecSyncMonthPlan(record,existingMonths=[],operationMonth=''){
+  const target=targetMonths(record).filter(validMonthKey).sort();
+  const start=validMonthKey(operationMonth)?operationMonth:(target[0]||'');
+  const update=target.filter(key=>!start||key>=start);
+  const retire=(existingMonths||[]).filter(validMonthKey).filter(key=>(!start||key>=start)&&!target.includes(key)).sort();
+  return {update,retire};
+}
 async function opecFastPromoTransaction(key,record,meta={}){
   const rows=state.months?.[key]?.promos;
   const list=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);
@@ -496,8 +503,8 @@ async function transactionForRecord(record){
   const operator=opecOperatorIdentity();
   await ensureOpecOnline();
   const target=new Set(targetMonths(record)),existingMonths=opecRecordMonths(record.id),isNew=!existingMonths.length,operationMonth=opecOperationMonth(record,existingMonths);
-  const missing=[...target].filter(key=>!existingMonths.includes(key));
-  const keys=(isNew?[...target]:[...new Set([operationMonth,...missing])]).filter(validMonthKey);
+  const syncPlan=opecSyncMonthPlan(record,existingMonths,operationMonth);
+  const keys=(isNew?[...target]:syncPlan.update).filter(validMonthKey);
   const originMonth=String(record.originMonth||record.startDate||operationMonth).slice(0,7)||operationMonth;
   for(const key of keys){
     const result=await opecRetry(async()=>{
@@ -514,7 +521,21 @@ async function transactionForRecord(record){
     // Fast path devolve apenas o registro; fallback devolve a coleção inteira.
     if(Array.isArray(rows)||rows&&typeof rows==='object'&&!rows.id)state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);
   }
-  const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V57_6_6_26_MONTHLY'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)} · COMPETÊNCIA ${isNew?'INICIAL MULTIMÊS':operationMonth}`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
+  if(!isNew){
+    for(const key of syncPlan.retire){
+      const result=await opecRetry(async()=>{
+        const tx=await ref.child('months').child(key).child('promos').transaction(current=>{
+          const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean);
+          return rows.filter(row=>row?.id!==record.id);
+        },undefined,false);
+        if(!tx?.committed)throw new Error('LIMPEZA DE VIGÊNCIA DO MERCHAN NÃO CONFIRMADA.');
+        return tx;
+      });
+      const rows=result.snapshot.val();
+      if(state.months?.[key])state.months[key].promos=Array.isArray(rows)?rows:Object.values(rows||{}).filter(Boolean);
+    }
+  }
+  const now=new Date();await Promise.allSettled([ref.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:now.toISOString(),source:'MERCHAN_RADIOS',user:operator.name,version:'FIREBASE_RTDB_V58_1_7_LINKED_MONTHS'}),appendOpecAudit({id:`LOG_OPEC_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,action:opecPublicationStatus(record)==='draft'?'RASCUNHO DE TEXTO SALVO':'TEXTO OPEC PUBLICADO',target:`${opecClientName(record)} · ${norm(record.name||record.title||'MERCHAN')}`,targetId:record.id,origin:'OPEC',operatorName:operator.name,operatorSector:operator.sector,note:`${opecTextTypeLabel(record)} · V${opecTextVersion(record)} · COMPETÊNCIA ${isNew?'INICIAL MULTIMÊS':operationMonth} · SINCRONIZAÇÃO DE VIGÊNCIA`,createdAt:now.toISOString(),createdAtLabel:now.toLocaleString('pt-BR')})]);
   return state;
 }
 async function deleteRecord(id){
