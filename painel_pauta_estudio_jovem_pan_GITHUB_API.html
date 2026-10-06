@@ -2426,14 +2426,17 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 
 <style id="av58-studio-reading-status">
 /* AV58: alertas do horário e leitura na área principal. */
-@keyframes studioPendingPulse{0%,100%{background-color:#fff1f2;box-shadow:0 0 0 0 rgba(200,46,67,0)}50%{background-color:#ffdce2;box-shadow:0 0 0 4px rgba(200,46,67,.14)}}
+@keyframes studioPendingPulse{0%,100%{background-color:#fff8ee;box-shadow:0 0 0 0 rgba(242,139,32,0)}50%{background-color:#ffe7c7;box-shadow:0 0 0 4px rgba(242,139,32,.14)}}
 @keyframes studioShortcutBlink{0%,100%{opacity:1}50%{opacity:.48}}
-.headNav #promoListBtn,.headNav #merchanListBtn,.headNav #historyListBtn,.headNav #studioPendingBellBtn{background:rgba(255,255,255,.58)!important;border-color:rgba(210,218,228,.9)!important;color:#657284!important;box-shadow:0 4px 16px rgba(38,48,62,.04)!important;animation:none!important;width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border-radius:50%!important}
-.headNav #promoListBtn.active,.headNav #merchanListBtn.active,.headNav #historyListBtn.active,.headNav #studioPendingBellBtn.active,.headNav #promoListBtn:hover,.headNav #merchanListBtn:hover,.headNav #historyListBtn:hover,.headNav #studioPendingBellBtn:hover{background:rgba(255,247,249,.86)!important;border-color:#e6cbd2!important;color:#8f253d!important}
-.headNav #promoListBtn.hasPending,.headNav #merchanListBtn.hasPending,.headNav #studioPendingBellBtn.hasPending{animation:studioShortcutBlink 1.25s ease-in-out infinite!important}
-.headNav #promoListBtn.hasPending::after,.headNav #merchanListBtn.hasPending::after,.headNav #studioPendingBellBtn.hasPending::after{content:"";position:absolute;inset:-4px;border:1px solid #bf5163;border-radius:50%;box-shadow:0 0 0 3px rgba(191,81,99,.12);pointer-events:none}
-.headNav #studioPendingBellBtn::before{display:none!important}
-.headNav #studioPendingBellBtn .studioBellCount{animation:none!important}
+/* Tons originais; a própria letra sinaliza a pendência em laranja. */
+.headNav #promoListBtn,.headNav #merchanListBtn,.headNav #historyListBtn,.headNav #studioPendingBellBtn{background:transparent!important;border:0!important;box-shadow:none!important;animation:none!important;width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border-radius:0!important;backdrop-filter:none!important}
+.headNav #promoListBtn,.headNav #promoListBtn:hover,.headNav #promoListBtn.active{color:#c76700!important}
+.headNav #merchanListBtn,.headNav #merchanListBtn:hover,.headNav #merchanListBtn.active{color:#1767ad!important}
+.headNav #historyListBtn,.headNav #historyListBtn:hover,.headNav #historyListBtn.active,.headNav #studioPendingBellBtn,.headNav #studioPendingBellBtn:hover,.headNav #studioPendingBellBtn.active{color:#657084!important}
+.headNav #promoListBtn.hasPending,.headNav #merchanListBtn.hasPending,.headNav #studioPendingBellBtn.hasPending{color:#c76700!important;animation:studioShortcutBlink 1.25s ease-in-out infinite!important}
+.headNav #promoListBtn::before,.headNav #promoListBtn::after,.headNav #merchanListBtn::before,.headNav #merchanListBtn::after,.headNav #historyListBtn::before,.headNav #historyListBtn::after,.headNav #studioPendingBellBtn::before,.headNav #studioPendingBellBtn::after{display:none!important;content:none!important}
+.headNav .studioShortcutBadge,.headNav .studioBellCount{display:none!important}
+.headNav #promoListBtn:focus-visible,.headNav #merchanListBtn:focus-visible,.headNav #historyListBtn:focus-visible,.headNav #studioPendingBellBtn:focus-visible{outline:2px solid #c76700;outline-offset:2px}
 .studioDrawerBody{min-height:0;max-height:min(64vh,600px)}
 .studioDrawerHeading{min-width:0;color:#667486;font:800 10px/1.3 "Segoe UI",Arial,sans-serif;letter-spacing:.03em}
 .studioDrawerGroupLabel{padding:2px 3px;color:#8c6570;font:800 9px/1.4 "Segoe UI",Arial,sans-serif;letter-spacing:.04em}
@@ -3894,12 +3897,11 @@ function studioDrawHistoryRows(date){
   });
 }
 function studioUpcomingDrawRows(){
-  const now=currentSlotDate(),rows=allPrizeRows(),active=itemForDate(rows,now).item;
-  return rows.filter(i=>(itemDateTime(i)>=now||i.id===active?.id)&&upper(i.status||'')!=='REALIZADO'&&upper(i.status||'')!=='CANCELADO'&&!upper(i.winnerName||'')&&!(Array.isArray(i.winnerNames)&&i.winnerNames.length));
+  const now=currentSlotDate(),today=todayISO(),rows=allPrizeRows(),active=itemForDate(rows,now).item;
+  return rows.filter(i=>i.date===today&&(itemDateTime(i)>=now||i.id===active?.id)&&upper(i.status||'')!=='REALIZADO'&&upper(i.status||'')!=='CANCELADO'&&!upper(i.winnerName||'')&&!(Array.isArray(i.winnerNames)&&i.winnerNames.length));
 }
 function studioDrawerCount(mode,item){return mode==='history'?studioDrawHistoryRows(item?.date||todayISO()).length:mode==='upcoming'?studioUpcomingDrawRows().length:studioDrawerPendingCount(mode,item);}
-function studioDrawerLabel(mode){return mode==='upcoming'?'PRÓXIMOS SORTEIOS':mode==='history'?'SORTEIOS REALIZADOS':mode==='merchan'?'MERCHAN':'PAUTAS E PROMOÇÕES';}
-function studioShortcutBadge(kind,item){const count=studioDrawerPendingCount(kind,item);return count?`<span class="studioShortcutBadge" aria-hidden="true">${count}</span>`:'';}
+function studioDrawerLabel(mode){return mode==='upcoming'?'PRÓXIMOS SORTEIOS DE HOJE':mode==='history'?'SORTEIOS REALIZADOS':mode==='merchan'?'MERCHAN':'PAUTAS E PROMOÇÕES';}
 function studioDrawerRows(item,mode){
   if(mode==='history'){
     const rows=studioDrawHistoryRows(item?.date||todayISO()).slice().reverse();
@@ -4005,7 +4007,7 @@ function studioPendingBellRows(){
 function studioPendingBellCount(){return studioPendingBellRows().reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0);}
 function studioPendingBellMarkup(){
   const count=studioUpcomingDrawRows().length;
-  return `<button class="promoListBtn studioPendingBell ${studioDrawerMode==='upcoming'?'active':''} ${count?'hasPending':''}" id="studioPendingBellBtn" type="button" onclick="studioUpcomingDrawClick(event)" title="PRÓXIMOS SORTEIOS" aria-label="PRÓXIMOS SORTEIOS · ${count}"><span class="studioBellIcon" aria-hidden="true">${studioDrawerIcon('upcoming')}</span><span class="studioBellCount" aria-hidden="true">${count}</span></button>`;
+  return `<button class="promoListBtn studioPendingBell ${studioDrawerMode==='upcoming'?'active':''} ${count?'hasPending':''}" id="studioPendingBellBtn" type="button" onclick="studioUpcomingDrawClick(event)" title="PRÓXIMOS SORTEIOS DE HOJE" aria-label="PRÓXIMOS SORTEIOS DE HOJE"><span class="studioBellIcon" aria-hidden="true">${studioDrawerIcon('upcoming')}</span></button>`;
 }
 function studioUpcomingDrawClick(event){event?.preventDefault?.();event?.stopPropagation?.();toggleStudioDrawer('upcoming');}
 window.studioUpcomingDrawClick=studioUpcomingDrawClick;
@@ -4800,8 +4802,8 @@ function render(){
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
       <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':upper(promo.kind||promo.promoKind||promo.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
       <div class="headNav">
-        ${ALLOW_PROMO_SHORTCUT ? `<div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='promo'?'active':''} ${studioDrawerPendingCount('promo',item)>0?'hasPending':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PAUTAS PROMOCIONAIS" title="P = PAUTAS PROMOCIONAIS">P${studioShortcutBadge('promo',item)}</button></div>` : ''}
-        <div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='merchan'?'active':''} ${studioDrawerPendingCount('merchan',item)>0?'hasPending':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHANS" title="M = MERCHANS">M${studioShortcutBadge('merchan',item)}</button></div>
+        ${ALLOW_PROMO_SHORTCUT ? `<div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='promo'?'active':''} ${studioDrawerPendingCount('promo',item)>0?'hasPending':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PAUTAS PROMOCIONAIS" title="P = PAUTAS PROMOCIONAIS">P</button></div>` : ''}
+        <div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='merchan'?'active':''} ${studioDrawerPendingCount('merchan',item)>0?'hasPending':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHANS" title="M = MERCHANS">M</button></div>
         <button class="promoListBtn history ${studioDrawerMode==='history'?'active':''}" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="HISTÓRICO" title="H = HISTÓRICO">H</button>
         ${studioPendingBellMarkup()}
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
