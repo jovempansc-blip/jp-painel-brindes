@@ -2423,6 +2423,33 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 @media(max-width:760px){.studioLayoutShell{grid-template-columns:1fr!important}.studioLayoutShell.drawerOpen{--studio-drawer-width:0px}.studioContextDrawer{position:absolute;z-index:40;top:60px;right:0;bottom:0;width:min(330px,88vw);transform:translateX(104%);box-shadow:-14px 0 30px rgba(39,50,66,.08)}.studioLayoutShell.drawerOpen .studioContextDrawer{transform:none}.headNav .promoListBtn{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important}}
 </style>
 
+
+<style id="av58-studio-reading-status">
+/* AV58: alertas do horário e leitura na área principal. */
+@keyframes studioPendingPulse{0%,100%{background-color:#fff1f2;box-shadow:0 0 0 0 rgba(200,46,67,0)}50%{background-color:#ffdce2;box-shadow:0 0 0 4px rgba(200,46,67,.14)}}
+.headNav #promoListBtn.hasPending{color:#b52b43!important;border-color:#e48797!important;animation:studioPendingPulse 1.4s ease-in-out infinite!important}
+.studioContextDrawer.hasPending .studioDrawerHead{color:#a42d42;border-bottom-color:#e7a1ad;animation:studioPendingPulse 1.4s ease-in-out infinite}
+.studioDrawerItem.pending{background:#fff1f2;border-color:#eaa0af;animation:studioPendingPulse 1.4s ease-in-out infinite}
+.studioDrawerItem.pending .studioDrawerMeta,.studioDrawerItem.pending .studioDrawerState{color:#b52b43}
+.studioDrawerItem.pending .studioDrawerState{background:#ffe5e9;border-color:#eaa0af}
+.studioDrawerItem.done{background:#effaf3;border-color:#abd8bc}
+.studioDrawerItem.done .studioDrawerTitle,.studioDrawerItem.done .studioDrawerMeta,.studioDrawerItem.done .studioDrawerArrow{color:#257849}
+.studioDrawerItem.missed{background:#fff1f2;border-color:#eaa0af}
+.studioDrawerItem.missed .studioDrawerMeta{color:#b52b43}
+.studioDrawerMeta{white-space:normal;line-height:1.4;font-weight:800}
+.studioMainColumn .promoReadBanner{width:min(940px,100%);height:auto!important;max-height:none!important;border-radius:16px;flex-shrink:0}
+.studioMainColumn .promoReadBanner img{width:100%;height:auto!important;max-height:260px;object-fit:contain!important}
+.studioInlineReadActions{display:flex;justify-content:center;align-items:center;gap:12px;padding-top:4px}
+.studioInlineReadActions #confirmPromoReadInline,.studioInlineReadActions #cancelPromoReadInline{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:50%!important;padding:0!important}
+.studioInlineReadActions #confirmPromoReadInline{background:#edf9f1!important;border-color:#9ed1b0!important;color:#237b4a!important;box-shadow:0 5px 13px rgba(35,123,74,.1)!important}
+.studioInlineReadActions #confirmPromoReadInline:hover{background:#dff3e7!important}
+.studioInlineReadActions #cancelPromoReadInline{background:#f6f7fa!important;color:#687586!important}
+.studioInlineReadActions .studioReadSheetAction svg{width:20px;height:20px}
+.studioInlineReadActions .studioReadSheetAction:disabled{opacity:.55;cursor:wait}
+.studioInlineReadActions .studioReadSheetAction:focus-visible,.studioDrawerTitle:focus-visible{outline:3px solid #648bbb;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.headNav #promoListBtn.hasPending,.studioContextDrawer.hasPending .studioDrawerHead,.studioDrawerItem.pending{animation:none!important}}
+</style>
+
 </head>
 <body>
 <div class="wrap">
@@ -2503,6 +2530,8 @@ let manual=false;
 let selectedPromoId=null;
 let studioDrawerMode='';
 let studioReadSheetPromoId=null;
+let studioReadContext=null;
+let studioReadSaving=false;
 let currentDisplayItem=null;
 let manualHourDateMs=null;
 let lastHourKey=currentHourKey();
@@ -3846,23 +3875,25 @@ function studioDrawerRows(item,mode){
   }
   const rows=mode==='merchan'?merchansForItemHour(item,true):promosForItemHour(item,true);
   if(!rows.length)return `<div class="studioDrawerEmpty">${mode==='merchan'?'SEM MERCHAN':'SEM PAUTA PROMOCIONAL'} PROGRAMADO PARA ESTE HORÁRIO.</div>`;
-  const program=upper(programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||item?.program||'PROGRAMA');
   return rows.map(p=>{
     const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,missed=progress.remaining===0&&progress.missed>0,state=done?'done':missed?'missed':'pending';
-    const type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
+    const type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||p?.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
     const name=upper(p?.name||p?.title||type),client=upper(p?.opecClientName||p?.clientName||p?.client||p?.advertiser||'');
     const title=isMerchan(p)&&client&&client!==name?`${client} · ${name}`:name;
-    return `<div class="studioDrawerItem" data-promo-id="${esc(p.id)}"><span class="studioDrawerState ${state}">${studioDrawerStateIcon(state)}</span><div><button class="studioDrawerTitle" type="button" data-promo-id="${esc(p.id)}" title="${esc(title)}">${esc(title)}</button><div class="studioDrawerMeta">${esc(program)} · ${esc(type)}</div></div><span class="studioDrawerArrow"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg></span></div>`;
+    const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ',''),status=done?`LIDO · ${time}`:missed?'NÃO REALIZADA':'AGUARDANDO';
+    const counter=progress.required>1?` · ${progress.done}/${progress.required}`:'';
+    return `<div class="studioDrawerItem ${state}" data-promo-id="${esc(p.id)}"><span class="studioDrawerState ${state}" title="${done?'OK':esc(status)}" aria-label="${done?'OK':esc(status)}">${studioDrawerStateIcon(state)}</span><div><button class="studioDrawerTitle" type="button" data-promo-id="${esc(p.id)}" title="${esc(title)}">${esc(title)}</button><div class="studioDrawerMeta">${esc(status)} · ${esc(type)}${esc(counter)}</div></div><span class="studioDrawerArrow">${done?studioDrawerStateIcon('done'):'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg>'}</span></div>`;
   }).join('');
 }
 function buildStudioDrawer(item){
   const mode=studioDrawerMode||'promo',count=mode==='history'?historyRowsForDate(item?.date||todayISO()).length:studioDrawerPendingCount(mode,item);
-  return `<aside class="studioContextDrawer" id="studioContextDrawer" aria-hidden="${studioDrawerMode?'false':'true'}"><div class="studioDrawerHead"><div class="studioDrawerHeadIcon">${studioDrawerIcon(mode)}</div><span class="studioDrawerCount">${count}</span><button class="studioDrawerClose" type="button" id="studioDrawerClose" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div><div class="studioDrawerBody" id="studioDrawerBody">${studioDrawerRows(item,mode)}</div></aside>`;
+  return `<aside class="studioContextDrawer ${mode!=='history'&&count>0?'hasPending':''}" id="studioContextDrawer" aria-hidden="${studioDrawerMode?'false':'true'}"><div class="studioDrawerHead"><div class="studioDrawerHeadIcon">${studioDrawerIcon(mode)}</div><span class="studioDrawerCount">${count}</span><button class="studioDrawerClose" type="button" id="studioDrawerClose" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div><div class="studioDrawerBody" id="studioDrawerBody">${studioDrawerRows(item,mode)}</div></aside>`;
 }
 function syncStudioDrawer(){
   const shell=document.querySelector('.studioLayoutShell'),drawer=$('studioContextDrawer'),body=$('studioDrawerBody');
   if(!shell||!drawer)return;
   shell.classList.toggle('drawerOpen',!!studioDrawerMode);drawer.setAttribute('aria-hidden',studioDrawerMode?'false':'true');
+  drawer.classList.toggle('hasPending',!!studioDrawerMode&&studioDrawerMode!=='history'&&!!currentDisplayItem&&studioDrawerPendingCount(studioDrawerMode,currentDisplayItem)>0);
   ['promo','merchan','history'].forEach(mode=>{const id=mode==='promo'?'promoListBtn':mode==='merchan'?'merchanListBtn':'historyListBtn';$(id)?.classList.toggle('active',studioDrawerMode===mode);});
   if(studioDrawerMode&&body&&currentDisplayItem){body.innerHTML=studioDrawerRows(currentDisplayItem,studioDrawerMode);const count=studioDrawerMode==='history'?historyRowsForDate(currentDisplayItem?.date||todayISO()).length:studioDrawerPendingCount(studioDrawerMode,currentDisplayItem);drawer.querySelector('.studioDrawerHeadIcon').innerHTML=studioDrawerIcon(studioDrawerMode);drawer.querySelector('.studioDrawerCount').textContent=count;}
 }
@@ -3874,13 +3905,18 @@ function ensureStudioReadSheet(){
   $('studioReadSheetClose').onclick=closeStudioReadSheet;$('studioReadSheetConfirm').onclick=confirmPromoRead;root.addEventListener('click',e=>{if(e.target===root)closeStudioReadSheet();});return root;
 }
 function openStudioReadSheet(promoId){
+  if(studioReadSaving)return;
   const p=findPromoById(promoId),item=currentDisplayItem||virtualCurrentItem();if(!p||!item)return;
-  studioReadSheetPromoId=promoId;const root=ensureStudioReadSheet(),progress=studioAV57Progress(p,item),program=upper(programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||item?.program||'PROGRAMA'),type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
-  $('studioReadSheetIcon').innerHTML=studioDrawerIcon(isMerchan(p)?'merchan':'promo');$('studioReadSheetTitle').textContent=upper(p.name||p.title||type);$('studioReadSheetMeta').textContent=`${program} · ${type}`;$('studioReadSheetContext').innerHTML=`<span>${esc(studioValidityLabel(p))}</span>${studioOpecContextLabel(p)?`<span>${esc(studioOpecContextLabel(p))}</span>`:''}`;$('studioReadSheetText').textContent=p.description||'SEM TEXTO CADASTRADO.';
-  const banner=$('studioReadSheetBanner');if(p.imageData){banner.hidden=false;banner.innerHTML=`<img src="${p.imageData}" alt="IMAGEM DA PAUTA">`;}else{banner.hidden=true;banner.innerHTML='';}
-  const confirm=$('studioReadSheetConfirm');confirm.hidden=progress.remaining===0;confirm.classList.remove('busy');confirm.disabled=false;confirm.setAttribute('aria-busy','false');root.classList.add('show');root.setAttribute('aria-hidden','false');
+  studioReadSheetPromoId=null;selectedPromoId=promoId;
+  studioReadContext={promoId,date:item.date,slot:item.slot};
+  render();
 }
-function closeStudioReadSheet(){const root=$('studioReadSheet');studioReadSheetPromoId=null;if(root){root.classList.remove('show');root.setAttribute('aria-hidden','true');}}
+function closeStudioReadSheet(renderPanel=true){
+  if(studioReadSaving)return;
+  const root=$('studioReadSheet');studioReadSheetPromoId=null;studioReadContext=null;selectedPromoId=null;
+  if(root){root.classList.remove('show');root.setAttribute('aria-hidden','true');}
+  if(renderPanel)render();
+}
 
 function buildStudioReadCenter(item){
   const rows=allPautasForItemHour(item,true),pending=rows.filter(p=>!isPromoResolvedForHour(p,item)),program=upper(programFromSchedule(item?.date||todayISO(),item?.slot||'',STUDIO_STATION)||item?.program||'PROGRAMA');
@@ -3964,10 +4000,10 @@ function previousStudioPendencies(){
   }
   return out.slice(-4).reverse();
 }
-function studioOperationActive(){return !!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
+function studioOperationActive(){return !!studioReadContext||studioReadSaving||!!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
 function scheduleManualReturn(){clearTimeout(manualReturnTimer);if(!manual)return;manualLastInteractionAt=Date.now();manualReturnTimer=setTimeout(()=>{if(!manual)return;if(studioOperationActive()){scheduleManualReturn();return;}returnStudioToNow();},MANUAL_RETURN_MS);}
-function returnStudioToNow(){clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;selectedPromoId=null;studioReadSheetPromoId=null;studioDrawerMode='';closeStudioReadSheet();render();}
-function jumpToStudioPending(date,slot,promoId=''){const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=null;scheduleManualReturn();render();if(promoId)setTimeout(()=>startPromoRead(promoId),0);}
+function returnStudioToNow(){if(studioReadSaving)return;clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;studioDrawerMode='';closeStudioReadSheet(false);render();}
+function jumpToStudioPending(date,slot,promoId=''){if(studioReadSaving)return;studioReadContext=null;studioReadSheetPromoId=null;const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=null;scheduleManualReturn();render();if(promoId)setTimeout(()=>startPromoRead(promoId),0);}
 window.returnStudioToNow=returnStudioToNow;window.jumpToStudioPending=jumpToStudioPending;
 function pautaTypeLabel(p){
   if(isMerchan(p)) return 'MERCHAN';
@@ -4403,12 +4439,14 @@ window.markPromoReadMissed=markPromoReadMissed;
 async function confirmPromoReadV56(event){
   if(event){event.preventDefault();event.stopPropagation();}
   const button=event?.currentTarget||$('confirmPromoReadInline'),p=currentPromoForRead(),item=currentDisplayItem||virtualCurrentItem();
-  if(!p||!item||button?.dataset.busy==='1')return;
+  if(!p||!item||studioReadSaving||button?.dataset.busy==='1')return;
   const required=studioRequiredReadsForHour(p,item),before=studioReadCountForHour(p,item),beforeMissed=studioMissedCountForHour(p,item),beforeResolved=before+beforeMissed;
-  if(required<1){alert('ESTA PAUTA NÃO ESTÁ PROGRAMADA PARA ESTE HORÁRIO.');selectedPromoId=null;closeStudioReadSheet();render();return;}
-  if(beforeResolved>=required){selectedPromoId=null;closeStudioReadSheet();render();return;}
+  if(required<1){alert('ESTA PAUTA NÃO ESTÁ PROGRAMADA PARA ESTE HORÁRIO.');closeStudioReadSheet();return;}
+  if(beforeResolved>=required){closeStudioReadSheet();return;}
   const operator=studioOperatorIdentity(true);
   if(button){button.dataset.busy='1';button.disabled=true;if(button.classList.contains('studioReadSheetConfirm')){button.classList.add('busy');button.setAttribute('aria-busy','true');}else{button.dataset.originalText=button.textContent;button.textContent='SALVANDO...';}}
+  studioReadSaving=true;
+  $('cancelPromoReadInline')?.setAttribute('aria-disabled','true');if($('cancelPromoReadInline'))$('cancelPromoReadInline').disabled=true;
   let savedOccurrence=beforeResolved+1;
   try{
     await ensureStudioFirebaseOnline();
@@ -4431,9 +4469,16 @@ async function confirmPromoReadV56(event){
     });
     const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'AV57_SMART_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
-    selectedPromoId=null;studioReadSheetPromoId=null;closeStudioReadSheet();render();
+    studioReadSaving=false;selectedPromoId=null;studioReadSheetPromoId=null;closeStudioReadSheet(false);render();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
-  finally{if(button){button.dataset.busy='0';button.disabled=false;if(button.classList.contains('studioReadSheetConfirm')){button.classList.remove('busy');button.setAttribute('aria-busy','false');}else{button.textContent=button.dataset.originalText||'CONFIRMAR LEITURA';}}}
+  finally{
+    studioReadSaving=false;
+    const cancel=$('cancelPromoReadInline');if(cancel){cancel.disabled=false;cancel.setAttribute('aria-disabled','false');}
+    for(const active of new Set([button,$('confirmPromoReadInline')].filter(Boolean))){
+      active.dataset.busy='0';active.disabled=false;active.classList.remove('busy');active.setAttribute('aria-busy','false');
+      if(!active.classList.contains('studioReadSheetConfirm')&&active.dataset.originalText)active.textContent=active.dataset.originalText;
+    }
+  }
 }
 async function confirmPromoRead(event){ return confirmPromoReadV56(event); }
 window.confirmPromoRead=confirmPromoRead;
@@ -4638,6 +4683,8 @@ async function saveWinner(){
   }
 }
 function step(delta){
+  if(studioReadSaving)return;
+  studioReadContext=null;studioReadSheetPromoId=null;
   const base = manualHourDateMs !== null
     ? new Date(manualHourDateMs)
     : (currentDisplayItem ? hourDateFromItem(currentDisplayItem) : currentSlotDate());
@@ -4659,7 +4706,10 @@ function render(){
   renderStudioDateStamp();
   const rows=allPrizeRows();
   let item=null;
-  if(!manual){
+  if(studioReadContext){
+    const target=new Date(`${studioReadContext.date}T${timeToHHMM(studioReadContext.slot)}:00`);
+    const found=itemForDate(rows,target);selectedIndex=found.idx;item=found.item;
+  }else if(!manual){
     const target=currentHourDate();
     const found=itemForDate(rows,target);
     selectedIndex=found.idx;
@@ -4674,7 +4724,7 @@ function render(){
   if(item && !item.__virtual) item.__hasScheduledPrize = item.sourceType!=='promo-result';
   currentDisplayItem=item;
   if(selectedPromoId && item && !allPautasForItemHour(item,true).some(p=>p.id===selectedPromoId)){
-    selectedPromoId=null;
+    selectedPromoId=null;studioReadContext=null;
   }
   if(!selectedPromoId && item && item.sourceType==='promo-result' && item.promoId){
     selectedPromoId=item.promoId;
@@ -4687,7 +4737,10 @@ function render(){
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1><small class="rotationInfo av57 studioValidityInfo">${esc(studioValidityLabel(promo))}</small>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
-      <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required>1?`${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done+1}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}`:''}</button></div>
+      <div class="pautaActions studioInlineReadActions">
+        ${studioAV57Progress(promo,item).remaining>0?`<button class="studioReadSheetAction confirm studioReadSheetConfirm ${studioReadSaving?'busy':''}" id="confirmPromoReadInline" type="button" ${studioReadSaving?'disabled':''} aria-busy="${studioReadSaving?'true':'false'}" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA" onclick="confirmPromoRead(event)">${studioDrawerStateIcon('done')}</button>`:''}
+        <button class="studioReadSheetAction" id="cancelPromoReadInline" type="button" ${studioReadSaving?'disabled':''} title="FECHAR E VOLTAR AO PRÊMIO" aria-label="FECHAR E VOLTAR AO PRÊMIO">${studioDrawerStateIcon('missed')}</button>
+      </div>
     ` : isVirtual ? `
       <div class="emptyStudioBox"><strong>SEM PAUTA PARA ESTE HORÁRIO</strong><span>NENHUM PRÊMIO, PROMOÇÃO OU MERCHAN CADASTRADO PARA AGORA.</span></div>
     ` : `
@@ -4700,9 +4753,9 @@ function render(){
     <div class="studioLayoutShell ${studioDrawerMode?'drawerOpen':''}"><div class="studioMainColumn">
     <div class="pautaHead">
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
-      <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':'PROMO / PAUTA') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
+      <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':upper(promo.kind||promo.promoKind||promo.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
       <div class="headNav">
-        ${ALLOW_PROMO_SHORTCUT ? `<div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='promo'?'active':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PAUTAS PROMOCIONAIS" title="P = PAUTAS PROMOCIONAIS">P${studioShortcutBadge('promo',item)}</button></div>` : ''}
+        ${ALLOW_PROMO_SHORTCUT ? `<div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='promo'?'active':''} ${studioDrawerPendingCount('promo',item)>0?'hasPending':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PAUTAS PROMOCIONAIS" title="P = PAUTAS PROMOCIONAIS">P${studioShortcutBadge('promo',item)}</button></div>` : ''}
         <div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='merchan'?'active':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHANS" title="M = MERCHANS">M${studioShortcutBadge('merchan',item)}</button></div>
         <button class="promoListBtn history ${studioDrawerMode==='history'?'active':''}" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="HISTÓRICO" title="H = HISTÓRICO">H</button>
         ${studioPendingBellMarkup()}
@@ -4713,8 +4766,8 @@ function render(){
     ${buildStudioContext(item,promo)}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
     </div>${buildStudioDrawer(item)}</div>`;
-  $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
-  $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});
+  $('prevItem').addEventListener('click',()=>step(-1));
+  $('nextItem').addEventListener('click',()=>step(1));
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
   const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',closePromoReadModal);
   const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.onclick=confirmPromoRead;
@@ -4808,7 +4861,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStat
 setInterval(()=>{ if(!document.hidden) refreshStudioCountdownClocks(); },1000);
 setInterval(()=>{
   const hk=currentHourKey();
-  if(hk!==lastHourKey){
+  if(hk!==lastHourKey&&!studioReadContext&&!studioReadSaving){
     manual=false;
     selectedIndex=-1;
     selectedPromoId=null;
