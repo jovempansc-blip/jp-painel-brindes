@@ -2427,7 +2427,16 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 <style id="av58-studio-reading-status">
 /* AV58: alertas do horário e leitura na área principal. */
 @keyframes studioPendingPulse{0%,100%{background-color:#fff1f2;box-shadow:0 0 0 0 rgba(200,46,67,0)}50%{background-color:#ffdce2;box-shadow:0 0 0 4px rgba(200,46,67,.14)}}
-.headNav #promoListBtn.hasPending{color:#b52b43!important;border-color:#e48797!important;animation:studioPendingPulse 1.4s ease-in-out infinite!important}
+@keyframes studioShortcutBlink{0%,100%{opacity:1}50%{opacity:.48}}
+.headNav #promoListBtn,.headNav #merchanListBtn,.headNav #historyListBtn,.headNav #studioPendingBellBtn{background:rgba(255,255,255,.58)!important;border-color:rgba(210,218,228,.9)!important;color:#657284!important;box-shadow:0 4px 16px rgba(38,48,62,.04)!important;animation:none!important;width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border-radius:50%!important}
+.headNav #promoListBtn.active,.headNav #merchanListBtn.active,.headNav #historyListBtn.active,.headNav #studioPendingBellBtn.active,.headNav #promoListBtn:hover,.headNav #merchanListBtn:hover,.headNav #historyListBtn:hover,.headNav #studioPendingBellBtn:hover{background:rgba(255,247,249,.86)!important;border-color:#e6cbd2!important;color:#8f253d!important}
+.headNav #promoListBtn.hasPending,.headNav #merchanListBtn.hasPending,.headNav #studioPendingBellBtn.hasPending{animation:studioShortcutBlink 1.25s ease-in-out infinite!important}
+.headNav #promoListBtn.hasPending::after,.headNav #merchanListBtn.hasPending::after,.headNav #studioPendingBellBtn.hasPending::after{content:"";position:absolute;inset:-4px;border:1px solid #bf5163;border-radius:50%;box-shadow:0 0 0 3px rgba(191,81,99,.12);pointer-events:none}
+.headNav #studioPendingBellBtn::before{display:none!important}
+.headNav #studioPendingBellBtn .studioBellCount{animation:none!important}
+.studioDrawerBody{min-height:0;max-height:min(64vh,600px)}
+.studioDrawerHeading{min-width:0;color:#667486;font:800 10px/1.3 "Segoe UI",Arial,sans-serif;letter-spacing:.03em}
+.studioDrawerGroupLabel{padding:2px 3px;color:#8c6570;font:800 9px/1.4 "Segoe UI",Arial,sans-serif;letter-spacing:.04em}
 .studioContextDrawer.hasPending .studioDrawerHead{color:#a42d42;border-bottom-color:#e7a1ad;animation:studioPendingPulse 1.4s ease-in-out infinite}
 .studioDrawerItem.pending{background:#fff1f2;border-color:#eaa0af;animation:studioPendingPulse 1.4s ease-in-out infinite}
 .studioDrawerItem.pending .studioDrawerMeta,.studioDrawerItem.pending .studioDrawerState{color:#b52b43}
@@ -2437,8 +2446,9 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 .studioDrawerItem.missed{background:#fff1f2;border-color:#eaa0af}
 .studioDrawerItem.missed .studioDrawerMeta{color:#b52b43}
 .studioDrawerMeta{white-space:normal;line-height:1.4;font-weight:800}
-.studioMainColumn .promoReadBanner{width:min(940px,100%);height:auto!important;max-height:none!important;border-radius:16px;flex-shrink:0}
-.studioMainColumn .promoReadBanner img{width:100%;height:auto!important;max-height:260px;object-fit:contain!important}
+.studioMainColumn .pautaBody>.promoReadBanner,.studioMainColumn .pautaBody>.titleBox,.studioMainColumn .pautaBody>.descBox{width:100%!important;max-width:940px!important;box-sizing:border-box!important;margin:0 auto!important;border-radius:16px!important}
+.studioMainColumn .pautaBody>.promoReadBanner{height:auto!important;max-height:none!important;aspect-ratio:auto!important;flex-shrink:0}
+.studioMainColumn .promoReadBanner img{display:block;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important}
 .studioInlineReadActions{display:flex;justify-content:center;align-items:center;gap:12px;padding-top:4px}
 .studioInlineReadActions #confirmPromoReadInline,.studioInlineReadActions #cancelPromoReadInline{width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;border-radius:50%!important;padding:0!important}
 .studioInlineReadActions #confirmPromoReadInline{background:#edf9f1!important;border-color:#9ed1b0!important;color:#237b4a!important;box-shadow:0 5px 13px rgba(35,123,74,.1)!important}
@@ -2447,7 +2457,7 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 .studioInlineReadActions .studioReadSheetAction svg{width:20px;height:20px}
 .studioInlineReadActions .studioReadSheetAction:disabled{opacity:.55;cursor:wait}
 .studioInlineReadActions .studioReadSheetAction:focus-visible,.studioDrawerTitle:focus-visible{outline:3px solid #648bbb;outline-offset:3px}
-@media(prefers-reduced-motion:reduce){.headNav #promoListBtn.hasPending,.studioContextDrawer.hasPending .studioDrawerHead,.studioDrawerItem.pending{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.headNav #promoListBtn.hasPending,.headNav #merchanListBtn.hasPending,.headNav #studioPendingBellBtn.hasPending,.studioContextDrawer.hasPending .studioDrawerHead,.studioDrawerItem.pending{animation:none!important;opacity:1}}
 </style>
 
 </head>
@@ -2532,6 +2542,7 @@ let studioDrawerMode='';
 let studioReadSheetPromoId=null;
 let studioReadContext=null;
 let studioReadSaving=false;
+let studioPendingReadCache=null;
 let currentDisplayItem=null;
 let manualHourDateMs=null;
 let lastHourKey=currentHourKey();
@@ -3853,6 +3864,7 @@ function merchansForItemHour(item,includeRead=false){return pautasForItemHour(it
 function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
 
 function studioDrawerIcon(kind){
+  if(kind==='upcoming')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>';
   if(kind==='promo')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h3l8 5V6l-8 5H4v2Z"></path><path d="M7 13v5h3l1-3"></path></svg>';
   if(kind==='merchan')return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 7h6M9 11h6M9 15h4"></path></svg>';
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l3 2"></path></svg>';
@@ -3862,40 +3874,66 @@ function studioDrawerStateIcon(state){
   if(state==='missed')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg>';
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4M12 16h.01"></path></svg>';
 }
-function studioDrawerPendingCount(kind,item){
-  const rows=kind==='merchan'?merchansForItemHour(item,true):promosForItemHour(item,true);
-  return rows.reduce((sum,p)=>sum+studioAV57Progress(p,item).remaining,0);
+function studioReadEntryKey(p,item){return `${p.id}|${item.date}|${studioAV57HourSlot(item.slot)}|${upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'')}`;}
+function studioDueReadEntries(){
+  if(studioPendingReadCache)return studioPendingReadCache;
+  studioPendingReadCache=studioPendingBellRows().filter(r=>r.kind==='read').map(r=>({p:findPromoById(r.promoId),item:{date:r.date,slot:r.slot,program:r.program,__virtual:true},late:r.state==='LATE'})).filter(r=>r.p);
+  return studioPendingReadCache;
 }
+function studioDrawerReadEntries(kind,item){
+  const list=(kind==='merchan'?merchansForItemHour(item,true):promosForItemHour(item,true)).map(p=>({p,item,late:false}));
+  const seen=new Set(list.map(r=>studioReadEntryKey(r.p,r.item)));
+  if(item?.date===todayISO())studioDueReadEntries().filter(r=>kind==='merchan'?isMerchan(r.p):!isMerchan(r.p)).forEach(r=>{const key=studioReadEntryKey(r.p,r.item);if(!seen.has(key)){seen.add(key);list.push(r);}});
+  return list;
+}
+function studioDrawerPendingCount(kind,item){return studioDrawerReadEntries(kind,item).reduce((sum,r)=>sum+studioAV57Progress(r.p,r.item).remaining,0);}
+function studioDrawHistoryRows(date){
+  const seen=new Set();return historyRowsForDate(date).filter(r=>{
+    const key=`${r.time}|${upper(r.title).replace(/^RESULTADO:\s*/,'')}|${upper(r.result)}`;
+    if(seen.has(key))return false;seen.add(key);return true;
+  });
+}
+function studioUpcomingDrawRows(){
+  const now=currentSlotDate(),rows=allPrizeRows(),active=itemForDate(rows,now).item;
+  return rows.filter(i=>(itemDateTime(i)>=now||i.id===active?.id)&&upper(i.status||'')!=='REALIZADO'&&upper(i.status||'')!=='CANCELADO'&&!upper(i.winnerName||'')&&!(Array.isArray(i.winnerNames)&&i.winnerNames.length));
+}
+function studioDrawerCount(mode,item){return mode==='history'?studioDrawHistoryRows(item?.date||todayISO()).length:mode==='upcoming'?studioUpcomingDrawRows().length:studioDrawerPendingCount(mode,item);}
+function studioDrawerLabel(mode){return mode==='upcoming'?'PRÓXIMOS SORTEIOS':mode==='history'?'SORTEIOS REALIZADOS':mode==='merchan'?'MERCHAN':'PAUTAS E PROMOÇÕES';}
 function studioShortcutBadge(kind,item){const count=studioDrawerPendingCount(kind,item);return count?`<span class="studioShortcutBadge" aria-hidden="true">${count}</span>`:'';}
 function studioDrawerRows(item,mode){
   if(mode==='history'){
-    const rows=historyRowsForDate(item?.date||todayISO()).slice().reverse();
+    const rows=studioDrawHistoryRows(item?.date||todayISO()).slice().reverse();
     if(!rows.length)return '<div class="studioDrawerEmpty">NENHUM REGISTRO PARA ESTE DIA.</div>';
-    return rows.map(r=>`<div class="studioDrawerItem"><span class="studioDrawerState done">${studioDrawerStateIcon('done')}</span><div><div class="studioDrawerTitle static">${esc(r.title||'REGISTRO')}</div><div class="studioDrawerMeta">${esc(`${r.time||''}${r.type?` · ${r.type}`:''}`)}</div></div><span class="studioDrawerArrow">${studioDrawerStateIcon('done')}</span></div>`).join('');
+    return rows.map(r=>`<div class="studioDrawerItem"><span class="studioDrawerState done">${studioDrawerStateIcon('done')}</span><div><div class="studioDrawerTitle static">${esc(r.title||'REGISTRO')}</div><div class="studioDrawerMeta">${esc(`GANHADOR: ${r.result||'NÃO INFORMADO'} · ${r.time||''}`)}</div></div><span class="studioDrawerArrow">${studioDrawerStateIcon('done')}</span></div>`).join('');
   }
-  const rows=mode==='merchan'?merchansForItemHour(item,true):promosForItemHour(item,true);
+  if(mode==='upcoming'){
+    const rows=studioUpcomingDrawRows();
+    if(!rows.length)return '<div class="studioDrawerEmpty">NENHUM PRÓXIMO SORTEIO PROGRAMADO.</div>';
+    return rows.map(r=>`<div class="studioDrawerItem upcoming"><span class="studioDrawerState">${studioDrawerIcon('upcoming')}</span><div><div class="studioDrawerTitle static">${esc(itemTitle(r))}</div><div class="studioDrawerMeta">${esc(formatBR(r.date))} · ${esc(formatStudioTime(r.slot))} · AGUARDANDO</div></div><span class="studioDrawerArrow">${studioDrawerStateIcon('pending')}</span></div>`).join('');
+  }
+  const rows=studioDrawerReadEntries(mode,item);
   if(!rows.length)return `<div class="studioDrawerEmpty">${mode==='merchan'?'SEM MERCHAN':'SEM PAUTA PROMOCIONAL'} PROGRAMADO PARA ESTE HORÁRIO.</div>`;
-  return rows.map(p=>{
-    const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,missed=progress.remaining===0&&progress.missed>0,state=done?'done':missed?'missed':'pending';
+  return rows.map(({p,item:target,late})=>{
+    const progress=studioAV57Progress(p,target),done=progress.remaining===0&&progress.missed===0,missed=progress.remaining===0&&progress.missed>0,state=done?'done':missed?'missed':'pending';
     const type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||p?.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
     const name=upper(p?.name||p?.title||type),client=upper(p?.opecClientName||p?.clientName||p?.client||p?.advertiser||'');
     const title=isMerchan(p)&&client&&client!==name?`${client} · ${name}`:name;
-    const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ',''),status=done?`LIDO · ${time}`:missed?'NÃO REALIZADA':'AGUARDANDO';
+    const time=readTimeLabel(readTimestampForHour(p,target)).replace('FEITA ',''),status=done?`LIDO · ${time}`:missed?'NÃO REALIZADA':'AGUARDANDO';
     const counter=progress.required>1?` · ${progress.done}/${progress.required}`:'';
-    return `<div class="studioDrawerItem ${state}" data-promo-id="${esc(p.id)}"><span class="studioDrawerState ${state}" title="${done?'OK':esc(status)}" aria-label="${done?'OK':esc(status)}">${studioDrawerStateIcon(state)}</span><div><button class="studioDrawerTitle" type="button" data-promo-id="${esc(p.id)}" title="${esc(title)}">${esc(title)}</button><div class="studioDrawerMeta">${esc(status)} · ${esc(type)}${esc(counter)}</div></div><span class="studioDrawerArrow">${done?studioDrawerStateIcon('done'):'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg>'}</span></div>`;
+    return `<div class="studioDrawerItem ${state}" data-promo-id="${esc(p.id)}" ${late?`data-program-date="${esc(target.date)}" data-program-slot="${esc(target.slot)}"`:''}><span class="studioDrawerState ${state}" title="${done?'OK':esc(status)}" aria-label="${done?'OK':esc(status)}">${studioDrawerStateIcon(state)}</span><div><button class="studioDrawerTitle" type="button" data-promo-id="${esc(p.id)}" title="${esc(title)}">${esc(title)}</button><div class="studioDrawerMeta">${esc(status)} · ${esc(type)}${esc(counter)}${late?` · ATRASADA ${esc(formatStudioTime(target.slot))}`:''}</div></div><span class="studioDrawerArrow">${done?studioDrawerStateIcon('done'):'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg>'}</span></div>`;
   }).join('');
 }
 function buildStudioDrawer(item){
-  const mode=studioDrawerMode||'promo',count=mode==='history'?historyRowsForDate(item?.date||todayISO()).length:studioDrawerPendingCount(mode,item);
-  return `<aside class="studioContextDrawer ${mode!=='history'&&count>0?'hasPending':''}" id="studioContextDrawer" aria-hidden="${studioDrawerMode?'false':'true'}"><div class="studioDrawerHead"><div class="studioDrawerHeadIcon">${studioDrawerIcon(mode)}</div><span class="studioDrawerCount">${count}</span><button class="studioDrawerClose" type="button" id="studioDrawerClose" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div><div class="studioDrawerBody" id="studioDrawerBody">${studioDrawerRows(item,mode)}</div></aside>`;
+  const mode=studioDrawerMode||'promo',count=studioDrawerCount(mode,item);
+  return `<aside class="studioContextDrawer ${mode!=='history'&&count>0?'hasPending':''}" id="studioContextDrawer" aria-hidden="${studioDrawerMode?'false':'true'}"><div class="studioDrawerHead"><div class="studioDrawerHeadIcon">${studioDrawerIcon(mode)}</div><span class="studioDrawerHeading">${esc(studioDrawerLabel(mode))}</span><span class="studioDrawerCount">${count}</span><button class="studioDrawerClose" type="button" id="studioDrawerClose" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div><div class="studioDrawerBody" id="studioDrawerBody">${studioDrawerRows(item,mode)}</div></aside>`;
 }
 function syncStudioDrawer(){
   const shell=document.querySelector('.studioLayoutShell'),drawer=$('studioContextDrawer'),body=$('studioDrawerBody');
   if(!shell||!drawer)return;
   shell.classList.toggle('drawerOpen',!!studioDrawerMode);drawer.setAttribute('aria-hidden',studioDrawerMode?'false':'true');
-  drawer.classList.toggle('hasPending',!!studioDrawerMode&&studioDrawerMode!=='history'&&!!currentDisplayItem&&studioDrawerPendingCount(studioDrawerMode,currentDisplayItem)>0);
-  ['promo','merchan','history'].forEach(mode=>{const id=mode==='promo'?'promoListBtn':mode==='merchan'?'merchanListBtn':'historyListBtn';$(id)?.classList.toggle('active',studioDrawerMode===mode);});
-  if(studioDrawerMode&&body&&currentDisplayItem){body.innerHTML=studioDrawerRows(currentDisplayItem,studioDrawerMode);const count=studioDrawerMode==='history'?historyRowsForDate(currentDisplayItem?.date||todayISO()).length:studioDrawerPendingCount(studioDrawerMode,currentDisplayItem);drawer.querySelector('.studioDrawerHeadIcon').innerHTML=studioDrawerIcon(studioDrawerMode);drawer.querySelector('.studioDrawerCount').textContent=count;}
+  drawer.classList.toggle('hasPending',!!studioDrawerMode&&studioDrawerMode!=='history'&&!!currentDisplayItem&&studioDrawerCount(studioDrawerMode,currentDisplayItem)>0);
+  ['promo','merchan','history','upcoming'].forEach(mode=>{const id=mode==='promo'?'promoListBtn':mode==='merchan'?'merchanListBtn':mode==='upcoming'?'studioPendingBellBtn':'historyListBtn';$(id)?.classList.toggle('active',studioDrawerMode===mode);});
+  if(studioDrawerMode&&body&&currentDisplayItem){body.innerHTML=studioDrawerRows(currentDisplayItem,studioDrawerMode);const count=studioDrawerCount(studioDrawerMode,currentDisplayItem);drawer.querySelector('.studioDrawerHeading').textContent=studioDrawerLabel(studioDrawerMode);drawer.querySelector('.studioDrawerHeadIcon').innerHTML=studioDrawerIcon(studioDrawerMode);drawer.querySelector('.studioDrawerCount').textContent=count;}
 }
 function toggleStudioDrawer(mode){studioDrawerMode=studioDrawerMode===mode?'':mode;syncStudioDrawer();}
 function closeStudioDrawer(){studioDrawerMode='';syncStudioDrawer();}
@@ -3948,32 +3986,38 @@ function buildMerchanList(item){
   if(!rows.length)return `<div class="promoListItem programEmpty">SEM MERCHAN PROGRAMADO PARA ${esc(program)}</div>`;
   return `<div class="programMerchanHead"><strong>${esc(program)}</strong><span>MERCHANS DO PROGRAMA · ${esc(formatBR(item?.date||todayISO()))}</span></div>`+rows.map(({p,item:target,progress})=>{const done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,name=upper(p.name||p.title||'MERCHAN'),state=done?'FEITO':failed?'NÃO REALIZADA':'A FAZER',cls=done?'programDone':failed?'missed':'programPending';return `<button class="promoListItem ${cls}" type="button" data-promo-id="${esc(p.id)}" data-program-date="${esc(target.date)}" data-program-slot="${esc(target.slot)}"><span class="programMerchanTime">${esc(formatStudioTime(target.slot))}</span>${esc(name)}<small>${state}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''}</small></button>`;}).join('');
 }
-function studioProgramMerchanClick(event,promoId,date,slot){if(event){event.preventDefault();event.stopPropagation();}hideStudioShortcutLists('');jumpToStudioPending(date,slot,promoId);}
+function studioProgramMerchanClick(event,promoId,date,slot){if(event){event.preventDefault();event.stopPropagation();}jumpToStudioPending(date,slot,promoId);}
 window.studioProgramMerchanClick=studioProgramMerchanClick;
 function buildHourReadList(item){const pautas=allPautasForItemHour(item,true);if(!pautas.length)return `<div class="promoListItem">SEM PROMOÇÕES OU MERCHAN PROGRAMADOS PARA ESTE HORÁRIO</div>`;return `<div class="hourReadList">${pautas.map(p=>{const progress=studioAV57Progress(p,item),read=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0,label=isMerchan(p)?'MERCHAN':'PROMOÇÃO';return `<button class="promoListItem ${read?'read':failed?'missed':''}" type="button" data-promo-id="${esc(p.id)}" onclick="studioPautaItemClick(event,'${esc(p.id)}')">${esc(upper(p.name||p.title||label))}<small>${label} · ${read?'LIDA':failed?'NÃO REALIZADA':'PENDENTE'}${progress.required>1?` · ${progress.done+progress.missed}/${progress.required}`:''} · ${studioValidityLabel(p)}</small></button>`;}).join('')}</div>`;}
 
 let studioPendingMissedContext=null;
 function studioPendingBellRows(){
   const today=todayISO(),now=currentSlotDate();if(dateISO(now)!==today)return[];
-  const currentHour=now.getHours(),currentSlot=formatStudioTime(`${pad(now.getHours())}:${pad(now.getMinutes())}`),out=[],seen=new Set();
+  const currentHour=now.getHours(),currentSlot=formatStudioTime(`${pad(now.getHours())}:${pad(now.getMinutes())}`),out=[],seen=new Set(),prizeRows=allPrizeRows();
   // Prize/result obligations keep their exact half-hour scheduling.
-  allPrizeRows().filter(item=>item.date===today).forEach(item=>{const dt=itemDateTime(item);if(dt>now||!studioPrizePending(item))return;const key=`PRIZE|${item.id}`;if(seen.has(key))return;seen.add(key);out.push({kind:'prize',date:item.date,slot:formatStudioTime(item.slot),program:upper(item.program||''),label:`SORTEIO / RESULTADO · ${itemTitle(item)}`,remaining:1,state:dt.getTime()===now.getTime()?'NOW':'LATE',promoId:''});});
+  prizeRows.filter(item=>item.date===today).forEach(item=>{const dt=itemDateTime(item);if(dt>now||!studioPrizePending(item))return;const key=`PRIZE|${item.id}`;if(seen.has(key))return;seen.add(key);out.push({kind:'prize',date:item.date,slot:formatStudioTime(item.slot),program:upper(item.program||''),label:`SORTEIO / RESULTADO · ${itemTitle(item)}`,remaining:1,state:dt.getTime()===now.getTime()?'NOW':'LATE',promoId:''});});
   for(let hour=0;hour<=currentHour;hour++){
-    const d=new Date(now);d.setHours(hour,hour===currentHour?now.getMinutes():0,0,0);const item=virtualItemFromDate(d);if(!item.program)continue;
+    const d=new Date(now);d.setHours(hour,hour===currentHour?now.getMinutes():0,0,0);const item=itemForDate(prizeRows,d).item;
     allPautasForItemHour(item,true).forEach(p=>{const progress=studioAV57Progress(p,item);if(progress.remaining<1)return;const slot=studioAV57HourSlot(item.slot),key=`${p.id}|${today}|${upper(item.program)}|${slot}`;if(seen.has(key))return;seen.add(key);out.push({kind:'read',date:today,slot,program:upper(item.program),label:`${isMerchan(p)?'MERCHAN':'PROMO / PAUTA'} · ${upper(p.name||p.title||'PAUTA')}`,remaining:progress.remaining,required:progress.required,resolved:progress.done+progress.missed,state:hour===currentHour?'NOW':'LATE',promoId:p.id});});
   }
   return out.sort((a,b)=>(a.state==='LATE'?0:1)-(b.state==='LATE'?0:1)||minutesOf(a.slot)-minutesOf(b.slot)||a.label.localeCompare(b.label));
 }
 function studioPendingBellCount(){return studioPendingBellRows().reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0);}
-function studioPendingBellMarkup(){const rows=studioPendingBellRows(),count=rows.reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0),late=rows.some(r=>r.state==='LATE');return `<button class="promoListBtn history studioPendingBell ${count?'hasPending':''} ${late?'hasLate':''}" id="studioPendingBellBtn" type="button" onclick="openStudioPendingModal(event)" title="${count?`${count} PENDÊNCIA(S) DO LOCUTOR`:'SEM PENDÊNCIAS'}" aria-label="PENDÊNCIAS DO LOCUTOR${count?` · ${count}`:''}"><span class="studioBellIcon" aria-hidden="true"><svg viewBox="0 0 24 24" role="img"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></span><span class="studioBellCount" aria-hidden="true">${count}</span></button>`;}
+function studioPendingBellMarkup(){
+  const count=studioUpcomingDrawRows().length;
+  return `<button class="promoListBtn studioPendingBell ${studioDrawerMode==='upcoming'?'active':''} ${count?'hasPending':''}" id="studioPendingBellBtn" type="button" onclick="studioUpcomingDrawClick(event)" title="PRÓXIMOS SORTEIOS" aria-label="PRÓXIMOS SORTEIOS · ${count}"><span class="studioBellIcon" aria-hidden="true">${studioDrawerIcon('upcoming')}</span><span class="studioBellCount" aria-hidden="true">${count}</span></button>`;
+}
+function studioUpcomingDrawClick(event){event?.preventDefault?.();event?.stopPropagation?.();toggleStudioDrawer('upcoming');}
+window.studioUpcomingDrawClick=studioUpcomingDrawClick;
+
 function renderStudioPendingModal(){
   const host=$('studioPendingModalBody');if(!host)return;
   const rows=studioPendingBellRows(),nowRows=rows.filter(r=>r.state==='NOW'),lateRows=rows.filter(r=>r.state==='LATE');
   const total=rows.reduce((sum,row)=>sum+Math.max(1,Number(row.remaining)||1),0),countEl=$('studioPendingModalCount');if(countEl)countEl.textContent=total;
   const stateIcon=late=>`<span class="studioPendingState" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4M12 16h.01"></path></svg></span>`;
   const openIcon=(r)=>`<button class="studioPendingIconAction" type="button" onclick="openStudioPendingFromBell('${esc(r.date)}','${esc(r.slot)}','${esc(r.promoId)}')" title="ABRIR" aria-label="ABRIR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg></button>`;
-  const missedIcon=(r)=>late&&r.kind==='read'?`<button class="studioPendingIconAction danger" type="button" onclick="requestStudioMissedReason('${esc(r.promoId)}','${esc(r.date)}','${esc(r.slot)}','${esc(r.program)}')" title="NÃO REALIZADA" aria-label="NÃO REALIZADA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>`:'';
-  const renderRows=(list,late)=>list.map(r=>`<div class="studioPendingRow ${late?'late':''}">${stateIcon(late)}<div class="studioPendingCopy"><strong>${esc(r.label)}</strong><span>${esc(r.program||'PROGRAMA')} · ${esc(r.slot)}</span></div><div class="studioPendingActions">${openIcon(r)}${missedIcon(r)}</div></div>`).join('');
+  const missedIcon=(r,late)=>late&&r.kind==='read'?`<button class="studioPendingIconAction danger" type="button" onclick="requestStudioMissedReason('${esc(r.promoId)}','${esc(r.date)}','${esc(r.slot)}','${esc(r.program)}')" title="NÃO REALIZADA" aria-label="NÃO REALIZADA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button>`:'';
+  const renderRows=(list,late)=>list.map(r=>`<div class="studioPendingRow ${late?'late':''}">${stateIcon(late)}<div class="studioPendingCopy"><strong>${esc(r.label)}</strong><span>${esc(r.program||'PROGRAMA')} · ${esc(r.slot)}</span></div><div class="studioPendingActions">${openIcon(r)}${missedIcon(r,late)}</div></div>`).join('');
   const nowGroup=`<section class="studioPendingGroup studioPendingNow"><div class="studioPendingGroupTitle"><strong>AGORA</strong><span>${nowRows.reduce((s,r)=>s+(r.remaining||1),0)}</span></div>${nowRows.length?renderRows(nowRows,false):'<div class="studioPendingEmpty">NENHUMA.</div>'}</section>`;
   const lateGroup=lateRows.length?`<section class="studioPendingGroup studioPendingLate"><div class="studioPendingGroupTitle"><strong>ATRASADAS</strong><span>${lateRows.reduce((s,r)=>s+(r.remaining||1),0)}</span></div>${renderRows(lateRows,true)}</section>`:`<section class="studioPendingCollapsed"><strong>ATRASADAS</strong><span>NENHUMA</span><em>0</em></section>`;
   host.innerHTML=nowGroup+lateGroup;
@@ -4327,7 +4371,7 @@ function historyRowsForDate(date){
   studioPublishedPrizeItems()
     .filter(i=>i && i.date===date)
     .filter(i=>(i.station||'JP1017')===STUDIO_STATION)
-    .filter(i=>upper(i.status)==='REALIZADO' || upper(i.winnerName||''))
+    .filter(i=>upper(i.status)==='REALIZADO' || upper(i.winnerName||'') || normalizeWinnerList(i.winnerNames).length)
     .forEach(i=>pushRow({
       source:'item',
       id:i.id||'',
@@ -4337,7 +4381,7 @@ function historyRowsForDate(date){
       sort:`${i.date}T${timeToHHMM(i.slot)}`,
       title:itemTitle(i),
       sub:i.program||'',
-      result:upper(i.winnerName||'REALIZADO')
+      result:normalizeWinnerList(i.winnerNames).map(w=>w.name).join(', ')||upper(i.winnerName||i.resultName||'NÃO INFORMADO')
     }));
 
   studioPromoPool(date)
@@ -4703,6 +4747,7 @@ window.studioShortcutClick=studioShortcutClick;
 window.studioPautaItemClick=studioPautaItemClick;
 
 function render(){
+  studioPendingReadCache=null;
   renderStudioDateStamp();
   const rows=allPrizeRows();
   let item=null;
@@ -4734,7 +4779,7 @@ function render(){
   const winnerBlock = item.winnerName ? `<div class="winnerBox" data-has-winner="1" title="BOTÃO DIREITO: AÇÕES DO GANHADOR"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
-      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1><small class="rotationInfo av57 studioValidityInfo">${esc(studioValidityLabel(promo))}</small>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
+      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
       <div class="pautaActions studioInlineReadActions">
@@ -4756,7 +4801,7 @@ function render(){
       <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':upper(promo.kind||promo.promoKind||promo.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
       <div class="headNav">
         ${ALLOW_PROMO_SHORTCUT ? `<div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='promo'?'active':''} ${studioDrawerPendingCount('promo',item)>0?'hasPending':''}" id="promoListBtn" type="button" onclick="studioShortcutClick(event,\'promo\')" aria-label="PAUTAS PROMOCIONAIS" title="P = PAUTAS PROMOCIONAIS">P${studioShortcutBadge('promo',item)}</button></div>` : ''}
-        <div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='merchan'?'active':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHANS" title="M = MERCHANS">M${studioShortcutBadge('merchan',item)}</button></div>
+        <div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='merchan'?'active':''} ${studioDrawerPendingCount('merchan',item)>0?'hasPending':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHANS" title="M = MERCHANS">M${studioShortcutBadge('merchan',item)}</button></div>
         <button class="promoListBtn history ${studioDrawerMode==='history'?'active':''}" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="HISTÓRICO" title="H = HISTÓRICO">H</button>
         ${studioPendingBellMarkup()}
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
@@ -4806,6 +4851,7 @@ function render(){
   if(promoBtn) promoBtn.onclick=e=>studioShortcutClick(e,'promo');
   const merchanBtn=$('merchanListBtn');
   if(merchanBtn) merchanBtn.onclick=e=>studioShortcutClick(e,'merchan');
+  const bellBtn=$('studioPendingBellBtn');if(bellBtn)bellBtn.onclick=studioUpcomingDrawClick;
   const historyBtn=$('historyListBtn');
   if(historyBtn) historyBtn.onclick=e=>studioShortcutClick(e,'history');
   const drawerClose=$('studioDrawerClose'); if(drawerClose) drawerClose.onclick=closeStudioDrawer;
@@ -4837,10 +4883,11 @@ $('winnerModal').addEventListener('keydown',e=>{
 });
 
 document.addEventListener('click',e=>{
-  const shortcut=e.target.closest('#promoListBtn,#merchanListBtn,#historyListBtn');
+  const shortcut=e.target.closest('#promoListBtn,#merchanListBtn,#historyListBtn,#studioPendingBellBtn');
   if(shortcut){
     if(shortcut.id==='promoListBtn') return studioShortcutClick(e,'promo');
     if(shortcut.id==='merchanListBtn') return studioShortcutClick(e,'merchan');
+    if(shortcut.id==='studioPendingBellBtn') return studioUpcomingDrawClick(e);
     if(shortcut.id==='historyListBtn') return studioShortcutClick(e,'history');
   }
   const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioDrawerItem[data-promo-id]');
