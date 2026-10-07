@@ -758,6 +758,17 @@ tbody tr:focus-within td{background:#fff8fa}
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/av58-admin.css">
+<style id="reception-campaign-style">
+.receptionCampaignSection{border:1px solid #e2e7ee;border-radius:15px;background:#fff;padding:14px;margin:0 0 18px}
+.receptionCampaignHeading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.receptionCampaignHeading h2{font-size:11px;color:#596779;letter-spacing:.04em;margin:0}.receptionCampaignHeading>span{font-size:9px;background:#fff3e4;color:#9d5a1c;padding:5px 8px;border-radius:8px;font-weight:800}
+.receptionCampaignLabels,.receptionCampaign summary{display:grid;grid-template-columns:minmax(140px,1.15fr) minmax(100px,.7fr) minmax(150px,1.2fr) minmax(145px,.9fr);gap:14px;align-items:center}
+.receptionCampaignLabels{padding:0 32px 7px 12px;color:#8a95a4;font-size:8px;font-weight:800}
+.receptionCampaign{border:1px solid #e4e8ef;border-radius:11px;background:#fafbfd;margin-bottom:7px;overflow:hidden}.receptionCampaign:last-child{margin-bottom:0}
+.receptionCampaign summary{position:relative;list-style:none;cursor:pointer;padding:10px 32px 10px 12px;font-size:10px;line-height:1.4}.receptionCampaign summary::-webkit-details-marker{display:none}.receptionCampaign summary::after{content:'⌄';position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#8692a3;font-size:15px}.receptionCampaign[open] summary::after{content:'⌃'}.receptionCampaign summary:focus-visible{outline:2px solid #c76700;outline-offset:-3px}
+.receptionCampaign summary strong{display:block;color:#26384e;font-size:10px;overflow-wrap:anywhere}.receptionCampaign summary small{display:block;font-size:8px;color:#7b8798;margin-top:4px}.receptionCampaign .campaignName small{color:#98702f}.receptionCampaign .campaignName small.pending{color:#b52b43}.campaignSegment{font-size:9px;color:#6b7c90;font-weight:800}.campaignNext{font-size:9px;color:#526a83}
+.campaignDetails{display:grid;grid-template-columns:1fr 1fr;gap:9px 16px;border-top:1px solid #e6ebf1;background:#fff;padding:12px;font-size:9px;color:#607287;line-height:1.5}.campaignDetails b{display:block;font-size:8px;color:#8b96a5;margin-bottom:2px}.campaignDrawDetails{grid-column:1/-1;max-height:150px;overflow:auto;padding-top:6px;border-top:1px solid #edf0f4}.campaignDrawDetails span{display:block;margin-bottom:5px}.receptionCampaignEmpty{padding:10px;font-size:9px;color:#7b8798;background:#f8f9fc;border-radius:9px}
+@media(max-width:760px){.receptionCampaignLabels{display:none}.receptionCampaign summary{grid-template-columns:1fr 1fr;gap:9px}.campaignName{grid-column:1/-1}.campaignNext{grid-column:1/-1}.campaignDetails{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -779,6 +790,11 @@ tbody tr:focus-within td{background:#fff8fa}
   <section class="receptionToolbar" aria-label="Filtros da recepção">
     <div class="filterField searchField"><label>BUSCA</label><input id="searchFilter" type="search" placeholder="BUSCAR GANHADOR, PRÊMIO OU PROGRAMA"></div>
     <div class="receptionStats" id="receptionStats"></div>
+  </section>
+  <section class="receptionCampaignSection" aria-label="Promoções em andamento">
+    <div class="receptionCampaignHeading"><h2>PROMOÇÕES EM ANDAMENTO</h2><span id="receptionCampaignCount">0 ATIVAS</span></div>
+    <div class="receptionCampaignLabels" aria-hidden="true"><span>PROMOÇÃO</span><span>SEGMENTO</span><span>PRÊMIO / QUANTIDADE</span><span>PRÓXIMO SORTEIO</span></div>
+    <div id="receptionCampaignList"></div>
   </section>
   <main class="list" id="resultList"></main>
 </div>
@@ -831,6 +847,40 @@ function receptionPromosForDate(date=''){
   }));
   return [...map.values()];
 }
+/* RECEPTION_CAMPAIGNS_START */
+function receptionIsCampaign(p){const kind=upper(p?.kind||p?.promoKind||p?.type||'');return kind==='PROMO'||kind==='PROMOÇÃO'||kind==='PROMOCAO'||(!kind&&p?.drawDate&&p?.drawTime);}
+function receptionCampaignVisible(p){return receptionIsCampaign(p)&&!p.opecArchived&&!p.opecForceEnded&&String(p.opecPublicationStatus||'published').toLowerCase()!=='draft'&&!['CANCELADO','CANCELADA'].includes(upper(p.status||''));}
+function receptionActiveCampaigns(date=todayISO()){
+  return receptionPromosForDate().filter(receptionCampaignVisible).filter(p=>{const start=p.startDate||p.drawDate||'',end=p.endDate||p.drawDate||start;return (!start||start<=date)&&(!end||end>=date);}).sort((a,b)=>promoTitle(a).localeCompare(promoTitle(b)));
+}
+function receptionCampaignSegment(p){
+  const labels={ar:'RÁDIO',rs:'REDES SOCIAIS',app:'APP',rua:'EXTERNA',camarote:'CAMAROTE',camarim:'CAMARIM',reservado:'RESERVADO'};
+  return labels[String(p.segmentKey||'').toLowerCase()]||upper(p.segmentKey||'SEGMENTO NÃO INFORMADO');
+}
+function receptionCampaignOccurrences(p){
+  const occurrences=p.occurrences?.length?p.occurrences:p.drawDate?[{date:p.drawDate,time:p.drawTime,qtyPlanned:p.winnersPerDraw||p.qtyPerDraw,status:'AGENDADO'}]:[];
+  return occurrences.filter(o=>o.date&&!['CANCELADO','CANCELADA'].includes(upper(o.status||''))).map(o=>{
+    const record=receptionPromosForDate(o.date).find(row=>row.id===p.id)||p,time=timeToHHMM(o.time||p.drawTime);
+    const winners=promoWinnerOccurrences(record).filter(w=>w.occurrenceDate===o.date&&timeToHHMM(w.occurrenceTime)===time);
+    const done=winners.length>0||upper(o.status)==='REALIZADO',due=new Date(`${o.date}T${time}:00`).getTime()<=Date.now();
+    return {...o,time,winners,done,pending:!done&&due,qtyPlanned:Math.max(1,Number(o.qtyPlanned||p.winnersPerDraw||p.qtyPerDraw)||1),unitsPerWinner:Math.max(1,Number(o.unitsPerWinner||p.unitsPerWinner)||1)};
+  }).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+}
+function renderReceptionCampaigns(){
+  const list=$('receptionCampaignList'),count=$('receptionCampaignCount');if(!list||!count)return;
+  const expanded=new Set(Array.from(document.querySelectorAll('details[data-reception-campaign]')).filter(el=>el.open).map(el=>el.dataset.receptionCampaign));
+  const query=searchKey($('searchFilter')?.value||'');
+  const all=receptionActiveCampaigns(),campaigns=all.filter(p=>!query||searchKey([promoTitle(p),promoPrizeTitle(p),receptionCampaignSegment(p),p.local].join(' ')).includes(query));
+  count.textContent=`${all.length} ATIVA${all.length===1?'':'S'}`;
+  list.innerHTML=campaigns.length?campaigns.map(p=>{
+    const occurrences=receptionCampaignOccurrences(p),next=occurrences.find(o=>o.pending)||occurrences.find(o=>!o.done),units=Math.max(1,Number(p.unitsPerWinner)||1);
+    const reserve=occurrences.reduce((n,o)=>n+o.qtyPlanned*o.unitsPerWinner,0),station=receptionStationCode(p.station)==='ALL'?'AMBAS AS RÁDIOS':receptionStationCode(p.station)==='JPNEWS983'?'JPNEWS 98,3':'JOVEMPAN 101,7';
+    const when=next?`${formatBR(next.date)} · ${formatTime(next.time)}`:'RESULTADOS CONFIRMADOS';
+    return `<details class="receptionCampaign" data-reception-campaign="${esc(p.id)}" ${expanded.has(p.id)?'open':''}><summary><span class="campaignName"><strong>${esc(promoTitle(p))}</strong><small class="${next?.pending?'pending':''}">${next?.pending?'RESULTADO PENDENTE':'EM ANDAMENTO'}</small></span><span class="campaignSegment">${esc(receptionCampaignSegment(p))}</span><span class="campaignPrize"><strong>${esc(promoPrizeTitle(p))}</strong><small>${units} UNID. POR GANHADOR</small></span><span class="campaignNext">${esc(when)}<small>${next?.pending?'AGUARDANDO ESTÚDIO':next?'PRÓXIMO SORTEIO':'SEM SORTEIO PENDENTE'}</small></span></summary><div class="campaignDetails"><span><b>VIGÊNCIA</b> ${esc(formatBR(p.startDate||p.drawDate))} A ${esc(formatBR(p.endDate||p.drawDate))}</span><span><b>RÁDIO</b> ${esc(station)}</span><span><b>CANAL</b> ${esc(upper(p.local||'NÃO INFORMADO'))}</span><span><b>RESERVA</b> ${reserve} UNIDADE${reserve===1?'':'S'} RESERVADA${reserve===1?'':'S'}</span><div class="campaignDrawDetails">${occurrences.map(o=>`<span>${esc(formatBR(o.date))} · ${esc(formatTime(o.time))} · ${o.qtyPlanned} GANHADOR(ES) · ${o.done?'RESULTADO CONFIRMADO':o.pending?'RESULTADO PENDENTE':'AGENDADO'}</span>`).join('')}</div></div></details>`;
+  }).join(''):`<div class="receptionCampaignEmpty">${all.length?'NENHUMA PROMOÇÃO ENCONTRADA NESTA BUSCA.':'NENHUMA PROMOÇÃO EM ANDAMENTO.'}</div>`;
+}
+/* RECEPTION_CAMPAIGNS_END */
+
 function availableMonths(){return Object.keys(state.months||{}).sort();}
 function selectMonthForDate(date){const m=String(date||todayISO()).slice(0,7); currentMonth=state.months?.[m]?m:(state.currentMonth||availableMonths().at(-1)||m);}
 function distributionById(id){if(!id)return{};const direct=(monthData().distributions||[]).find(d=>d.id===id);if(direct)return direct;for(const m of Object.values(state.months||{})){const found=(m?.distributions||[]).find(d=>d.id===id);if(found)return found;}return{};}
@@ -844,7 +894,7 @@ function receptionScheduleName(row){return upper(row?.name||row?.program||row?.p
 function receptionGenericProgram(value){const p=upper(value||'');return !p||['PROGRAMAÇÃO NORMAL','PROGRAMACAO NORMAL','PROGRAMA NORMAL','GRADE NORMAL'].includes(p);}
 function receptionProgramFromSchedule(date,slot,station='JP1017'){const minute=receptionMinutes(slot),day=new Date(`${date}T12:00:00`).getDay(),wanted=receptionStationCode(station);const rows=(state.programSchedules||[]).filter(row=>{const st=receptionStationCode(row?.station||'JP1017'),days=receptionDayValues(row?.days??row?.dias??row?.weekdays??row?.dayRule??'');const start=receptionMinutes(row?.startTime||row?.start||row?.inicio||row?.horaInicio||''),end=Math.max(receptionMinutes(row?.endTime||row?.end||row?.fim||row?.horaFim||''),start+60);return (st==='ALL'||st===wanted)&&days.includes(day)&&minute>=start&&minute<end;});if(!rows.length)return'';rows.sort((a,b)=>Number(receptionGenericProgram(receptionScheduleName(a)))-Number(receptionGenericProgram(receptionScheduleName(b)))||(receptionMinutes(a?.endTime||a?.end||'')-receptionMinutes(a?.startTime||a?.start||''))-(receptionMinutes(b?.endTime||b?.end||'')-receptionMinutes(b?.startTime||b?.start||'')));return receptionScheduleName(rows[0]);}
 function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
-function promoPrizeTitle(p){const d=distributionById(p?.distributionId);return upper(p?.prizeTitle||d.title||d.show||p?.title||p?.name||d.prize||'PROMOÇÃO');}
+function promoPrizeTitle(p){const d=distributionById(p?.distributionId);return upper(p?.prizeTitle||d.title||d.show||d.prize||p?.prize||p?.title||p?.name||'PROMOÇÃO');}
 firebase.initializeApp(FIREBASE_CONFIG);
 const receptionDatabase=firebase.database();
 if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();
@@ -1003,6 +1053,8 @@ function resultRowsForDate(date){
   receptionAllItems()
     .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || upper(i.winnerName) || (Array.isArray(i.winnerNames)&&i.winnerNames.length)))
     .forEach(i=>{
+      const linkedPromo=i.sourceType==='promo-result'?receptionPromosForDate(date).find(p=>p.id===i.promoId):null;
+      const linkedOccurrence=linkedPromo?(linkedPromo.occurrences||[]).find(o=>o.date===date&&timeToHHMM(o.time||linkedPromo.drawTime)===timeToHHMM(i.slot)):null;
       const names=(Array.isArray(i.winnerNames)&&i.winnerNames.length)
         ? i.winnerNames.map(upper).filter(Boolean)
         : String(i.winnerName||'').split(',').map(upper).filter(Boolean);
@@ -1021,8 +1073,10 @@ function resultRowsForDate(date){
           date,
           time:formatTime(i.slot),
           sort:`${date}T${timeToHHMM(i.slot)}`,
-          title:itemTitle(i),
-          sub:`${receptionProgramFromSchedule(i.date,i.slot,i.station||'JP1017')||upper(i.program||'GRADE NÃO CADASTRADA')} · ${channelName(i)}`,
+          title:linkedPromo?promoPrizeTitle(linkedPromo):itemTitle(i),
+          promoResultId:i.sourceType==='promo-result'?i.promoId||'':'',
+          quantity:linkedPromo?Math.max(1,Number(linkedOccurrence?.unitsPerWinner||linkedPromo.unitsPerWinner)||1):undefined,
+          sub:linkedPromo?`PROMOÇÃO · ${receptionCampaignSegment(linkedPromo)} · ${promoTitle(linkedPromo)}`:`${receptionProgramFromSchedule(i.date,i.slot,i.station||'JP1017')||upper(i.program||'GRADE NÃO CADASTRADA')} · ${channelName(i)}`,
           result:name,
           deliveredAt,
           deliveredAtLabel,
@@ -1037,10 +1091,18 @@ function resultRowsForDate(date){
     const days=Math.max(1,Math.min(5,Number(p.pickupBusinessDays)||5));
     promoWinnerOccurrences(p).filter(w=>w.occurrenceDate===date).forEach(w=>{
       const reg=registeredDateForPromo({...p,resultDate:w.occurrenceDate,drawDate:w.occurrenceDate,drawTime:w.occurrenceTime},w),deadline=deadlineInfo(reg,w.deliveredAt||'',days);
-      promos.push({source:'promo',id:p.id,winnerIndex:w.winnerIndex,occurrenceKey:w.occurrenceKey||'',date,time:w.occurrenceTime||p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${w.occurrenceTime||(p.drawTime||'23:59').slice(0,5)}`,title:promoPrizeTitle(p),sub:upper(p.local||p.type||'PROMOÇÃO'),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',deadlineLabel:deadline.label,deadlineClass:deadline.className,expired:!w.deliveredAt&&deadline.expired,deadlineDays:days});
+      promos.push({source:'promo',id:p.id,winnerIndex:w.winnerIndex,occurrenceKey:w.occurrenceKey||'',date,time:w.occurrenceTime||p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${w.occurrenceTime||(p.drawTime||'23:59').slice(0,5)}`,title:promoPrizeTitle(p),sub:`PROMOÇÃO · ${receptionCampaignSegment(p)} · ${promoTitle(p)}`,quantity:Math.max(1,Number((p.occurrences||[]).find(o=>o.date===date&&timeToHHMM(o.time||p.drawTime)===timeToHHMM(w.occurrenceTime))?.unitsPerWinner||p.unitsPerWinner)||1),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',deadlineLabel:deadline.label,deadlineClass:deadline.className,expired:!w.deliveredAt&&deadline.expired,deadlineDays:days});
     });
   });
-  return [...items,...promos].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title)||a.result.localeCompare(b.result));
+  const hiddenPromos=new Set();
+  const physical=items.filter(item=>{
+    if(!item.promoResultId)return true;
+    const mirror=promos.find(row=>row.id===item.promoResultId&&row.date===item.date&&timeToHHMM(row.time)===timeToHHMM(item.time)&&searchKey(row.result)===searchKey(item.result));
+    if(!mirror)return true;
+    if(item.deliveredAt&&!mirror.deliveredAt){hiddenPromos.add(mirror);return true;}
+    return false;
+  });
+  return [...physical,...promos.filter(row=>!hiddenPromos.has(row))].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title)||a.result.localeCompare(b.result));
 }
 function allResultRows(){
   const dates=new Set();
@@ -1168,13 +1230,14 @@ function openReceptionSheet(row){
   activeReceptionRow={source:row.source,id:row.id,winnerIndex:row.winnerIndex,occurrenceKey:row.occurrenceKey||'',date:row.date||''};
   const status=rowStatus(row), statusClass=status==='RETIRADO'?'done':status==='VENCIDO'?'expired':status==='VENCE_HOJE'?'today':'pending';
   const action=row.deliveredAt?`<button class="pickupSheetAction" type="button" disabled>RETIRADA JÁ REGISTRADA</button>`:`<button class="pickupSheetAction" id="sheetConfirmPickup" type="button">CONFIRMAR RETIRADA</button>`;
-  $('receptionModalBody').innerHTML=`<h3 class="pickupSheetName" id="receptionModalName">${esc(row.result)}</h3><div class="pickupSheetGrid"><div class="pickupSheetField"><span>PRÊMIO</span><strong>${esc(row.title)}</strong></div><div class="pickupSheetField"><span>GANHOU EM</span><strong>${esc(formatBR(row.date))} · ${esc(row.time)} · ${esc(row.sub)}</strong></div><div class="pickupSheetField"><span>PRAZO PARA RETIRADA</span><strong>${esc(row.deadlineLabel||'--')}</strong></div></div><div class="pickupSheetStatus ${statusClass}">${esc(deadlineStatusText(row))}</div>${action}`;
+  $('receptionModalBody').innerHTML=`<h3 class="pickupSheetName" id="receptionModalName">${esc(row.result)}</h3><div class="pickupSheetGrid"><div class="pickupSheetField"><span>PRÊMIO</span><strong>${esc(row.title)}${row.quantity?` · ${row.quantity} UNID.`:''}</strong></div><div class="pickupSheetField"><span>GANHOU EM</span><strong>${esc(formatBR(row.date))} · ${esc(row.time)} · ${esc(row.sub)}</strong></div><div class="pickupSheetField"><span>PRAZO PARA RETIRADA</span><strong>${esc(row.deadlineLabel||'--')}</strong></div></div><div class="pickupSheetStatus ${statusClass}">${esc(deadlineStatusText(row))}</div>${action}`;
   $('receptionModal').hidden=false;
 }
 function closeReceptionSheet(){if(pickupBusy)return;$('receptionModal').hidden=true;activeReceptionRow=null;}
 function showReceptionToast(message,error=false){const t=$('receptionToast');t.textContent=message;t.classList.toggle('error',error);t.hidden=false;clearTimeout(showReceptionToast.timer);showReceptionToast.timer=setTimeout(()=>{t.hidden=true;},error?4500:3000);}
 function refreshOpenReceptionSheet(){if(!activeReceptionRow||$('receptionModal').hidden)return;const row=findReceptionRow(activeReceptionRow);if(row)openReceptionSheet(row);}
 function render(){
+  renderReceptionCampaigns();
   const date=$('dateFilter').value||todayISO();
   const query=upper($('searchFilter')?.value||'');
   const allRows=allResultRows();
@@ -1186,7 +1249,7 @@ function render(){
     return `<article class="resultCard status-${esc(rowStatusClass(r))}" tabindex="0" data-source="${esc(r.source)}" data-id="${esc(r.id)}" data-winner-index="${esc(r.winnerIndex)}" data-occurrence-key="${esc(r.occurrenceKey||'')}" data-date="${esc(r.date||'')}">
       <div class="resultLeft">
         <div class="dateTimeBlock"><span class="resultDate">${esc(formatBR(r.date||''))}</span><div class="time">${esc(r.time)}</div></div>
-        <div class="prizeText"><strong>${esc(r.title)}</strong><span>${esc(r.sub)}</span></div>
+        <div class="prizeText"><strong>${esc(r.title)}</strong><span>${r.quantity?`${r.quantity} UNID. · `:''}${esc(r.sub)}</span></div>
       </div>
       <div class="winnerCenter"><span class="resultNameTag">${esc(r.result)}</span></div>
       <div class="resultRight">${deadline}${pickupButton(r)}</div>

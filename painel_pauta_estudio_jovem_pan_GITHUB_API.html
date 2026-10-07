@@ -2465,6 +2465,18 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 @media(prefers-reduced-motion:reduce){.headNav #promoListBtn.hasPending .studioShortcutGlyph,.headNav #merchanListBtn.hasPending .studioShortcutGlyph,.headNav #studioPendingBellBtn.hasPending .studioBellIcon,.studioContextDrawer.hasPending .studioDrawerHead,.studioDrawerItem.pending{animation:none!important;opacity:1}}
 </style>
 
+<style id="studio-campaign-style">
+.headNav #studioCampaignBtn{width:42px!important;height:42px!important;min-width:42px!important;border-radius:50%!important;padding:0!important;position:relative;overflow:visible!important;border:1px solid #ffd59c!important;background:#fff7ec!important;color:#c76700!important;box-shadow:0 5px 12px rgba(28,46,75,.06)!important;animation:none!important}
+.headNav #studioCampaignBtn::before,.headNav #studioCampaignBtn::after{display:none!important}
+.studioGiftGlyph{display:flex;align-items:center;justify-content:center}.studioGiftGlyph svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.headNav #studioCampaignBtn.hasPending .studioGiftGlyph{animation:studioShortcutBlink 1s steps(1,end) infinite;color:#c76700}
+.studioCampaignCount{position:absolute;top:-5px;right:-4px;min-width:17px;height:17px;padding:0 3px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;border-radius:9px;background:#c76700;color:#fff;border:2px solid #fff;font:800 9px Arial;animation:none!important}
+.headNav #studioCampaignBtn:focus-visible{outline:2px solid #c76700;outline-offset:2px}
+.studioCampaignCard{border:1px solid #e0e6ee;border-radius:13px;background:#fff;padding:12px;margin-bottom:10px}.studioCampaignCard>strong{display:block;font-size:11px;color:#27394f;line-height:1.4}.studioCampaignCard p{font-size:9px;color:#6d798a;line-height:1.5;margin:8px 0}.studioCampaignStatus{display:inline-block;font-size:8px;color:#9d5a1c;background:#fff3e5;border-radius:6px;padding:4px 6px;margin-top:6px;font-weight:800}
+.studioCampaignDraw{display:grid;grid-template-columns:1fr;gap:6px;width:100%;padding:9px;margin-top:6px;border:1px solid #e1e6ee;border-radius:9px;background:#f8fafc;color:#55677c;text-align:left;cursor:pointer;font-size:9px}.studioCampaignDraw small{display:block;margin-top:3px;font-size:8px}.studioCampaignDraw b{font-size:9px;overflow-wrap:anywhere}.studioCampaignDraw.pending{border-color:#ebb3bf;color:#b52b43;background:#fff2f4}.studioCampaignDraw.done{border-color:#bedfca;color:#257849;background:#f1fbf5}.studioCampaignDraw:focus-visible{outline:2px solid #c76700;outline-offset:2px}
+.studioCampaignResultInfo{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;border:1px solid #e5d9c8;border-radius:12px;background:#fff8ef;color:#96602b;text-align:center;font-size:10px;line-height:1.5;margin:0 auto;width:100%;max-width:940px;box-sizing:border-box}.studioCampaignResultInfo span{font-size:9px}
+@media(prefers-reduced-motion:reduce){.headNav #studioCampaignBtn.hasPending .studioGiftGlyph{animation:none!important}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -3124,7 +3136,7 @@ function winnerContextForItem(item){
 function winnerContextForPromo(promo,item){
   const date=item?.date||promo?.drawDate||todayISO();
   const slot=formatStudioTime(item?.slot||promo?.drawTime||'');
-  return {sourceRef:`PROMO:${promo?.id||''}:${date}:${slot}`,date,program:upper(programFromSchedule(date,slot,STUDIO_STATION)||item?.program||promo?.program||'RESULTADO PROMOÇÃO'),prize:upper(promo?.prize||promo?.name||promo?.title||item?.prize||'PROMOÇÃO')};
+  return {sourceRef:`PROMO:${promo?.id||''}:${date}:${slot}`,date,program:upper(programFromSchedule(date,slot,STUDIO_STATION)||item?.program||promo?.program||'RESULTADO PROMOÇÃO'),prize:studioIsCampaign(promo)?studioCampaignPrize(promo):upper(promo?.prize||promo?.name||promo?.title||item?.prize||'PROMOÇÃO')};
 }
 function winnerSuggestions(name){
   return winnerSimilarityCandidates(name,5);
@@ -3609,6 +3621,106 @@ function programFromSchedule(date,slot,station=STUDIO_STATION){
   hits.sort((a,b)=>Number(genericProgramName(studioScheduleName(a)))-Number(genericProgramName(studioScheduleName(b)))||(Math.max(60,minutesOf(studioScheduleEnd(a))-minutesOf(studioScheduleStart(a)))-Math.max(60,minutesOf(studioScheduleEnd(b))-minutesOf(studioScheduleStart(b))))||minutesOf(studioScheduleStart(b))-minutesOf(studioScheduleStart(a))||studioScheduleName(a).localeCompare(studioScheduleName(b)));
   return studioScheduleName(hits[0]);
 }
+/* STUDIO_CAMPAIGNS_START */
+let studioCampaignContext=null;
+let studioResultSaving=false;
+function studioIsCampaign(p){
+  const kind=upper(p?.kind||p?.promoKind||p?.type||'');
+  return !!p&&!isMerchan(p)&&(kind==='PROMO'||kind==='PROMOÇÃO'||kind==='PROMOCAO'||(!kind&&p.drawDate&&p.drawTime));
+}
+function studioCampaignVisible(p){return studioIsCampaign(p)&&!p.opecArchived&&!p.opecForceEnded&&studioOpecPublished(p)&&!['CANCELADO','CANCELADA'].includes(upper(p.status||''));}
+function studioActiveCampaigns(date=todayISO()){
+  return studioPromoPool(date).filter(studioCampaignVisible).filter(stationAllowed).sort((a,b)=>upper(a.name||a.title).localeCompare(upper(b.name||b.title)));
+}
+function studioCampaignRecord(id,date=''){
+  return (date?studioPromoPool(date):studioPromoPool()).find(p=>p.id===id)||studioPromoPool().find(p=>p.id===id)||null;
+}
+function studioCampaignDraws(p){
+  return promoOccurrences(p).filter(o=>o.date&&!['CANCELADO','CANCELADA'].includes(upper(o.status||''))).map(o=>{
+    const time=timeToHHMM(o.time||p.drawTime),record=studioCampaignRecord(p.id,o.date)||p;
+    const item={date:o.date,slot:formatStudioTime(time),occurrenceId:o.id,promoId:p.id};
+    const winners=promoWinnerList(record,item),done=winners.length>0||upper(o.status||'')==='REALIZADO';
+    const at=new Date(`${o.date}T${time}:00`).getTime();
+    return {...o,id:o.id||`${p.id}|${o.date}|${time}`,time,qtyPlanned:Math.max(1,Number(o.qtyPlanned||p.winnersPerDraw||p.qtyPerDraw)||1),item,winners,done,due:Number.isFinite(at)&&at<=Date.now(),pending:!done&&Number.isFinite(at)&&at<=Date.now()};
+  }).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+}
+function studioCampaignList(){
+  const active=studioActiveCampaigns(),seen=new Set(active.map(p=>p.id));
+  studioPromoPool().filter(studioCampaignVisible).filter(p=>stationAllowed(p)).forEach(p=>{if(!seen.has(p.id)&&studioCampaignDraws(p).some(o=>o.pending)){seen.add(p.id);active.push(p);}});
+  return active;
+}
+function studioCampaignButtonMarkup(){
+  const count=studioActiveCampaigns().length,pending=count>0||studioCampaignList().some(p=>studioCampaignDraws(p).some(o=>o.pending));
+  return `<button class="promoListBtn studioCampaignBtn ${studioDrawerMode==='campaigns'?'active':''} ${pending?'hasPending':''}" id="studioCampaignBtn" type="button" onclick="studioShortcutClick(event,'campaigns')" aria-label="PROMOÇÕES · ${count} ATIVA${count===1?'':'S'}" title="PROMOÇÕES ATIVAS E RESULTADOS"><span class="studioGiftGlyph" aria-hidden="true">${studioDrawerIcon('campaigns')}</span>${count?`<span class="studioCampaignCount" aria-hidden="true">${count}</span>`:''}</button>`;
+}
+function studioCampaignPrize(p){const d=distributionById(p.distributionId)||{};return upper(p.prizeTitle||d.title||d.show||d.prize||p.prize||'PRÊMIO DA PROMOÇÃO');}
+function studioCampaignSegment(p){const labels={ar:'RÁDIO',rs:'REDES SOCIAIS',app:'APP',rua:'EXTERNA',camarote:'CAMAROTE',camarim:'CAMARIM',reservado:'RESERVADO'};return labels[String(p.segmentKey||'').toLowerCase()]||upper(p.segmentKey||'SEGMENTO NÃO INFORMADO');}
+function studioCampaignDrawerRows(){
+  const campaigns=studioCampaignList();
+  if(!campaigns.length)return '<div class="studioDrawerEmpty">NENHUMA PROMOÇÃO ATIVA OU RESULTADO PENDENTE.</div>';
+  return campaigns.map(p=>{
+    const active=studioMaterialInForce(p,todayISO()),draws=studioCampaignDraws(p),units=Math.max(1,Number(p.unitsPerWinner)||1);
+    return `<section class="studioCampaignCard"><strong>${esc(upper(p.name||p.title||'PROMOÇÃO'))}</strong><span class="studioCampaignStatus">${active?'EM ANDAMENTO':'RESULTADO PENDENTE'}</span><p>${esc(studioCampaignSegment(p))} · ${esc(studioCampaignPrize(p))} · ${units} UNID. / GANHADOR</p>${draws.map(o=>`<button class="studioCampaignDraw ${o.done?'done':o.pending?'pending':'scheduled'}" type="button" data-campaign-id="${esc(p.id)}" data-occurrence-id="${esc(o.id)}"><span>${esc(formatBR(o.date))} · ${esc(formatStudioTime(o.time))}<small>${o.qtyPlanned} GANHADOR${o.qtyPlanned===1?'':'ES'}</small></span><b>${o.done?'OK · '+esc(o.winners.map(w=>w.name).join(', ')||'RESULTADO CONFIRMADO'):o.pending?'RESULTADO PENDENTE':'SORTEIO AGENDADO'}</b></button>`).join('')||'<p>SEM SORTEIO CADASTRADO.</p>'}</section>`;
+  }).join('');
+}
+function studioCaptureCampaignDraft(){
+  if(!studioCampaignContext||studioResultSaving)return;
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
+  if(fields.length)studioCampaignContext.winnerDraft=fields.map(input=>({name:input.value,similarityInputKey:input.dataset.similarityInputKey||'',similarityRejected:input.dataset.similarityRejected||''}));
+}
+function studioCampaignDisplayItem(){
+  if(!studioCampaignContext)return null;
+  const c=studioCampaignContext;
+  return {id:`PROMO_RESULT_${c.promoId}_${c.occurrenceId}_${STUDIO_STATION}`,date:c.date,slot:c.slot,station:STUDIO_STATION,program:programFromSchedule(c.date,c.slot,STUDIO_STATION)||'RESULTADO PROMOÇÃO',sourceType:'promo-result',promoId:c.promoId,occurrenceId:c.occurrenceId,qty:c.qty,__virtual:true};
+}
+function studioOpenCampaignResult(promoId,occurrenceId){
+  if(studioReadSaving||studioResultSaving)return;
+  const p=studioCampaignRecord(promoId);if(!p||!studioCampaignVisible(p)||!stationAllowed(p))return;
+  const occurrence=studioCampaignDraws(p).find(o=>o.id===occurrenceId);if(!occurrence)return;
+  studioReadContext=null;studioReadSheetPromoId=null;selectedPromoId=promoId;
+  studioCampaignContext={promoId,occurrenceId,date:occurrence.date,slot:formatStudioTime(occurrence.time),qty:occurrence.qtyPlanned,winnerDraft:null};
+  studioDrawerMode='campaigns';render();
+}
+function studioCloseCampaignResult(){
+  if(studioResultSaving||studioReadSaving)return;
+  studioCampaignContext=null;selectedPromoId=null;studioReadContext=null;studioReadSheetPromoId=null;
+  manual=false;manualHourDateMs=null;selectedIndex=-1;studioDrawerMode='';render();
+}
+function studioCampaignResultInfo(p,item){
+  const o=promoOccurrenceForItem(p,item),units=Math.max(1,Number(o?.unitsPerWinner||p.unitsPerWinner)||1);
+  return `<div class="studioCampaignResultInfo"><strong>SORTEIO · ${esc(formatBR(item.date))} · ${esc(formatStudioTime(item.slot))}</strong><span>${esc(studioCampaignPrize(p))} · ${Math.max(1,Number(o?.qtyPlanned||p.qtyPerDraw)||1)} GANHADOR(ES) · ${units} UNID. CADA</span></div>`;
+}
+function promoResultHourKeys(item,p){
+  const date=item?.date||p?.resultDate||p?.drawDate||'',time=timeToHHMM(item?.slot||p?.resultSlot||p?.drawTime||''),hour=time.slice(0,2),minute=time.slice(3,5);
+  const exact=`${date}-${hour}${minute}`,keys=[exact];
+  if(minute==='00')keys.push(`${date}-${hour}`);
+  else if(promoOccurrences(p).filter(o=>o.date===date&&slotHour(o.time||p.drawTime)===Number(hour)).length===1)keys.push(`${date}-${hour}00`,`${date}-${hour}`);
+  return [...new Set(keys)];
+}
+function promoResultMapValue(map,item,p){
+  for(const key of promoResultHourKeys(item,p))if(map&&Object.prototype.hasOwnProperty.call(map,key))return map[key];
+  return undefined;
+}
+function promoResultLegacyMatches(p,item){
+  if(!item)return true;
+  if(Object.keys(p.resultWinnersByHour||{}).length||Object.keys(p.resultByHour||{}).length)return false;
+  return (p.resultDate||p.drawDate)===(item.date||'')&&timeToHHMM(p.resultSlot||p.drawTime||'')===timeToHHMM(item.slot);
+}
+function studioMergeCampaignOutcome(row,patch,key){
+  const next={...row,...JSON.parse(JSON.stringify(patch))};
+  const incoming=normalizeWinnerList(patch.resultWinnersByHour?.[key]||[]);
+  const winners=mergeWinnerDelivery(row.resultWinnersByHour?.[key]||[],incoming);
+  next.resultWinnersByHour={...(row.resultWinnersByHour||{}),[key]:winners};
+  next.resultByHour={...(row.resultByHour||{}),[key]:winners.map(w=>w.name).join(', ')};
+  next.resultWinners=winners;next.resultName=winners.map(w=>w.name).join(', ');
+  const date=key.slice(0,10),time=key.slice(11,13)+':'+key.slice(13,15);
+  const updates=(patch.occurrences||[]).filter(o=>o.date===date&&timeToHHMM(o.time||patch.resultSlot)===time);
+  const old=Array.isArray(row.occurrences)?row.occurrences:[];
+  next.occurrences=old.length?old.map(o=>{const update=updates.find(v=>v.id===o.id||v.date===o.date&&timeToHHMM(v.time)===timeToHHMM(o.time));return update?{...o,status:update.status,actualQty:update.actualQty,resultAt:update.resultAt,resultAtLabel:update.resultAtLabel}:o;}):patch.occurrences||[];
+  return next;
+}
+/* STUDIO_CAMPAIGNS_END */
+
 function promoResultStations(p){
   const st=normalizeStationValue(p?.station || STUDIO_STATION);
   if(st==='ALL') return ['JP1017','JPNEWS983'];
@@ -3624,7 +3736,7 @@ function promoOccurrences(p){
 }
 function promoOccurrenceForItem(p,item){
   if(!p||!item) return null;
-  return promoOccurrences(p).find(o=>o.date===(item.date||'')&&slotHour(o.time||p.drawTime)===slotHour(item.slot));
+  return promoOccurrences(p).find(o=>o.date===(item.date||'')&&(!item.occurrenceId||o.id===item.occurrenceId)&&timeToHHMM(o.time||p.drawTime)===timeToHHMM(item.slot));
 }
 function isPromoResultForItem(p,item){
   if(!p || !item || isMerchan(p)) return false;
@@ -3815,7 +3927,7 @@ function studioAV57Tokens(p,date){
   else{let daily=n;if(scope==='period')daily=studioAV57PeriodDue(p,date);if(scope==='legacy')daily=1;for(let i=0;i<daily;i++)out.push({p,candidates,ordinal:i});}
   return out.map((token,index)=>({...token,sequence:index+1}));
 }
-function studioAV57LegacyHourAllowed(p,item){const itemHour=studioAV57HourSlot(item?.slot||''),date=item?.date||'';if(!itemHour||!studioAV57DateAllowed(p,date)||!stationAllowed(p))return false;if(!isMerchan(p)&&isPromoResultForItem(p,item))return true;const configured=(p?.readHours||[]).map(studioAV57HourSlot).filter(Boolean);if(configured.length&&!configured.includes(itemHour))return false;if((p.readMode||'all')==='selected'&&!configured.length)return false;if(isMerchan(p)){const configs=studioAV57RecordPrograms(p,date);if(configs.length){const program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');if(!configs.some(c=>c.program===program&&(!c.hours.length||c.hours.includes(itemHour))))return false;}else if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item))return false;}return true;}
+function studioAV57LegacyHourAllowed(p,item){const itemHour=studioAV57HourSlot(item?.slot||''),date=item?.date||'';if(!itemHour||!studioAV57DateAllowed(p,date)||!stationAllowed(p))return false;const configured=(p?.readHours||[]).map(studioAV57HourSlot).filter(Boolean);if(configured.length&&!configured.includes(itemHour))return false;if((p.readMode||'all')==='selected'&&!configured.length)return false;if(isMerchan(p)){const configs=studioAV57RecordPrograms(p,date);if(configs.length){const program=upper(programFromSchedule(date,item?.slot||'',STUDIO_STATION)||item?.program||'');if(!configs.some(c=>c.program===program&&(!c.hours.length||c.hours.includes(itemHour))))return false;}else if(!programMatchesMerchan(p,item)||!merchanHourAllowed(p,item))return false;}return true;}
 function studioAV57FixedLoad(date){const load=new Map();studioPromoPool(date).filter(p=>studioAV57Visible(p)&&studioAV57Mode(p)==='fixed').forEach(p=>{const candidates=studioAV57Candidates(p,date),scope=studioAV57Scope(p),count=scope==='hour'?studioAV57Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
 function studioAV57OverrideFor(p,date,sequence){
   const rows=(Array.isArray(p?.opecOverrides)?p.opecOverrides:[]).filter(o=>!o?.disabled&&o?.date===date&&Number(o?.occurrence||o?.sequence||1)===Number(sequence));
@@ -3856,6 +3968,7 @@ function studioRequiredReadsForHour(p,item){
   if(studioAV57Mode(p)==='rotation'){const plan=studioAV57SmartPlan(item.date||todayISO());return(plan.get(p.id)||[]).filter(c=>c.program===program&&c.slot===slot).length;}
   const candidates=studioAV57Candidates(p,item.date||'');
   if(candidates.length&&candidates.some(c=>c.program===program&&c.slot===slot))return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;
+  if(p?.opecPrograms?.length)return 0;
   if(studioAV57LegacyHourAllowed(p,item))return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;
   return studioFixedCompatRequiredReads(p,item);
 }
@@ -3869,6 +3982,7 @@ function merchansForItemHour(item,includeRead=false){return pautasForItemHour(it
 function allPautasForItemHour(item,includeRead=false){return pautasForItemHour(item,includeRead,'all');}
 
 function studioDrawerIcon(kind){
+  if(kind==='campaigns')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v4H3zM5 12v9h14v-9M12 8v13"></path><path d="M12 8H8a3 3 0 1 1 3-3l1 3Zm0 0h4a3 3 0 1 0-3-3l-1 3Z"></path></svg>';
   if(kind==='upcoming')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>';
   if(kind==='promo')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h3l8 5V6l-8 5H4v2Z"></path><path d="M7 13v5h3l1-3"></path></svg>';
   if(kind==='merchan')return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 7h6M9 11h6M9 15h4"></path></svg>';
@@ -3902,9 +4016,10 @@ function studioUpcomingDrawRows(){
   const now=currentSlotDate(),today=todayISO(),rows=allPrizeRows(),active=itemForDate(rows,now).item;
   return rows.filter(i=>i.date===today&&(itemDateTime(i)>=now||i.id===active?.id)&&upper(i.status||'')!=='REALIZADO'&&upper(i.status||'')!=='CANCELADO'&&!upper(i.winnerName||'')&&!(Array.isArray(i.winnerNames)&&i.winnerNames.length));
 }
-function studioDrawerCount(mode,item){return mode==='history'?studioDrawHistoryRows(item?.date||todayISO()).length:mode==='upcoming'?studioUpcomingDrawRows().length:studioDrawerPendingCount(mode,item);}
-function studioDrawerLabel(mode){return mode==='upcoming'?'PRÓXIMOS SORTEIOS DE HOJE':mode==='history'?'SORTEIOS REALIZADOS':mode==='merchan'?'MERCHAN':'PAUTAS E PROMOÇÕES';}
+function studioDrawerCount(mode,item){if(mode==='campaigns')return studioCampaignList().length;return mode==='history'?studioDrawHistoryRows(item?.date||todayISO()).length:mode==='upcoming'?studioUpcomingDrawRows().length:studioDrawerPendingCount(mode,item);}
+function studioDrawerLabel(mode){if(mode==='campaigns')return 'PROMOÇÕES ATIVAS';return mode==='upcoming'?'PRÓXIMOS SORTEIOS DE HOJE':mode==='history'?'SORTEIOS REALIZADOS':mode==='merchan'?'MERCHAN':'PAUTAS E PROMOÇÕES';}
 function studioDrawerRows(item,mode){
+  if(mode==='campaigns')return studioCampaignDrawerRows();
   if(mode==='history'){
     const rows=studioDrawHistoryRows(item?.date||todayISO()).slice().reverse();
     if(!rows.length)return '<div class="studioDrawerEmpty">NENHUM REGISTRO PARA ESTE DIA.</div>';
@@ -3936,10 +4051,10 @@ function syncStudioDrawer(){
   if(!shell||!drawer)return;
   shell.classList.toggle('drawerOpen',!!studioDrawerMode);drawer.setAttribute('aria-hidden',studioDrawerMode?'false':'true');
   drawer.classList.toggle('hasPending',!!studioDrawerMode&&studioDrawerMode!=='history'&&!!currentDisplayItem&&studioDrawerCount(studioDrawerMode,currentDisplayItem)>0);
-  ['promo','merchan','history','upcoming'].forEach(mode=>{const id=mode==='promo'?'promoListBtn':mode==='merchan'?'merchanListBtn':mode==='upcoming'?'studioPendingBellBtn':'historyListBtn';$(id)?.classList.toggle('active',studioDrawerMode===mode);});
+  ['promo','merchan','history','upcoming','campaigns'].forEach(mode=>{const id=mode==='campaigns'?'studioCampaignBtn':mode==='promo'?'promoListBtn':mode==='merchan'?'merchanListBtn':mode==='upcoming'?'studioPendingBellBtn':'historyListBtn';$(id)?.classList.toggle('active',studioDrawerMode===mode);});
   if(studioDrawerMode&&body&&currentDisplayItem){body.innerHTML=studioDrawerRows(currentDisplayItem,studioDrawerMode);const count=studioDrawerCount(studioDrawerMode,currentDisplayItem);drawer.querySelector('.studioDrawerHeading').textContent=studioDrawerLabel(studioDrawerMode);drawer.querySelector('.studioDrawerHeadIcon').innerHTML=studioDrawerIcon(studioDrawerMode);drawer.querySelector('.studioDrawerCount').textContent=count;}
 }
-function toggleStudioDrawer(mode){studioDrawerMode=studioDrawerMode===mode?'':mode;syncStudioDrawer();}
+function toggleStudioDrawer(mode){if(studioResultSaving||studioReadSaving)return;studioDrawerMode=studioDrawerMode===mode?'':mode;syncStudioDrawer();}
 function closeStudioDrawer(){studioDrawerMode='';syncStudioDrawer();}
 function ensureStudioReadSheet(){
   let root=$('studioReadSheet');if(root)return root;
@@ -3947,7 +4062,8 @@ function ensureStudioReadSheet(){
   $('studioReadSheetClose').onclick=closeStudioReadSheet;$('studioReadSheetConfirm').onclick=confirmPromoRead;root.addEventListener('click',e=>{if(e.target===root)closeStudioReadSheet();});return root;
 }
 function openStudioReadSheet(promoId){
-  if(studioReadSaving)return;
+  if(studioReadSaving||studioResultSaving)return;
+  studioCampaignContext=null;
   const p=findPromoById(promoId),item=currentDisplayItem||virtualCurrentItem();if(!p||!item)return;
   studioReadSheetPromoId=null;selectedPromoId=promoId;
   studioReadContext={promoId,date:item.date,slot:item.slot};
@@ -4048,10 +4164,10 @@ function previousStudioPendencies(){
   }
   return out.slice(-4).reverse();
 }
-function studioOperationActive(){return !!studioReadContext||studioReadSaving||!!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
+function studioOperationActive(){return !!studioCampaignContext||studioResultSaving||!!studioReadContext||studioReadSaving||!!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
 function scheduleManualReturn(){clearTimeout(manualReturnTimer);if(!manual)return;manualLastInteractionAt=Date.now();manualReturnTimer=setTimeout(()=>{if(!manual)return;if(studioOperationActive()){scheduleManualReturn();return;}returnStudioToNow();},MANUAL_RETURN_MS);}
-function returnStudioToNow(){if(studioReadSaving)return;clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;studioDrawerMode='';closeStudioReadSheet(false);render();}
-function jumpToStudioPending(date,slot,promoId=''){if(studioReadSaving)return;studioReadContext=null;studioReadSheetPromoId=null;const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=null;scheduleManualReturn();render();if(promoId)setTimeout(()=>startPromoRead(promoId),0);}
+function returnStudioToNow(){if(studioReadSaving||studioResultSaving)return;studioCampaignContext=null;clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;studioDrawerMode='';closeStudioReadSheet(false);render();}
+function jumpToStudioPending(date,slot,promoId=''){if(studioReadSaving||studioResultSaving)return;studioCampaignContext=null;studioReadContext=null;studioReadSheetPromoId=null;const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=null;scheduleManualReturn();render();if(promoId)setTimeout(()=>startPromoRead(promoId),0);}
 window.returnStudioToNow=returnStudioToNow;window.jumpToStudioPending=jumpToStudioPending;
 function pautaTypeLabel(p){
   if(isMerchan(p)) return 'MERCHAN';
@@ -4097,11 +4213,12 @@ function renderReadHistoryTicker(){
   const loopRows=textRows.length>1 ? textRows.concat(textRows) : textRows;
   host.innerHTML=`<div class="readHistoryTickerTrack">${loopRows.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`;
 }
-function currentPromoForRead(){return studioReadSheetPromoId?findPromoById(studioReadSheetPromoId):(selectedPromoId?findPromoById(selectedPromoId):null);}
+function currentPromoForRead(){if(studioCampaignContext)return studioCampaignRecord(studioCampaignContext.promoId,studioCampaignContext.date);return studioReadSheetPromoId?findPromoById(studioReadSheetPromoId):(selectedPromoId?findPromoById(selectedPromoId):null);}
 
 function promoResultForHour(p,item){
   if(!p) return '';
-  return (item && hourMapValue(p.resultByHour,item,p)) || p.resultName || '';
+  const exact=item?promoResultMapValue(p.resultByHour,item,p):undefined;
+  return exact!==undefined?exact:promoResultLegacyMatches(p,item)?p.resultName||'':'';
 }
 function normalizeWinnerList(list){
   if(!Array.isArray(list)) return [];
@@ -4111,14 +4228,12 @@ function normalizeWinnerList(list){
     .filter(w=>{ if(seen.has(w.name)) return false; seen.add(w.name); return true; });
 }
 function promoWinnerList(p,item){
-  if(!p) return [];
-  const byHourValue=item ? hourMapValue(p.resultWinnersByHour,item,p) : null;
-  const byHour = Array.isArray(byHourValue) ? byHourValue : null;
-  const base = byHour || p.resultWinners || [];
-  const list=normalizeWinnerList(base);
-  if(list.length) return list;
+  if(!p)return [];
+  const exact=item?promoResultMapValue(p.resultWinnersByHour,item,p):undefined;
+  if(Array.isArray(exact))return normalizeWinnerList(exact);
   const current=promoResultForHour(p,item);
-  return current ? normalizeWinnerList(String(current).split(',').map(name=>({name}))) : [];
+  if(current)return normalizeWinnerList(String(current).split(',').map(name=>({name})));
+  return promoResultLegacyMatches(p,item)?normalizeWinnerList(p.resultWinners||[]):[];
 }
 function mergeWinnerDelivery(previous,next){
   const prev=normalizeWinnerList(previous);
@@ -4134,7 +4249,7 @@ function collectPromoWinnerInputs(){
     .filter(w=>w.name);
 }
 function promoWinnerInputRow(w={},index=0){
-  return `<div class="promoWinnerCandidate" data-promo-winner-index="${index}"><div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(w.name||'')}" placeholder="NOME DO GANHADOR"><button class="${index?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${index?'REMOVER':'ADICIONAR GANHADOR'}">${index?'×':'+'}</button></div><div class="winnerEligibility neutral promoWinnerEligibility" id="promoWinnerEligibility${index}">${winnerEligibilityHtml(null)}</div></div>`;
+  return `<div class="promoWinnerCandidate" data-promo-winner-index="${index}"><div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(w.name||'')}" data-similarity-input-key="${esc(w.similarityInputKey||'')}" data-similarity-rejected="${esc(w.similarityRejected||'')}" placeholder="NOME DO GANHADOR"><button class="${index?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${index?'REMOVER':'ADICIONAR GANHADOR'}">${index?'×':'+'}</button></div><div class="winnerEligibility neutral promoWinnerEligibility" id="promoWinnerEligibility${index}">${winnerEligibilityHtml(null)}</div></div>`;
 }
 function updatePromoWinnerSaveState(){
   const button=$('savePromoResultInline');
@@ -4285,7 +4400,13 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
           if([...previousNames].sort().join('|')===[...cleanNames].sort().join('|')) return rows;
           if(!correctionMode){stateConflict='ESTE RESULTADO JÁ FOI CONFIRMADO EM OUTRO COMPUTADOR.';return;}
         }
-        const next={...row,...JSON.parse(JSON.stringify(patch)),winnerOperationId:operationId,updatedAt:now.toISOString()};
+        if(collection==='promos'&&occurrenceKey){
+          const reference={date:context.date,slot:patch.resultSlot},remoteOccurrence=promoOccurrenceForItem(row,reference);
+          if(!studioCampaignVisible(row)||!stationAllowed(row)||!remoteOccurrence||['CANCELADO','CANCELADA'].includes(upper(remoteOccurrence.status||''))){stateConflict='ESTE SORTEIO FOI ALTERADO OU CANCELADO. REABRA A PROMOÇÃO ANTES DE CONFIRMAR.';return;}
+          const remoteCapacity=Math.max(1,Number(remoteOccurrence.qtyPlanned||row.winnersPerDraw||row.qtyPerDraw)||1);
+          if(cleanNames.length>remoteCapacity){stateConflict=`A QUANTIDADE DESTE SORTEIO FOI ALTERADA PARA ${remoteCapacity} GANHADOR(ES). REABRA A PROMOÇÃO ANTES DE CONFIRMAR.`;return;}
+        }
+        const next=collection==='promos'&&occurrenceKey?studioMergeCampaignOutcome(row,patch,occurrenceKey):{...row,...JSON.parse(JSON.stringify(patch))};next.winnerOperationId=operationId;next.updatedAt=now.toISOString();
         if(correctionMode){next.winnerCorrectedAt=now.toISOString();next.winnerCorrectedAtLabel=now.toLocaleString('pt-BR');next.winnerCorrectedBy=operator.name;next.winnerCorrectionReason='CORREÇÃO NO ESTÚDIO';if(collection==='items'){next.winnerDeliveries=[];next.deliveredAt='';next.deliveredAtLabel='';next.deliveredBy='';}}
         rows[index]=next;
         stateChanged=true;
@@ -4326,39 +4447,46 @@ async function commitStudioOutcomeAtomic(payload){
   return commitStudioOutcomeAtomicV56(payload);
 }
 async function savePromoResultInline(){
-  const busyButton=$('savePromoResultInline'); if(busyButton?.dataset.busy==='1') return;
+  const busyButton=$('savePromoResultInline'); if(studioResultSaving||busyButton?.dataset.busy==='1') return;
   const p=currentPromoForRead(); const item=currentDisplayItem||virtualCurrentItem(); if(!p||!item) return;
+  if(studioCampaignContext && new Date(`${item.date}T${timeToHHMM(item.slot)}:00`).getTime()>Date.now())return;
+  studioCaptureCampaignDraft();
   const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput')); const winners=collectPromoWinnerInputs();
   if(!winners.length||fields.some(field=>!upper(field.value))){ fields.find(field=>!upper(field.value))?.focus(); return; }
   const occurrence=promoOccurrenceForItem(p,item); const capacity=Math.max(1,Number(occurrence?.qtyPlanned||p.qtyPerDraw||item.qty||1)||1);
   if(winners.length>capacity){ alert(`ESTE SORTEIO PREVÊ NO MÁXIMO ${capacity} GANHADOR(ES).`); return; }
   validateAllPromoWinnerInputs(); if(!winnerBankReady||promoWinnerChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
+  studioResultSaving=true;
   const button=$('savePromoResultInline'); button.dataset.busy='1'; button.disabled=true; button.textContent='VALIDANDO E SALVANDO...';
   try{
-    const context=winnerContextForPromo(p,item), now=new Date(), key=readHourKey(item,p), previous=promoWinnerList(p,item);
+    const context=winnerContextForPromo(p,item), now=new Date(), key=promoResultHourKeys(item,p)[0], previous=promoWinnerList(p,item);
     const prepared=winners.map(w=>({...w,registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')})); const merged=mergeWinnerDelivery(previous,prepared); const joined=merged.map(w=>w.name).join(', ');
     const resultByHour={...(p.resultByHour||{}),[key]:joined}; const resultWinnersByHour={...(p.resultWinnersByHour||{}),[key]:merged};
     const occurrences=promoOccurrences(p).map(o=>promoOccurrenceForItem({...p,occurrences:[o]},item)?{...o,status:'REALIZADO',actualQty:merged.length,resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')}:{...o});
     const patch={resultByHour,resultWinnersByHour,resultWinners:merged,resultName:joined,resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR'),resultSlot:formatStudioTime(item.slot),resultDate:item.date||todayISO(),occurrences};
     await commitStudioOutcomeAtomic({collection:'promos',recordId:p.id,patch,names:merged.map(w=>w.name),context,occurrenceKey:key});
-    render();
+    studioResultSaving=false;
+    if(studioCampaignContext)studioCloseCampaignResult();else render();
   }catch(error){ console.error('ERRO AO SALVAR RESULTADO DA PROMOÇÃO:',error); alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR O RESULTADO.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`); initWinnerBank(true); }
-  finally{ if(button){ button.dataset.busy='0'; button.textContent='SALVAR RESULTADO'; updatePromoWinnerSaveState(); } }
+  finally{studioResultSaving=false;if(button){button.dataset.busy='0';button.textContent='CONFIRMAR RESULTADO';updatePromoWinnerSaveState();}}
 }
 
 function shouldShowPromoResultBox(p,item){
-  if(!p || !item || isMerchan(p)) return false;
+  if(!p || !item || !studioIsCampaign(p)) return false;
+  if(studioCampaignContext && new Date(`${item.date}T${timeToHHMM(item.slot)}:00`).getTime()>Date.now())return false;
   return isPromoResultForItem(p,item);
 }
 
 function buildPromoResultBox(p,item){
   const winners=promoWinnerList(p,item);
-  const inputRows=(winners.length?winners:[{name:''}]).map((w,idx)=>promoWinnerInputRow(w,idx)).join('');
+  const draft=studioCampaignContext?.winnerDraft;
+  const capacity=Math.max(1,Number(promoOccurrenceForItem(p,item)?.qtyPlanned||p.qtyPerDraw)||1);
+  const inputRows=(draft|| (winners.length?winners:Array.from({length:capacity},()=>({name:''})))).map((w,idx)=>promoWinnerInputRow(w,idx)).join('');
   const saved=winners.length ? `<div class="resultSavedList">${winners.map(w=>`<div class="resultSaved">GANHADOR: ${esc(w.name)}${w.deliveredAtLabel?` · RETIRADO ${esc(w.deliveredAtLabel)}`:''}</div>`).join('')}</div>` : '';
   return `<div class="resultBox">
-    <label>RESULTADO / GANHADOR DO SORTEIO</label>
+    <label>RESULTADO / GANHADOR DO SORTEIO</label><div class="uploadHint">A CONFIRMAÇÃO DO RESULTADO É SEPARADA DA LEITURA DA PAUTA.</div>
     <div class="resultWinnersList" id="promoResultWinnersList">${inputRows}</div>
-    <div class="pautaActions" style="justify-content:flex-start;margin-top:4px"><button class="modalBtn primary" id="savePromoResultInline" type="button">SALVAR RESULTADO</button></div>
+    <div class="pautaActions" style="justify-content:flex-start;margin-top:4px"><button class="modalBtn primary" id="savePromoResultInline" type="button">CONFIRMAR RESULTADO</button></div>
     ${saved}
   </div>`;
 }
@@ -4487,7 +4615,7 @@ window.markPromoReadMissed=markPromoReadMissed;
 async function confirmPromoReadV56(event){
   if(event){event.preventDefault();event.stopPropagation();}
   const button=event?.currentTarget||$('confirmPromoReadInline'),p=currentPromoForRead(),item=currentDisplayItem||virtualCurrentItem();
-  if(!p||!item||studioReadSaving||button?.dataset.busy==='1')return;
+  if(!p||!item||studioReadSaving||studioResultSaving||studioCampaignContext||button?.dataset.busy==='1')return;
   const required=studioRequiredReadsForHour(p,item),before=studioReadCountForHour(p,item),beforeMissed=studioMissedCountForHour(p,item),beforeResolved=before+beforeMissed;
   if(required<1){alert('ESTA PAUTA NÃO ESTÁ PROGRAMADA PARA ESTE HORÁRIO.');closeStudioReadSheet();return;}
   if(beforeResolved>=required){closeStudioReadSheet();return;}
@@ -4731,7 +4859,8 @@ async function saveWinner(){
   }
 }
 function step(delta){
-  if(studioReadSaving)return;
+  if(studioReadSaving||studioResultSaving)return;
+  studioCampaignContext=null;
   studioReadContext=null;studioReadSheetPromoId=null;
   const base = manualHourDateMs !== null
     ? new Date(manualHourDateMs)
@@ -4751,11 +4880,17 @@ window.studioShortcutClick=studioShortcutClick;
 window.studioPautaItemClick=studioPautaItemClick;
 
 function render(){
+  if(studioResultSaving)return;
+  if(studioCampaignContext){
+    if(currentDisplayItem?.promoId===studioCampaignContext.promoId && currentDisplayItem?.occurrenceId===studioCampaignContext.occurrenceId)studioCaptureCampaignDraft();
+    if(document.activeElement?.classList?.contains('promoResultWinnerInput')){renderStudioDateStamp();return;}
+  }
   studioPendingReadCache=null;
   renderStudioDateStamp();
   const rows=allPrizeRows();
   let item=null;
-  if(studioReadContext){
+  if(studioCampaignContext){item=studioCampaignDisplayItem();}
+  else if(studioReadContext){
     const target=new Date(`${studioReadContext.date}T${timeToHHMM(studioReadContext.slot)}:00`);
     const found=itemForDate(rows,target);selectedIndex=found.idx;item=found.item;
   }else if(!manual){
@@ -4772,7 +4907,7 @@ function render(){
   }
   if(item && !item.__virtual) item.__hasScheduledPrize = item.sourceType!=='promo-result';
   currentDisplayItem=item;
-  if(selectedPromoId && item && !allPautasForItemHour(item,true).some(p=>p.id===selectedPromoId)){
+  if(!studioCampaignContext && selectedPromoId && item && !allPautasForItemHour(item,true).some(p=>p.id===selectedPromoId)){
     selectedPromoId=null;studioReadContext=null;
   }
   if(!selectedPromoId && item && item.sourceType==='promo-result' && item.promoId){
@@ -4782,12 +4917,14 @@ function render(){
   const isVirtual=!!item.__virtual;
   const winnerBlock = item.winnerName ? `<div class="winnerBox" data-has-winner="1" title="BOTÃO DIREITO: AÇÕES DO GANHADOR"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
   const promoBody = promo ? `
+      ${studioCampaignContext?studioCampaignResultInfo(promo,item):''}
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1></div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
+      ${studioCampaignContext&&!shouldShowPromoResultBox(promo,item)?'<div class="studioCampaignResultInfo">SORTEIO AGENDADO · O RESULTADO PODERÁ SER CONFIRMADO NO HORÁRIO DO SORTEIO.</div>':''}
       <div class="pautaActions studioInlineReadActions">
-        ${studioAV57Progress(promo,item).remaining>0?`<button class="studioReadSheetAction confirm studioReadSheetConfirm ${studioReadSaving?'busy':''}" id="confirmPromoReadInline" type="button" ${studioReadSaving?'disabled':''} aria-busy="${studioReadSaving?'true':'false'}" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA" onclick="confirmPromoRead(event)">${studioDrawerStateIcon('done')}</button>`:''}
+        ${!studioCampaignContext&&studioAV57Progress(promo,item).remaining>0?`<button class="studioReadSheetAction confirm studioReadSheetConfirm ${studioReadSaving?'busy':''}" id="confirmPromoReadInline" type="button" ${studioReadSaving?'disabled':''} aria-busy="${studioReadSaving?'true':'false'}" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA" onclick="confirmPromoRead(event)">${studioDrawerStateIcon('done')}</button>`:''}
         <button class="studioReadSheetAction" id="cancelPromoReadInline" type="button" ${studioReadSaving?'disabled':''} title="FECHAR E VOLTAR AO PRÊMIO" aria-label="FECHAR E VOLTAR AO PRÊMIO">${studioDrawerStateIcon('missed')}</button>
       </div>
     ` : isVirtual ? `
@@ -4808,6 +4945,7 @@ function render(){
         <div class="promoListWrap"><button class="promoListBtn ${studioDrawerMode==='merchan'?'active':''} ${studioDrawerPendingCount('merchan',item)>0?'hasPending':''}" id="merchanListBtn" type="button" onclick="studioShortcutClick(event,\'merchan\')" aria-label="MERCHANS" title="M = MERCHANS"><span class="studioShortcutGlyph" aria-hidden="true">M</span></button></div>
         <button class="promoListBtn history ${studioDrawerMode==='history'?'active':''}" id="historyListBtn" type="button" onclick="studioShortcutClick(event,\'history\')" aria-label="HISTÓRICO" title="H = HISTÓRICO">H</button>
         ${studioPendingBellMarkup()}
+        ${studioCampaignButtonMarkup()}
         <button class="iconNav" id="prevItem" type="button" aria-label="PAUTA ANTERIOR">‹</button>
         <button class="iconNav" id="nextItem" type="button" aria-label="PRÓXIMA PAUTA">›</button>
       </div>
@@ -4818,12 +4956,12 @@ function render(){
   $('prevItem').addEventListener('click',()=>step(-1));
   $('nextItem').addEventListener('click',()=>step(1));
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
-  const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',closePromoReadModal);
+  const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',()=>studioCampaignContext?studioCloseCampaignResult():closePromoReadModal());
   const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.onclick=confirmPromoRead;
   const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);
   const resultList=$('promoResultWinnersList');
   if(resultList){
-    resultList.addEventListener('input',e=>{ if(e.target.classList.contains('promoResultWinnerInput')) validateAllPromoWinnerInputs(); });
+    resultList.addEventListener('input',e=>{ if(e.target.classList.contains('promoResultWinnerInput')){studioCaptureCampaignDraft();validateAllPromoWinnerInputs();} });
     resultList.addEventListener('click',e=>{
       const manual=e.target.closest('[data-winner-manual-toggle]');
       if(manual){
@@ -4856,6 +4994,7 @@ function render(){
   const merchanBtn=$('merchanListBtn');
   if(merchanBtn) merchanBtn.onclick=e=>studioShortcutClick(e,'merchan');
   const bellBtn=$('studioPendingBellBtn');if(bellBtn)bellBtn.onclick=studioUpcomingDrawClick;
+  const campaignBtn=$('studioCampaignBtn');if(campaignBtn)campaignBtn.onclick=e=>studioShortcutClick(e,'campaigns');
   const historyBtn=$('historyListBtn');
   if(historyBtn) historyBtn.onclick=e=>studioShortcutClick(e,'history');
   const drawerClose=$('studioDrawerClose'); if(drawerClose) drawerClose.onclick=closeStudioDrawer;
@@ -4887,13 +5026,15 @@ $('winnerModal').addEventListener('keydown',e=>{
 });
 
 document.addEventListener('click',e=>{
-  const shortcut=e.target.closest('#promoListBtn,#merchanListBtn,#historyListBtn,#studioPendingBellBtn');
+  const shortcut=e.target.closest('#promoListBtn,#merchanListBtn,#historyListBtn,#studioPendingBellBtn,#studioCampaignBtn');
   if(shortcut){
+    if(shortcut.id==='studioCampaignBtn')return studioShortcutClick(e,'campaigns');
     if(shortcut.id==='promoListBtn') return studioShortcutClick(e,'promo');
     if(shortcut.id==='merchanListBtn') return studioShortcutClick(e,'merchan');
     if(shortcut.id==='studioPendingBellBtn') return studioUpcomingDrawClick(e);
     if(shortcut.id==='historyListBtn') return studioShortcutClick(e,'history');
   }
+  const campaign=e.target.closest('[data-campaign-id]');if(campaign){e.preventDefault();e.stopPropagation();return studioOpenCampaignResult(campaign.dataset.campaignId,campaign.dataset.occurrenceId);}
   const pauta=e.target.closest('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioDrawerItem[data-promo-id]');
   if(pauta){if(pauta.dataset.programSlot)return studioProgramMerchanClick(e,pauta.dataset.promoId,pauta.dataset.programDate,pauta.dataset.programSlot);return studioPautaItemClick(e,pauta.dataset.promoId);}
 });
@@ -4912,7 +5053,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStat
 setInterval(()=>{ if(!document.hidden) refreshStudioCountdownClocks(); },1000);
 setInterval(()=>{
   const hk=currentHourKey();
-  if(hk!==lastHourKey&&!studioReadContext&&!studioReadSaving){
+  if(hk!==lastHourKey&&!studioReadContext&&!studioReadSaving&&!studioCampaignContext&&!studioResultSaving){
     manual=false;
     selectedIndex=-1;
     selectedPromoId=null;

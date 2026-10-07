@@ -3571,8 +3571,6 @@ main{position:relative!important;z-index:1!important;padding-bottom:0!important}
 #promoDrawer .promoFormSectionTitle{margin-bottom:10px}
 #promoDrawer .promoDistributionGuide{background:#f4f8fb;border-color:#d7e3ed;color:#50687b}
 #promoDrawer .promoMechanicsSummary{margin-top:3px}
-#promoDrawer[data-kind="pauta"] .promoFormSection:nth-of-type(2){display:none!important}
-#promoDrawer[data-kind="pauta"] .promoFormSection:nth-of-type(3) .promoFormSectionTitle span::after{content:' · MESMA REGRA DO OMR'}
 #promoDrawer #promoResultProgram:not(.missing){background:#eff8f3;border-color:#c7e5d3;color:#247047}
 #promoDrawer #promoResultProgram.missing{background:#fff5f6;border-color:#efc3ca;color:#9c3143}
 </style>
@@ -3737,6 +3735,32 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/av58-admin.css">
+<style id="promo-pi-editor-style">
+#promoDrawer .drawerCard{width:min(1320px,97vw)!important;max-width:1320px!important}
+#promoDrawer .promoFormLayout{grid-template-columns:minmax(0,3fr) minmax(340px,2fr)!important;gap:20px!important}
+#promoDrawer .promoTypeChoice{position:static!important;padding:10px!important}
+.promoEditorTabs{display:flex;gap:6px;padding:5px;border:1px solid #e1e6ed;border-radius:13px;background:#f3f5f8;margin-bottom:14px}
+.promoEditorTabs button{flex:1;padding:11px 8px;border:0;border-radius:9px;background:transparent;font:800 10px Arial;color:#6a7586;cursor:pointer}
+.promoEditorTabs button[aria-selected="true"]{background:#fff;color:#b90d2f;box-shadow:0 2px 6px #17233d12}
+#promoDrawer [data-promo-editor-panel][hidden]{display:none!important}
+#promoDrawer .promoPreviewBox{padding:14px!important;background:#f4f6fa;top:12px;min-width:0}
+.promoPreviewHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+#promoDrawer .promoPreviewCard{padding:16px!important;background:#fff;overflow:hidden}
+#promoDrawer .promoPreviewImage{width:100%!important;aspect-ratio:4/1;height:auto!important;min-height:0!important;border-radius:9px;margin:0 0 15px!important;background:#edf1f6;display:flex;align-items:center;justify-content:center;font-size:10px}
+#promoDrawer .promoPreviewImage img{width:100%!important;height:auto!important;display:block;object-fit:contain!important}
+#promoDrawer .promoPreviewContent{padding:0!important;width:100%}
+#promoDrawer .promoPreviewMeta{font-size:9px;color:#758194;margin-bottom:12px}
+#promoDrawer .promoPreviewTitle{line-height:1.2;overflow-wrap:anywhere}
+#promoDrawer .promoPreviewDesc{white-space:pre-wrap;line-height:1.6;overflow-wrap:anywhere}
+.promoPreviewFooter{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:12px;font-size:8px;font-weight:800;color:#778294}
+.promoPreviewFooter div{display:flex;gap:8px}.promoPreviewFooter button{width:32px;height:32px;border:1px solid #ccd9d1;border-radius:50%;color:#247047;background:#fff;font-size:17px}
+.promoPreviewFooter button:last-child{border-color:#ead0d6;color:#9c3143}
+#promoDrawer.previewExpanded .promoPreviewBox{position:fixed!important;inset:6vh max(4vw,calc((100vw - 1000px)/2))!important;z-index:1100;overflow:auto;box-shadow:0 0 0 100vmax #17233d80}
+.promoPlanBox{border:1px solid #dbe5ed;border-radius:12px;padding:12px;background:#fff}
+.promoPlanHead{display:flex;justify-content:space-between;gap:12px;align-items:center}.promoPlanHead strong{font-size:10px}.promoPlanHead span{font-size:9px;color:#247047;font-weight:800}
+#promoPlanGrid{max-height:270px;overflow:auto;margin-top:8px}.promoPlanTable{width:100%;border-collapse:collapse;font-size:9px}.promoPlanTable th{text-align:left;color:#748094;background:#f5f7fa;position:sticky;top:0}.promoPlanTable th,.promoPlanTable td{padding:8px;border-bottom:1px solid #edf0f4}.promoPlanTable td:last-child{text-align:center;font-weight:800;color:#247047}.promoPlanEmpty{padding:12px;border-radius:9px;background:#fff5ee;color:#a05d18;font-size:10px}
+@media(max-width:900px){#promoDrawer .promoFormLayout{grid-template-columns:1fr!important}#promoDrawer .promoPreviewBox{order:initial!important;position:relative!important}.promoPlanHead{align-items:flex-start;flex-direction:column}.promoEditorTabs button{font-size:9px}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -4436,7 +4460,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
         <input type="hidden" id="promoId">
         <input type="hidden" id="promoImageData">
         <div class="promoFormLayout">
-          <div>
+          <div class="promoEditorFields">
             <div class="promoTypeChoice">
               <span>O QUE SERÁ CADASTRADO?</span>
               <div class="promoTypeButtons">
@@ -4446,46 +4470,36 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
               <select class="control hidden" id="promoKind" aria-hidden="true" tabindex="-1"><option value="promo">PROMOÇÃO</option><option value="pauta">PAUTA</option></select>
             </div>
 
+            <div class="promoEditorTabs" role="tablist" aria-label="Cadastro de promoção ou pauta">
+              <button type="button" id="promoTabContent" role="tab" data-promo-editor-tab="content" aria-controls="promoPanelContent" aria-selected="true">CONTEÚDO</button>
+              <button type="button" id="promoTabSchedule" role="tab" data-promo-editor-tab="schedule" aria-controls="promoPanelSchedule" aria-selected="false" tabindex="-1">PROGRAMAÇÃO</button>
+              <button type="button" id="promoTabDraw" role="tab" data-promo-editor-tab="draw" aria-controls="promoPanelDraw" aria-selected="false" tabindex="-1" data-promo-only="1">SORTEIO</button>
+            </div>
+            <div id="promoPanelContent" role="tabpanel" aria-labelledby="promoTabContent" data-promo-editor-panel="content">
             <section class="promoFormSection">
-              <div class="promoFormSectionTitle"><strong>1. IDENTIFICAÇÃO E VIGÊNCIA</strong><span>PERÍODO, EMISSORA E IDENTIFICAÇÃO</span></div>
+              <div class="promoFormSectionTitle"><strong>IDENTIFICAÇÃO</strong><span>RÁDIO E CANAL</span></div>
               <div class="formGrid">
-                <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
-                <div class="field"><label>ENCERRAMENTO</label><input class="control" type="date" id="promoEndDate" required></div>
                 <div class="field"><label>RÁDIO</label><select class="control" id="promoStation"><option value="JP1017">JOVEMPAN 101,7</option><option value="JPNEWS983">JPNEWS 98,3</option><option value="ALL">AMBAS</option></select></div>
                 <div class="field" id="promoLocalField" data-promo-only="1"><label id="promoLocalLabel">CANAL DA PROMOÇÃO</label><select class="control" id="promoLocal"></select></div>
               </div>
             </section>
-
-            <section class="promoFormSection" data-promo-only="1">
-              <div class="promoFormSectionTitle"><strong>2. PRÊMIO E SORTEIO</strong><span>VÍNCULO DIRETO COM A DISTRIBUIÇÃO</span></div>
+            <section class="promoFormSection">
+              <div class="promoFormSectionTitle"><strong>TEXTO E BANNER</strong><span>PRÉVIA AO LADO</span></div>
               <div class="formGrid">
-                <div class="field wide"><label>PRÊMIO VINCULADO À DISTRIBUIÇÃO</label><select class="control" id="promoDistributionId" required><option value="">SELECIONE O PRÊMIO DISTRIBUÍDO</option></select></div>
-                <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
-                <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SELECIONE O PRÊMIO"></div>
-                <div class="promoDistributionGuide"><strong>REGRA:</strong> A PROMOÇÃO RESERVA O PRÊMIO DIRETAMENTE DA DISTRIBUIÇÃO. O SALDO NÃO É DUPLICADO E O SISTEMA BLOQUEIA QUANDO A QUANTIDADE NECESSÁRIA FOR MAIOR QUE A DISPONÍVEL.</div>
-
-                <div class="field"><label>NÚMERO DE GANHADORES</label><input class="control" type="number" min="1" step="1" id="promoQtyPerDraw" value="1"></div>
-                <div class="field"><label>BRINDES / INGRESSOS POR GANHADOR</label><input class="control" type="number" min="1" step="1" id="promoUnitsPerWinner" value="1"></div>
-                <div class="field"><label>TOTAL RESERVADO POR SORTEIO</label><input class="control" id="promoConsumptionTotal" readonly value="1 UNIDADE"></div>
-                <div class="field"><label>PRAZO DE RETIRADA</label><select class="control" id="promoPickupDays"><option value="5">PADRÃO · 5 DIAS ÚTEIS</option><option value="4">4 DIAS ÚTEIS</option><option value="3">3 DIAS ÚTEIS</option><option value="2">2 DIAS ÚTEIS</option><option value="1">1 DIA ÚTIL</option></select></div>
-
-                <div class="field" id="promoDrawDateField"><label id="promoDrawDateLabel">DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate"></div>
-                <div class="field" id="promoDrawTimeField"><label id="promoDrawTimeLabel">HORA DO SORTEIO</label><input class="control" type="time" id="promoDrawTime" step="1800"></div>
-                <div class="field wide"><label>PROGRAMA DO RESULTADO · IDENTIFICADO PELA GRADE</label><input class="control promoResultProgram" id="promoResultProgram" readonly value="SELECIONE DATA E HORA"></div>
-                <div class="field"><label>RECORRÊNCIA DO SORTEIO</label><select class="control" id="promoRecurrence"><option value="single">SORTEIO ÚNICO</option><option value="weekly">SEMANAL ATÉ O ENCERRAMENTO</option></select></div>
-
-                <div class="field full" id="promoOccurrencesField"><label>AGENDA DE SORTEIOS</label><div class="promoOccurrencesEditor" id="promoOccurrencesEditor"><div class="promoOccurrenceEmpty">A AGENDA SERÁ GERADA A PARTIR DAS DATAS ACIMA.</div></div></div>
-                <div class="promoMechanicsSummary">
-                  <div class="promoMechanicsBox"><span>GANHADORES / SORTEIO</span><strong id="promoSummaryWinners">1</strong></div>
-                  <div class="promoMechanicsBox"><span>UNIDADES / GANHADOR</span><strong id="promoSummaryUnits">1</strong></div>
-                  <div class="promoMechanicsBox"><span>CONSUMO / SORTEIO</span><strong id="promoSummaryConsumption">1</strong></div>
-                </div>
+                <div class="field wide"><label>NOME / TÍTULO PARA O LOCUTOR</label><input class="control" id="promoName" required></div>
+                <div class="field full"><label>TEXTO PARA O LOCUTOR</label><textarea class="control" id="promoDescription" required></textarea></div>
+                <div class="field full" data-promo-only="1"><label>IMAGEM 1600 X 400 — 4:1</label><input class="control" type="file" id="promoImage" accept="image/*"><div class="uploadHint">OPCIONAL · 1600 × 400 PX · PROPORÇÃO 4:1. BANNER, TÍTULO E TEXTO USAM A MESMA LARGURA.</div></div>
+                <input type="hidden" id="promoTitleFont"><input type="hidden" id="promoTitleSize"><input type="hidden" id="promoTitleColor">
+                <input type="hidden" id="promoDescFont"><input type="hidden" id="promoDescSize"><input type="hidden" id="promoDescColor">
               </div>
             </section>
-
+            </div>
+            <div id="promoPanelSchedule" role="tabpanel" aria-labelledby="promoTabSchedule" data-promo-editor-panel="schedule" hidden>
             <section class="promoFormSection">
-              <div class="promoFormSectionTitle"><strong>3. PROGRAMAÇÃO DA PAUTA</strong><span>MESMO MOTOR DE VEICULAÇÃO DO OMR</span></div>
+              <div class="promoFormSectionTitle"><strong>DISTRIBUIÇÃO DAS LEITURAS</strong><span>DIAS, FREQUÊNCIA E HORÁRIOS</span></div>
               <div class="formGrid">
+                <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
+                <div class="field"><label>ENCERRAMENTO</label><input class="control" type="date" id="promoEndDate" required></div>
                 <div class="field full merchanProgramField" id="promoProgramField"><label id="promoProgramLabel">PROGRAMA(S) / FAIXAS PERMITIDAS</label><select class="control av57Hidden" id="promoProgram"></select><div class="av57ProgramChoices" id="promoProgramChoices"></div><div class="av57ProgramHours" id="promoProgramHours"></div></div>
                 <div class="field full">
                   <label>REGRA DE VEICULAÇÃO</label>
@@ -4510,33 +4524,52 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
                   <label>HORÁRIOS DE LEITURA</label>
                   <div class="promoReadSchedule" id="promoReadScheduleBox"><div class="promoReadScheduleTop"><strong id="promoReadScheduleTitle">ONDE ESSA PAUTA APARECE NO ESTÚDIO</strong><label class="promoReadAll"><input type="checkbox" id="promoReadAll"> TODOS OS HORÁRIOS</label></div><div class="promoReadHours" id="promoReadHours"></div></div>
                 </div>
+                <div class="field full promoPlanBox"><div class="promoPlanHead"><strong>GRADE DE LEITURAS</strong><span id="promoPlanSummary">SELECIONE DIAS E HORÁRIOS</span></div><p class="uploadHint">O rodízio considera as outras leituras da programação. A grade pode se ajustar às confirmações e alterações.</p><div id="promoPlanGrid" aria-live="polite"></div></div>
               </div>
             </section>
-
-            <section class="promoFormSection">
-              <div class="promoFormSectionTitle"><strong>4. TEXTO PARA O LOCUTOR</strong><span>TÍTULO, TEXTO E PREVIEW</span></div>
+            </div>
+            <div id="promoPanelDraw" role="tabpanel" aria-labelledby="promoTabDraw" data-promo-editor-panel="draw" hidden>
+            <section class="promoFormSection" data-promo-only="1">
+              <div class="promoFormSectionTitle"><strong>PRÊMIO E SORTEIO</strong><span>VÍNCULO DIRETO COM A DISTRIBUIÇÃO</span></div>
               <div class="formGrid">
-                <div class="field wide"><label>NOME / TÍTULO PARA O LOCUTOR</label><input class="control" id="promoName" required></div>
-                <div class="field full"><label>TEXTO PARA O LOCUTOR</label><textarea class="control" id="promoDescription" required></textarea></div>
-                <div class="field full" data-promo-only="1"><label>IMAGEM 1600 X 400 — 4:1</label><input class="control" type="file" id="promoImage" accept="image/*"><div class="uploadHint">OPCIONAL · FORMATO IDEAL: 1600 X 400.</div></div>
-                <input type="hidden" id="promoTitleFont"><input type="hidden" id="promoTitleSize"><input type="hidden" id="promoTitleColor">
-                <input type="hidden" id="promoDescFont"><input type="hidden" id="promoDescSize"><input type="hidden" id="promoDescColor">
+                <div class="field wide"><label>PRÊMIO VINCULADO À DISTRIBUIÇÃO</label><select class="control" id="promoDistributionId" required><option value="">SELECIONE O PRÊMIO DISTRIBUÍDO</option></select></div>
+                <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
+                <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SELECIONE O PRÊMIO"></div>
+                <div class="promoDistributionGuide"><strong>REGRA:</strong> A PROMOÇÃO RESERVA O PRÊMIO DIRETAMENTE DA DISTRIBUIÇÃO. O SALDO NÃO É DUPLICADO E O SISTEMA BLOQUEIA QUANDO A QUANTIDADE NECESSÁRIA FOR MAIOR QUE A DISPONÍVEL.</div>
+
+                <div class="field"><label>NÚMERO DE GANHADORES</label><input class="control" type="number" min="1" step="1" id="promoQtyPerDraw" value="1"></div>
+                <div class="field"><label>BRINDES / INGRESSOS POR GANHADOR</label><input class="control" type="number" min="1" step="1" id="promoUnitsPerWinner" value="1"></div>
+                <div class="field"><label>TOTAL RESERVADO POR SORTEIO</label><input class="control" id="promoConsumptionTotal" readonly value="1 UNIDADE"></div>
+                <div class="field"><label>PRAZO DE RETIRADA</label><select class="control" id="promoPickupDays"><option value="5">PADRÃO · 5 DIAS ÚTEIS</option><option value="4">4 DIAS ÚTEIS</option><option value="3">3 DIAS ÚTEIS</option><option value="2">2 DIAS ÚTEIS</option><option value="1">1 DIA ÚTIL</option></select></div>
+
+                <div class="field" id="promoDrawDateField"><label id="promoDrawDateLabel">DATA DE SORTEIO</label><input class="control" type="date" id="promoDrawDate"></div>
+                <div class="field" id="promoDrawTimeField"><label id="promoDrawTimeLabel">HORA DO SORTEIO</label><input class="control" type="time" id="promoDrawTime" step="1800"></div>
+                <div class="field wide"><label>PROGRAMA DO RESULTADO · IDENTIFICADO PELA GRADE</label><input class="control promoResultProgram" id="promoResultProgram" readonly value="SELECIONE DATA E HORA"></div>
+                <div class="field"><label>RECORRÊNCIA DO SORTEIO</label><select class="control" id="promoRecurrence"><option value="single">SORTEIO ÚNICO</option><option value="weekly">SEMANAL ATÉ O ENCERRAMENTO</option></select></div>
+
+                <div class="field full" id="promoOccurrencesField"><label>AGENDA DE SORTEIOS</label><div class="promoOccurrencesEditor" id="promoOccurrencesEditor"><div class="promoOccurrenceEmpty">A AGENDA SERÁ GERADA A PARTIR DAS DATAS ACIMA.</div></div></div>
+                <div class="promoMechanicsSummary">
+                  <div class="promoMechanicsBox"><span>GANHADORES / SORTEIO</span><strong id="promoSummaryWinners">1</strong></div>
+                  <div class="promoMechanicsBox"><span>UNIDADES / GANHADOR</span><strong id="promoSummaryUnits">1</strong></div>
+                  <div class="promoMechanicsBox"><span>CONSUMO / SORTEIO</span><strong id="promoSummaryConsumption">1</strong></div>
+                </div>
               </div>
             </section>
-
+            </div>
             <div class="formActions promoFormActionsBar"><button class="btn red" type="submit" formnovalidate id="promoSaveBtn">SALVAR PROMOÇÃO</button><button class="btn" type="button" data-close="promoDrawer">CANCELAR</button></div>
           </div>
           <aside class="promoPreviewBox">
-            <div class="promoPreviewLabel">PREVIEW DA PAUTA PARA O LOCUTOR</div>
+            <div class="promoPreviewHead"><div class="promoPreviewLabel">PRÉVIA DO LOCUTOR</div><button class="btn small" type="button" id="promoPreviewExpand" aria-pressed="false">AMPLIAR</button></div>
             <div class="promoPreviewCard">
               <div class="promoPreviewImage" id="promoPreviewImage">IMAGEM 1600 X 400</div>
               <div class="promoPreviewContent">
                 <div class="promoPreviewMeta" id="promoPreviewMeta">PROMOÇÃO · JOVEMPAN</div>
                 <div class="promoPreviewTitle" id="promoPreviewTitle">NOME DA PROMOÇÃO</div>
                 <div class="promoPreviewDesc" id="promoPreviewDesc">DESCRIÇÃO DA PROMOÇÃO PARA LEITURA NO AR.</div>
-                <div class="promoPreviewSchedule" id="promoPreviewSchedule">APARECE EM TODOS OS HORÁRIOS</div>
+                <div class="promoPreviewSchedule" id="promoPreviewSchedule" hidden></div>
               </div>
             </div>
+            <div class="promoPreviewFooter"><span>LEITURA NO DESTAQUE DO ESTÚDIO</span><div><button type="button" disabled aria-label="Confirmar leitura na prévia">✓</button><button type="button" disabled aria-label="Fechar leitura na prévia">×</button></div></div>
           </aside>
         </div>
       </form>
@@ -9425,16 +9458,18 @@ function adminAV572RawCandidates(p,date,station){if(!adminAV572Visible(p)||!same
 function adminAV572ClientId(p){return norm(p?.opecClientId||p?.clientId||'');}
 function adminAV572TextPriority(p){const type=String(p?.opecTextType||p?.textType||'').toLowerCase();return type==='promotional'?30:type==='institutional'?20:10;}
 function adminAV572TextVersion(p){return Math.max(1,Number(p?.opecTextVersion)||1);}
-function adminAV572EffectiveMerchan(p,date,program,slot,station){const client=adminAV572ClientId(p);if(!client||promoTypeKey(p)!=='merchan')return p;const candidates=(monthData().promos||[]).filter(row=>promoTypeKey(row)==='merchan'&&adminAV572ClientId(row)===client&&adminAV572RawCandidates(row,date,station).some(c=>norm(c.program)===norm(program)&&c.slot===adminAV572HourSlot(slot)));if(!candidates.length)return null;return candidates.sort((a,b)=>adminAV572TextPriority(b)-adminAV572TextPriority(a)||adminAV572TextVersion(b)-adminAV572TextVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0];}
-function adminAV572Candidates(p,date,station){return adminAV572RawCandidates(p,date,station).filter(c=>{const chosen=adminAV572EffectiveMerchan(p,date,c.program,c.slot,station);return !chosen||chosen.id===p.id;});}
-function adminAV572HistoryCount(p,program,slot,beforeDate,station){return (p?.readLog||[]).filter(log=>sameStation(log.station||p.station||'JP1017',station)&&(log.date||'')<beforeDate&&norm(log.program||'')===norm(program)&&adminAV572HourSlot(log.slot||log.scheduledHour||'')===adminAV572HourSlot(slot)&&!!(log.confirmedAt||log.readAt||log.at)).length;}
-function adminAV572LastCandidate(p,beforeDate,station){const logs=(p?.readLog||[]).filter(log=>sameStation(log.station||p.station||'JP1017',station)&&(log.date||'')<beforeDate&&!!(log.confirmedAt||log.readAt||log.at)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.confirmedAt||b.readAt||b.at||'').localeCompare(String(a.confirmedAt||a.readAt||a.at||'')));const log=logs[0];return log?`${norm(log.program||'')}|${adminAV572HourSlot(log.slot||log.scheduledHour||'')}`:'';}
-function adminAV572PeriodDue(p,date,station){const total=Math.max(1,Number(p?.opecPeriodTotal||p?.promoPeriodTotal||p?.periodTotal||1)||1),start=p?.startDate||date,end=p?.endDate||p?.drawDate||start;const eligible=adminAV572DateRange(start,end).filter(d=>adminAV572Candidates(p,d,station).length);if(!eligible.length)return 0;const index=eligible.indexOf(date);if(index<0)return 0;const base=Math.floor(total/eligible.length),extra=total%eligible.length,offset=adminAV572Hash(`${p.id}|${start}|${end}|${station}`)%eligible.length;let count=base;for(let i=0;i<extra;i++)if((offset+i)%eligible.length===index)count++;return count;}
-function adminAV572Tokens(p,date,station){const candidates=adminAV572Candidates(p,date,station);if(!candidates.length)return[];const scope=adminAV572Scope(p),n=adminAV572Count(p),out=[];if(scope==='hour'){candidates.forEach(c=>{for(let i=0;i<n;i++)out.push({p,candidates:[c],ordinal:i});});}else if(scope==='program'){[...new Set(candidates.map(c=>c.program))].forEach(program=>{const pool=candidates.filter(c=>c.program===program);for(let i=0;i<n;i++)out.push({p,candidates:pool,ordinal:i,program});});}else{let daily=n;if(scope==='period')daily=adminAV572PeriodDue(p,date,station);if(scope==='legacy')daily=1;for(let i=0;i<daily;i++)out.push({p,candidates,ordinal:i});}return out.map((token,index)=>({...token,sequence:index+1}));}
-function adminAV572FixedLoad(date,station){const load=new Map();(monthData().promos||[]).filter(p=>adminAV572Visible(p)&&adminAV572Mode(p)==='fixed'&&sameStation(p?.station||'JP1017',station)).forEach(p=>{const candidates=adminAV572Candidates(p,date,station),scope=adminAV572Scope(p),count=scope==='hour'?adminAV572Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
+function adminAV572EffectiveMerchan(p,date,program,slot,station,pool=monthData().promos||[]){const client=adminAV572ClientId(p);if(!client||promoTypeKey(p)!=='merchan')return p;const candidates=pool.filter(row=>promoTypeKey(row)==='merchan'&&adminAV572ClientId(row)===client&&adminAV572RawCandidates(row,date,station).some(c=>norm(c.program)===norm(program)&&c.slot===adminAV572HourSlot(slot)));if(!candidates.length)return null;return candidates.sort((a,b)=>adminAV572TextPriority(b)-adminAV572TextPriority(a)||adminAV572TextVersion(b)-adminAV572TextVersion(a)||(b.startDate||'').localeCompare(a.startDate||'')||(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||''))[0];}
+function adminAV572Candidates(p,date,station,pool=monthData().promos||[]){return adminAV572RawCandidates(p,date,station).filter(c=>{const chosen=adminAV572EffectiveMerchan(p,date,c.program,c.slot,station,pool);return !chosen||chosen.id===p.id;});}
+function adminAV572GenericProgram(value){return ['', 'PROGRAMAÇÃO NORMAL','PROGRAMACAO NORMAL','PROGRAMA NORMAL','GRADE NORMAL','PROGRAMA'].includes(norm(value));}
+function adminAV572LogProgram(log,station){return norm(programFromSchedule(log?.date||'',log?.slot||log?.scheduledHour||'',station)||log?.program||'');}
+function adminAV572HistoryCount(p,program,slot,beforeDate,station){return (p?.readLog||[]).filter(log=>{const lp=adminAV572LogProgram(log,station);return sameStation(log.station||p.station||'JP1017',station)&&(log.date||'')<beforeDate&&(!lp||adminAV572GenericProgram(lp)||lp===norm(program))&&adminAV572HourSlot(log.slot||log.scheduledHour||'')===adminAV572HourSlot(slot)&&!!(log.confirmedAt||log.readAt);}).length;}
+function adminAV572LastCandidate(p,beforeDate,station){const logs=(p?.readLog||[]).filter(log=>sameStation(log.station||p.station||'JP1017',station)&&(log.date||'')<beforeDate&&!!(log.confirmedAt||log.readAt)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.confirmedAt||'').localeCompare(String(a.confirmedAt||'')));const log=logs[0];return log?`${adminAV572LogProgram(log,station)}|${adminAV572HourSlot(log.slot||log.scheduledHour||'')}`:'';}
+function adminAV572PeriodDue(p,date,station,pool=monthData().promos||[]){const total=Math.max(1,Number(p?.opecPeriodTotal||p?.promoPeriodTotal||p?.periodTotal||1)||1),start=p?.startDate||date,end=p?.endDate||p?.drawDate||start;const eligible=adminAV572DateRange(start,end).filter(d=>adminAV572Candidates(p,d,station,pool).length);if(!eligible.length)return 0;const index=eligible.indexOf(date);if(index<0)return 0;const base=Math.floor(total/eligible.length),extra=total%eligible.length,offset=adminAV572Hash(`${p.id}|${start}|${end}`)%eligible.length;let count=base;for(let i=0;i<extra;i++)if((offset+i)%eligible.length===index)count++;return count;}
+function adminAV572Tokens(p,date,station,pool=monthData().promos||[]){const candidates=adminAV572Candidates(p,date,station,pool);if(!candidates.length)return[];const scope=adminAV572Scope(p),n=adminAV572Count(p),out=[];if(scope==='hour'){candidates.forEach(c=>{for(let i=0;i<n;i++)out.push({p,candidates:[c],ordinal:i});});}else if(scope==='program'){[...new Set(candidates.map(c=>c.program))].forEach(program=>{const pool=candidates.filter(c=>c.program===program);for(let i=0;i<n;i++)out.push({p,candidates:pool,ordinal:i,program});});}else{let daily=n;if(scope==='period')daily=adminAV572PeriodDue(p,date,station,pool);if(scope==='legacy')daily=1;for(let i=0;i<daily;i++)out.push({p,candidates,ordinal:i});}return out.map((token,index)=>({...token,sequence:index+1}));}
+function adminAV572FixedLoad(date,station,records=monthData().promos||[]){const load=new Map();records.filter(p=>adminAV572Visible(p)&&adminAV572Mode(p)==='fixed'&&sameStation(p?.station||'JP1017',station)).forEach(p=>{const candidates=adminAV572Candidates(p,date,station,records),scope=adminAV572Scope(p),count=scope==='hour'?adminAV572Count(p):1;candidates.forEach(c=>{const key=`${c.program}|${c.slot}`;load.set(key,(load.get(key)||0)+count);});});return load;}
 function adminAV572OverrideFor(p,date,sequence){const rows=(Array.isArray(p?.opecOverrides)?p.opecOverrides:[]).filter(o=>!o?.disabled&&o?.date===date&&Number(o?.occurrence||o?.sequence||1)===Number(sequence));if(!rows.length)return null;const row=rows[rows.length-1];return{program:norm(row.program||''),slot:adminAV572HourSlot(row.slot||''),reason:String(row.reason||'')};}
-function adminAV572SmartPlan(date,station){const records=(monthData().promos||[]).filter(p=>adminAV572Visible(p)&&adminAV572Mode(p)==='rotation'&&sameStation(p?.station||'JP1017',station)),load=adminAV572FixedLoad(date,station),out=new Map(),tokens=[];records.forEach(p=>adminAV572Tokens(p,date,station).forEach(t=>tokens.push(t)));tokens.sort((a,b)=>a.candidates.length-b.candidates.length||String(a.p.endDate||a.p.drawDate||'9999').localeCompare(String(b.p.endDate||b.p.drawDate||'9999'))||((adminAV572Hash(`${date}|${station}|${a.p.id}|${a.ordinal}`)%997)-(adminAV572Hash(`${date}|${station}|${b.p.id}|${b.ordinal}`)%997)));tokens.forEach(token=>{const own=out.get(token.p.id)||[],last=adminAV572LastCandidate(token.p,date,station),override=adminAV572OverrideFor(token.p,date,token.sequence);let best=null,bestScore=Infinity;const forced=override?token.candidates.find(c=>norm(c.program)===norm(override.program)&&c.slot===override.slot):null;if(forced)best=forced;else token.candidates.forEach(c=>{const key=`${c.program}|${c.slot}`,loadScore=load.get(key)||0,hist=adminAV572HistoryCount(token.p,c.program,c.slot,date,station),repeat=own.filter(x=>x.program===c.program&&x.slot===c.slot).length,lastPenalty=last===key?32:0,score=loadScore*100+hist*13+repeat*48+lastPenalty+(adminAV572Hash(`${date}|${station}|${token.p.id}|${key}|${token.ordinal}`)%31)/100;if(score<bestScore){bestScore=score;best=c;}});if(best){const key=`${best.program}|${best.slot}`;load.set(key,(load.get(key)||0)+1);own.push({...best,override:!!forced,overrideReason:override?.reason||''});out.set(token.p.id,own);}});return out;}
-function adminAV572Assignments(p,date,station){if(!adminAV572DateAllowed(p,date)||!adminAV572Visible(p)||!sameStation(p?.station||'JP1017',station))return[];if(adminAV572Mode(p)==='rotation')return adminAV572SmartPlan(date,station).get(p.id)||[];let candidates=adminAV572Candidates(p,date,station);if(!candidates.length){let hours=(p?.readHours||[]).map(adminAV572HourSlot).filter(Boolean);if((p?.readMode||'all')==='all'&&!hours.length){const set=new Set();programSchedules().filter(r=>sameStation(r.station,station)&&dayMatchesRule(date,scheduleDays(r))).forEach(r=>{for(let minute=Math.ceil(scheduleStartMinutes(r)/60)*60;minute<scheduleEndMinutes(r);minute+=60)set.add(`${String(Math.floor(minute/60)).padStart(2,'0')}H`);});hours=[...set].sort();}const wantedProgram=norm(p?.program||p?.programName||'');candidates=hours.map(slot=>({program:norm(programFromSchedule(date,slot,station)||wantedProgram||'PROGRAMA'),slot,station})).filter(c=>c.program&&(!wantedProgram||norm(c.program)===wantedProgram)&&!adminAV572PauseBlocks(p,date,c.slot));}const scope=adminAV572Scope(p),count=scope==='hour'?adminAV572Count(p):1;return candidates.flatMap(c=>Array.from({length:count},()=>({...c})));}
+function adminAV572SmartPlan(date,station,pool=monthData().promos||[]){const records=pool.filter(p=>adminAV572Visible(p)&&adminAV572Mode(p)==='rotation'&&sameStation(p?.station||'JP1017',station)),load=adminAV572FixedLoad(date,station,pool),out=new Map(),tokens=[];records.forEach(p=>adminAV572Tokens(p,date,station,pool).forEach(t=>tokens.push(t)));tokens.sort((a,b)=>a.candidates.length-b.candidates.length||String(a.p.endDate||a.p.drawDate||'9999').localeCompare(String(b.p.endDate||b.p.drawDate||'9999'))||((adminAV572Hash(`${date}|${a.p.id}|${a.ordinal}`)%997)-(adminAV572Hash(`${date}|${b.p.id}|${b.ordinal}`)%997)));tokens.forEach(token=>{const own=out.get(token.p.id)||[],last=adminAV572LastCandidate(token.p,date,station),override=adminAV572OverrideFor(token.p,date,token.sequence);let best=null,bestScore=Infinity;const forced=override?token.candidates.find(c=>norm(c.program)===norm(override.program)&&c.slot===override.slot):null;if(forced)best=forced;else token.candidates.forEach(c=>{const key=`${c.program}|${c.slot}`,loadScore=load.get(key)||0,hist=adminAV572HistoryCount(token.p,c.program,c.slot,date,station),repeat=own.filter(x=>x.program===c.program&&x.slot===c.slot).length,lastPenalty=last===key&&token.candidates.length>1?10000:0,score=loadScore*100+hist*13+repeat*48+lastPenalty+(adminAV572Hash(`${date}|${token.p.id}|${key}|${token.ordinal}`)%31)/100;if(score<bestScore){bestScore=score;best=c;}});if(best){const key=`${best.program}|${best.slot}`;load.set(key,(load.get(key)||0)+1);own.push({...best,override:!!forced,overrideReason:override?.reason||''});out.set(token.p.id,own);}});return out;}
+function adminAV572Assignments(p,date,station,pool=monthData().promos||[]){if(!adminAV572DateAllowed(p,date)||!adminAV572Visible(p)||!sameStation(p?.station||'JP1017',station))return[];if(adminAV572Mode(p)==='rotation')return adminAV572SmartPlan(date,station,pool).get(p.id)||[];let candidates=adminAV572Candidates(p,date,station,pool);if(!candidates.length){if(p?.opecPrograms?.length)return[];let hours=(p?.readHours||[]).map(adminAV572HourSlot).filter(Boolean);if((p?.readMode||'all')==='all'&&!hours.length){const set=new Set();programSchedules().filter(r=>sameStation(r.station,station)&&dayMatchesRule(date,scheduleDays(r))).forEach(r=>{for(let minute=Math.ceil(scheduleStartMinutes(r)/60)*60;minute<scheduleEndMinutes(r);minute+=60)set.add(`${String(Math.floor(minute/60)).padStart(2,'0')}H`);});hours=[...set].sort();}const wantedProgram=norm(p?.program||p?.programName||'');candidates=hours.map(slot=>({program:norm(programFromSchedule(date,slot,station)||wantedProgram||'PROGRAMA'),slot,station})).filter(c=>c.program&&(!wantedProgram||norm(c.program)===wantedProgram)&&!adminAV572PauseBlocks(p,date,c.slot));}const scope=adminAV572Scope(p),count=scope==='hour'?adminAV572Count(p):1;return candidates.flatMap(c=>Array.from({length:count},()=>({...c})));}
 function adminAV572StationsForView(p,filter){if(filter&&filter!=='ALL')return sameStation(p?.station||'JP1017',filter)?[filter]:[];const own=stationCanonical(p?.station||'JP1017');return own==='ALL'?['JP1017','JPNEWS983']:[own];}
 function adminAV572StudioMeta(p,date,stationFilter){const assignments=[];adminAV572StationsForView(p,stationFilter).forEach(st=>adminAV572Assignments(p,date,st).forEach(a=>assignments.push(a)));return assignments;}
 function adminAV572StudioHoursLabel(p){const rows=p?.__av572Assignments||[];const hours=[...new Set(rows.map(r=>r.slot).filter(Boolean))].sort();return hours.length?hours.join(', '):'SEM LEITURA';}
@@ -12566,14 +12601,16 @@ function promoAV57SetWeekdays(days=[]){promoAV57InitWeekdays();const set=new Set
 function promoAV57AddDate(type){const input=$(type==='specific'?'promoSpecificDateInput':'promoExcludedDateInput');if(!input?.value)return;const arr=type==='specific'?promoAV57SpecificDates:promoAV57ExcludedDates;if(!arr.includes(input.value))arr.push(input.value);input.value='';promoAV57RenderDateTokens();updatePromoPreview();}
 function promoAV57UpdateScheduleUI(){
   promoAV57InitWeekdays();
-  const smart=promoAV57SmartMode(),scope=$('promoFrequencyScope')?.value||'day',specific=($('promoReadDateMode')?.value||'range')==='specific';
+  const smart=promoAV57SmartMode();
+  if($('promoFrequencyScope')){if(!smart) $('promoFrequencyScope').value='hour';$('promoFrequencyScope').disabled=!smart;}
+  const scope=$('promoFrequencyScope')?.value||'day',specific=($('promoReadDateMode')?.value||'range')==='specific';
   if($('promoPeriodTotalField')) $('promoPeriodTotalField').classList.toggle('av57Hidden',scope!=='period');
   if($('promoFrequencyCountField')) $('promoFrequencyCountField').classList.toggle('av57Hidden',scope==='period');
   if($('promoWeekdaysField')) $('promoWeekdaysField').classList.toggle('av57Hidden',specific);
   if($('promoReadAll')) $('promoReadAll').disabled=smart;
   if(smart && $('promoReadAll')) $('promoReadAll').checked=false;
   if($('promoReadScheduleTitle')) $('promoReadScheduleTitle').textContent=smart?'JANELAS DE HORÁRIO PERMITIDAS PARA O CÁLCULO':'ONDE ESSA PAUTA APARECE NO ESTÚDIO';
-  if($('promoSmartHint')) $('promoSmartHint').innerHTML=smart?'<b>RODÍZIO INTELIGENTE:</b> cruza a carga de todas as pautas/merchans, histórico confirmado e faixas permitidas. O ciclo não é sequencial e se reequilibra automaticamente.':'<b>HORÁRIO FIXO:</b> cada hora marcada vira uma obrigação de leitura. Use datas específicas para uma inserção única e pontual.';
+  if($('promoSmartHint')) $('promoSmartHint').innerHTML=smart?'<b>RODÍZIO INTELIGENTE:</b> distribui a quantidade nas faixas escolhidas, equilibrando as outras leituras e alternando os horários sempre que possível.':'<b>HORÁRIO FIXO:</b> cada hora marcada vira uma obrigação de leitura. Use datas específicas para uma inserção única e pontual.';
   const pf=$('promoProgramField'); if(pf) pf.classList.remove('hidden');
   updatePromoReadScheduleState();
 }
@@ -12591,6 +12628,57 @@ function promoReadScheduleText(){
   const hours=getPromoReadHoursFromForm();
   return hours.length ? `${freq} · JANELAS: ${hours.map(h=>h+'H').join(', ')}` : `${freq} · NENHUM HORÁRIO SELECIONADO`;
 }
+/* PROMO_PI_EDITOR_START */
+let promoEditorNewId='';
+let promoEditorPlanTimer=0;
+let promoEditorPlanCache={signature:'',rows:[]};
+function promoEditorDraft(){
+  const id=$('promoId')?.value||promoEditorNewId||'__NOVO__';
+  const existing=promoByIdForMonth(id,state.currentMonth)||consolidatedPromoById(id)||{};
+  const smart=promoAV57SmartMode(),configs=promoAV57ProgramConfigsFromForm();
+  return {...clone(existing),id,kind:$('promoKind')?.value||'promo',station:$('promoStation')?.value||'JP1017',startDate:$('promoStartDate')?.value||'',endDate:$('promoEndDate')?.value||'',program:configs[0]?.program||'',promoScheduleMode:smart?'smart':'fixed',promoFrequencyScope:smart?($('promoFrequencyScope')?.value||'day'):'hour',promoFrequencyCount:Math.max(1,Number($('promoFrequencyCount')?.value)||1),promoPeriodTotal:Math.max(1,Number($('promoPeriodTotal')?.value)||1),promoReadDateMode:$('promoReadDateMode')?.value||'range',promoReadWeekdays:promoAV57SelectedWeekdays(),promoReadSpecificDates:[...promoAV57SpecificDates],promoReadExcludedDates:[...promoAV57ExcludedDates],opecPrograms:configs,readMode:'selected',readHours:[...new Set(configs.flatMap(c=>c.hours))].sort()};
+}
+function promoEditorPoolForDate(draft,date){
+  const freshest=new Map(),requested=new Map(),month=String(date).slice(0,7);
+  (state.months?.[month]?.promos||[]).forEach(p=>requested.set(p.id,p));
+  Object.values(state.months||{}).forEach(m=>(m.promos||[]).forEach(p=>{const old=freshest.get(p.id),a=Date.parse(old?.monthlyUpdatedAt||old?.updatedAt||old?.createdAt||'')||0,b=Date.parse(p.monthlyUpdatedAt||p.updatedAt||p.createdAt||'')||0;if(!old||b>=a)freshest.set(p.id,p);}));
+  const operational=['readByHour','readLog','missedLog','readAt','readAtLabel','readSlot','readStation','readProgram','resultByHour','resultWinnersByHour','resultWinners','resultName','resultNames','resultAt','resultAtLabel','resultSlot','resultDate','winnerName','winnerNames','deliveredAt','deliveredAtLabel'];
+  const pool=[...freshest.values()].map(p=>{const historical=requested.get(p.id);if(!historical)return p;const a=Date.parse(historical.monthlyUpdatedAt||historical.updatedAt||historical.createdAt||'')||0,b=Date.parse(p.monthlyUpdatedAt||p.updatedAt||p.createdAt||'')||0;if(b<=a)return historical;const merged={...p};operational.forEach(key=>{if(Object.prototype.hasOwnProperty.call(historical,key))merged[key]=historical[key];else delete merged[key];});return merged;});
+  return pool.filter(p=>p.id!==draft.id).concat([draft]);
+}
+function promoEditorPlanRows(draft,dates){
+  if(!draft?.startDate||!draft?.endDate||draft.endDate<draft.startDate||!draft.opecPrograms?.some(c=>c.program&&c.hours?.length))return [];
+  if((draft.promoReadDateMode||'range')==='range'&&!draft.promoReadWeekdays?.length&&!draft.promoReadSpecificDates?.length)return [];
+  const days=dates||adminAV572DateRange(draft.startDate,draft.endDate),groups=new Map();
+  const stations=draft.station==='ALL'?['JP1017','JPNEWS983']:[draft.station||'JP1017'];
+  days.forEach(date=>{const pool=promoEditorPoolForDate(draft,date);stations.forEach(station=>{
+    adminAV572Assignments(draft,date,station,pool).forEach(a=>{const key=`${date}|${a.station}|${a.program}|${a.slot}`;const row=groups.get(key)||{date,station:a.station,program:a.program,slot:a.slot,qty:0};row.qty++;groups.set(key,row);});
+  });});
+  return [...groups.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.slot.localeCompare(b.slot)||a.station.localeCompare(b.station)||a.program.localeCompare(b.program));
+}
+function promoEditorShowTab(tab){
+  if(!['content','schedule','draw'].includes(tab)||tab==='draw'&&$('promoKind')?.value!=='promo')tab='content';
+  document.querySelectorAll('[data-promo-editor-tab]').forEach(button=>{const active=button.dataset.promoEditorTab===tab;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;});
+  document.querySelectorAll('[data-promo-editor-panel]').forEach(panel=>{panel.hidden=panel.dataset.promoEditorPanel!==tab;});
+  if(tab==='schedule')promoEditorRenderPlan();
+}
+function promoEditorTogglePreview(force){
+  const box=$('promoDrawer');if(!box)return;
+  const expanded=typeof force==='boolean'?force:!box.classList.contains('previewExpanded');
+  box.classList.toggle('previewExpanded',expanded);
+  const button=$('promoPreviewExpand');if(button){button.textContent=expanded?'RECOLHER':'AMPLIAR';button.setAttribute('aria-pressed',String(expanded));}
+}
+function promoEditorQueuePlan(){clearTimeout(promoEditorPlanTimer);promoEditorPlanTimer=setTimeout(promoEditorRenderPlan,120);}
+function promoEditorRenderPlan(){
+  const grid=$('promoPlanGrid'),summary=$('promoPlanSummary');if(!grid||!summary)return;
+  const draft=promoEditorDraft(),signature=JSON.stringify([draft,Object.entries(state.months||{}).map(([m,data])=>[m,(data.promos||[]).map(p=>[p.id,p.updatedAt,p.monthlyUpdatedAt,p.readLog?.length])])]);
+  let rows=promoEditorPlanCache.rows;if(signature!==promoEditorPlanCache.signature){rows=promoEditorPlanRows(draft);promoEditorPlanCache={signature,rows};}
+  const total=rows.reduce((n,r)=>n+r.qty,0),days=new Set(rows.map(r=>r.date)).size;
+  summary.textContent=total?`${total} LEITURA${total===1?'':'S'} · ${days} DIA${days===1?'':'S'}`:'SEM LEITURAS PROGRAMADAS';
+  grid.innerHTML=rows.length?`<table class="promoPlanTable"><thead><tr><th>DATA</th><th>HORA</th><th>PROGRAMA / RÁDIO</th><th>QTD.</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(formatBR(r.date))}</td><td>${esc(r.slot)}</td><td>${esc(r.program)}<br><small>${esc(stationLabel(r.station))}</small></td><td>${r.qty}</td></tr>`).join('')}</tbody></table>`:'<div class="promoPlanEmpty">Escolha os dias, programas e horas permitidas. Sem horários compatíveis, nenhuma leitura será enviada ao Estúdio.</div>';
+}
+/* PROMO_PI_EDITOR_END */
+
 function updatePromoPreview(){
   populatePromoFontSelects();
   const imgData = $('promoImageData')?.value || '';
@@ -12607,16 +12695,14 @@ function updatePromoPreview(){
   const meta=$('promoPreviewMeta');
   if(meta){
     const parts=[promoKindLabel(kind),stationLabel(station)];
-    if((isPromoKindMerchan()||promoAV57SmartMode()) && (promoAV57SelectedPrograms().length||program)) parts.push((promoAV57SelectedPrograms().join(' + ')||program));
-    if(!isPromoKindMerchan() && local) parts.push(local);
     meta.textContent=parts.join(' · ');
   }
   const titleBox = $('promoPreviewTitle');
   if(titleBox){ titleBox.textContent = name || (kind==='merchan'?'NOME DO MERCHAN':'NOME DA PAUTA'); applyPromoTextStyle(titleBox,titleStyle,'title'); }
   const descBox = $('promoPreviewDesc');
   if(descBox){ descBox.textContent = desc || 'TEXTO PARA O LOCUTOR LER NO AR.'; applyPromoTextStyle(descBox,descStyle,'desc'); }
-  const schedule=$('promoPreviewSchedule');
-  if(schedule){const base=promoReadScheduleText();if(kind==='promo'){const m=promoUpdateMechanics(),rp=$('promoResultProgram')?.value||'';schedule.textContent=`${m.winners} GANHADOR(ES) · ${m.units} UNID. CADA · SORTEIO ${formatBR($('promoDrawDate')?.value||'')} ${$('promoDrawTime')?.value||''} · ${rp} · ${base}`;}else schedule.textContent=base;}
+  if(kind!=='promo' && $('promoPanelDraw') && !$('promoPanelDraw').hidden) promoEditorShowTab('content');
+  promoEditorQueuePlan();
 }
 function populatePromoLocalSelect(){
   const sel=$('promoLocal');
@@ -12656,8 +12742,11 @@ function setPromoReadControls(p={}){
   updatePromoReadScheduleState();
 }
 function clearPromoForm(){
+  promoEditorShowTab('content');
+  promoEditorTogglePreview(false);
   $('promoForm').reset();
   $('promoId').value='';
+  promoEditorNewId=id('PR');
   $('promoImageData').value='';
   if($('promoKind')) $('promoKind').value='promo'; promoSetKindChoice('promo');
   if($('promoStation')) $('promoStation').value='JP1017';
@@ -12881,10 +12970,8 @@ function storePromoAcrossMonths(p,editingMonth=state.currentMonth,isNew=false){
 }
 
 function fullHourTimeValue(value){
-  const match=String(value||'').match(/^(\d{1,2})(?::?(\d{2}))?$/);
-  if(!match) return '';
-  const hour=Math.max(0,Math.min(23,Number(match[1])));
-  return `${String(hour).padStart(2,'0')}:00`;
+  const parts=slotParts(value);
+  return parts?`${String(parts.hour).padStart(2,'0')}:${String(parts.minute).padStart(2,'0')}`:'';
 }
 
 function editPromo(pid){
@@ -12977,6 +13064,10 @@ $('promoImage').addEventListener('change',e=>{
 bind('promoProgram','change',()=>{applyProgramHoursToPromo(); updatePromoPreview();});
 bind('promoProgram','input',updatePromoPreview);
 bind('promoKind','change',()=>{ updatePromoKindMode(); renderPromoOccurrencesEditor(false); updatePromoSegmentBalance(); }); document.querySelectorAll('input[name="promoKindChoice"]').forEach(i=>i.addEventListener('change',()=>{if(!i.checked)return;$('promoKind').value=i.value;updatePromoKindMode();renderPromoOccurrencesEditor(false);updatePromoSegmentBalance();})); bind('promoStation','change',()=>{populateProgramSelects();promoUpdateResultProgram();updatePromoPreview();});
+
+document.addEventListener('click',e=>{const tab=e.target.closest('[data-promo-editor-tab]');if(tab){promoEditorShowTab(tab.dataset.promoEditorTab);return;}if(e.target.closest('#promoPreviewExpand')) promoEditorTogglePreview();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape' && $('promoDrawer')?.classList.contains('previewExpanded')){promoEditorTogglePreview(false);return;}const tab=e.target.closest('[data-promo-editor-tab]');if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const tabs=Array.from(document.querySelectorAll('[data-promo-editor-tab]')).filter(t=>!t.hasAttribute('data-promo-only')||$('promoKind').value==='promo');let i=tabs.indexOf(tab);i=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;e.preventDefault();promoEditorShowTab(tabs[i].dataset.promoEditorTab);tabs[i].focus();});
+
 bind('promoReadAll','change',updatePromoReadScheduleState);
 bind('promoScheduleMode','change',()=>{promoAV57UpdateScheduleUI();updatePromoKindMode();updatePromoPreview();});
 bind('promoFrequencyScope','change',()=>{promoAV57UpdateScheduleUI();updatePromoPreview();});
@@ -13003,8 +13094,8 @@ function populatePromoDistributionSelect(){
 function promoOccurrenceKey(p,date,time){ return `${p?.id||'PROMO'}|${date}|${timeToHHMM(time||p?.drawTime||'00:00')}`; }
 function generatePromoOccurrences(p,existing={}){
   if((p.kind||'promo')!=='promo') return [];
-  const start=p.startDate, end=p.endDate||p.drawDate, first=p.drawDate, time=fullHourTimeValue(p.drawTime)||timeToHHMM(p.drawTime)||'00:00';
-  if(!first||!end||first<start||first>end) return [];
+  const start=p.startDate, end=p.endDate||p.drawDate, first=p.drawDate, time=fullHourTimeValue(p.drawTime);
+  if(!time||!first||!end||first<start||first>end) return [];
   const oldMap=new Map((existing.occurrences||[]).map(o=>[`${o.date}|${timeToHHMM(o.time||existing.drawTime||'')}`,o]));
   const dates=[];
   if(p.recurrenceMode==='weekly'){
@@ -13201,6 +13292,7 @@ function clearPromoValidationState(){
 function promoValidationFail(idValue,message){
   const el=$(idValue);
   if(el){
+    const panel=el.closest('[data-promo-editor-panel]');if(panel) promoEditorShowTab(panel.dataset.promoEditorPanel);
     el.setAttribute('aria-invalid','true');
     const field=el.closest('.field,.miniField')||el.parentElement;
     if(field && !field.querySelector('[data-promo-validation-error]')){
@@ -13225,6 +13317,7 @@ function validatePromoFormExplicit(){
     if(!$('promoSegmentKey')?.value) return promoValidationFail('promoSegmentKey','SELECIONE O SEGMENTO DA DISTRIBUIÇÃO.');
     if(!$('promoDrawDate')?.value) return promoValidationFail('promoDrawDate','INFORME A DATA DO SORTEIO.');
     if(!$('promoDrawTime')?.value) return promoValidationFail('promoDrawTime','INFORME O HORÁRIO DO SORTEIO.');
+    if(!slotParts($('promoDrawTime').value))return promoValidationFail('promoDrawTime','SELECIONE UM HORÁRIO VÁLIDO, COM MINUTOS 00 OU 30.');
   }
   return true;
 }
@@ -13241,7 +13334,7 @@ $('promoForm').addEventListener('submit',async e=>{
   try{
     if(!validatePromoFormExplicit()) return;
     await promoImageLoadPromise;
-  const idVal=$('promoId').value||id('PR');
+  const idVal=$('promoId').value||promoEditorNewId||id('PR');
   const existing=promoByIdForMonth(idVal,state.currentMonth) || consolidatedPromoById(idVal) || {};
   const isNewPromoRecord=!promoCopiesById(idVal).length;
   const startDate=$('promoStartDate').value;
@@ -13296,6 +13389,7 @@ $('promoForm').addEventListener('submit',async e=>{
   if(promoAV57SmartMode() && !p.opecPrograms.length){ alert('NO RODÍZIO INTELIGENTE, SELECIONE PELO MENOS UM PROGRAMA E UMA FAIXA DE HORÁRIO.'); return; }
   if(p.promoReadDateMode==='specific' && !p.promoReadSpecificDates.length){ alert('SELECIONE PELO MENOS UMA DATA ESPECÍFICA PARA A LEITURA.'); return; }
   if(!promoAV57SmartMode() && p.readMode==='selected' && !p.readHours.length){ alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.'); return; }
+  if(!promoEditorPlanRows(p).length){promoValidationFail('promoProgramChoices','A PROGRAMAÇÃO NÃO TEM LEITURAS. SELECIONE UM PROGRAMA, HORÁRIOS E DIAS COMPATÍVEIS COM A GRADE.');return;}
   p.occurrences=isPromo?promoOccurrencesFromForm(p,existing):[];
   if(isPromo&&!p.occurrences.length){ alert('NÃO FOI POSSÍVEL GERAR A AGENDA DE SORTEIOS. CONFIRA AS DATAS.'); return; }
   if(isPromo&&p.occurrences.some(o=>o.date<p.startDate||o.date>p.endDate)){ alert('EXISTE SORTEIO FORA DO PERÍODO DA PROMOÇÃO.'); return; }
