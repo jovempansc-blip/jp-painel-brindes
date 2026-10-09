@@ -2435,7 +2435,7 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 .headNav #studioPendingBellBtn{--studio-shortcut-base-bg:#f7f8fa;--studio-shortcut-base-border:#d8dee7;--studio-shortcut-base-color:#77808e}
 .headNav #studioCampaignBtn{--studio-shortcut-base-bg:#fff7ec;--studio-shortcut-base-border:#ffd59c;--studio-shortcut-base-color:#c76700}
 .headNav #promoListBtn.hasPending,.headNav #merchanListBtn.hasPending,.headNav #historyListBtn.hasPending,.headNav #studioPendingBellBtn.hasPending,.headNav #studioCampaignBtn.hasPending{animation:none!important;transition:none!important}
-.headNav #promoListBtn.hasPending.studioShortcutAlertOn,.headNav #merchanListBtn.hasPending.studioShortcutAlertOn,.headNav #historyListBtn.hasPending.studioShortcutAlertOn,.headNav #studioPendingBellBtn.hasPending.studioShortcutAlertOn,.headNav #studioCampaignBtn.hasPending.studioShortcutAlertOn{--studio-shortcut-bg:#ca435c;--studio-shortcut-border:#b52b43;--studio-shortcut-color:#fff;--studio-shortcut-shadow:0 0 0 3px rgba(185,13,47,.18),0 0 12px rgba(185,13,47,.18)}
+.headNav #promoListBtn.hasPending.studioShortcutAlertOn,.headNav #merchanListBtn.hasPending.studioShortcutAlertOn,.headNav #historyListBtn.hasPending.studioShortcutAlertOn,.headNav #studioPendingBellBtn.hasPending.studioShortcutAlertOn,.headNav #studioCampaignBtn.hasPending.studioShortcutAlertOn{--studio-shortcut-bg:#f5dfe5;--studio-shortcut-border:#dfadb9;--studio-shortcut-color:#a56777;--studio-shortcut-shadow:0 0 0 3px rgba(192,137,153,.12),0 0 12px rgba(192,137,153,.12)}
 .headNav .studioShortcutGlyph{display:inline-block}
 .headNav #promoListBtn .studioShortcutGlyph,.headNav #merchanListBtn .studioShortcutGlyph,.headNav #historyListBtn .studioShortcutGlyph,.headNav #studioPendingBellBtn .studioBellIcon,.headNav #studioCampaignBtn .studioGiftGlyph{color:inherit!important;animation:none!important;opacity:1!important}
 .headNav #promoListBtn::before,.headNav #promoListBtn::after,.headNav #merchanListBtn::before,.headNav #merchanListBtn::after,.headNav #historyListBtn::before,.headNav #historyListBtn::after,.headNav #studioPendingBellBtn::before,.headNav #studioPendingBellBtn::after{display:none!important;content:none!important}
@@ -2478,6 +2478,19 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 .studioCampaignCard{border:1px solid #e0e6ee;border-radius:13px;background:#fff;padding:12px;margin-bottom:10px}.studioCampaignCard>strong{display:block;font-size:11px;color:#27394f;line-height:1.4}.studioCampaignCard p{font-size:9px;color:#6d798a;line-height:1.5;margin:8px 0}.studioCampaignStatus{display:inline-block;font-size:8px;color:#9d5a1c;background:#fff3e5;border-radius:6px;padding:4px 6px;margin-top:6px;font-weight:800}
 .studioCampaignDraw{display:grid;grid-template-columns:1fr;gap:6px;width:100%;padding:9px;margin-top:6px;border:1px solid #e1e6ee;border-radius:9px;background:#f8fafc;color:#55677c;text-align:left;cursor:pointer;font-size:9px}.studioCampaignDraw small{display:block;margin-top:3px;font-size:8px}.studioCampaignDraw b{font-size:9px;overflow-wrap:anywhere}.studioCampaignDraw.pending{border-color:#ebb3bf;color:#b52b43;background:#fff2f4}.studioCampaignDraw.done{border-color:#bedfca;color:#257849;background:#f1fbf5}.studioCampaignDraw:focus-visible{outline:2px solid #c76700;outline-offset:2px}
 .studioCampaignResultInfo{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px;border:1px solid #e5d9c8;border-radius:12px;background:#fff8ef;color:#96602b;text-align:center;font-size:10px;line-height:1.5;margin:0 auto;width:100%;max-width:940px;box-sizing:border-box}.studioCampaignResultInfo span{font-size:9px}
+</style>
+<style id="studio-central-reading">
+.studioReadingMenu{width:100%;max-width:940px;margin:0 auto;border:1px solid #dfe6ef;border-radius:20px;background:rgba(249,251,254,.84);padding:16px;box-shadow:0 10px 24px rgba(36,46,60,.035);text-align:left}
+.studioReadingMenuHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;color:#68798b;font-size:12px}.studioReadingMenuHead svg{width:17px;height:17px}
+.studioReadingGroup{display:grid;gap:8px}.studioReadingPrevious{margin-top:14px;border-top:1px solid #e3e8ef;padding-top:12px}.studioReadingPrevious summary{cursor:pointer;color:#82909e;font:700 10px/1.5 'Segoe UI',Arial,sans-serif;margin-bottom:8px}
+.studioReadingPrevious .studioDrawerItem{margin-top:8px}.studioDrawerItem.expired{background:#f5f7fa;border-color:#e0e6ec;animation:none;color:#87929f}.studioDrawerState.expired{background:#f0f3f7;border-color:#dce3eb;color:#8c98a5}
+.studioDrawerItem.pending{background:#fcf0f3;border-color:#e6c4ce}.studioDrawerItem.pending .studioDrawerMeta,.studioDrawerItem.pending .studioDrawerState{color:#a56777}.studioDrawerItem.pending .studioDrawerState{background:#f7e3ea;border-color:#e6c4ce}
+</style>
+<style id="promo-profile-fields">
+.promoWinnerRowLabel{color:#8491a1;font:700 10px/1.4 'Segoe UI',Arial,sans-serif;margin-bottom:5px;text-align:left}.promoProfileGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.promoProfileField{display:flex;flex-direction:column;gap:5px;text-align:left}.promoProfileField span{color:#7e8c9d;font:700 9px/1.4 'Segoe UI',Arial,sans-serif}.promoProfileField input,.promoProfileInput{min-width:0;width:100%;min-height:40px;border:1px solid #dfe6ef;border-radius:11px;background:rgba(255,255,255,.94);color:#384759;padding:9px 11px;font:600 13px/1.4 'Segoe UI',Arial,sans-serif;outline:none}.promoProfileField input:focus{border-color:#b7c9da;box-shadow:0 0 0 3px rgba(184,204,224,.13)}.promoWinnerDetails{margin-top:10px;text-align:left}.promoWinnerDetails summary{cursor:pointer;color:#8391a1;font:700 10px/1.5 'Segoe UI',Arial,sans-serif}.promoCompanionFields{margin:12px 0 0;padding:10px;border:1px solid #e4eaf0;border-radius:12px}.promoCompanionFields legend{font-size:9px;font-weight:700;color:#8a95a3}.promoProfileStatus{margin-top:8px;text-align:left;color:#9a815e;font:600 10px/1.5 'Segoe UI',Arial,sans-serif}.promoProfileStatus.ready{color:#6a987e}.promoProfileStatus.waiting{color:#9a815e}@media(max-width:650px){.promoProfileGrid{grid-template-columns:1fr}}
+</style>
+<style id="studio-result-compact">
+.resultBox.studioResultCard{width:100%;max-width:940px;margin:16px auto;border:1px solid #dfe6ef;border-radius:20px;padding:18px;background:rgba(249,251,254,.88);box-shadow:0 8px 25px rgba(36,46,60,.03);text-align:left}.studioResultCardHead{display:flex;align-items:center;gap:12px;margin-bottom:16px}.studioResultCardHead>div{flex:1;min-width:0}.studioResultEyebrow{display:block;color:#77879a;font:700 10px/1.4 'Segoe UI',Arial,sans-serif;letter-spacing:.02em}.studioResultCardHead strong{display:block;margin-top:4px;color:#334357;font:700 16px/1.3 'Segoe UI',Arial,sans-serif}.studioResultDate{padding:6px 9px;border:1px solid #e0e7ef;border-radius:20px;color:#7b899b;font:700 9px/1.4 'Segoe UI',Arial,sans-serif;white-space:nowrap}.studioResultCard .resultWinnersList{border:0!important;background:transparent!important;padding:0!important;gap:14px}.studioResultCard .promoWinnerCandidate{border:0!important;background:transparent!important;padding:0!important}.studioResultCard .resultWinnerLine input{min-height:43px;font-size:15px!important;font-weight:600!important;border-color:#dfe6ef!important}.studioResultCard .resultAddBtn,.studioResultCard .resultRemoveBtn{width:43px;height:43px;border-radius:12px;background:#f4f7fb;border-color:#dfe6ef;color:#738194}.studioResultCard .winnerEligibility{min-height:0!important;margin-top:6px!important;border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;color:#7f8fa1;font-size:10px!important}.studioResultCard .winnerEligibility.apto{color:#679178}.studioResultCard .winnerEligibility.bloqueado{color:#a86b79}.studioResultCardFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e4eaf1;padding-top:12px;margin-top:14px}.studioResultSave{background:#e8f4ed!important;border:1px solid #b8d9c6!important;color:#4a7e63!important;border-radius:13px!important;font-size:12px!important;min-height:42px;padding:10px 18px!important;box-shadow:none!important}.studioResultSave:disabled{background:#f1f4f5!important;border-color:#dfe6e8!important;color:#a0aba8!important;opacity:1!important}.studioResultCancel{border:0;background:transparent;color:#8793a2;font:600 11px/1.4 'Segoe UI',Arial,sans-serif;padding:8px;cursor:pointer}.studioResultSavedHint{font-size:9px;color:#8a98a8;margin-top:9px}.studioInlineReadActions[hidden]{display:none!important}@media(max-width:650px){.studioResultCardHead{flex-wrap:wrap}.studioResultDate{margin-left:auto}.studioResultCardHead strong{font-size:14px}}
 </style>
 </head>
 <body>
@@ -2561,7 +2574,8 @@ let studioDrawerMode='';
 let studioReadSheetPromoId=null;
 let studioReadContext=null;
 let studioReadSaving=false;
-const STUDIO_SHORTCUT_ALERT_IDS=['promoListBtn','merchanListBtn','historyListBtn','studioPendingBellBtn','studioCampaignBtn'];
+const STUDIO_SHORTCUT_ALERT_IDS=['promoListBtn','merchanListBtn','historyListBtn','studioPendingBellBtn'];
+let studioShortcutReadClock='';
 let studioShortcutFlashOn=true;
 let studioShortcutFlashTimer=null;
 let studioPendingReadCache=null;
@@ -3030,7 +3044,7 @@ function winnerResolvedPrizeKey(record){
   return winnerPrizeKey(winnerResolvedPrize(record));
 }
 function winnerRecordList(value){
-  const active=row=>{if(row?.operationStatus!=='PENDING')return true;const created=Date.parse(row.createdAt||'');return !Number.isFinite(created)||(Date.now()-created)<(10*60*1000);};
+  const active=row=>{if(row?.operationStatus==='PENDING_REMOVAL')return false;if(row?.operationStatus!=='PENDING')return true;const created=Date.parse(row.createdAt||'');return !Number.isFinite(created)||(Date.now()-created)<(10*60*1000);};
   if(Array.isArray(value)) return value.filter(Boolean).map((row,index)=>({...row,id:row.id||`LEGACY_${index}`})).filter(active);
   if(value&&typeof value==='object') return Object.entries(value).map(([key,row])=>({...row,id:row?.id||key})).filter(row=>row.name&&row.date).filter(active);
   return [];
@@ -3038,7 +3052,7 @@ function winnerRecordList(value){
 function winnerRecordMap(value){
   const map={};
   const active=record=>{
-    if(record?.operationStatus!=='PENDING') return true;
+    if(record?.operationStatus==='PENDING_REMOVAL')return false;if(record?.operationStatus!=='PENDING') return true;
     const created=Date.parse(record.createdAt||'');
     return !Number.isFinite(created)||(Date.now()-created)<(10*60*1000);
   };
@@ -3628,6 +3642,7 @@ function programFromSchedule(date,slot,station=STUDIO_STATION){
 }
 /* STUDIO_CAMPAIGNS_START */
 let studioCampaignContext=null;
+const studioPromoResultDrafts=new Map(),studioDismissedResults=new Set();
 let studioResultSaving=false;
 function studioIsCampaign(p){
   const kind=upper(p?.kind||p?.promoKind||p?.type||'');
@@ -3655,8 +3670,8 @@ function studioCampaignList(){
   return active;
 }
 function studioCampaignButtonMarkup(){
-  const count=studioActiveCampaigns().length,pending=count>0||studioCampaignList().some(p=>studioCampaignDraws(p).some(o=>o.pending));
-  return `<button class="promoListBtn studioCampaignBtn ${studioDrawerMode==='campaigns'?'active':''} ${pending?'hasPending':''}" id="studioCampaignBtn" type="button" onclick="studioShortcutClick(event,'campaigns')" aria-label="PROMOÇÕES · ${count} ATIVA${count===1?'':'S'}" title="PROMOÇÕES ATIVAS E RESULTADOS"><span class="studioGiftGlyph" aria-hidden="true">${studioDrawerIcon('campaigns')}</span>${count?`<span class="studioCampaignCount" aria-hidden="true">${count}</span>`:''}</button>`;
+  const count=studioActiveCampaigns().length;
+  return `<button class="promoListBtn studioCampaignBtn ${studioDrawerMode==='campaigns'?'active':''}" id="studioCampaignBtn" type="button" onclick="studioShortcutClick(event,'campaigns')" aria-label="PROMOÇÕES · ${count} ATIVA${count===1?'':'S'}" title="PROMOÇÕES ATIVAS E RESULTADOS"><span class="studioGiftGlyph" aria-hidden="true">${studioDrawerIcon('campaigns')}</span>${count?`<span class="studioCampaignCount" aria-hidden="true">${count}</span>`:''}</button>`;
 }
 function studioCampaignPrize(p){const d=distributionById(p.distributionId)||{};return upper(p.prizeTitle||d.title||d.show||d.prize||p.prize||'PRÊMIO DA PROMOÇÃO');}
 function studioCampaignSegment(p){const labels={ar:'RÁDIO',rs:'REDES SOCIAIS',app:'APP',rua:'EXTERNA',camarote:'CAMAROTE',camarim:'CAMARIM',reservado:'RESERVADO'};return labels[String(p.segmentKey||'').toLowerCase()]||upper(p.segmentKey||'SEGMENTO NÃO INFORMADO');}
@@ -3668,11 +3683,15 @@ function studioCampaignDrawerRows(){
     return `<section class="studioCampaignCard"><strong>${esc(upper(p.name||p.title||'PROMOÇÃO'))}</strong><span class="studioCampaignStatus">${active?'EM ANDAMENTO':'RESULTADO PENDENTE'}</span><p>${esc(studioCampaignSegment(p))} · ${esc(studioCampaignPrize(p))} · ${units} UNID. / GANHADOR</p>${draws.map(o=>`<button class="studioCampaignDraw ${o.done?'done':o.pending?'pending':'scheduled'}" type="button" data-campaign-id="${esc(p.id)}" data-occurrence-id="${esc(o.id)}"><span>${esc(formatBR(o.date))} · ${esc(formatStudioTime(o.time))}<small>${o.qtyPlanned} GANHADOR${o.qtyPlanned===1?'':'ES'}</small></span><b>${o.done?'OK · '+esc(o.winners.map(w=>w.name).join(', ')||'RESULTADO CONFIRMADO'):o.pending?'RESULTADO PENDENTE':'SORTEIO AGENDADO'}</b></button>`).join('')||'<p>SEM SORTEIO CADASTRADO.</p>'}</section>`;
   }).join('');
 }
+function studioResultContextMatchesItem(item){return !studioCampaignContext||(item?.promoId===studioCampaignContext.promoId&&item.date===studioCampaignContext.date&&timeToHHMM(item.slot)===timeToHHMM(studioCampaignContext.slot));}
 function studioCaptureCampaignDraft(){
-  if(!studioCampaignContext||studioResultSaving)return;
+  if(studioResultSaving)return;
+  const p=currentPromoForRead(),item=currentDisplayItem;
+  if(!p||!item||item.promoId!==p.id||!studioResultContextMatchesItem(item)||!shouldShowPromoResultBox(p,item))return;
   const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
-  if(fields.length)studioCampaignContext.winnerDraft=fields.map(input=>({name:input.value,similarityInputKey:input.dataset.similarityInputKey||'',similarityRejected:input.dataset.similarityRejected||''}));
+  if(fields.length){const values=collectPromoWinnerInputs(true),draft=values.map((w,i)=>({...w,similarityInputKey:fields[i].dataset.similarityInputKey||'',similarityRejected:fields[i].dataset.similarityRejected||''}));studioPromoResultDrafts.set(winnerContextForPromo(p,item).sourceRef,draft);if(studioCampaignContext)studioCampaignContext.winnerDraft=draft;}
 }
+function studioDismissCurrentResult(){const p=currentPromoForRead(),item=currentDisplayItem;if(p&&item&&shouldShowPromoResultBox(p,item)){const key=winnerContextForPromo(p,item).sourceRef;studioPromoResultDrafts.delete(key);studioDismissedResults.add(key);}}
 function studioCampaignDisplayItem(){
   if(!studioCampaignContext)return null;
   const c=studioCampaignContext;
@@ -3680,6 +3699,7 @@ function studioCampaignDisplayItem(){
 }
 function studioOpenCampaignResult(promoId,occurrenceId){
   if(studioReadSaving||studioResultSaving)return;
+  studioCaptureCampaignDraft();
   const p=studioCampaignRecord(promoId);if(!p||!studioCampaignVisible(p)||!stationAllowed(p))return;
   const occurrence=studioCampaignDraws(p).find(o=>o.id===occurrenceId);if(!occurrence)return;
   studioReadContext=null;studioReadSheetPromoId=null;selectedPromoId=promoId;
@@ -3688,6 +3708,7 @@ function studioOpenCampaignResult(promoId,occurrenceId){
 }
 function studioCloseCampaignResult(){
   if(studioResultSaving||studioReadSaving)return;
+  studioDismissCurrentResult();
   studioCampaignContext=null;selectedPromoId=null;studioReadContext=null;studioReadSheetPromoId=null;
   manual=false;manualHourDateMs=null;selectedIndex=-1;studioDrawerMode='';render();
 }
@@ -4010,7 +4031,9 @@ function studioDrawerReadEntries(kind,item){
   if(item?.date===todayISO())studioDueReadEntries().filter(r=>kind==='merchan'?isMerchan(r.p):!isMerchan(r.p)).forEach(r=>{const key=studioReadEntryKey(r.p,r.item);if(!seen.has(key)){seen.add(key);list.push(r);}});
   return list;
 }
-function studioDrawerPendingCount(kind,item){return studioDrawerReadEntries(kind,item).reduce((sum,r)=>sum+studioAV57Progress(r.p,r.item).remaining,0);}
+function studioCurrentReadItem(){return itemForDate(allPrizeRows(),currentSlotDate()).item;}
+function studioReadEntryIsCurrent(item){return item?.date===todayISO()&&studioAV57HourSlot(item.slot)===studioAV57HourSlot(formatStudioTime(currentSlotDate().toTimeString().slice(0,5)));}
+function studioDrawerPendingCount(kind,item){const current=studioCurrentReadItem();return studioDrawerReadEntries(kind,current).filter(r=>studioReadEntryIsCurrent(r.item)).reduce((sum,r)=>sum+studioAV57Progress(r.p,r.item).remaining,0);}
 function studioDrawHistoryRows(date){
   const seen=new Set();return historyRowsForDate(date).filter(r=>{
     const key=`${r.time}|${upper(r.title).replace(/^RESULTADO:\s*/,'')}|${upper(r.result)}`;
@@ -4023,7 +4046,7 @@ function studioUpcomingDrawRows(){
 }
 function studioDrawerCount(mode,item){if(mode==='campaigns')return studioCampaignList().length;return mode==='history'?studioDrawHistoryRows(item?.date||todayISO()).length:mode==='upcoming'?studioUpcomingDrawRows().length:studioDrawerPendingCount(mode,item);}
 function studioDrawerLabel(mode){if(mode==='campaigns')return 'PROMOÇÕES ATIVAS';return mode==='upcoming'?'PRÓXIMOS SORTEIOS DE HOJE':mode==='history'?'SORTEIOS REALIZADOS':mode==='merchan'?'MERCHAN':'PAUTAS E PROMOÇÕES';}
-function studioDrawerRows(item,mode){
+function studioDrawerRows(item,mode,entries=null){
   if(mode==='campaigns')return studioCampaignDrawerRows();
   if(mode==='history'){
     const rows=studioDrawHistoryRows(item?.date||todayISO()).slice().reverse();
@@ -4035,19 +4058,20 @@ function studioDrawerRows(item,mode){
     if(!rows.length)return '<div class="studioDrawerEmpty">NENHUM PRÓXIMO SORTEIO PROGRAMADO.</div>';
     return rows.map(r=>`<div class="studioDrawerItem upcoming"><span class="studioDrawerState">${studioDrawerIcon('upcoming')}</span><div><div class="studioDrawerTitle static">${esc(itemTitle(r))}</div><div class="studioDrawerMeta">${esc(formatBR(r.date))} · ${esc(formatStudioTime(r.slot))} · AGUARDANDO</div></div><span class="studioDrawerArrow">${studioDrawerStateIcon('pending')}</span></div>`).join('');
   }
-  const rows=studioDrawerReadEntries(mode,item);
+  const rows=entries||studioDrawerReadEntries(mode,item);
   if(!rows.length)return `<div class="studioDrawerEmpty">${mode==='merchan'?'SEM MERCHAN':'SEM PAUTA PROMOCIONAL'} PROGRAMADO PARA ESTE HORÁRIO.</div>`;
   return rows.map(({p,item:target,late})=>{
-    const progress=studioAV57Progress(p,target),done=progress.remaining===0&&progress.missed===0,missed=progress.remaining===0&&progress.missed>0,state=done?'done':missed?'missed':'pending';
+    const progress=studioAV57Progress(p,target),done=progress.remaining===0&&progress.missed===0,missed=progress.remaining===0&&progress.missed>0,expired=(target.date+'T'+timeToHHMM(target.slot))<(todayISO()+'T'+timeToHHMM(formatStudioTime(currentSlotDate().toTimeString().slice(0,5))))&&progress.remaining>0,state=done?'done':missed?'missed':expired?'expired':studioReadEntryIsCurrent(target)?'pending':'scheduled';
     const type=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||p?.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
     const name=upper(p?.name||p?.title||type),client=upper(p?.opecClientName||p?.clientName||p?.client||p?.advertiser||'');
     const title=isMerchan(p)&&client&&client!==name?`${client} · ${name}`:name;
-    const time=readTimeLabel(readTimestampForHour(p,target)).replace('FEITA ',''),status=done?`LIDO · ${time}`:missed?'NÃO REALIZADA':'AGUARDANDO';
+    const time=readTimeLabel(readTimestampForHour(p,target)).replace('FEITA ',''),status=done?`LIDO · ${time}`:missed?'NÃO REALIZADA':expired?'NÃO CONFIRMADA':'AGUARDANDO';
     const counter=progress.required>1?` · ${progress.done}/${progress.required}`:'';
-    return `<div class="studioDrawerItem ${state}" data-promo-id="${esc(p.id)}" ${late?`data-program-date="${esc(target.date)}" data-program-slot="${esc(target.slot)}"`:''}><span class="studioDrawerState ${state}" title="${done?'OK':esc(status)}" aria-label="${done?'OK':esc(status)}">${studioDrawerStateIcon(state)}</span><div><button class="studioDrawerTitle" type="button" data-promo-id="${esc(p.id)}" title="${esc(title)}">${esc(title)}</button><div class="studioDrawerMeta">${esc(status)} · ${esc(type)}${esc(counter)}${late?` · ATRASADA ${esc(formatStudioTime(target.slot))}`:''}</div></div><span class="studioDrawerArrow">${done?studioDrawerStateIcon('done'):'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg>'}</span></div>`;
+    return `<div class="studioDrawerItem ${state}" data-promo-id="${esc(p.id)}" data-program-date="${esc(target.date)}" data-program-slot="${esc(target.slot)}"><span class="studioDrawerState ${state}" title="${done?'OK':esc(status)}" aria-label="${done?'OK':esc(status)}">${studioDrawerStateIcon(state)}</span><div><button class="studioDrawerTitle" type="button" data-promo-id="${esc(p.id)}" data-program-date="${esc(target.date)}" data-program-slot="${esc(target.slot)}" title="${esc(title)}">${esc(title)}</button><div class="studioDrawerMeta">${esc(status)} · ${esc(type)}${esc(counter)} · ${esc(formatStudioTime(target.slot))}</div></div><span class="studioDrawerArrow">${done?studioDrawerStateIcon('done'):'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"></path></svg>'}</span></div>`;
   }).join('');
 }
 function buildStudioDrawer(item){
+  if(['promo','merchan'].includes(studioDrawerMode))return '';
   const mode=studioDrawerMode||'promo',count=studioDrawerCount(mode,item);
   return `<aside class="studioContextDrawer ${mode!=='history'&&count>0?'hasPending':''}" id="studioContextDrawer" aria-hidden="${studioDrawerMode?'false':'true'}"><div class="studioDrawerHead"><div class="studioDrawerHeadIcon">${studioDrawerIcon(mode)}</div><span class="studioDrawerHeading">${esc(studioDrawerLabel(mode))}</span><span class="studioDrawerCount">${count}</span><button class="studioDrawerClose" type="button" id="studioDrawerClose" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div><div class="studioDrawerBody" id="studioDrawerBody">${studioDrawerRows(item,mode)}</div></aside>`;
 }
@@ -4059,8 +4083,10 @@ function syncStudioDrawer(){
   ['promo','merchan','history','upcoming','campaigns'].forEach(mode=>{const id=mode==='campaigns'?'studioCampaignBtn':mode==='promo'?'promoListBtn':mode==='merchan'?'merchanListBtn':mode==='upcoming'?'studioPendingBellBtn':'historyListBtn';$(id)?.classList.toggle('active',studioDrawerMode===mode);});
   if(studioDrawerMode&&body&&currentDisplayItem){body.innerHTML=studioDrawerRows(currentDisplayItem,studioDrawerMode);const count=studioDrawerCount(studioDrawerMode,currentDisplayItem);drawer.querySelector('.studioDrawerHeading').textContent=studioDrawerLabel(studioDrawerMode);drawer.querySelector('.studioDrawerHeadIcon').innerHTML=studioDrawerIcon(studioDrawerMode);drawer.querySelector('.studioDrawerCount').textContent=count;}
 }
-function toggleStudioDrawer(mode){if(studioResultSaving||studioReadSaving)return;studioDrawerMode=studioDrawerMode===mode?'':mode;syncStudioDrawer();}
-function closeStudioDrawer(){studioDrawerMode='';syncStudioDrawer();}
+function studioReadingMenuActive(){return ['promo','merchan'].includes(studioDrawerMode);}
+function buildStudioReadingMenu(){const mode=studioDrawerMode,item=studioCurrentReadItem(),rows=studioDrawerReadEntries(mode,item),now=rows.filter(r=>studioReadEntryIsCurrent(r.item)),before=rows.filter(r=>!studioReadEntryIsCurrent(r.item));return `<section class="studioReadingMenu"><div class="studioReadingMenuHead"><strong>${esc(studioDrawerLabel(mode))}</strong><button class="studioDrawerClose" id="studioDrawerClose" type="button" title="VOLTAR AO PRÊMIO" aria-label="VOLTAR AO PRÊMIO">${studioDrawerStateIcon('missed')}</button></div><div class="studioReadingGroup"><div class="studioDrawerGroupLabel">AGORA · ${esc(formatStudioTime(item.slot))}</div>${studioDrawerRows(item,mode,now)}</div>${before.length?`<details class="studioReadingPrevious"><summary>HORÁRIOS ANTERIORES · ${before.length}</summary>${studioDrawerRows(item,mode,before)}</details>`:''}</section>`;}
+function toggleStudioDrawer(mode){if(studioResultSaving||studioReadSaving)return;const central=studioReadingMenuActive()||['promo','merchan'].includes(mode);studioDrawerMode=studioDrawerMode===mode?'':mode;if(central){studioCampaignContext=null;closeStudioReadSheet(false);manual=false;manualHourDateMs=null;clearTimeout(manualReturnTimer);render();}else syncStudioDrawer();}
+function closeStudioDrawer(){const central=studioReadingMenuActive();studioDrawerMode='';if(central)returnStudioToNow();else syncStudioDrawer();}
 function ensureStudioReadSheet(){
   let root=$('studioReadSheet');if(root)return root;
   root=document.createElement('div');root.id='studioReadSheet';root.className='studioReadSheet';root.setAttribute('aria-hidden','true');root.innerHTML=`<div class="studioReadSheetCard" role="dialog" aria-modal="true" aria-labelledby="studioReadSheetTitle"><div class="studioReadSheetHead"><div class="studioReadSheetIcon" id="studioReadSheetIcon"></div><div class="studioReadSheetActions"><button class="studioReadSheetAction confirm studioReadSheetConfirm" id="studioReadSheetConfirm" type="button" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg></button><button class="studioReadSheetAction" id="studioReadSheetClose" type="button" title="FECHAR" aria-label="FECHAR"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div></div><div class="studioReadSheetContent"><h2 id="studioReadSheetTitle"></h2><div class="studioReadSheetMeta" id="studioReadSheetMeta"></div><div class="studioReadSheetContext" id="studioReadSheetContext"></div><div class="studioReadSheetBanner" id="studioReadSheetBanner" hidden></div><div class="studioReadSheetText" id="studioReadSheetText"></div></div></div>`;document.body.appendChild(root);
@@ -4072,13 +4098,14 @@ function openStudioReadSheet(promoId){
   const p=findPromoById(promoId),item=currentDisplayItem||virtualCurrentItem();if(!p||!item)return;
   studioReadSheetPromoId=null;selectedPromoId=promoId;
   studioReadContext={promoId,date:item.date,slot:item.slot};
+  studioDrawerMode='';
   render();
 }
 function closeStudioReadSheet(renderPanel=true){
   if(studioReadSaving)return;
   const root=$('studioReadSheet');studioReadSheetPromoId=null;studioReadContext=null;selectedPromoId=null;
   if(root){root.classList.remove('show');root.setAttribute('aria-hidden','true');}
-  if(renderPanel)render();
+  if(renderPanel)returnStudioToNow();
 }
 
 function buildStudioReadCenter(item){
@@ -4172,7 +4199,7 @@ function previousStudioPendencies(){
 function studioOperationActive(){return !!studioCampaignContext||studioResultSaving||!!studioReadContext||studioReadSaving||!!document.querySelector('.modalBackdrop.show,.modal.show')||!!document.querySelector('#pautaPanel button:disabled')||['INPUT','TEXTAREA'].includes(document.activeElement?.tagName);}
 function scheduleManualReturn(){clearTimeout(manualReturnTimer);if(!manual)return;manualLastInteractionAt=Date.now();manualReturnTimer=setTimeout(()=>{if(!manual)return;if(studioOperationActive()){scheduleManualReturn();return;}returnStudioToNow();},MANUAL_RETURN_MS);}
 function returnStudioToNow(){if(studioReadSaving||studioResultSaving)return;studioCampaignContext=null;clearTimeout(manualReturnTimer);manual=false;manualHourDateMs=null;selectedIndex=-1;studioDrawerMode='';closeStudioReadSheet(false);render();}
-function jumpToStudioPending(date,slot,promoId=''){if(studioReadSaving||studioResultSaving)return;studioCampaignContext=null;studioReadContext=null;studioReadSheetPromoId=null;const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=null;scheduleManualReturn();render();if(promoId)setTimeout(()=>startPromoRead(promoId),0);}
+function jumpToStudioPending(date,slot,promoId=''){if(studioReadSaving||studioResultSaving)return;studioCampaignContext=null;studioReadContext=null;studioReadSheetPromoId=null;const d=new Date(`${date}T${timeToHHMM(slot)}:00`);manualHourDateMs=d.getTime();manual=true;selectedPromoId=null;scheduleManualReturn();render();if(promoId)startPromoRead(promoId);}
 window.returnStudioToNow=returnStudioToNow;window.jumpToStudioPending=jumpToStudioPending;
 function pautaTypeLabel(p){
   if(isMerchan(p)) return 'MERCHAN';
@@ -4225,79 +4252,244 @@ function promoResultForHour(p,item){
   const exact=item?promoResultMapValue(p.resultByHour,item,p):undefined;
   return exact!==undefined?exact:promoResultLegacyMatches(p,item)?p.resultName||'':'';
 }
+/* PROMO_WINNER_FIELDS_START */
+function promoWinnerFieldDefinitions(){return [{key:'name',label:'NOME COMPLETO',type:'text'},{key:'phone',label:'TELEFONE / WHATSAPP',type:'tel'},{key:'cpf',label:'CPF',type:'text'},{key:'instagram',label:'@INSTAGRAM',type:'text'}];}
+function promoWinnerNormalizeRules(value={}){
+  const modes=['off','optional','result','pickup'],fields={},companionFields={};
+  promoWinnerFieldDefinitions().forEach(({key})=>{fields[key]=modes.includes(value.fields?.[key])?value.fields[key]:(key==='name'?'result':'off');companionFields[key]=modes.includes(value.companionFields?.[key])?value.companionFields[key]:'off';});
+  return {version:1,fields,companionsPerWinner:Math.max(0,Math.min(50,Math.trunc(Number(value.companionsPerWinner)||0))),companionFields};
+}
+function promoWinnerRules(p,w=null){
+  if(p?.kind!=='promo'||!p.id)return null;
+  if(w&&Object.prototype.hasOwnProperty.call(w,'registrationRules'))return w.registrationRules&&typeof w.registrationRules==='object'?promoWinnerNormalizeRules(w.registrationRules):null;
+  if(w){
+    const name=promoWinnerCleanName(w.name),recorded=[...(p.resultWinners||[]),...Object.values(p.resultWinnersByHour||{}).flat()].some(r=>w.id&&r?.id===w.id||name&&promoWinnerCleanName(typeof r==='string'?r:r?.name)===name);
+    const named=name&&[p.resultName,...Object.values(p.resultByHour||{})].some(value=>String(value||'').split(',').some(n=>promoWinnerCleanName(n)===name));
+    if(w.registeredAt||w.deliveredAt||recorded||named)return null;
+  }
+  return p.winnerRegistration&&typeof p.winnerRegistration==='object'?promoWinnerNormalizeRules(p.winnerRegistration):null;
+}
+function promoWinnerCleanName(value){return String(value||'').trim().replace(/\s+/g,' ').toUpperCase();}
+function promoWinnerFullName(w={}){const name=String(w.fullName??w.name??'').trim();return name.startsWith('@')?'':promoWinnerCleanName(name);}
+function promoWinnerInstagram(value){const name=String(value||'').trim().replace(/^@/,'');return name?'@'+name.toLowerCase():'';}
+function promoWinnerCpfValid(value){const cpf=String(value||'').replace(/\D/g,'');if(cpf.length!==11||/^(\d)\1{10}$/.test(cpf))return false;for(let size=9;size<=10;size++){let sum=0;for(let i=0;i<size;i++)sum+=Number(cpf[i])*(size+1-i);const digit=(sum*10)%11%10;if(digit!==Number(cpf[size]))return false;}return true;}
+function promoWinnerIdentityReady(w){return promoWinnerFullName(w).split(/\s+/).filter(Boolean).length>=2;}
+function promoWinnerCheck(w={},p,stage='result'){
+  const rules=promoWinnerRules(p,w),errors=[],missing=[];
+  if(!rules)return {allowed:!!String(w.name||'').trim(),identityReady:!!String(w.name||'').trim(),errors:[],missing:[]};
+  const main={...w,name:promoWinnerFullName(w),instagram:promoWinnerInstagram(w.instagram||(String(w.name||'').startsWith('@')?w.name:''))};
+  if(!main.name&&!main.instagram){errors.push('INFORME O NOME OU O PERFIL DO GANHADOR.');missing.push('IDENTIFICAÇÃO');}
+  function check(fields,data,prefix=''){
+    promoWinnerFieldDefinitions().forEach(({key,label})=>{
+      const mode=fields[key],value=String(data[key]||'').trim(),required=mode==='result'||(stage==='pickup'&&mode==='pickup');
+      if(mode==='off')return;
+      if(required&&!value){missing.push(prefix+label);errors.push(prefix+label+' É OBRIGATÓRIO.');return;}
+      if(!value)return;
+      if(key==='name'&&required&&value.split(/\s+/).length<2)errors.push(prefix+'INFORME O NOME COMPLETO.');
+      if(key==='phone'&&!/^\d{10,15}$/.test(value.replace(/\D/g,'')))errors.push(prefix+'CONFIRA O TELEFONE.');
+      if(key==='cpf'&&!promoWinnerCpfValid(value))errors.push(prefix+'CONFIRA O CPF.');
+      if(key==='instagram'&&!/^@?[a-zA-Z0-9._]{1,30}$/.test(value))errors.push(prefix+'CONFIRA O PERFIL DO INSTAGRAM.');
+    });
+  }
+  check(rules.fields,main);
+  for(let i=0;i<rules.companionsPerWinner;i++){const c=w.companions?.[i]||{};check(rules.companionFields,{...c,name:promoWinnerFullName(c)},`ACOMPANHANTE ${i+1} · `);}
+  const identityReady=promoWinnerIdentityReady(w);
+  if(stage==='pickup'&&!identityReady){if(!missing.includes('NOME COMPLETO'))missing.push('NOME COMPLETO');errors.push('COMPLETE A IDENTIFICAÇÃO PARA VALIDAR O HISTÓRICO.');}
+  return {allowed:errors.length===0,identityReady,errors:[...new Set(errors)],missing:[...new Set(missing)]};
+}
+function promoWinnerNormalize(w={},p,id=''){
+  const rules=promoWinnerRules(p,w);if(!rules)return {...w,name:promoWinnerCleanName(w.name)};
+  const fullName=promoWinnerFullName(w),instagram=promoWinnerInstagram(w.instagram||(String(w.name||'').startsWith('@')?w.name:''));
+  const companions=Array.from({length:rules.companionsPerWinner},(_,i)=>{const c=w.companions?.[i]||{};return {...c,name:promoWinnerFullName(c),phone:String(c.phone||'').trim(),cpf:String(c.cpf||'').replace(/\D/g,''),instagram:promoWinnerInstagram(c.instagram)};});
+  return {...w,id:w.id||id,name:fullName||instagram,fullName,phone:String(w.phone||'').trim(),cpf:String(w.cpf||'').replace(/\D/g,''),instagram,companionCount:rules.companionsPerWinner,companions,registrationRules:rules};
+}
+function promoWinnerProfileStatus(w,p){const check=promoWinnerCheck(w,p,'pickup');return {ready:check.allowed&&w.identityStatus!=='PENDING',label:check.allowed&&w.identityStatus!=='PENDING'?'PRONTO PARA ENTREGA':check.missing.length?'AGUARDANDO '+check.missing.join(', '):'VALIDAÇÃO PENDENTE',missing:check.missing};}
+function promoWinnerEscape(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function promoWinnerExtraFieldsHtml(w,p){
+  const rules=promoWinnerRules(p,w);if(!rules)return '';
+  const field=({key,label,type},data,index=null)=>{const mode=(index===null?rules.fields:rules.companionFields)[key];if(mode==='off'||(key==='name'&&index===null))return '';const value=key==='name'?promoWinnerFullName(data):data[key]||'';return `<label class="promoProfileField"><span>${label}${mode==='result'?' · NO RESULTADO':mode==='pickup'?' · ANTES DA ENTREGA':' · OPCIONAL'}</span><input class="promoProfileInput" data-winner-field="${key}" ${index===null?'':`data-companion-index="${index}"`} type="${type}" maxlength="${key==='cpf'?14:key==='phone'?22:key==='instagram'?31:140}" value="${promoWinnerEscape(value)}" autocomplete="off"></label>`;};
+  const main=promoWinnerFieldDefinitions().map(f=>field(f,w)).join('');
+  const askCompanions=Object.values(rules.companionFields).some(mode=>mode!=='off');
+  const companions=askCompanions?Array.from({length:rules.companionsPerWinner},(_,i)=>`<fieldset class="promoCompanionFields"><legend>ACOMPANHANTE ${i+1}</legend><div class="promoProfileGrid">${promoWinnerFieldDefinitions().map(f=>field(f,w.companions?.[i]||{},i)).join('')}</div></fieldset>`).join(''):'';
+  return main||companions?`<details class="promoWinnerDetails"><summary>DADOS DO GANHADOR${rules.companionsPerWinner?` · +${rules.companionsPerWinner} ACOMPANHANTES`:''}</summary><div class="promoProfileGrid">${main}</div>${companions}</details>`:'';
+}
+function promoWinnerReadFields(host,previous={},p){
+  const next={...previous,companions:(previous.companions||[]).map(c=>({...c}))};
+  const main=host?.querySelector?.('.promoResultWinnerInput');if(main){next.name=main.value||'';next.fullName=String(main.value||'').startsWith('@')?'':main.value||'';if(String(main.value||'').startsWith('@'))next.instagram=main.value;}
+  host?.querySelectorAll?.('[data-winner-field]').forEach(input=>{const key=input.dataset.winnerField,index=input.dataset.companionIndex;if(!['name','phone','cpf','instagram'].includes(key))return;if(index!==undefined){const i=Number(index);if(!Number.isInteger(i)||i<0||i>=50)return;next.companions[i]||={};next.companions[i][key]=input.value;}else next[key]=input.value;});
+  if(String(main?.value||'').startsWith('@'))next.instagram=main.value;
+  if(host?.dataset?.winnerId)next.id=host.dataset.winnerId;
+  return promoWinnerNormalize(next,p,next.id||'');
+}
+/* PROMO_WINNER_FIELDS_END */
+/* PROMO_WINNER_STORE_START */
+function promoWinnerToken(value){let hash=2166136261;for(const c of String(value||'')){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619);}return(hash>>>0).toString(36);}
+function promoWinnerPersonKey(value){return String(value||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim().replace(/\s+/g,'_').slice(0,180);}
+function promoWinnerSourceRef(p,date,time){const t=String(time||'').trim().toUpperCase().replace('H',':').replace(/:$/,''),match=t.match(/^(\d{1,2})(?::(\d{2}))?$/),hour=String(Number(match?.[1]||0)).padStart(2,'0'),minute=match?.[2]||'00';return `PROMO:${p.id}:${date}:${hour}H${minute==='00'?'':minute}`;}
+function promoWinnerPrizeKey(prize,bank={}){
+  const plain=promoWinnerPersonKey(prize),source=bank.settings?.prizeEquivalences,values=Array.isArray(source)?source:Object.values(source||{}),groups=values.length?values:[{id:'GRUPO_CINEMA',aliases:['CINEMA','CINESYSTEM','CINÉPOLIS','CINEPOLIS']}];
+  const group=groups.find(g=>(Array.isArray(g.aliases)?g.aliases:String(g.aliases||'').split(/[,;\n]/)).some(alias=>{const term=promoWinnerPersonKey(alias);return term&&(plain===term||plain.includes(term));}));
+  return group?'EQUIV_'+promoWinnerPersonKey(group.id||group.name):plain.slice(0,220);
+}
+function promoWinnerHistoryCheck(bank,w,context,months={}){
+  const name=promoWinnerFullName(w)||w.name,key=promoWinnerPersonKey(name),cpf=String(w.cpf||'').replace(/\D/g,''),instagram=promoWinnerInstagram(w.instagram);
+  const records=(Array.isArray(bank.records)?bank.records:Object.values(bank.records||{})).filter(r=>r?.name&&/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')&&r.operationStatus!=='PENDING_REMOVAL').filter(r=>r.operationStatus!=='PENDING'||!Number.isFinite(Date.parse(r.createdAt||''))||Date.now()-Date.parse(r.createdAt)<600000).filter(r=>r.sourceRef!==context.sourceRef&&r.date<=context.date).filter(r=>r.personKey===key||promoWinnerPersonKey(r.name)===key||(cpf&&String(r.cpf||'').replace(/\D/g,'')===cpf)||(instagram&&promoWinnerInstagram(r.instagram)===instagram)).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  const block=bank.blocks?.[key];if(block?.active===true)return {allowed:false,reason:block.reason||'OUVINTE INCLUÍDO NA LISTA DE NÃO SORTEAR.'};
+  const prizeKey=promoWinnerPrizeKey(context.prize,bank);
+  const samePrize=records.some(r=>{let prize=r.prize||'';if(String(r.sourceRef||'').startsWith('ITEM:')){const id=String(r.sourceRef).slice(5);for(const month of Object.values(months)){const item=(month.items||[]).find(i=>i.id===id);if(item){const d=(month.distributions||[]).find(d=>d.id===item.distributionId);prize=item.title||d?.title||d?.show||d?.prize||item.prize||prize;break;}}}return promoWinnerPrizeKey(prize,bank)===prizeKey;});
+  if(prizeKey&&samePrize)return {allowed:false,reason:'ESTE OUVINTE JÁ GANHOU O MESMO PRÊMIO.'};
+  function plusDays(date,days){const d=new Date(date+'T12:00:00');d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);}
+  function plusMonths(date,months){const[y,m,day]=date.split('-').map(Number),first=new Date(y,m-1+months,1,12),last=new Date(first.getFullYear(),first.getMonth()+1,0,12).getDate();return `${first.getFullYear()}-${String(first.getMonth()+1).padStart(2,'0')}-${String(Math.min(day,last)).padStart(2,'0')}`;}
+  let count=0,until='',third='';for(const r of records){if(count===3){if(r.date>=plusMonths(third,8)){count=0;until='';third='';}else continue;}count++;if(count<3)until=plusDays(r.date,28);else{third=r.date;until=plusMonths(r.date,8);}}
+  if(count===3&&context.date>=until){count=0;until='';}
+  if(until&&context.date<until)return {allowed:false,reason:`OUVINTE BLOQUEADO ATÉ ${until}.`};
+  return {allowed:true,total:records.length,warning:count===2?'ESTA SERÁ A TERCEIRA PREMIAÇÃO.':''};
+}
+function promoWinnerProfileSignature(w){return JSON.stringify({name:promoWinnerFullName(w),instagram:promoWinnerInstagram(w.instagram),phone:String(w.phone||'').trim(),cpf:String(w.cpf||'').replace(/\D/g,''),companions:w.companions||[]});}
+async function promoWinnerStore({stateRef,bankRef,promo,occurrenceKey,winners=[],context,operator,monthKeys=[],months={},profilesOnly=false,changedWinnerIds=null,pickupWinnerId='',undoPickup=false,validateRemote=null}){
+  if(promo?.kind!=='promo'||!promo.id||!occurrenceKey||!bankRef)throw new Error('REGISTRO DA PROMOÇÃO INDISPONÍVEL.');
+  const now=new Date(),operation=`PROMO_PROFILE_${promoWinnerToken(context.sourceRef+'|'+now.getTime()+'|'+Math.random())}`,lockKey='PROMO_'+promoWinnerToken(context.sourceRef);
+  const acquired=[],bankBackup={},writtenKeys=[],removedKeys=[],bankWrites={};let stateCommitted=false,bankTouched=false;
+  const lockKeys=[...new Set([lockKey,...winners.flatMap(w=>[promoWinnerFullName(w)?promoWinnerPersonKey(promoWinnerFullName(w)):'',w.cpf?'CPF_'+promoWinnerToken(String(w.cpf).replace(/\D/g,'')):'',w.instagram?'IG_'+promoWinnerToken(promoWinnerInstagram(w.instagram)):'']).filter(Boolean)])].sort();
+  try{
+    for(const key of lockKeys){const tx=await bankRef.child('locks').child(key).transaction(current=>{if(current?.operationId&&current.operationId!==operation&&Date.parse(current.expiresAt||'')>Date.now())return;return {operationId:operation,createdAt:now.toISOString(),expiresAt:new Date(Date.now()+120000).toISOString()};},undefined,false);if(!tx?.committed)throw new Error('ESTE CADASTRO ESTÁ SENDO ATUALIZADO EM OUTRO COMPUTADOR. TENTE NOVAMENTE.');acquired.push(key);}
+    let found=null,monthKey='';for(const key of [...new Set([context.date.slice(0,7),...monthKeys])]){const value=(await stateRef.child('months').child(key).child('promos').get()).val(),rows=Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean);const row=rows.find(r=>r.id===promo.id);if(row){found=row;monthKey=key;break;}}
+    if(!found)throw new Error('A PROMOÇÃO NÃO FOI LOCALIZADA NA BASE OFICIAL.');
+    if(found.kind!=='promo')throw new Error('ESTE REGISTRO NÃO É UMA PROMOÇÃO CADASTRADA.');
+    if(validateRemote)validateRemote(found);
+    const previous=Array.isArray(found.resultWinnersByHour?.[occurrenceKey])?found.resultWinnersByHour[occurrenceKey]:[];
+    if(profilesOnly&&!previous.length)throw new Error('REGISTRE O RESULTADO ANTES DE COMPLETAR OS DADOS.');
+    const previousWithIds=previous.map((w,i)=>({...w,id:w.id||'PW_'+promoWinnerToken(context.sourceRef+'|'+i)}));
+    const incoming=winners.map((w,i)=>({...w,id:w.id||previousWithIds[i]?.id||'PW_'+promoWinnerToken(context.sourceRef+'|'+i)}));
+    const changes=new Set(changedWinnerIds?changedWinnerIds.filter(Boolean):incoming.map(w=>w.id));
+    if(changedWinnerIds?.some(id=>!id))incoming.forEach((w,i)=>{if(!winners[i].id)changes.add(w.id);});
+    if(profilesOnly&&!pickupWinnerId&&[...changes].some(id=>!previousWithIds.some(w=>w.id===id)||!incoming.some(w=>w.id===id)))throw new Error('O GANHADOR DESTE CADASTRO FOI ALTERADO. REABRA A PROMOÇÃO.');
+    let desired=profilesOnly?previousWithIds.map(w=>changes.has(w.id)?{...w,...incoming.find(n=>n.id===w.id)}:w):incoming;
+    if(pickupWinnerId){desired=previous.map(w=>({...w}));if(!desired.some(w=>w.id===pickupWinnerId))throw new Error('GANHADOR NÃO LOCALIZADO.');}
+    if(!desired.length)throw new Error('INFORME UM GANHADOR.');
+    const capacity=Math.max(1,Number((found.occurrences||[]).find(o=>o.date===context.date&&promoWinnerSourceRef(found,o.date,o.time||found.drawTime)===context.sourceRef)?.qtyPlanned||found.winnersPerDraw||found.qtyPerDraw)||1);
+    if(desired.length>capacity&&desired.length>previous.length)throw new Error('A QUANTIDADE DE GANHADORES DESTE SORTEIO FOI ALTERADA. REABRA A PROMOÇÃO.');
+    if(!previous.length&&JSON.stringify(promoWinnerRules(found))!==JSON.stringify(promoWinnerRules(promo)))throw new Error('OS DADOS EXIGIDOS DA PROMOÇÃO FORAM ALTERADOS. REABRA O CADASTRO.');
+    const bank=(await bankRef.get()).val()||{},records=Array.isArray(bank.records)?Object.fromEntries(bank.records.map((r,i)=>[String(i),r])):{...(bank.records||{})},existingEntries=Object.entries(records).filter(([,r])=>r?.sourceRef===context.sourceRef);
+    const originalOccurrence=(found.occurrences||[]).find(o=>o.date===context.date&&promoWinnerSourceRef(found,o.date,o.time||found.drawTime)===context.sourceRef),matchingSummary=found.resultDate===context.date&&promoWinnerSourceRef(found,found.resultDate,found.resultSlot||context.time)===context.sourceRef;
+    const originalResultAt=originalOccurrence?.resultAt||(matchingSummary?found.resultAt:'')||'',originalResultLabel=originalOccurrence?.resultAtLabel||(matchingSummary?found.resultAtLabel:'')||'';
+    const seen=new Set();desired=desired.map((raw,i)=>{
+      const old=previousWithIds.find(p=>p.id===raw.id);
+      const registrationRules=old?promoWinnerRules(found,old):promoWinnerRules(found);
+      const w=promoWinnerNormalize({...raw,registrationRules},found,raw.id);
+      const check=promoWinnerCheck(w,found,'result');if(!check.allowed)throw new Error(check.errors.join(' '));
+      const identities=['ID_'+w.id,'NAME_'+promoWinnerPersonKey(w.name),w.cpf?'CPF_'+w.cpf:'',w.instagram?'IG_'+promoWinnerInstagram(w.instagram):''].filter(Boolean);
+      if(!w.name||identities.some(key=>seen.has(key)))throw new Error('GANHADOR REPETIDO NESTE SORTEIO.');identities.forEach(key=>seen.add(key));
+      if(!pickupWinnerId&&(!profilesOnly||changes.has(w.id))&&Number(old?.profileVersion||0)!==Number(raw.profileVersion||0))throw new Error('OS DADOS DESTE GANHADOR MUDARAM EM OUTRO COMPUTADOR. REABRA O CADASTRO.');
+      const history=promoWinnerHistoryCheck(bank,w,context,months);if(!history.allowed)throw new Error(history.reason);
+      const edited=!old||promoWinnerProfileSignature(old)!==promoWinnerProfileSignature(w);
+      const originalBank=existingEntries.find(([,r])=>r.winnerId===w.id||!r.winnerId&&promoWinnerPersonKey(r.name)===promoWinnerPersonKey(old?.name||w.name))?.[1];
+      const registeredAt=old?(old.registeredAt||originalResultAt||originalBank?.confirmedAt||originalBank?.createdAt||new Date(context.date+'T'+context.sourceRef.split(':').at(-1).replace(/^(\d{2})H(\d{2})?$/,(_,h,m)=>h+':'+(m||'00'))+':00').toISOString()):now.toISOString();
+      return {...w,registeredAt,registeredAtLabel:old?.registeredAtLabel||originalResultLabel||originalBank?.createdAtLabel||new Date(registeredAt).toLocaleString('pt-BR'),deliveredAt:old?.deliveredAt||'',deliveredAtLabel:old?.deliveredAtLabel||'',deliveredBy:old?.deliveredBy||'',reuseStatus:old?.reuseStatus||'',reuseAt:old?.reuseAt||'',reusedItemId:old?.reusedItemId||'',identityStatus:check.identityReady?'VERIFIED':'PENDING',profileVersion:Number(old?.profileVersion||0)+(edited?1:0),profileUpdatedAt:edited?now.toISOString():old?.profileUpdatedAt||'',profileUpdatedBy:edited?operator.name:old?.profileUpdatedBy||''};
+    });
+    if(pickupWinnerId&&!undoPickup){const w=desired.find(w=>w.id===pickupWinnerId),check=promoWinnerCheck(w,found,'pickup');if(!check.allowed||w.identityStatus==='PENDING')throw new Error('COMPLETE OS DADOS OBRIGATÓRIOS ANTES DA RETIRADA. '+check.errors.join(' '));}
+    const additions={};desired.forEach(w=>{const previousWinner=previousWithIds.find(r=>r.id===w.id),entry=existingEntries.find(([,r])=>r.winnerId===w.id)||existingEntries.find(([,r])=>!r.winnerId&&promoWinnerPersonKey(r.name)===promoWinnerPersonKey(previousWinner?.name||w.name)),id=entry?.[0]||'PW_'+promoWinnerToken(context.sourceRef+'|'+w.id),old=entry?.[1]||{};bankBackup[id]=records[id]||null;writtenKeys.push(id);additions[id]={...old,id,name:w.name,fullName:w.fullName||'',cpf:w.cpf||'',phone:w.phone||'',instagram:w.instagram||'',winnerId:w.id,date:context.date,program:context.program,prize:context.prize,personKey:promoWinnerPersonKey(w.name),prizeKey:promoWinnerPrizeKey(context.prize,bank),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,operationId:old.operationId||operation,operationStatus:w.identityStatus==='PENDING'?'PROVISIONAL':'CONFIRMED',createdAt:old.createdAt||w.registeredAt,createdAtLabel:old.createdAtLabel||w.registeredAtLabel,confirmedAt:old.confirmedAt||w.registeredAt,updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector};});
+    if(!profilesOnly&&!pickupWinnerId)for(const [key,record]of existingEntries)if(!writtenKeys.includes(key)){bankBackup[key]=record;writtenKeys.push(key);removedKeys.push(key);additions[key]={...record,operationStatus:'PENDING_REMOVAL'};}
+    writtenKeys.forEach(key=>{additions[key].profileOperationId=operation;bankWrites[key]=additions[key];});
+    await bankRef.child('records').update(additions);bankTouched=true;
+    let conflict='';const tx=await stateRef.child('months').child(monthKey).child('promos').transaction(value=>{
+      const rows=Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean),index=rows.findIndex(p=>p.id===promo.id);if(index<0){conflict='A PROMOÇÃO NÃO FOI LOCALIZADA.';return;}const current=rows[index];
+      try{
+        if(current.kind!=='promo')throw new Error('ESTE REGISTRO NÃO É UMA PROMOÇÃO CADASTRADA.');
+        if(validateRemote)validateRemote(current);
+        const liveCapacity=Math.max(1,Number((current.occurrences||[]).find(o=>o.date===context.date&&promoWinnerSourceRef(current,o.date,o.time||current.drawTime)===context.sourceRef)?.qtyPlanned||current.winnersPerDraw||current.qtyPerDraw)||1);
+        if(desired.length>liveCapacity&&desired.length>previous.length)throw new Error('A QUANTIDADE DE GANHADORES DESTE SORTEIO FOI ALTERADA. REABRA A PROMOÇÃO.');
+        if(!previous.length&&JSON.stringify(promoWinnerRules(current))!==JSON.stringify(promoWinnerRules(found)))throw new Error('OS DADOS EXIGIDOS DA PROMOÇÃO FORAM ALTERADOS. REABRA O CADASTRO.');
+      }catch(e){conflict=e.message;return;}
+      const live=current.resultWinnersByHour?.[occurrenceKey]||[];
+      if(JSON.stringify(live.map(w=>[w.id||'',Number(w.profileVersion||0),promoWinnerProfileSignature(w)]))!==JSON.stringify(previous.map(w=>[w.id||'',Number(w.profileVersion||0),promoWinnerProfileSignature(w)]))){conflict='OS DADOS DESTE GANHADOR MUDARAM EM OUTRO COMPUTADOR. REABRA O CADASTRO.';return;}
+      const next=desired.map((w,i)=>{const original=live.find(r=>r.id===w.id)||(!live[i]?.id?live[i]:null);return {...w,deliveredAt:original?.deliveredAt||'',deliveredAtLabel:original?.deliveredAtLabel||'',deliveredBy:original?.deliveredBy||'',deliveredLate:original?.deliveredLate||false,reuseStatus:original?.reuseStatus||'',reuseAt:original?.reuseAt||'',reusedItemId:original?.reusedItemId||''};});
+      if(pickupWinnerId){const w=next.find(w=>w.id===pickupWinnerId);w.deliveredAt=undoPickup?'':now.toISOString();w.deliveredAtLabel=undoPickup?'':now.toLocaleString('pt-BR');w.deliveredBy=undoPickup?'':operator.name;}
+      const joined=next.map(w=>w.name).join(', '),resultByHour={...(current.resultByHour||{}),[occurrenceKey]:joined},resultWinnersByHour={...(current.resultWinnersByHour||{}),[occurrenceKey]:next};
+      const summaryKey=promoWinnerSourceRef(current,current.resultDate||context.date,current.resultSlot||context.time||'');
+      const latest=!current.resultDate||context.sourceRef>=summaryKey;
+      const existingOccurrence=(current.occurrences||[]).find(o=>o.date===context.date&&promoWinnerSourceRef(current,o.date,o.time||current.drawTime)===context.sourceRef);
+      const originalAt=existingOccurrence?.resultAt||(summaryKey===context.sourceRef?current.resultAt:'')||live[0]?.registeredAt||now.toISOString(),originalLabel=existingOccurrence?.resultAtLabel||(summaryKey===context.sourceRef?current.resultAtLabel:'')||live[0]?.registeredAtLabel||now.toLocaleString('pt-BR');
+      const summary=latest?{resultWinners:next,resultName:joined,resultAt:originalAt,resultAtLabel:originalLabel,resultDate:context.date,resultSlot:context.slot||context.time}:{};
+      const occurrences=(current.occurrences||[]).map(o=>!profilesOnly&&!pickupWinnerId&&o.date===context.date&&promoWinnerSourceRef(current,o.date,o.time||current.drawTime)===context.sourceRef?{...o,status:'REALIZADO',actualQty:next.length,resultAt:o.resultAt||now.toISOString(),resultAtLabel:o.resultAtLabel||now.toLocaleString('pt-BR')}:o);
+      rows[index]={...current,...summary,resultByHour,resultWinnersByHour,occurrences,updatedAt:now.toISOString(),updatedBy:operator.name};return rows;
+    },undefined,false);
+    if(!tx?.committed)throw new Error(conflict||'NÃO FOI POSSÍVEL CONFIRMAR A GRAVAÇÃO.');
+    stateCommitted=true;
+    if(removedKeys.length)try{await bankRef.child('records').transaction(value=>{const rows={...(value||{})};removedKeys.forEach(key=>{if(rows[key]?.profileOperationId===operation&&rows[key]?.operationStatus==='PENDING_REMOVAL')delete rows[key];});return rows;},undefined,false);}catch(cleanupError){console.error('LIMPEZA DO HISTÓRICO PENDENTE',cleanupError);}
+    return {rows:tx.snapshot.val(),monthKey,winners:desired,operationId:operation};
+  }catch(error){if(bankTouched&&!stateCommitted){try{await bankRef.child('records').transaction(value=>{const rows={...(value||{})};writtenKeys.forEach(key=>{if(rows[key]?.profileOperationId!==operation||JSON.stringify(rows[key])!==JSON.stringify(bankWrites[key]))return;if(bankBackup[key])rows[key]=bankBackup[key];else delete rows[key];});return rows;},undefined,false);}catch(rollbackError){console.error('RESTAURAÇÃO DO HISTÓRICO PENDENTE',rollbackError);}}throw error;}
+  finally{await Promise.allSettled(acquired.map(key=>bankRef.child('locks').child(key).transaction(value=>value?.operationId===operation?null:value,undefined,false)));}
+}
+/* PROMO_WINNER_STORE_END */
+
+
 function normalizeWinnerList(list){
   if(!Array.isArray(list)) return [];
   const seen=new Set();
   return list.map(w=>typeof w==='string'?{name:upper(w)}:{...w,name:upper(w?.name||'')})
     .filter(w=>w.name)
-    .filter(w=>{ if(seen.has(w.name)) return false; seen.add(w.name); return true; });
+    .filter(w=>{ const key=w.id||w.name;if(seen.has(key)) return false; seen.add(key); return true; });
 }
 function promoWinnerList(p,item){
   if(!p)return [];
   const exact=item?promoResultMapValue(p.resultWinnersByHour,item,p):undefined;
-  if(Array.isArray(exact))return normalizeWinnerList(exact);
+  if(Array.isArray(exact))return normalizeWinnerList(exact).map(w=>Object.prototype.hasOwnProperty.call(w,'registrationRules')?w:{...w,registrationRules:null});
   const current=promoResultForHour(p,item);
-  if(current)return normalizeWinnerList(String(current).split(',').map(name=>({name})));
-  return promoResultLegacyMatches(p,item)?normalizeWinnerList(p.resultWinners||[]):[];
+  if(current)return normalizeWinnerList(String(current).split(',').map(name=>({name,registrationRules:null})));
+  return promoResultLegacyMatches(p,item)?normalizeWinnerList(p.resultWinners||[]).map(w=>Object.prototype.hasOwnProperty.call(w,'registrationRules')?w:{...w,registrationRules:null}):[];
 }
-function mergeWinnerDelivery(previous,next){
-  const prev=normalizeWinnerList(previous);
-  const prevMap=new Map(prev.map(w=>[w.name,w]));
-  return normalizeWinnerList(next).map(w=>{
-    const old=prevMap.get(w.name);
-    return old ? {...w,registeredAt:old.registeredAt||w.registeredAt||'',registeredAtLabel:old.registeredAtLabel||w.registeredAtLabel||'',deliveredAt:old.deliveredAt||'',deliveredAtLabel:old.deliveredAtLabel||'',deliveredBy:old.deliveredBy||'',reuseStatus:old.reuseStatus||'',reuseAt:old.reuseAt||'',reuseAtLabel:old.reuseAtLabel||'',reusedItemId:old.reusedItemId||''} : w;
-  });
-}
-function collectPromoWinnerInputs(){
-  return Array.from(document.querySelectorAll('.promoResultWinnerInput'))
-    .map(input=>({name:upper(input.value||'')}))
-    .filter(w=>w.name);
+function mergeWinnerDelivery(previous,next){const prev=normalizeWinnerList(previous);return normalizeWinnerList(next).map(w=>{const old=prev.find(o=>(w.id&&o.id===w.id)||o.name===w.name);return old?{...old,...w,registeredAt:old.registeredAt||w.registeredAt||'',registeredAtLabel:old.registeredAtLabel||w.registeredAtLabel||'',deliveredAt:old.deliveredAt||'',deliveredAtLabel:old.deliveredAtLabel||'',deliveredBy:old.deliveredBy||'',reuseStatus:old.reuseStatus||'',reuseAt:old.reuseAt||'',reuseAtLabel:old.reuseAtLabel||'',reusedItemId:old.reusedItemId||''}:w;});}
+let studioPromoWinnerSequence=0;
+function studioNewPromoWinnerId(p,item){return 'PW_'+promoWinnerToken(winnerContextForPromo(p,item).sourceRef+'|'+Date.now()+'|'+(++studioPromoWinnerSequence)+'|'+Math.random());}
+function collectPromoWinnerInputs(includeEmpty=false){
+  const p=currentPromoForRead(),item=currentDisplayItem||virtualCurrentItem(),previous=promoWinnerList(p,item),context=p?winnerContextForPromo(p,item):null;
+  return Array.from(document.querySelectorAll('.promoResultWinnerInput')).map((input,index)=>{
+    const host=input.closest?.('.promoWinnerCandidate'),old=(host?.dataset?.winnerId?previous.find(w=>w.id===host.dataset.winnerId):previous[index])||{};
+    if(!promoWinnerRules(p,old))return {...old,name:upper(input.value||'')};
+    const container=host||{querySelector:()=>input,querySelectorAll:()=>[],dataset:{}},next=promoWinnerReadFields(container,old,p);
+    if(host?.dataset?.profileVersion!==undefined)next.profileVersion=Number(host.dataset.profileVersion)||0;
+    return promoWinnerNormalize(next,p,next.id||studioNewPromoWinnerId(p,item));
+  }).filter(w=>includeEmpty||w.name);
 }
 function promoWinnerInputRow(w={},index=0){
-  return `<div class="promoWinnerCandidate" data-promo-winner-index="${index}"><div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(w.name||'')}" data-similarity-input-key="${esc(w.similarityInputKey||'')}" data-similarity-rejected="${esc(w.similarityRejected||'')}" placeholder="NOME DO GANHADOR"><button class="${index?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${index?'REMOVER':'ADICIONAR GANHADOR'}">${index?'×':'+'}</button></div><div class="winnerEligibility neutral promoWinnerEligibility" id="promoWinnerEligibility${index}">${winnerEligibilityHtml(null)}</div></div>`;
+  const p=currentPromoForRead(),rules=promoWinnerRules(p,w),profile=rules?promoWinnerNormalize(w,p,w.id||studioNewPromoWinnerId(p,currentDisplayItem||virtualCurrentItem())):w,check=rules?promoWinnerProfileStatus(profile,p):null;
+  const extra=promoWinnerExtraFieldsHtml(profile,p),label=rules&&rules.fields.name!=='result'?'NOME OU @INSTAGRAM':'NOME COMPLETO DO GANHADOR';
+  return `<div class="promoWinnerCandidate" data-promo-winner-index="${index}" data-winner-id="${esc(profile.id||'')}" data-profile-version="${Number(profile.profileVersion)||0}"><div class="promoWinnerRowLabel">GANHADOR ${index+1}${rules?.companionsPerWinner?` · +${rules.companionsPerWinner} ACOMPANHANTES`:''}</div><div class="resultWinnerLine"><input class="promoResultWinnerInput" type="text" maxlength="140" value="${esc(profile.name||'')}" data-similarity-input-key="${esc(w.similarityInputKey||'')}" data-similarity-rejected="${esc(w.similarityRejected||'')}" placeholder="${label}" aria-label="${label}"><button class="${index?'resultRemoveBtn':'resultAddBtn'}" type="button" title="${index?'REMOVER GANHADOR':'ADICIONAR GANHADOR'}">${index?'×':'+'}</button></div><div class="winnerEligibility neutral promoWinnerEligibility" id="promoWinnerEligibility${index}"><span>INFORME A IDENTIFICAÇÃO PARA CONSULTAR O HISTÓRICO.</span></div>${extra}${check?`<div class="promoProfileStatus ${check.ready?'ready':'waiting'}">${esc(check.label)}</div>`:''}</div>`;
 }
-function updatePromoWinnerSaveState(){
-  const button=$('savePromoResultInline');
-  if(!button) return;
-  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
-  const ready=winnerBankReady&&fields.length>0&&promoWinnerChecks.length===fields.length&&promoWinnerChecks.every(check=>check.name&&check.allowed);
-  button.disabled=!ready;
-  button.title=ready?'CONFIRMAR RESULTADO E REGISTRAR NO FIREBASE':'TODOS OS GANHADORES PRECISAM ESTAR APTOS E VALIDADOS';
-}
+function updatePromoWinnerSaveState(){const button=$('savePromoResultInline');if(!button)return;const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput')),ready=winnerBankReady&&fields.length>0&&promoWinnerChecks.length===fields.length&&promoWinnerChecks.every(check=>check.name&&check.allowed);button.disabled=!ready;button.title=ready?'REGISTRAR GANHADORES':'CONFIRA OS CAMPOS OBRIGATÓRIOS E A CONSULTA AO HISTÓRICO';}
 function validateAllPromoWinnerInputs(){
-  const promo=currentPromoForRead();
-  const item=currentDisplayItem||virtualCurrentItem();
-  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput'));
-  if(!promo||!item||!fields.length){ promoWinnerChecks=[]; updatePromoWinnerSaveState(); return; }
-  const context=winnerContextForPromo(promo,item);
-  const availableHistory=winnerBankRecords.filter(record=>!(record.source==='ESTUDIO_JP1017'&&record.sourceRef===context.sourceRef));
-  const counts=new Map();
-  fields.forEach(field=>{ const key=winnerPersonKey(field.value); if(key) counts.set(key,(counts.get(key)||0)+1); });
+  const p=currentPromoForRead(),item=currentDisplayItem||virtualCurrentItem(),fields=Array.from(document.querySelectorAll('.promoResultWinnerInput')),profiles=collectPromoWinnerInputs(true);
+  if(!p||!item||!fields.length){promoWinnerChecks=[];updatePromoWinnerSaveState();return;}
+  const context=winnerContextForPromo(p,item),history=winnerBankRecords.filter(r=>!(r.source==='ESTUDIO_JP1017'&&r.sourceRef===context.sourceRef)),counts=new Map();
+  profiles.forEach(w=>{const keys=[winnerPersonKey(w.name),w.cpf?'CPF_'+w.cpf:'',w.instagram?'IG_'+promoWinnerInstagram(w.instagram):''].filter(Boolean);keys.forEach(key=>counts.set(key,(counts.get(key)||0)+1));});
   promoWinnerChecks=fields.map((field,index)=>{
-    const name=upper(field.value);
-    const host=$(`promoWinnerEligibility${index}`);
-    if(!name){ if(host){ host.className='winnerEligibility neutral promoWinnerEligibility'; host.innerHTML=winnerEligibilityHtml(null); } return {name:'',allowed:false,status:'PENDENTE'}; }
-    const rejected=winnerSimilarityRejected(field,name);
-    const suggestions=winnerSuggestionsForField(field,name);
-    let result=winnerEvaluateAgainst(availableHistory,name,context.prize,context.date);
-    if(!result.total&&suggestions.length) result={...result,status:'PENDENTE',title:'POSSÍVEL CADASTRO EXISTENTE',reason:'CONFIRME SE É A MESMA PESSOA OU SE SÃO PESSOAS DIFERENTES.',allowed:false};
-    else if(!result.total&&rejected.size) result={...result,similarityDifferent:true,reason:`${result.reason} REVISÃO DE NOME CONCLUÍDA.`};
-    if((counts.get(result.personKey)||0)>1) result={...result,status:'BLOQUEADO',title:'NOME REPETIDO NESTE SORTEIO',reason:'CADA PESSOA DEVE APARECER APENAS UMA VEZ.',allowed:false};
-    if(!winnerBankReady) result={...result,status:'BLOQUEADO',title:'CONSULTA INDISPONÍVEL',reason:'AGUARDE A CONEXÃO COM O FIREBASE ANTES DE CONFIRMAR.',allowed:false};
-    if(host){ const visual=result.status==='ATENCAO'?'atencao':result.status==='BLOQUEADO'&&result.blockKind==='SHORT'&&!result.manualBlocked&&!result.samePrize?'curto':result.status==='BLOQUEADO'?'bloqueado':result.status==='PENDENTE'?'neutral':'apto'; host.className=`winnerEligibility promoWinnerEligibility ${visual}`; host.innerHTML=winnerEligibilityHtml(result,suggestions); }
+    const w=profiles[index]||{},name=upper(w.name||''),host=$(`promoWinnerEligibility${index}`),rules=promoWinnerRules(p,w),data=promoWinnerCheck(w,p,'result');let result;
+    if(!name){result={name:'',allowed:false,status:'PENDENTE',title:'AGUARDANDO IDENTIFICAÇÃO',reason:'INFORME O NOME OU O PERFIL DO GANHADOR.'};}
+    else if(rules&&!data.allowed){result={name,allowed:false,status:'PENDENTE',title:'DADOS OBRIGATÓRIOS',reason:data.errors.join(' ')};}
+    else if(rules&&!data.identityReady){result={name,allowed:true,status:'PENDENTE',identityPending:true,title:'IDENTIFICAÇÃO PENDENTE',reason:'RESULTADO PODE SER REGISTRADO. COMPLETE O NOME PARA VALIDAR O HISTÓRICO.'};}
+    else{
+      const rejected=winnerSimilarityRejected(field,name),suggestions=winnerSuggestionsForField(field,name);result=winnerEvaluateAgainst(history,name,context.prize,context.date);
+      if(!result.total&&suggestions.length)result={...result,status:'PENDENTE',title:'POSSÍVEL CADASTRO EXISTENTE',reason:'CONFIRME SE É A MESMA PESSOA OU SE SÃO PESSOAS DIFERENTES.',allowed:false};
+      else if(!result.total&&rejected.size)result={...result,similarityDifferent:true,reason:`${result.reason} REVISÃO DE NOME CONCLUÍDA.`};
+      result.suggestions=suggestions;
+    }
+    const duplicate=[winnerPersonKey(w.name),w.cpf?'CPF_'+w.cpf:'',w.instagram?'IG_'+promoWinnerInstagram(w.instagram):''].filter(Boolean).some(key=>(counts.get(key)||0)>1);
+    if(duplicate)result={...result,status:'BLOQUEADO',title:'GANHADOR REPETIDO NESTE SORTEIO',reason:'CADA GANHADOR PRINCIPAL DEVE APARECER UMA VEZ.',allowed:false};
+    if(!winnerBankReady)result={...result,status:'PENDENTE',title:'CONSULTA EM ANDAMENTO',reason:'AGUARDE A CONSULTA AO HISTÓRICO.',allowed:false};
+    if(host){const visual=result.status==='ATENCAO'?'atencao':result.status==='BLOQUEADO'?'bloqueado':result.status==='PENDENTE'?'neutral':'apto';host.className=`winnerEligibility promoWinnerEligibility ${visual}`;host.innerHTML=result.identityPending||!name||!data.allowed?`<span>${esc(result.title)} · ${esc(result.reason)}</span>`:winnerEligibilityHtml(result,result.suggestions||[]);}
     return result;
   });
   updatePromoWinnerSaveState();
 }
-function addPromoWinnerField(value=''){
-  const list=$('promoResultWinnersList');
-  if(!list) return;
-  const values=Array.from(list.querySelectorAll('.promoResultWinnerInput')).map(input=>input.value);
-  values.push(value);
-  list.innerHTML=values.map((name,index)=>promoWinnerInputRow({name},index)).join('');
-  const last=list.querySelector('.promoWinnerCandidate:last-child input');
-  if(last) last.focus();
-  validateAllPromoWinnerInputs();
+function addPromoWinnerField(){const list=$('promoResultWinnersList'),p=currentPromoForRead(),item=currentDisplayItem||virtualCurrentItem();if(!list||!p)return;const values=collectPromoWinnerInputs(true),capacity=Math.max(1,Number(promoOccurrenceForItem(p,item)?.qtyPlanned||p.qtyPerDraw)||1);if(values.length>=capacity)return;values.push({name:''});list.innerHTML=values.map((w,i)=>promoWinnerInputRow(w,i)).join('');list.querySelector('.promoWinnerCandidate:last-child input')?.focus();validateAllPromoWinnerInputs();studioCaptureCampaignDraft();}
+async function studioCommitConfiguredPromoOutcome(payload){
+  await ensureStudioFirebaseOnline();initWinnerBank();if(!winnerBankRef)throw new Error('CONSULTA DE GANHADORES INDISPONÍVEL.');
+  const p=findPromoById(payload.recordId),key=payload.occurrenceKey,item={date:payload.context.date,slot:payload.patch.resultSlot},context={...payload.context,time:timeToHHMM(item.slot),slot:formatStudioTime(item.slot)},operator=studioOperatorIdentity(true);
+  const result=await promoWinnerStore({stateRef:firebaseRef,bankRef:winnerBankRef,promo:p,occurrenceKey:key,winners:payload.patch.resultWinnersByHour[key],context,operator,monthKeys:studioRecordMonths('promos',p.id,item.date),months:state.months,validateRemote:row=>{const occurrence=promoOccurrenceForItem(row,item);if(!studioCampaignVisible(row)||!stationAllowed(row)||!occurrence||['CANCELADO','CANCELADA'].includes(upper(occurrence.status||'')))throw new Error('ESTE SORTEIO FOI ALTERADO OU CANCELADO. REABRA A PROMOÇÃO.');}});
+  state.months[result.monthKey].promos=Array.isArray(result.rows)?result.rows:Object.values(result.rows||{}).filter(Boolean);
+  await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'ESTUDIO_JP1017'}),appendStudioAudit({id:'LOG_'+result.operationId,action:'RESULTADO / DADOS DO GANHADOR ATUALIZADOS',targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,createdAt:new Date().toISOString(),note:context.sourceRef})]);
+  try{applyWinnerBankSnapshot((await winnerBankRef.get()).val()||{});}catch(error){initWinnerBank(true);}return true;
 }
 function studioOperationToken(value){
   let hash=2166136261;
@@ -4449,6 +4641,7 @@ async function commitStudioOutcomeAtomicV56({collection,recordId,patch,names,con
   }
 }
 async function commitStudioOutcomeAtomic(payload){
+  if(payload.collection==='promos'&&promoWinnerRules(findPromoById(payload.recordId)))return studioCommitConfiguredPromoOutcome(payload);
   return commitStudioOutcomeAtomicV56(payload);
 }
 async function savePromoResultInline(){
@@ -4456,8 +4649,8 @@ async function savePromoResultInline(){
   const p=currentPromoForRead(); const item=currentDisplayItem||virtualCurrentItem(); if(!p||!item) return;
   if(studioCampaignContext && new Date(`${item.date}T${timeToHHMM(item.slot)}:00`).getTime()>Date.now())return;
   studioCaptureCampaignDraft();
-  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput')); const winners=collectPromoWinnerInputs();
-  if(!winners.length||fields.some(field=>!upper(field.value))){ fields.find(field=>!upper(field.value))?.focus(); return; }
+  const fields=Array.from(document.querySelectorAll('.promoResultWinnerInput')); const winners=collectPromoWinnerInputs(true);
+  if(!winners.length||winners.some(w=>!w.name)){ fields.find(field=>!upper(field.value))?.focus(); return; }
   const occurrence=promoOccurrenceForItem(p,item); const capacity=Math.max(1,Number(occurrence?.qtyPlanned||p.qtyPerDraw||item.qty||1)||1);
   if(winners.length>capacity){ alert(`ESTE SORTEIO PREVÊ NO MÁXIMO ${capacity} GANHADOR(ES).`); return; }
   validateAllPromoWinnerInputs(); if(!winnerBankReady||promoWinnerChecks.some(check=>!check.allowed)){ alert('NÃO É POSSÍVEL CONFIRMAR. CONFIRA A SITUAÇÃO INDIVIDUAL DE TODOS OS GANHADORES.'); return; }
@@ -4465,35 +4658,27 @@ async function savePromoResultInline(){
   const button=$('savePromoResultInline'); button.dataset.busy='1'; button.disabled=true; button.textContent='VALIDANDO E SALVANDO...';
   try{
     const context=winnerContextForPromo(p,item), now=new Date(), key=promoResultHourKeys(item,p)[0], previous=promoWinnerList(p,item);
-    const prepared=winners.map(w=>({...w,registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')})); const merged=mergeWinnerDelivery(previous,prepared); const joined=merged.map(w=>w.name).join(', ');
+    const prepared=winners.map((w,index)=>({...w,identityStatus:promoWinnerChecks[index]?.identityPending?'PENDING':'VERIFIED',registeredAt:w.registeredAt||now.toISOString(),registeredAtLabel:w.registeredAtLabel||now.toLocaleString('pt-BR')})); const merged=mergeWinnerDelivery(previous,prepared); const joined=merged.map(w=>w.name).join(', ');
     const resultByHour={...(p.resultByHour||{}),[key]:joined}; const resultWinnersByHour={...(p.resultWinnersByHour||{}),[key]:merged};
     const occurrences=promoOccurrences(p).map(o=>promoOccurrenceForItem({...p,occurrences:[o]},item)?{...o,status:'REALIZADO',actualQty:merged.length,resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')}:{...o});
     const patch={resultByHour,resultWinnersByHour,resultWinners:merged,resultName:joined,resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR'),resultSlot:formatStudioTime(item.slot),resultDate:item.date||todayISO(),occurrences};
     await commitStudioOutcomeAtomic({collection:'promos',recordId:p.id,patch,names:merged.map(w=>w.name),context,occurrenceKey:key});
     studioResultSaving=false;
-    if(studioCampaignContext)studioCloseCampaignResult();else render();
+    studioPromoResultDrafts.delete(context.sourceRef);
+    if(studioCampaignContext)studioCloseCampaignResult();else{studioDismissedResults.add(context.sourceRef);returnStudioToNow();}
   }catch(error){ console.error('ERRO AO SALVAR RESULTADO DA PROMOÇÃO:',error); alert(error?.eligibility?.title?`${error.eligibility.title}\n\n${error.message}`:`NÃO FOI POSSÍVEL CONFIRMAR O RESULTADO.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`); initWinnerBank(true); }
-  finally{studioResultSaving=false;if(button){button.dataset.busy='0';button.textContent='CONFIRMAR RESULTADO';updatePromoWinnerSaveState();}}
+  finally{studioResultSaving=false;if(button){button.dataset.busy='0';button.textContent=promoWinnerList(p,item).length?'ATUALIZAR DADOS':'REGISTRAR RESULTADO';updatePromoWinnerSaveState();}}
 }
 
 function shouldShowPromoResultBox(p,item){
-  if(!p || !item || !studioIsCampaign(p)) return false;
+  if(studioReadContext || !p || !item || !studioIsCampaign(p)) return false;
   if(studioCampaignContext && new Date(`${item.date}T${timeToHHMM(item.slot)}:00`).getTime()>Date.now())return false;
   return isPromoResultForItem(p,item);
 }
 
 function buildPromoResultBox(p,item){
-  const winners=promoWinnerList(p,item);
-  const draft=studioCampaignContext?.winnerDraft;
-  const capacity=Math.max(1,Number(promoOccurrenceForItem(p,item)?.qtyPlanned||p.qtyPerDraw)||1);
-  const inputRows=(draft|| (winners.length?winners:Array.from({length:capacity},()=>({name:''})))).map((w,idx)=>promoWinnerInputRow(w,idx)).join('');
-  const saved=winners.length ? `<div class="resultSavedList">${winners.map(w=>`<div class="resultSaved">GANHADOR: ${esc(w.name)}${w.deliveredAtLabel?` · RETIRADO ${esc(w.deliveredAtLabel)}`:''}</div>`).join('')}</div>` : '';
-  return `<div class="resultBox">
-    <label>RESULTADO / GANHADOR DO SORTEIO</label><div class="uploadHint">A CONFIRMAÇÃO DO RESULTADO É SEPARADA DA LEITURA DA PAUTA.</div>
-    <div class="resultWinnersList" id="promoResultWinnersList">${inputRows}</div>
-    <div class="pautaActions" style="justify-content:flex-start;margin-top:4px"><button class="modalBtn primary" id="savePromoResultInline" type="button">CONFIRMAR RESULTADO</button></div>
-    ${saved}
-  </div>`;
+  const winners=promoWinnerList(p,item),draft=studioPromoResultDrafts.get(winnerContextForPromo(p,item).sourceRef)||studioCampaignContext?.winnerDraft,capacity=Math.max(1,Number(promoOccurrenceForItem(p,item)?.qtyPlanned||p.qtyPerDraw)||1),rows=(draft||(winners.length?winners:Array.from({length:capacity},()=>({name:''})))).map((w,i)=>promoWinnerInputRow(w,i)).join('');
+  return `<section class="resultBox studioResultCard"><div class="studioResultCardHead"><div><span class="studioResultEyebrow">RESULTADO DO SORTEIO</span><strong>${esc(upper(p.name||p.title||'PROMOÇÃO'))}</strong></div><span class="studioResultDate">${esc(formatBR(item.date))} · ${esc(formatStudioTime(item.slot))}</span><button class="studioDrawerClose" type="button" onclick="studioCampaignContext?studioCloseCampaignResult():closePromoReadModal()" aria-label="FECHAR RESULTADO">${studioDrawerStateIcon('missed')}</button></div><div class="resultWinnersList" id="promoResultWinnersList">${rows}</div><div class="studioResultCardFooter"><button class="studioResultCancel" id="cancelPromoResultInline" type="button">CANCELAR</button><button class="modalBtn studioResultSave" id="savePromoResultInline" type="button">${winners.length?'ATUALIZAR DADOS':'REGISTRAR RESULTADO'}</button></div>${winners.length?'<div class="studioResultSavedHint">RESULTADO REGISTRADO · A COMPLEMENTAÇÃO DOS DADOS ATUALIZA O MESMO GANHADOR.</div>':''}</section>`;
 }
 
 function historyRowsForDate(date){
@@ -4606,7 +4791,7 @@ function closeHistoryModal(){
 }
 
 function startPromoRead(promoId){const p=findPromoById(promoId);if(!p)return;openStudioReadSheet(promoId);}
-function closePromoReadModal(){closeStudioReadSheet();}
+function closePromoReadModal(){studioDismissCurrentResult();closeStudioReadSheet();}
 async function markPromoReadMissed(promoId,date,slot,program,reason){
   const p=findPromoById(promoId);if(!p)throw new Error('PAUTA NÃO LOCALIZADA.');
   const item={date,slot,program:upper(program||programFromSchedule(date,slot,STUDIO_STATION)||'PROGRAMA')},progress=studioAV57Progress(p,item);if(progress.remaining<1)return;
@@ -4650,7 +4835,7 @@ async function confirmPromoReadV56(event){
     });
     const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JP1017',version:'AV57_SMART_READ'}),appendStudioAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP 101,7',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
-    studioReadSaving=false;selectedPromoId=null;studioReadSheetPromoId=null;closeStudioReadSheet(false);render();
+    studioReadSaving=false;selectedPromoId=null;studioReadSheetPromoId=null;closeStudioReadSheet(false);returnStudioToNow();
   }catch(error){console.error('ERRO AO CONFIRMAR LEITURA:',error);alert(error.message||'NÃO FOI POSSÍVEL CONFIRMAR A LEITURA.');}
   finally{
     studioReadSaving=false;
@@ -4885,6 +5070,9 @@ window.studioShortcutClick=studioShortcutClick;
 window.studioPautaItemClick=studioPautaItemClick;
 
 function refreshStudioShortcutAlerts(){
+  const clock=`${todayISO()}|${currentSlotDate().getHours()}`;
+  if(studioShortcutReadClock!==clock){studioShortcutReadClock=clock;studioPendingReadCache=null;['promo','merchan'].forEach(mode=>{const b=document.getElementById(mode==='promo'?'promoListBtn':'merchanListBtn');if(b)b.classList.toggle('hasPending',studioDrawerPendingCount(mode,currentDisplayItem)>0);});}
+  const gift=document.getElementById('studioCampaignBtn');if(gift){gift.classList.remove('hasPending');gift.classList.remove('studioShortcutAlertOn');}
   STUDIO_SHORTCUT_ALERT_IDS.forEach(id=>{
     const button=document.getElementById(id);
     if(button)button.classList.toggle('studioShortcutAlertOn',studioShortcutFlashOn&&button.classList.contains('hasPending'));
@@ -4902,9 +5090,10 @@ function initStudioShortcutAlerts(){
 
 function render(){
   if(studioResultSaving)return;
-  if(studioCampaignContext){
-    if(currentDisplayItem?.promoId===studioCampaignContext.promoId && currentDisplayItem?.occurrenceId===studioCampaignContext.occurrenceId)studioCaptureCampaignDraft();
-    if(document.activeElement?.classList?.contains('promoResultWinnerInput')){renderStudioDateStamp();return;}
+  const editingPromo=currentPromoForRead();
+  if(editingPromo&&currentDisplayItem?.promoId===editingPromo.id&&studioResultContextMatchesItem(currentDisplayItem)&&shouldShowPromoResultBox(editingPromo,currentDisplayItem)){
+    studioCaptureCampaignDraft();
+    if(document.activeElement?.classList?.contains('promoResultWinnerInput')||document.activeElement?.classList?.contains('promoProfileInput')){renderStudioDateStamp();return;}
   }
   studioPendingReadCache=null;
   renderStudioDateStamp();
@@ -4931,7 +5120,7 @@ function render(){
   if(!studioCampaignContext && selectedPromoId && item && !allPautasForItemHour(item,true).some(p=>p.id===selectedPromoId)){
     selectedPromoId=null;studioReadContext=null;
   }
-  if(!selectedPromoId && item && item.sourceType==='promo-result' && item.promoId){
+  if(!selectedPromoId && item && item.sourceType==='promo-result' && item.promoId && !studioDismissedResults.has(winnerContextForPromo(findPromoById(item.promoId)||{id:item.promoId},item).sourceRef) && !studioReadingMenuActive()){
     selectedPromoId=item.promoId;
   }
   const promo=currentPromoForRead();
@@ -4944,8 +5133,8 @@ function render(){
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
       ${studioCampaignContext&&!shouldShowPromoResultBox(promo,item)?'<div class="studioCampaignResultInfo">SORTEIO AGENDADO · O RESULTADO PODERÁ SER CONFIRMADO NO HORÁRIO DO SORTEIO.</div>':''}
-      <div class="pautaActions studioInlineReadActions">
-        ${!studioCampaignContext&&studioAV57Progress(promo,item).remaining>0?`<button class="studioReadSheetAction confirm studioReadSheetConfirm ${studioReadSaving?'busy':''}" id="confirmPromoReadInline" type="button" ${studioReadSaving?'disabled':''} aria-busy="${studioReadSaving?'true':'false'}" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA" onclick="confirmPromoRead(event)">${studioDrawerStateIcon('done')}</button>`:''}
+      <div class="pautaActions studioInlineReadActions" ${shouldShowPromoResultBox(promo,item)?'hidden':''}>
+        ${!studioCampaignContext&&!shouldShowPromoResultBox(promo,item)&&studioAV57Progress(promo,item).remaining>0?`<button class="studioReadSheetAction confirm studioReadSheetConfirm ${studioReadSaving?'busy':''}" id="confirmPromoReadInline" type="button" ${studioReadSaving?'disabled':''} aria-busy="${studioReadSaving?'true':'false'}" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA" onclick="confirmPromoRead(event)">${studioDrawerStateIcon('done')}</button>`:''}
         <button class="studioReadSheetAction" id="cancelPromoReadInline" type="button" ${studioReadSaving?'disabled':''} title="FECHAR E VOLTAR AO PRÊMIO" aria-label="FECHAR E VOLTAR AO PRÊMIO">${studioDrawerStateIcon('missed')}</button>
       </div>
     ` : isVirtual ? `
@@ -4957,7 +5146,7 @@ function render(){
       <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'GANHADOR REGISTRADO' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'GANHADOR REGISTRADO · BOTÃO DIREITO NO NOME PARA CORRIGIR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
     `;
   $('pautaPanel').innerHTML=`
-    <div class="studioLayoutShell ${studioDrawerMode?'drawerOpen':''}"><div class="studioMainColumn">
+    <div class="studioLayoutShell ${studioDrawerMode&&!studioReadingMenuActive()?'drawerOpen':''}"><div class="studioMainColumn">
     <div class="pautaHead">
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
       <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':upper(promo.kind||promo.promoKind||promo.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
@@ -4972,7 +5161,7 @@ function render(){
       </div>
     </div>
     ${buildStudioContext(item,promo)}
-    <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
+    <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${studioReadingMenuActive()?buildStudioReadingMenu():promoBody}</div>
     </div>${buildStudioDrawer(item)}</div>`;
   $('prevItem').addEventListener('click',()=>step(-1));
   $('nextItem').addEventListener('click',()=>step(1));
@@ -4980,9 +5169,10 @@ function render(){
   const cancelPromo=$('cancelPromoReadInline'); if(cancelPromo) cancelPromo.addEventListener('click',()=>studioCampaignContext?studioCloseCampaignResult():closePromoReadModal());
   const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.onclick=confirmPromoRead;
   const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);
+  const cancelResult=$('cancelPromoResultInline');if(cancelResult)cancelResult.onclick=()=>studioCampaignContext?studioCloseCampaignResult():closePromoReadModal();
   const resultList=$('promoResultWinnersList');
   if(resultList){
-    resultList.addEventListener('input',e=>{ if(e.target.classList.contains('promoResultWinnerInput')){studioCaptureCampaignDraft();validateAllPromoWinnerInputs();} });
+    resultList.addEventListener('input',e=>{ if(e.target.classList.contains('promoResultWinnerInput')||e.target.classList.contains('promoProfileInput')){studioCaptureCampaignDraft();validateAllPromoWinnerInputs();} });
     resultList.addEventListener('click',e=>{
       const manual=e.target.closest('[data-winner-manual-toggle]');
       if(manual){
@@ -5001,10 +5191,10 @@ function render(){
       if(add) addPromoWinnerField('');
       if(remove){
         const candidate=remove.closest('.promoWinnerCandidate');
-        const values=Array.from(resultList.querySelectorAll('.promoResultWinnerInput')).map(input=>input.value);
+        const values=collectPromoWinnerInputs(true);
         const index=Array.from(resultList.querySelectorAll('.promoWinnerCandidate')).indexOf(candidate);
         if(index>=0) values.splice(index,1);
-        resultList.innerHTML=(values.length?values:['']).map((name,rowIndex)=>promoWinnerInputRow({name},rowIndex)).join('');
+        resultList.innerHTML=(values.length?values:[{name:''}]).map((w,rowIndex)=>promoWinnerInputRow(w,rowIndex)).join('');
         validateAllPromoWinnerInputs();
       }
     });

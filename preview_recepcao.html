@@ -769,6 +769,12 @@ tbody tr:focus-within td{background:#fff8fa}
 .campaignDetails{display:grid;grid-template-columns:1fr 1fr;gap:9px 16px;border-top:1px solid #e6ebf1;background:#fff;padding:12px;font-size:9px;color:#607287;line-height:1.5}.campaignDetails b{display:block;font-size:8px;color:#8b96a5;margin-bottom:2px}.campaignDrawDetails{grid-column:1/-1;max-height:150px;overflow:auto;padding-top:6px;border-top:1px solid #edf0f4}.campaignDrawDetails span{display:block;margin-bottom:5px}.receptionCampaignEmpty{padding:10px;font-size:9px;color:#7b8798;background:#f8f9fc;border-radius:9px}
 @media(max-width:760px){.receptionCampaignLabels{display:none}.receptionCampaign summary{grid-template-columns:1fr 1fr;gap:9px}.campaignName{grid-column:1/-1}.campaignNext{grid-column:1/-1}.campaignDetails{grid-template-columns:1fr}}
 </style>
+<style id="promo-profile-fields">
+.promoWinnerRowLabel{color:#8491a1;font:700 10px/1.4 'Segoe UI',Arial,sans-serif;margin-bottom:5px;text-align:left}.promoProfileGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.promoProfileField{display:flex;flex-direction:column;gap:5px;text-align:left}.promoProfileField span{color:#7e8c9d;font:700 9px/1.4 'Segoe UI',Arial,sans-serif}.promoProfileField input,.promoProfileInput{min-width:0;width:100%;min-height:40px;border:1px solid #dfe6ef;border-radius:11px;background:rgba(255,255,255,.94);color:#384759;padding:9px 11px;font:600 13px/1.4 'Segoe UI',Arial,sans-serif;outline:none}.promoProfileField input:focus{border-color:#b7c9da;box-shadow:0 0 0 3px rgba(184,204,224,.13)}.promoWinnerDetails{margin-top:10px;text-align:left}.promoWinnerDetails summary{cursor:pointer;color:#8391a1;font:700 10px/1.5 'Segoe UI',Arial,sans-serif}.promoCompanionFields{margin:12px 0 0;padding:10px;border:1px solid #e4eaf0;border-radius:12px}.promoCompanionFields legend{font-size:9px;font-weight:700;color:#8a95a3}.promoProfileStatus{margin-top:8px;text-align:left;color:#9a815e;font:600 10px/1.5 'Segoe UI',Arial,sans-serif}.promoProfileStatus.ready{color:#6a987e}.promoProfileStatus.waiting{color:#9a815e}@media(max-width:650px){.promoProfileGrid{grid-template-columns:1fr}}
+</style>
+<style id="reception-profile-status">
+.winnerCenter{flex-direction:column;gap:4px}.receptionProfileBadge{font-size:8px!important;font-weight:700;color:#9a815e;line-height:1.35}.receptionProfileBadge.ready{color:#6a987e}.pickupBtn.profilePending{background:#faf5ec!important;border:1px solid #e5d7bd!important;color:#a08762!important}.receptionProfileFields{margin:12px 0;padding:12px;border:1px solid #e2e8ef;border-radius:14px;background:#fafcfe}.pickupSheetAction.secondary{margin-top:10px;background:#eef4f8!important;color:#778ba0!important;border:1px solid #dce5ee!important}.pickupSheetAction:disabled{background:#f3f5f7;color:#9ba6b3;cursor:default;opacity:1}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -994,6 +1000,178 @@ async function saveReceptionRecord(source,record,operationDate=''){
   }finally{receptionPendingSaves.delete(record.id);}
 }
 
+/* PROMO_WINNER_FIELDS_START */
+function promoWinnerFieldDefinitions(){return [{key:'name',label:'NOME COMPLETO',type:'text'},{key:'phone',label:'TELEFONE / WHATSAPP',type:'tel'},{key:'cpf',label:'CPF',type:'text'},{key:'instagram',label:'@INSTAGRAM',type:'text'}];}
+function promoWinnerNormalizeRules(value={}){
+  const modes=['off','optional','result','pickup'],fields={},companionFields={};
+  promoWinnerFieldDefinitions().forEach(({key})=>{fields[key]=modes.includes(value.fields?.[key])?value.fields[key]:(key==='name'?'result':'off');companionFields[key]=modes.includes(value.companionFields?.[key])?value.companionFields[key]:'off';});
+  return {version:1,fields,companionsPerWinner:Math.max(0,Math.min(50,Math.trunc(Number(value.companionsPerWinner)||0))),companionFields};
+}
+function promoWinnerRules(p,w=null){
+  if(p?.kind!=='promo'||!p.id)return null;
+  if(w&&Object.prototype.hasOwnProperty.call(w,'registrationRules'))return w.registrationRules&&typeof w.registrationRules==='object'?promoWinnerNormalizeRules(w.registrationRules):null;
+  if(w){
+    const name=promoWinnerCleanName(w.name),recorded=[...(p.resultWinners||[]),...Object.values(p.resultWinnersByHour||{}).flat()].some(r=>w.id&&r?.id===w.id||name&&promoWinnerCleanName(typeof r==='string'?r:r?.name)===name);
+    const named=name&&[p.resultName,...Object.values(p.resultByHour||{})].some(value=>String(value||'').split(',').some(n=>promoWinnerCleanName(n)===name));
+    if(w.registeredAt||w.deliveredAt||recorded||named)return null;
+  }
+  return p.winnerRegistration&&typeof p.winnerRegistration==='object'?promoWinnerNormalizeRules(p.winnerRegistration):null;
+}
+function promoWinnerCleanName(value){return String(value||'').trim().replace(/\s+/g,' ').toUpperCase();}
+function promoWinnerFullName(w={}){const name=String(w.fullName??w.name??'').trim();return name.startsWith('@')?'':promoWinnerCleanName(name);}
+function promoWinnerInstagram(value){const name=String(value||'').trim().replace(/^@/,'');return name?'@'+name.toLowerCase():'';}
+function promoWinnerCpfValid(value){const cpf=String(value||'').replace(/\D/g,'');if(cpf.length!==11||/^(\d)\1{10}$/.test(cpf))return false;for(let size=9;size<=10;size++){let sum=0;for(let i=0;i<size;i++)sum+=Number(cpf[i])*(size+1-i);const digit=(sum*10)%11%10;if(digit!==Number(cpf[size]))return false;}return true;}
+function promoWinnerIdentityReady(w){return promoWinnerFullName(w).split(/\s+/).filter(Boolean).length>=2;}
+function promoWinnerCheck(w={},p,stage='result'){
+  const rules=promoWinnerRules(p,w),errors=[],missing=[];
+  if(!rules)return {allowed:!!String(w.name||'').trim(),identityReady:!!String(w.name||'').trim(),errors:[],missing:[]};
+  const main={...w,name:promoWinnerFullName(w),instagram:promoWinnerInstagram(w.instagram||(String(w.name||'').startsWith('@')?w.name:''))};
+  if(!main.name&&!main.instagram){errors.push('INFORME O NOME OU O PERFIL DO GANHADOR.');missing.push('IDENTIFICAÇÃO');}
+  function check(fields,data,prefix=''){
+    promoWinnerFieldDefinitions().forEach(({key,label})=>{
+      const mode=fields[key],value=String(data[key]||'').trim(),required=mode==='result'||(stage==='pickup'&&mode==='pickup');
+      if(mode==='off')return;
+      if(required&&!value){missing.push(prefix+label);errors.push(prefix+label+' É OBRIGATÓRIO.');return;}
+      if(!value)return;
+      if(key==='name'&&required&&value.split(/\s+/).length<2)errors.push(prefix+'INFORME O NOME COMPLETO.');
+      if(key==='phone'&&!/^\d{10,15}$/.test(value.replace(/\D/g,'')))errors.push(prefix+'CONFIRA O TELEFONE.');
+      if(key==='cpf'&&!promoWinnerCpfValid(value))errors.push(prefix+'CONFIRA O CPF.');
+      if(key==='instagram'&&!/^@?[a-zA-Z0-9._]{1,30}$/.test(value))errors.push(prefix+'CONFIRA O PERFIL DO INSTAGRAM.');
+    });
+  }
+  check(rules.fields,main);
+  for(let i=0;i<rules.companionsPerWinner;i++){const c=w.companions?.[i]||{};check(rules.companionFields,{...c,name:promoWinnerFullName(c)},`ACOMPANHANTE ${i+1} · `);}
+  const identityReady=promoWinnerIdentityReady(w);
+  if(stage==='pickup'&&!identityReady){if(!missing.includes('NOME COMPLETO'))missing.push('NOME COMPLETO');errors.push('COMPLETE A IDENTIFICAÇÃO PARA VALIDAR O HISTÓRICO.');}
+  return {allowed:errors.length===0,identityReady,errors:[...new Set(errors)],missing:[...new Set(missing)]};
+}
+function promoWinnerNormalize(w={},p,id=''){
+  const rules=promoWinnerRules(p,w);if(!rules)return {...w,name:promoWinnerCleanName(w.name)};
+  const fullName=promoWinnerFullName(w),instagram=promoWinnerInstagram(w.instagram||(String(w.name||'').startsWith('@')?w.name:''));
+  const companions=Array.from({length:rules.companionsPerWinner},(_,i)=>{const c=w.companions?.[i]||{};return {...c,name:promoWinnerFullName(c),phone:String(c.phone||'').trim(),cpf:String(c.cpf||'').replace(/\D/g,''),instagram:promoWinnerInstagram(c.instagram)};});
+  return {...w,id:w.id||id,name:fullName||instagram,fullName,phone:String(w.phone||'').trim(),cpf:String(w.cpf||'').replace(/\D/g,''),instagram,companionCount:rules.companionsPerWinner,companions,registrationRules:rules};
+}
+function promoWinnerProfileStatus(w,p){const check=promoWinnerCheck(w,p,'pickup');return {ready:check.allowed&&w.identityStatus!=='PENDING',label:check.allowed&&w.identityStatus!=='PENDING'?'PRONTO PARA ENTREGA':check.missing.length?'AGUARDANDO '+check.missing.join(', '):'VALIDAÇÃO PENDENTE',missing:check.missing};}
+function promoWinnerEscape(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function promoWinnerExtraFieldsHtml(w,p){
+  const rules=promoWinnerRules(p,w);if(!rules)return '';
+  const field=({key,label,type},data,index=null)=>{const mode=(index===null?rules.fields:rules.companionFields)[key];if(mode==='off'||(key==='name'&&index===null))return '';const value=key==='name'?promoWinnerFullName(data):data[key]||'';return `<label class="promoProfileField"><span>${label}${mode==='result'?' · NO RESULTADO':mode==='pickup'?' · ANTES DA ENTREGA':' · OPCIONAL'}</span><input class="promoProfileInput" data-winner-field="${key}" ${index===null?'':`data-companion-index="${index}"`} type="${type}" maxlength="${key==='cpf'?14:key==='phone'?22:key==='instagram'?31:140}" value="${promoWinnerEscape(value)}" autocomplete="off"></label>`;};
+  const main=promoWinnerFieldDefinitions().map(f=>field(f,w)).join('');
+  const askCompanions=Object.values(rules.companionFields).some(mode=>mode!=='off');
+  const companions=askCompanions?Array.from({length:rules.companionsPerWinner},(_,i)=>`<fieldset class="promoCompanionFields"><legend>ACOMPANHANTE ${i+1}</legend><div class="promoProfileGrid">${promoWinnerFieldDefinitions().map(f=>field(f,w.companions?.[i]||{},i)).join('')}</div></fieldset>`).join(''):'';
+  return main||companions?`<details class="promoWinnerDetails"><summary>DADOS DO GANHADOR${rules.companionsPerWinner?` · +${rules.companionsPerWinner} ACOMPANHANTES`:''}</summary><div class="promoProfileGrid">${main}</div>${companions}</details>`:'';
+}
+function promoWinnerReadFields(host,previous={},p){
+  const next={...previous,companions:(previous.companions||[]).map(c=>({...c}))};
+  const main=host?.querySelector?.('.promoResultWinnerInput');if(main){next.name=main.value||'';next.fullName=String(main.value||'').startsWith('@')?'':main.value||'';if(String(main.value||'').startsWith('@'))next.instagram=main.value;}
+  host?.querySelectorAll?.('[data-winner-field]').forEach(input=>{const key=input.dataset.winnerField,index=input.dataset.companionIndex;if(!['name','phone','cpf','instagram'].includes(key))return;if(index!==undefined){const i=Number(index);if(!Number.isInteger(i)||i<0||i>=50)return;next.companions[i]||={};next.companions[i][key]=input.value;}else next[key]=input.value;});
+  if(String(main?.value||'').startsWith('@'))next.instagram=main.value;
+  if(host?.dataset?.winnerId)next.id=host.dataset.winnerId;
+  return promoWinnerNormalize(next,p,next.id||'');
+}
+/* PROMO_WINNER_FIELDS_END */
+/* PROMO_WINNER_STORE_START */
+function promoWinnerToken(value){let hash=2166136261;for(const c of String(value||'')){hash^=c.charCodeAt(0);hash=Math.imul(hash,16777619);}return(hash>>>0).toString(36);}
+function promoWinnerPersonKey(value){return String(value||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim().replace(/\s+/g,'_').slice(0,180);}
+function promoWinnerSourceRef(p,date,time){const t=String(time||'').trim().toUpperCase().replace('H',':').replace(/:$/,''),match=t.match(/^(\d{1,2})(?::(\d{2}))?$/),hour=String(Number(match?.[1]||0)).padStart(2,'0'),minute=match?.[2]||'00';return `PROMO:${p.id}:${date}:${hour}H${minute==='00'?'':minute}`;}
+function promoWinnerPrizeKey(prize,bank={}){
+  const plain=promoWinnerPersonKey(prize),source=bank.settings?.prizeEquivalences,values=Array.isArray(source)?source:Object.values(source||{}),groups=values.length?values:[{id:'GRUPO_CINEMA',aliases:['CINEMA','CINESYSTEM','CINÉPOLIS','CINEPOLIS']}];
+  const group=groups.find(g=>(Array.isArray(g.aliases)?g.aliases:String(g.aliases||'').split(/[,;\n]/)).some(alias=>{const term=promoWinnerPersonKey(alias);return term&&(plain===term||plain.includes(term));}));
+  return group?'EQUIV_'+promoWinnerPersonKey(group.id||group.name):plain.slice(0,220);
+}
+function promoWinnerHistoryCheck(bank,w,context,months={}){
+  const name=promoWinnerFullName(w)||w.name,key=promoWinnerPersonKey(name),cpf=String(w.cpf||'').replace(/\D/g,''),instagram=promoWinnerInstagram(w.instagram);
+  const records=(Array.isArray(bank.records)?bank.records:Object.values(bank.records||{})).filter(r=>r?.name&&/^\d{4}-\d{2}-\d{2}$/.test(r.date||'')&&r.operationStatus!=='PENDING_REMOVAL').filter(r=>r.operationStatus!=='PENDING'||!Number.isFinite(Date.parse(r.createdAt||''))||Date.now()-Date.parse(r.createdAt)<600000).filter(r=>r.sourceRef!==context.sourceRef&&r.date<=context.date).filter(r=>r.personKey===key||promoWinnerPersonKey(r.name)===key||(cpf&&String(r.cpf||'').replace(/\D/g,'')===cpf)||(instagram&&promoWinnerInstagram(r.instagram)===instagram)).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||''))||String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+  const block=bank.blocks?.[key];if(block?.active===true)return {allowed:false,reason:block.reason||'OUVINTE INCLUÍDO NA LISTA DE NÃO SORTEAR.'};
+  const prizeKey=promoWinnerPrizeKey(context.prize,bank);
+  const samePrize=records.some(r=>{let prize=r.prize||'';if(String(r.sourceRef||'').startsWith('ITEM:')){const id=String(r.sourceRef).slice(5);for(const month of Object.values(months)){const item=(month.items||[]).find(i=>i.id===id);if(item){const d=(month.distributions||[]).find(d=>d.id===item.distributionId);prize=item.title||d?.title||d?.show||d?.prize||item.prize||prize;break;}}}return promoWinnerPrizeKey(prize,bank)===prizeKey;});
+  if(prizeKey&&samePrize)return {allowed:false,reason:'ESTE OUVINTE JÁ GANHOU O MESMO PRÊMIO.'};
+  function plusDays(date,days){const d=new Date(date+'T12:00:00');d.setDate(d.getDate()+days);return d.toISOString().slice(0,10);}
+  function plusMonths(date,months){const[y,m,day]=date.split('-').map(Number),first=new Date(y,m-1+months,1,12),last=new Date(first.getFullYear(),first.getMonth()+1,0,12).getDate();return `${first.getFullYear()}-${String(first.getMonth()+1).padStart(2,'0')}-${String(Math.min(day,last)).padStart(2,'0')}`;}
+  let count=0,until='',third='';for(const r of records){if(count===3){if(r.date>=plusMonths(third,8)){count=0;until='';third='';}else continue;}count++;if(count<3)until=plusDays(r.date,28);else{third=r.date;until=plusMonths(r.date,8);}}
+  if(count===3&&context.date>=until){count=0;until='';}
+  if(until&&context.date<until)return {allowed:false,reason:`OUVINTE BLOQUEADO ATÉ ${until}.`};
+  return {allowed:true,total:records.length,warning:count===2?'ESTA SERÁ A TERCEIRA PREMIAÇÃO.':''};
+}
+function promoWinnerProfileSignature(w){return JSON.stringify({name:promoWinnerFullName(w),instagram:promoWinnerInstagram(w.instagram),phone:String(w.phone||'').trim(),cpf:String(w.cpf||'').replace(/\D/g,''),companions:w.companions||[]});}
+async function promoWinnerStore({stateRef,bankRef,promo,occurrenceKey,winners=[],context,operator,monthKeys=[],months={},profilesOnly=false,changedWinnerIds=null,pickupWinnerId='',undoPickup=false,validateRemote=null}){
+  if(promo?.kind!=='promo'||!promo.id||!occurrenceKey||!bankRef)throw new Error('REGISTRO DA PROMOÇÃO INDISPONÍVEL.');
+  const now=new Date(),operation=`PROMO_PROFILE_${promoWinnerToken(context.sourceRef+'|'+now.getTime()+'|'+Math.random())}`,lockKey='PROMO_'+promoWinnerToken(context.sourceRef);
+  const acquired=[],bankBackup={},writtenKeys=[],removedKeys=[],bankWrites={};let stateCommitted=false,bankTouched=false;
+  const lockKeys=[...new Set([lockKey,...winners.flatMap(w=>[promoWinnerFullName(w)?promoWinnerPersonKey(promoWinnerFullName(w)):'',w.cpf?'CPF_'+promoWinnerToken(String(w.cpf).replace(/\D/g,'')):'',w.instagram?'IG_'+promoWinnerToken(promoWinnerInstagram(w.instagram)):'']).filter(Boolean)])].sort();
+  try{
+    for(const key of lockKeys){const tx=await bankRef.child('locks').child(key).transaction(current=>{if(current?.operationId&&current.operationId!==operation&&Date.parse(current.expiresAt||'')>Date.now())return;return {operationId:operation,createdAt:now.toISOString(),expiresAt:new Date(Date.now()+120000).toISOString()};},undefined,false);if(!tx?.committed)throw new Error('ESTE CADASTRO ESTÁ SENDO ATUALIZADO EM OUTRO COMPUTADOR. TENTE NOVAMENTE.');acquired.push(key);}
+    let found=null,monthKey='';for(const key of [...new Set([context.date.slice(0,7),...monthKeys])]){const value=(await stateRef.child('months').child(key).child('promos').get()).val(),rows=Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean);const row=rows.find(r=>r.id===promo.id);if(row){found=row;monthKey=key;break;}}
+    if(!found)throw new Error('A PROMOÇÃO NÃO FOI LOCALIZADA NA BASE OFICIAL.');
+    if(found.kind!=='promo')throw new Error('ESTE REGISTRO NÃO É UMA PROMOÇÃO CADASTRADA.');
+    if(validateRemote)validateRemote(found);
+    const previous=Array.isArray(found.resultWinnersByHour?.[occurrenceKey])?found.resultWinnersByHour[occurrenceKey]:[];
+    if(profilesOnly&&!previous.length)throw new Error('REGISTRE O RESULTADO ANTES DE COMPLETAR OS DADOS.');
+    const previousWithIds=previous.map((w,i)=>({...w,id:w.id||'PW_'+promoWinnerToken(context.sourceRef+'|'+i)}));
+    const incoming=winners.map((w,i)=>({...w,id:w.id||previousWithIds[i]?.id||'PW_'+promoWinnerToken(context.sourceRef+'|'+i)}));
+    const changes=new Set(changedWinnerIds?changedWinnerIds.filter(Boolean):incoming.map(w=>w.id));
+    if(changedWinnerIds?.some(id=>!id))incoming.forEach((w,i)=>{if(!winners[i].id)changes.add(w.id);});
+    if(profilesOnly&&!pickupWinnerId&&[...changes].some(id=>!previousWithIds.some(w=>w.id===id)||!incoming.some(w=>w.id===id)))throw new Error('O GANHADOR DESTE CADASTRO FOI ALTERADO. REABRA A PROMOÇÃO.');
+    let desired=profilesOnly?previousWithIds.map(w=>changes.has(w.id)?{...w,...incoming.find(n=>n.id===w.id)}:w):incoming;
+    if(pickupWinnerId){desired=previous.map(w=>({...w}));if(!desired.some(w=>w.id===pickupWinnerId))throw new Error('GANHADOR NÃO LOCALIZADO.');}
+    if(!desired.length)throw new Error('INFORME UM GANHADOR.');
+    const capacity=Math.max(1,Number((found.occurrences||[]).find(o=>o.date===context.date&&promoWinnerSourceRef(found,o.date,o.time||found.drawTime)===context.sourceRef)?.qtyPlanned||found.winnersPerDraw||found.qtyPerDraw)||1);
+    if(desired.length>capacity&&desired.length>previous.length)throw new Error('A QUANTIDADE DE GANHADORES DESTE SORTEIO FOI ALTERADA. REABRA A PROMOÇÃO.');
+    if(!previous.length&&JSON.stringify(promoWinnerRules(found))!==JSON.stringify(promoWinnerRules(promo)))throw new Error('OS DADOS EXIGIDOS DA PROMOÇÃO FORAM ALTERADOS. REABRA O CADASTRO.');
+    const bank=(await bankRef.get()).val()||{},records=Array.isArray(bank.records)?Object.fromEntries(bank.records.map((r,i)=>[String(i),r])):{...(bank.records||{})},existingEntries=Object.entries(records).filter(([,r])=>r?.sourceRef===context.sourceRef);
+    const originalOccurrence=(found.occurrences||[]).find(o=>o.date===context.date&&promoWinnerSourceRef(found,o.date,o.time||found.drawTime)===context.sourceRef),matchingSummary=found.resultDate===context.date&&promoWinnerSourceRef(found,found.resultDate,found.resultSlot||context.time)===context.sourceRef;
+    const originalResultAt=originalOccurrence?.resultAt||(matchingSummary?found.resultAt:'')||'',originalResultLabel=originalOccurrence?.resultAtLabel||(matchingSummary?found.resultAtLabel:'')||'';
+    const seen=new Set();desired=desired.map((raw,i)=>{
+      const old=previousWithIds.find(p=>p.id===raw.id);
+      const registrationRules=old?promoWinnerRules(found,old):promoWinnerRules(found);
+      const w=promoWinnerNormalize({...raw,registrationRules},found,raw.id);
+      const check=promoWinnerCheck(w,found,'result');if(!check.allowed)throw new Error(check.errors.join(' '));
+      const identities=['ID_'+w.id,'NAME_'+promoWinnerPersonKey(w.name),w.cpf?'CPF_'+w.cpf:'',w.instagram?'IG_'+promoWinnerInstagram(w.instagram):''].filter(Boolean);
+      if(!w.name||identities.some(key=>seen.has(key)))throw new Error('GANHADOR REPETIDO NESTE SORTEIO.');identities.forEach(key=>seen.add(key));
+      if(!pickupWinnerId&&(!profilesOnly||changes.has(w.id))&&Number(old?.profileVersion||0)!==Number(raw.profileVersion||0))throw new Error('OS DADOS DESTE GANHADOR MUDARAM EM OUTRO COMPUTADOR. REABRA O CADASTRO.');
+      const history=promoWinnerHistoryCheck(bank,w,context,months);if(!history.allowed)throw new Error(history.reason);
+      const edited=!old||promoWinnerProfileSignature(old)!==promoWinnerProfileSignature(w);
+      const originalBank=existingEntries.find(([,r])=>r.winnerId===w.id||!r.winnerId&&promoWinnerPersonKey(r.name)===promoWinnerPersonKey(old?.name||w.name))?.[1];
+      const registeredAt=old?(old.registeredAt||originalResultAt||originalBank?.confirmedAt||originalBank?.createdAt||new Date(context.date+'T'+context.sourceRef.split(':').at(-1).replace(/^(\d{2})H(\d{2})?$/,(_,h,m)=>h+':'+(m||'00'))+':00').toISOString()):now.toISOString();
+      return {...w,registeredAt,registeredAtLabel:old?.registeredAtLabel||originalResultLabel||originalBank?.createdAtLabel||new Date(registeredAt).toLocaleString('pt-BR'),deliveredAt:old?.deliveredAt||'',deliveredAtLabel:old?.deliveredAtLabel||'',deliveredBy:old?.deliveredBy||'',reuseStatus:old?.reuseStatus||'',reuseAt:old?.reuseAt||'',reusedItemId:old?.reusedItemId||'',identityStatus:check.identityReady?'VERIFIED':'PENDING',profileVersion:Number(old?.profileVersion||0)+(edited?1:0),profileUpdatedAt:edited?now.toISOString():old?.profileUpdatedAt||'',profileUpdatedBy:edited?operator.name:old?.profileUpdatedBy||''};
+    });
+    if(pickupWinnerId&&!undoPickup){const w=desired.find(w=>w.id===pickupWinnerId),check=promoWinnerCheck(w,found,'pickup');if(!check.allowed||w.identityStatus==='PENDING')throw new Error('COMPLETE OS DADOS OBRIGATÓRIOS ANTES DA RETIRADA. '+check.errors.join(' '));}
+    const additions={};desired.forEach(w=>{const previousWinner=previousWithIds.find(r=>r.id===w.id),entry=existingEntries.find(([,r])=>r.winnerId===w.id)||existingEntries.find(([,r])=>!r.winnerId&&promoWinnerPersonKey(r.name)===promoWinnerPersonKey(previousWinner?.name||w.name)),id=entry?.[0]||'PW_'+promoWinnerToken(context.sourceRef+'|'+w.id),old=entry?.[1]||{};bankBackup[id]=records[id]||null;writtenKeys.push(id);additions[id]={...old,id,name:w.name,fullName:w.fullName||'',cpf:w.cpf||'',phone:w.phone||'',instagram:w.instagram||'',winnerId:w.id,date:context.date,program:context.program,prize:context.prize,personKey:promoWinnerPersonKey(w.name),prizeKey:promoWinnerPrizeKey(context.prize,bank),source:'ESTUDIO_JP1017',sourceRef:context.sourceRef,operationId:old.operationId||operation,operationStatus:w.identityStatus==='PENDING'?'PROVISIONAL':'CONFIRMED',createdAt:old.createdAt||w.registeredAt,createdAtLabel:old.createdAtLabel||w.registeredAtLabel,confirmedAt:old.confirmedAt||w.registeredAt,updatedAt:now.toISOString(),updatedBy:operator.name,operatorSector:operator.sector};});
+    if(!profilesOnly&&!pickupWinnerId)for(const [key,record]of existingEntries)if(!writtenKeys.includes(key)){bankBackup[key]=record;writtenKeys.push(key);removedKeys.push(key);additions[key]={...record,operationStatus:'PENDING_REMOVAL'};}
+    writtenKeys.forEach(key=>{additions[key].profileOperationId=operation;bankWrites[key]=additions[key];});
+    await bankRef.child('records').update(additions);bankTouched=true;
+    let conflict='';const tx=await stateRef.child('months').child(monthKey).child('promos').transaction(value=>{
+      const rows=Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean),index=rows.findIndex(p=>p.id===promo.id);if(index<0){conflict='A PROMOÇÃO NÃO FOI LOCALIZADA.';return;}const current=rows[index];
+      try{
+        if(current.kind!=='promo')throw new Error('ESTE REGISTRO NÃO É UMA PROMOÇÃO CADASTRADA.');
+        if(validateRemote)validateRemote(current);
+        const liveCapacity=Math.max(1,Number((current.occurrences||[]).find(o=>o.date===context.date&&promoWinnerSourceRef(current,o.date,o.time||current.drawTime)===context.sourceRef)?.qtyPlanned||current.winnersPerDraw||current.qtyPerDraw)||1);
+        if(desired.length>liveCapacity&&desired.length>previous.length)throw new Error('A QUANTIDADE DE GANHADORES DESTE SORTEIO FOI ALTERADA. REABRA A PROMOÇÃO.');
+        if(!previous.length&&JSON.stringify(promoWinnerRules(current))!==JSON.stringify(promoWinnerRules(found)))throw new Error('OS DADOS EXIGIDOS DA PROMOÇÃO FORAM ALTERADOS. REABRA O CADASTRO.');
+      }catch(e){conflict=e.message;return;}
+      const live=current.resultWinnersByHour?.[occurrenceKey]||[];
+      if(JSON.stringify(live.map(w=>[w.id||'',Number(w.profileVersion||0),promoWinnerProfileSignature(w)]))!==JSON.stringify(previous.map(w=>[w.id||'',Number(w.profileVersion||0),promoWinnerProfileSignature(w)]))){conflict='OS DADOS DESTE GANHADOR MUDARAM EM OUTRO COMPUTADOR. REABRA O CADASTRO.';return;}
+      const next=desired.map((w,i)=>{const original=live.find(r=>r.id===w.id)||(!live[i]?.id?live[i]:null);return {...w,deliveredAt:original?.deliveredAt||'',deliveredAtLabel:original?.deliveredAtLabel||'',deliveredBy:original?.deliveredBy||'',deliveredLate:original?.deliveredLate||false,reuseStatus:original?.reuseStatus||'',reuseAt:original?.reuseAt||'',reusedItemId:original?.reusedItemId||''};});
+      if(pickupWinnerId){const w=next.find(w=>w.id===pickupWinnerId);w.deliveredAt=undoPickup?'':now.toISOString();w.deliveredAtLabel=undoPickup?'':now.toLocaleString('pt-BR');w.deliveredBy=undoPickup?'':operator.name;}
+      const joined=next.map(w=>w.name).join(', '),resultByHour={...(current.resultByHour||{}),[occurrenceKey]:joined},resultWinnersByHour={...(current.resultWinnersByHour||{}),[occurrenceKey]:next};
+      const summaryKey=promoWinnerSourceRef(current,current.resultDate||context.date,current.resultSlot||context.time||'');
+      const latest=!current.resultDate||context.sourceRef>=summaryKey;
+      const existingOccurrence=(current.occurrences||[]).find(o=>o.date===context.date&&promoWinnerSourceRef(current,o.date,o.time||current.drawTime)===context.sourceRef);
+      const originalAt=existingOccurrence?.resultAt||(summaryKey===context.sourceRef?current.resultAt:'')||live[0]?.registeredAt||now.toISOString(),originalLabel=existingOccurrence?.resultAtLabel||(summaryKey===context.sourceRef?current.resultAtLabel:'')||live[0]?.registeredAtLabel||now.toLocaleString('pt-BR');
+      const summary=latest?{resultWinners:next,resultName:joined,resultAt:originalAt,resultAtLabel:originalLabel,resultDate:context.date,resultSlot:context.slot||context.time}:{};
+      const occurrences=(current.occurrences||[]).map(o=>!profilesOnly&&!pickupWinnerId&&o.date===context.date&&promoWinnerSourceRef(current,o.date,o.time||current.drawTime)===context.sourceRef?{...o,status:'REALIZADO',actualQty:next.length,resultAt:o.resultAt||now.toISOString(),resultAtLabel:o.resultAtLabel||now.toLocaleString('pt-BR')}:o);
+      rows[index]={...current,...summary,resultByHour,resultWinnersByHour,occurrences,updatedAt:now.toISOString(),updatedBy:operator.name};return rows;
+    },undefined,false);
+    if(!tx?.committed)throw new Error(conflict||'NÃO FOI POSSÍVEL CONFIRMAR A GRAVAÇÃO.');
+    stateCommitted=true;
+    if(removedKeys.length)try{await bankRef.child('records').transaction(value=>{const rows={...(value||{})};removedKeys.forEach(key=>{if(rows[key]?.profileOperationId===operation&&rows[key]?.operationStatus==='PENDING_REMOVAL')delete rows[key];});return rows;},undefined,false);}catch(cleanupError){console.error('LIMPEZA DO HISTÓRICO PENDENTE',cleanupError);}
+    return {rows:tx.snapshot.val(),monthKey,winners:desired,operationId:operation};
+  }catch(error){if(bankTouched&&!stateCommitted){try{await bankRef.child('records').transaction(value=>{const rows={...(value||{})};writtenKeys.forEach(key=>{if(rows[key]?.profileOperationId!==operation||JSON.stringify(rows[key])!==JSON.stringify(bankWrites[key]))return;if(bankBackup[key])rows[key]=bankBackup[key];else delete rows[key];});return rows;},undefined,false);}catch(rollbackError){console.error('RESTAURAÇÃO DO HISTÓRICO PENDENTE',rollbackError);}}throw error;}
+  finally{await Promise.allSettled(acquired.map(key=>bankRef.child('locks').child(key).transaction(value=>value?.operationId===operation?null:value,undefined,false)));}
+}
+/* PROMO_WINNER_STORE_END */
+
+
 function normalizeWinnerList(list){
   if(!Array.isArray(list)) return [];
   const seen=new Set();
@@ -1102,7 +1280,7 @@ function resultRowsForDate(date){
     if(item.deliveredAt&&!mirror.deliveredAt){hiddenPromos.add(mirror);return true;}
     return false;
   });
-  return [...physical,...promos.filter(row=>!hiddenPromos.has(row))].sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title)||a.result.localeCompare(b.result));
+  return [...physical,...promos.filter(row=>!hiddenPromos.has(row))].map(row=>{const profile=receptionPromoProfile(row);if(!profile)return row;const status=promoWinnerProfileStatus(profile.w,profile.p);return {...row,winnerId:profile.w.id||'',profileManaged:true,profileReady:status.ready,profileStatus:status.label,companionCount:promoWinnerRules(profile.p,profile.w).companionsPerWinner};}).sort((a,b)=>a.sort.localeCompare(b.sort)||a.title.localeCompare(b.title)||a.result.localeCompare(b.result));
 }
 function allResultRows(){
   const dates=new Set();
@@ -1122,7 +1300,34 @@ function isPickupPending(row){
 function pickupPendingCount(rows){
   return rows.reduce((n,row)=>n+(isPickupPending(row)?1:0),0);
 }
+let receptionProfileDirty=false;
+let receptionProfileSaving=false;
+let receptionProfileBaseline=null;
+const receptionWinnerBankRef=receptionDatabase.ref('jp-painel-brindes/winnerBank');
+function receptionPromoProfile(row){if(row.source!=='promo')return null;const p=receptionPromosForDate(row.date).find(p=>p.id===row.id)||receptionAllPromos().find(p=>p.id===row.id);if(!p||p.kind!=='promo')return null;const list=p.resultWinnersByHour?.[row.occurrenceKey]||p.resultWinners||[],w=row.winnerId?list.find(w=>w.id===row.winnerId):list[Number(row.winnerIndex)];return w&&promoWinnerRules(p,w)?{p,w}:null;}
+function receptionProfileFieldsHtml(row){const profile=receptionPromoProfile(row);receptionProfileBaseline=profile?JSON.parse(JSON.stringify(profile)):null;if(!profile)return '';const{p,w}=profile,status=promoWinnerProfileStatus(w,p),extra=promoWinnerExtraFieldsHtml(w,p).replace('<details class="promoWinnerDetails">','<details class="promoWinnerDetails" open>');const content=`<section class="receptionProfileFields promoWinnerCandidate" id="receptionProfileFields" data-winner-id="${esc(w.id||'')}"><label class="promoProfileField"><span>NOME COMPLETO DO GANHADOR</span><input class="promoResultWinnerInput promoProfileInput" type="text" maxlength="140" value="${esc(w.name||'')}" autocomplete="off"></label>${extra}<div class="promoProfileStatus ${status.ready?'ready':'waiting'}">${esc(status.label)}</div>${!row.deliveredAt?'<button class="pickupSheetAction secondary" id="sheetSaveWinnerFields" type="button">SALVAR DADOS DO GANHADOR</button>':''}</section>`;return row.deliveredAt?content.replace(/<input /g,'<input disabled '):content;}
+async function receptionCommitPromoProfile(row,data=null,{pickup=false,undo=false}={}){
+  const profile=receptionPromoProfile(row);if(!profile)throw new Error('CADASTRO DO GANHADOR NÃO LOCALIZADO.');
+  await ensureReceptionOnline();const{p,w}=profile,displayTime=String(row.time||'00:00'),sourceRef=promoWinnerSourceRef(p,row.date,displayTime),distribution=distributionById(p.distributionId)||{},prize=upper(p.prizeTitle||distribution.title||distribution.show||distribution.prize||p.prize||'PRÊMIO DA PROMOÇÃO');
+  const context={sourceRef,date:row.date,time:displayTime,slot:displayTime.replace(':','H').replace(/H00$/,'H'),program:upper(p.resultProgram||receptionProgramFromSchedule(row.date,displayTime,p.station||'JP1017')||'RESULTADO PROMOÇÃO'),prize};
+  const next=data?promoWinnerNormalize({...w,...data},p,w.id):w;
+  const result=await promoWinnerStore({stateRef:firebaseRef,bankRef:receptionWinnerBankRef,promo:p,occurrenceKey:row.occurrenceKey,winners:[next],context,operator:receptionOperatorIdentity(),monthKeys:receptionRecordMonths('promos',p.id,row.date),months:state.months,profilesOnly:true,changedWinnerIds:[w.id],pickupWinnerId:pickup?w.id:'',undoPickup:undo,validateRemote:remote=>{if(remote.kind!=='promo')throw new Error('ESTE REGISTRO NÃO É UMA PROMOÇÃO CADASTRADA.');}});
+  state.months[result.monthKey].promos=Array.isArray(result.rows)?result.rows:Object.values(result.rows||{}).filter(Boolean);
+  await Promise.allSettled([firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'RECEPCAO'}),firebaseRef.child('auditLog').transaction(value=>{const rows=Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean);rows.push({id:'LOG_'+result.operationId,action:pickup?(undo?'RETIRADA CANCELADA':'RETIRADA DE PROMOÇÃO CONFIRMADA'):'DADOS DO GANHADOR COMPLETADOS',targetId:p.id,winnerId:w.id,origin:'RECEPÇÃO',operatorName:'RECEPÇÃO',createdAt:new Date().toISOString()});return rows.slice(-2500);},undefined,false)]);
+  return true;
+}
+async function saveReceptionWinnerFields(){
+  if(!activeReceptionRow||receptionProfileSaving)return;
+  const row=findReceptionRow(activeReceptionRow),profile=row&&receptionPromoProfile(row);if(!profile){showReceptionToast('O GANHADOR DESTE CADASTRO FOI ALTERADO. REABRA A PROMOÇÃO.',true);return;}
+  const baseline=receptionProfileBaseline||profile,host=$('receptionProfileFields'),next=promoWinnerReadFields(host,baseline.w,baseline.p),check=promoWinnerCheck(next,baseline.p,'result');
+  if(!check.allowed){showReceptionToast(check.errors.join(' '),true);return;}
+  receptionProfileSaving=true;const button=$('sheetSaveWinnerFields');if(button){button.disabled=true;button.textContent='SALVANDO...';}
+  try{await receptionCommitPromoProfile(row,next);receptionProfileDirty=false;render();openReceptionSheet(findReceptionRow(activeReceptionRow)||row);showReceptionToast('DADOS DO GANHADOR ATUALIZADOS.');}
+  catch(error){showReceptionToast(error.message||'NÃO FOI POSSÍVEL SALVAR OS DADOS.',true);}
+  finally{receptionProfileSaving=false;if(button){button.disabled=false;button.textContent='SALVAR DADOS DO GANHADOR';}}
+}
 function pickupButton(row){
+  if(row.profileManaged&&!row.profileReady&&!row.deliveredAt)return `<div class="pickupWrap"><button class="pickupBtn profilePending" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date)}">COMPLETAR DADOS</button></div>`;
   if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">NÃO RETIRADO NO PRAZO<br>PRÊMIO VOLTOU À CIRCULAÇÃO</div><button class="pickupBtn expiredPickup" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
   const done=!!row.deliveredAt;
   if(done){
@@ -1132,6 +1337,7 @@ function pickupButton(row){
   return `<div class="pickupWrap"><button class="pickupBtn${statusClass}" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
 }
 function setPickup(row,undo=false){
+  const actual=row.source==='promo'?findReceptionRow(row):row;if(actual?.profileManaged){if(!undo&&!actual.profileReady){showReceptionToast('COMPLETE OS DADOS OBRIGATÓRIOS ANTES DA RETIRADA.',true);return Promise.resolve(false);}return receptionCommitPromoProfile(actual,null,{pickup:true,undo}).then(()=>{render();refreshOpenReceptionSheet();return true;}).catch(error=>{showReceptionToast(error.message,true);throw error;});}
   selectMonthForDate(row.date||$('dateFilter').value||todayISO());
   const now=new Date();
   let changedRecord=null;
@@ -1224,18 +1430,18 @@ function rowFromButton(btn){
   return {source:btn.dataset.source,id:btn.dataset.id,winnerIndex:btn.dataset.winnerIndex,occurrenceKey:btn.dataset.occurrenceKey||'',date:btn.dataset.date||''};
 }
 let activeReceptionRow=null; let pickupBusy=false;
-function findReceptionRow(ref){return allResultRows().find(r=>r.source===ref.source&&String(r.id)===String(ref.id)&&String(r.winnerIndex)===String(ref.winnerIndex)&&String(r.occurrenceKey||'')===String(ref.occurrenceKey||'')&&String(r.date||'')===String(ref.date||''));}
+function findReceptionRow(ref){return allResultRows().find(r=>r.source===ref.source&&String(r.id)===String(ref.id)&&(ref.winnerId?String(r.winnerId)===String(ref.winnerId):String(r.winnerIndex)===String(ref.winnerIndex))&&String(r.occurrenceKey||'')===String(ref.occurrenceKey||'')&&String(r.date||'')===String(ref.date||''));}
 function deadlineStatusText(row){if(row.deliveredAt)return `RETIRADO · ${row.deliveredAtLabel||''}`;if(row.expired)return `VENCIDO · ${row.deadlineLabel||''}`;if(row.deadlineClass==='today')return `VENCE HOJE · ${row.deadlineLabel||''}`;if(row.deadlineClass==='tomorrow')return `VENCE AMANHÃ · ${row.deadlineLabel||''}`;return row.deadlineLabel||'NO PRAZO';}
 function openReceptionSheet(row){
-  activeReceptionRow={source:row.source,id:row.id,winnerIndex:row.winnerIndex,occurrenceKey:row.occurrenceKey||'',date:row.date||''};
+  activeReceptionRow={source:row.source,id:row.id,winnerIndex:row.winnerIndex,winnerId:row.winnerId||'',occurrenceKey:row.occurrenceKey||'',date:row.date||''};
   const status=rowStatus(row), statusClass=status==='RETIRADO'?'done':status==='VENCIDO'?'expired':status==='VENCE_HOJE'?'today':'pending';
-  const action=row.deliveredAt?`<button class="pickupSheetAction" type="button" disabled>RETIRADA JÁ REGISTRADA</button>`:`<button class="pickupSheetAction" id="sheetConfirmPickup" type="button">CONFIRMAR RETIRADA</button>`;
-  $('receptionModalBody').innerHTML=`<h3 class="pickupSheetName" id="receptionModalName">${esc(row.result)}</h3><div class="pickupSheetGrid"><div class="pickupSheetField"><span>PRÊMIO</span><strong>${esc(row.title)}${row.quantity?` · ${row.quantity} UNID.`:''}</strong></div><div class="pickupSheetField"><span>GANHOU EM</span><strong>${esc(formatBR(row.date))} · ${esc(row.time)} · ${esc(row.sub)}</strong></div><div class="pickupSheetField"><span>PRAZO PARA RETIRADA</span><strong>${esc(row.deadlineLabel||'--')}</strong></div></div><div class="pickupSheetStatus ${statusClass}">${esc(deadlineStatusText(row))}</div>${action}`;
+  const action=row.profileManaged&&!row.profileReady&&!row.deliveredAt?`<button class="pickupSheetAction" type="button" disabled>COMPLETE OS DADOS PARA CONFIRMAR A RETIRADA</button>`:row.deliveredAt?`<button class="pickupSheetAction" type="button" disabled>RETIRADA JÁ REGISTRADA</button>`:`<button class="pickupSheetAction" id="sheetConfirmPickup" type="button">CONFIRMAR RETIRADA</button>`;
+  $('receptionModalBody').innerHTML=`<h3 class="pickupSheetName" id="receptionModalName">${esc(row.result)}</h3><div class="pickupSheetGrid"><div class="pickupSheetField"><span>PRÊMIO</span><strong>${esc(row.title)}${row.quantity?` · ${row.quantity} UNID.`:''}</strong></div><div class="pickupSheetField"><span>GANHOU EM</span><strong>${esc(formatBR(row.date))} · ${esc(row.time)} · ${esc(row.sub)}</strong></div><div class="pickupSheetField"><span>PRAZO PARA RETIRADA</span><strong>${esc(row.deadlineLabel||'--')}</strong></div></div><div class="pickupSheetStatus ${statusClass}">${esc(deadlineStatusText(row))}</div>${receptionProfileFieldsHtml(row)}${action}`;
   $('receptionModal').hidden=false;
 }
-function closeReceptionSheet(){if(pickupBusy)return;$('receptionModal').hidden=true;activeReceptionRow=null;}
+function closeReceptionSheet(){if(pickupBusy||receptionProfileSaving)return;receptionProfileDirty=false;receptionProfileBaseline=null;$('receptionModal').hidden=true;activeReceptionRow=null;}
 function showReceptionToast(message,error=false){const t=$('receptionToast');t.textContent=message;t.classList.toggle('error',error);t.hidden=false;clearTimeout(showReceptionToast.timer);showReceptionToast.timer=setTimeout(()=>{t.hidden=true;},error?4500:3000);}
-function refreshOpenReceptionSheet(){if(!activeReceptionRow||$('receptionModal').hidden)return;const row=findReceptionRow(activeReceptionRow);if(row)openReceptionSheet(row);}
+function refreshOpenReceptionSheet(){if(receptionProfileDirty||receptionProfileSaving)return;if(!activeReceptionRow||$('receptionModal').hidden)return;const row=findReceptionRow(activeReceptionRow);if(row)openReceptionSheet(row);}
 function render(){
   renderReceptionCampaigns();
   const date=$('dateFilter').value||todayISO();
@@ -1251,19 +1457,20 @@ function render(){
         <div class="dateTimeBlock"><span class="resultDate">${esc(formatBR(r.date||''))}</span><div class="time">${esc(r.time)}</div></div>
         <div class="prizeText"><strong>${esc(r.title)}</strong><span>${r.quantity?`${r.quantity} UNID. · `:''}${esc(r.sub)}</span></div>
       </div>
-      <div class="winnerCenter"><span class="resultNameTag">${esc(r.result)}</span></div>
+      <div class="winnerCenter"><span class="resultNameTag">${esc(r.result)}${r.companionCount?` + ${r.companionCount} ACOMPANHANTES`:""}</span>${r.profileManaged?`<span class="receptionProfileBadge ${r.profileReady?"ready":"waiting"}">${esc(r.profileStatus)}</span>`:""}</div>
       <div class="resultRight">${deadline}${pickupButton(r)}</div>
     </article>`;
   }).join(''):'<div class="empty">NENHUM RESULTADO ENCONTRADO PARA ESTE FILTRO.</div>';
 }
 document.addEventListener('click',e=>{
+  if(e.target.closest('#sheetSaveWinnerFields')){saveReceptionWinnerFields();return;}
   const stat=e.target.closest('[data-reception-filter]');
   if(stat){receptionStatusFilter=stat.dataset.receptionFilter||'ALL';render();return;}
   if(e.target.closest('#receptionModalClose')){closeReceptionSheet();return;}
   if(e.target.id==='sheetConfirmPickup'){
     if(!activeReceptionRow||pickupBusy)return;
     const ref={...activeReceptionRow};
-    const row=findReceptionRow(ref); if(!row)return;
+    const row=findReceptionRow(ref); if(!row)return;if(row.profileManaged&&!row.profileReady){openReceptionSheet(row);return;}
     // O próprio modal já é a tela de confirmação. Um clique confirma, fecha e grava.
     closeReceptionSheet();
     pickupBusy=true;
@@ -1283,6 +1490,7 @@ document.addEventListener('click',e=>{
   const card=e.target.closest('.resultCard');
   if(card){const row=findReceptionRow(rowFromButton(card));if(row)openReceptionSheet(row);return;}
 });
+document.addEventListener('input',e=>{if(e.target.closest?.('#receptionProfileFields'))receptionProfileDirty=true;});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.resultCard')){e.preventDefault();const row=findReceptionRow(rowFromButton(e.target));if(row)openReceptionSheet(row);}if(e.key==='Escape')closeReceptionSheet();});
 $('receptionModal').addEventListener('click',e=>{if(e.target===$('receptionModal'))closeReceptionSheet();});
 document.addEventListener('contextmenu',e=>{
