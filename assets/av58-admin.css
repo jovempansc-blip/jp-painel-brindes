@@ -594,3 +594,27 @@ body.programDragActive #view-programacao .programPeriodLane[data-drop-date][data
 .prizeCatalogToolbar{grid-template-columns:minmax(240px,1fr) minmax(180px,220px) 180px!important}
 @media(max-width:950px){.prizeCatalogToolbar{grid-template-columns:1fr 1fr!important}.prizeCatalogSearchField{grid-column:1/-1}}
 @media(max-width:600px){.prizeCatalogToolbar{grid-template-columns:1fr!important}.prizeCatalogSearchField{grid-column:auto}}
+
+/* AV58.1.10 — desprogramação por prêmio / Glass Suave */
+#distUnprogramDrawer{align-items:center!important}
+#distUnprogramDrawer .drawerCard{width:min(680px,94vw)!important;max-height:90vh!important;background:rgba(250,252,253,.97)!important;box-shadow:0 18px 60px rgba(31,42,57,.14)!important}
+#distUnprogramDrawer .drawerBody{display:flex;flex-direction:column;gap:10px}
+#distUnprogramDrawer [hidden],#distProgramContextMenu[hidden]{display:none!important}
+.distUnprogramTitle{font-size:15px;color:#2c3b46}
+#distUnprogramScopeNote{font-size:10px;font-weight:800;color:#7d8c97}
+.distUnprogramRange{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.distUnprogramSummary{display:flex;flex-direction:column;gap:5px;padding:12px;border:1px solid #d6e4dc;border-radius:14px;background:#f1f7f4;color:#365646}
+.distUnprogramSummary strong{font-size:13px}.distUnprogramSummary span{font-size:10px;color:#718579}
+.distUnprogramDates{display:flex;flex-wrap:wrap;gap:6px;max-height:130px;overflow:auto}
+.distUnprogramDates>span{display:flex;gap:8px;padding:6px 9px;background:#f4f6f8;border:1px solid #e1e7ec;border-radius:9px;font-size:11px;color:#61737f}
+.distUnprogramDates b{color:#365646}.distUnprogramRule{font-size:12px;line-height:1.5;color:#6d7b88;margin:0}
+#distUnprogramToggleLinks{align-self:flex-start}#distUnprogramLinkList{max-height:260px;overflow:auto;border:1px solid #e1e7ec;border-radius:13px;padding:0 10px}
+.distUnprogramLink{display:flex;align-items:center;gap:10px;justify-content:space-between;padding:10px 0;border-bottom:1px solid #e6ecef}.distUnprogramLink:last-child{border-bottom:0}
+.distUnprogramLink>div{min-width:0;display:flex;flex-direction:column;gap:4px}.distUnprogramLink strong{font-size:12px;color:#3e5d4e}.distUnprogramLink span{font-size:11px;color:#697c88}.distUnprogramLink small{font-size:9px;color:#688b76}
+.distUnprogramLink.preserved strong,.distUnprogramLink.preserved small{color:#85929d}.distUnprogramLink .btn{white-space:nowrap;font-size:9px!important}
+#distUnprogramFeedback{font-size:12px;line-height:1.5;color:#985943;margin:0;min-height:0}
+.distUnprogramX{color:#967074!important;background:#fbf4f5!important;border-color:#ecdfe1!important}
+.distCompactActions{flex-wrap:wrap;gap:4px!important}.distCompactActions .actionIcon{width:28px!important;height:28px!important;min-width:28px!important}
+.distProgramContextMenu{position:fixed;z-index:10000;min-width:216px;padding:6px;border:1px solid #dfe6e9;border-radius:13px;background:rgba(251,253,254,.98);box-shadow:0 12px 40px rgba(29,42,52,.16);backdrop-filter:blur(12px)}
+.distProgramContextMenu button{display:block;width:100%;padding:10px 12px;text-align:left;border:0;border-radius:8px;background:transparent;color:#516771;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer}.distProgramContextMenu button:hover,.distProgramContextMenu button:focus-visible{background:#edf3f0;outline:2px solid #cfdfd5}
+@media(max-width:600px){.distUnprogramRange{grid-template-columns:1fr}.distUnprogramLink{align-items:flex-start;flex-wrap:wrap}}
