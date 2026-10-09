@@ -5395,6 +5395,17 @@ function queueApiSave(delay=80){
   updateSyncStatus('saving','SALVANDO');
   firebaseSaveTimer = setTimeout(()=>{ saveStateToApi().catch(error=>console.warn('FIREBASE DIRECT SAVE FAILED',error)); }, delay);
 }
+function workspaceEmptyAfterTrackedDeletion(data,baseline){
+  if(!baseline?.months||countStateRecords(baseline)===0)return false;
+  if((baseline.schedules||[]).length||(baseline.programSchedules||[]).length)return false;
+  const oldTrashIds=new Set((baseline.trash||[]).map(row=>row.id));
+  const deletions=(data.trash||[]).filter(row=>!oldTrashIds.has(row.id));
+  return Object.entries(baseline.months).every(([monthKey,m])=>
+    [['items','ITEM'],['promos','PROMOÇÃO'],['distributions','DISTRIBUIÇÃO']].every(([collection,type])=>
+      (m[collection]||[]).every(record=>deletions.some(row=>row.type===type&&row.monthKey===monthKey&&row.sourceId===record.id))
+    )
+  );
+}
 async function saveStateToApi(){
   if(!firebaseReady || !firebaseRef){
     initFirebaseSync();
@@ -5408,7 +5419,7 @@ async function saveStateToApi(){
   try{
     const hadPendingSave=!!firebasePendingSave;
     normalizePanelState(state);
-    if(countStateRecords(state)===0){
+    if(countStateRecords(state)===0&&!(hadPendingSave&&workspaceEmptyAfterTrackedDeletion(state,firebaseBaselineState))){
       firebasePendingSave=false;
       updateSyncStatus('error','BASE VAZIA');
       renderBackup();
@@ -12248,7 +12259,8 @@ function migrateLegacyDistributionGroup(data,distId,rows){
     // Só tratamos como alteração mensal um snapshot cujo conteúdo operacional realmente divergiu.
     if(row.monthKey!==origin.monthKey && !distributionOperationallyEmpty(row.d) && distributionOperationalFingerprint(row.d)!==originFingerprint){fixed[row.monthKey]=row.d;}
   });
-  if(rows.every(row=>row.d?.stockModelVersion>=3) && keys.every(key=>data.months?.[key]?.distributions?.some(d=>d.id===distId)))return 0;
+  // A migração é única. Uma competência ausente após migrar pode ter sido excluída.
+  if(rows.every(row=>row.d?.stockModelVersion>=3))return 0;
 
   // A fotografia inicial é calculada uma única vez a partir do estoque físico mestre.
   // Alterações mensais existentes NÃO são compensadas nos demais meses: diferença vira saldo ou déficit global.
@@ -12365,7 +12377,7 @@ function distributionDependencies(distId){
   });
   return {items,promos,pendingWithdrawals};
 }
-function deleteDist(distId){
+async function deleteDist(distId){
   const monthKey=state.currentMonth;
   const m=monthDataForKey(monthKey);
   const current=(m.distributions||[]).find(d=>d.id===distId);
@@ -12382,7 +12394,15 @@ function deleteDist(distId){
   trashRecord('DISTRIBUIÇÃO',label,{id:distId,copies:[{monthKey,data:clone(current)}]},{sourceId:distId,monthKey});
   m.distributions=(m.distributions||[]).filter(d=>d.id!==distId);
   auditEvent('EXCLUSÃO MENSAL DE DISTRIBUIÇÃO',label,{targetId:distId,before:current,note:`COMPETÊNCIA ${monthKey} · OUTROS MESES PRESERVADOS`});
-  saveState(true); render(); toast('DISTRIBUIÇÃO REMOVIDA SOMENTE DESTE MÊS · SINCRONIZANDO COM FIREBASE...');
+  try{
+    if(!saveState(true))throw new Error('FIREBASE INDISPONÍVEL.');
+    await flushFirebaseNow('EXCLUSÃO MENSAL DE DISTRIBUIÇÃO');
+    render();toast(`EXCLUSÃO DE ${labelMonth(monthKey)} CONFIRMADA · OUTROS MESES PRESERVADOS.`);
+  }catch(error){
+    console.warn('EXCLUSÃO DE DISTRIBUIÇÃO NÃO CONFIRMADA',error);
+    rollbackToFirebaseBaseline('EXCLUSÃO CANCELADA: FIREBASE NÃO CONFIRMOU.');
+    toast('NÃO FOI POSSÍVEL EXCLUIR · O CADASTRO FOI PRESERVADO.');
+  }
 }
 function saveDistributionFromForm(generate=false){
   const idVal=$('distId').value || id('DST');
