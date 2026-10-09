@@ -3734,7 +3734,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/av58-admin.css">
+<link rel="stylesheet" href="assets/av58-admin.css?v=AV58_1_8">
 <style id="promo-pi-editor-style">
 #promoDrawer .drawerCard{width:min(1320px,97vw)!important;max-width:1320px!important}
 #promoDrawer .promoFormLayout{grid-template-columns:minmax(0,3fr) minmax(340px,2fr)!important;gap:20px!important}
@@ -3889,6 +3889,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
           <div class="prizeCatalogKpis" id="prizeCatalogKpis"></div>
           <div class="prizeCatalogToolbar">
             <div class="field prizeCatalogSearchField"><label>PESQUISAR</label><input class="control" id="prizeCatalogSearch" autocomplete="off" placeholder="TÍTULO, DESCRIÇÃO OU GANHADOR..."></div>
+            <div class="field prizeCatalogStatusField"><label for="prizeCatalogStatus">STATUS</label><select class="control" id="prizeCatalogStatus"><option value="all">TODOS</option><option value="described">COM DESCRIÇÃO</option><option value="missing">SEM DESCRIÇÃO</option><option value="awarded">COM SORTEIO REGISTRADO</option><option value="undrawn">SEM SORTEIO REGISTRADO</option></select></div>
             <div class="field prizeCatalogOrderField"><label>ORDENAR</label><select class="control" id="prizeCatalogOrder"><option value="recent" selected>MAIS RECENTE</option><option value="use">MAIS UTILIZADO</option><option value="name">A–Z</option><option value="draw">ÚLTIMO SORTEIO</option></select></div>
           </div>
           <div class="tableWrap"><table class="promoMainTable prizeCatalogTable"><colgroup><col class="prizeCatalogTitleCol"><col class="prizeCatalogDescriptionCol"><col class="prizeCatalogCountCol"><col class="prizeCatalogDateCol"><col class="prizeCatalogDrawCol"><col class="prizeCatalogActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th>DESCRIÇÃO PADRÃO</th><th>USOS</th><th>ÚLTIMO USO</th><th>ÚLTIMO SORTEIO</th><th>AÇÕES</th></tr></thead><tbody id="prizeCatalogTable"></tbody></table></div>
@@ -7176,6 +7177,13 @@ function prizeCatalogDrawText(draw){
   const winnerText=names.length<=2?names.join(' + '):`${names.slice(0,2).join(' + ')} + ${names.length-2}`;
   return winnerText||'GANHADOR NÃO INFORMADO';
 }
+function prizeCatalogMatchesStatus(entry,status){
+  if(status==='described')return !!entry.description;
+  if(status==='missing')return !entry.description;
+  if(status==='awarded')return !!entry.draws?.length;
+  if(status==='undrawn')return !entry.draws?.length;
+  return true;
+}
 function renderPrizeCatalog(){
   const table=$('prizeCatalogTable');
   const kpis=$('prizeCatalogKpis');
@@ -7191,7 +7199,9 @@ function renderPrizeCatalog(){
     ${missingCount?`<div class="prizeCatalogKpi attention"><span>SEM DESCRIÇÃO PADRÃO</span><strong>${missingCount}</strong></div>`:''}`;
   const query=prizeCatalogPlain($('prizeCatalogSearch')?.value||'');
   const order=$('prizeCatalogOrder')?.value||'recent';
+  const status=$('prizeCatalogStatus')?.value||'all';
   const rows=all.filter(entry=>{
+    if(!prizeCatalogMatchesStatus(entry,status))return false;
     if(!query) return true;
     const haystack=prizeCatalogPlain([entry.title,entry.prize,entry.description,...entry.draws.flatMap(draw=>[draw.program,...draw.names])].join(' '));
     return haystack.includes(query);
@@ -13719,6 +13729,7 @@ bind('distRotationAll','change',()=>setRotationControls('dist', selectedRotation
 
 bind('prizeCatalogSearch','input',renderPrizeCatalog);
 bind('prizeCatalogOrder','change',renderPrizeCatalog);
+bind('prizeCatalogStatus','change',renderPrizeCatalog);
 bind('newDistFromCatalogBtn','click',()=>openNewDistributionFromCatalog(''));
 bind('prizeCatalogForm','submit',savePrizeCatalogEntry);
 bind('distTitle','blur',()=>applyDistributionTemplateFromTitle(false));

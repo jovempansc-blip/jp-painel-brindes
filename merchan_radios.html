@@ -171,7 +171,7 @@ tbody tr:focus-within td{background:#fff8fa}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/av58-admin.css">
+<link rel="stylesheet" href="assets/av58-admin.css?v=AV58_1_8">
 </head>
 <body>
 <div class="wrap">
@@ -380,6 +380,7 @@ async function opecRetry(operation,maxAttempts=3){let lastError;for(let attempt=
 function opecOperatorIdentity(){return{name:'OPEC',sector:'OPEC',automatic:true};}
 async function ensureOpecOnline(){
   if(navigator.onLine===false)throw new Error('ETAPA CONEXÃO OPEC: NAVEGADOR SEM CONEXÃO.');
+  if(opecConnected)return true; // A gravação continua aguardando confirmação real.
   try{
     await Promise.race([
       ref.child('savedAt').get(),

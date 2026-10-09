@@ -2487,7 +2487,7 @@ function initFirebaseSync(){
       scheduleNewsFirebaseReconnect();
     });
     attachNewsRealtimeListeners();
-    Promise.all([firebaseRef.child('months').get(),firebaseRef.child('programSchedules').get(),firebaseRef.child('publishedPrograms').get()]).then(([m,pubSched,published])=>{state={...state,months:m.val()||{},programSchedules:Array.isArray(pubSched.val())?pubSched.val():Object.values(pubSched.val()||{}).filter(Boolean),publishedPrograms:published.val()||{}};firebaseServerLoaded=true;selectStudioMonth();render();}).catch(()=>scheduleNewsFirebaseReconnect(700));
+    Promise.all([firebaseRef.child('months').once('value'),firebaseRef.child('programSchedules').once('value'),firebaseRef.child('publishedPrograms').once('value')]).then(([m,pubSched,published])=>{state={...state,months:m.val()||{},programSchedules:Array.isArray(pubSched.val())?pubSched.val():Object.values(pubSched.val()||{}).filter(Boolean),publishedPrograms:published.val()||{}};firebaseServerLoaded=true;selectStudioMonth();render();}).catch(()=>scheduleNewsFirebaseReconnect(700));
   }catch(err){
     console.warn('FIREBASE INIT ERROR',err);
   }

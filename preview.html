@@ -617,7 +617,7 @@ tbody tr:focus-within td{background:#fff8fa}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/av58-admin.css">
+<link rel="stylesheet" href="assets/av58-admin.css?v=AV58_1_8">
 </head>
 <body>
 <div class="wrap">
@@ -1464,19 +1464,20 @@ async function directionFirebaseRestRead(force=false){
 }
 async function directionFirebaseBootstrap(force=false){
   if(!firebaseReady||!firebaseRef||firebaseBootstrapInFlight)return false;
-  if(!force&&firebaseConnected&&firebaseServerLoaded&&directionHasRecentServerActivity())return true;
+  if(firebaseConnected&&firebaseServerLoaded&&firebaseListenerAttached)return true;
   firebaseBootstrapInFlight=true;
   if(!directionHasRecentServerActivity())directionShowConnecting('CONECTANDO AUTOMATICAMENTE');
   try{
     if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
     const [monthsSnap,programSnap]=await Promise.race([
-      Promise.all([firebaseRef.child('months').get(),firebaseRef.child('programSchedules').get()]),
+      Promise.all(['months','programSchedules'].map(key=>{const ref=firebaseRef.child(key);return !firebaseServerLoaded&&firebaseListenerAttached?ref.once('value'):ref.get();})),
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT SDK FIREBASE')),9000))
     ]);
     state=directionNormalizeState({months:monthsSnap.val()||{},programSchedules:directionList(programSnap.val())});
     const requestedMonth=currentMonth||String($('dateFilter')?.value||liveTodayISO()).slice(0,7);
     currentMonth=state.months?.[requestedMonth]?requestedMonth:(availableMonths().at(-1)||liveTodayISO().slice(0,7));
     state.currentMonth=currentMonth;fillMonthFilter();directionMarkFirebaseActivity();render();
+    directionAttachFirebaseListeners();
     return true;
   }catch(error){
     firebaseLastError=String(error?.message||error||'ERRO DE CONEXÃO');
@@ -1490,11 +1491,19 @@ async function directionFirebaseBootstrap(force=false){
     return restOk;
   }finally{firebaseBootstrapInFlight=false;}
 }
+let directionRealtimeSubscriptions=[];
+function resetDirectionFirebaseListeners(){
+  firebaseListenerAttached=false;
+  const subscriptions=directionRealtimeSubscriptions;directionRealtimeSubscriptions=[];
+  subscriptions.forEach(({ref,event,handler})=>ref.off(event,handler));
+}
 function directionAttachFirebaseListeners(){
   if(!firebaseReady||!firebaseRef||firebaseListenerAttached)return;
+  resetDirectionFirebaseListeners();
   firebaseListenerAttached=true;
+  const bind=(ref,event,handler,onError)=>{directionRealtimeSubscriptions.push({ref,event,handler});ref.on(event,handler,onError);};
   firebaseConnectionRef=firebaseDatabase.ref('.info/connected');
-  firebaseConnectionRef.on('value',snapshot=>{
+  bind(firebaseConnectionRef,'value',snapshot=>{
     firebaseConnectionKnown=true;
     if(snapshot.val()===true){
       firebaseConnected=true;
@@ -1510,6 +1519,7 @@ function directionAttachFirebaseListeners(){
     if(directionHasRecentServerActivity(90000)){updateConnection(true,'FIREBASE ONLINE');setTimeout(()=>directionFirebaseHealthCheck(),250);return;}
     firebaseConnected=false;directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');directionScheduleFirebaseRetry(1600);
   },error=>{
+    resetDirectionFirebaseListeners();firebaseConnected=false;
     firebaseLastError=String(error?.message||error||'MONITOR DE CONEXÃO');
     if(!directionHasRecentServerActivity())directionShowConnecting('RECONECTANDO AUTOMATICAMENTE');
     directionScheduleFirebaseRetry(1800);
@@ -1525,15 +1535,15 @@ function directionAttachFirebaseListeners(){
     },40);
   };
   const monthsRef=firebaseRef.child('months');
-  const monthError=error=>{firebaseLastError=String(error?.message||error||'LISTENER MESES');console.warn('DIRECTION FIREBASE MONTHS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);};
+  const monthError=error=>{resetDirectionFirebaseListeners();firebaseConnected=false;firebaseLastError=String(error?.message||error||'LISTENER MESES');console.warn('DIRECTION FIREBASE MONTHS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);};
   const applyMonth=(snapshot,removed=false)=>{const key=snapshot.key;if(!key)return;state.months ||= {};if(removed)delete state.months[key];else state.months[key]=snapshot.val()||{};queueDirectionRealtimeRender();};
-  monthsRef.on('child_added',snapshot=>applyMonth(snapshot,false),monthError);
-  monthsRef.on('child_changed',snapshot=>applyMonth(snapshot,false),monthError);
-  monthsRef.on('child_removed',snapshot=>applyMonth(snapshot,true),monthError);
-  firebaseRef.child('programSchedules').on('value',snapshot=>{
+  bind(monthsRef,'child_added',snapshot=>applyMonth(snapshot,false),monthError);
+  bind(monthsRef,'child_changed',snapshot=>applyMonth(snapshot,false),monthError);
+  bind(monthsRef,'child_removed',snapshot=>applyMonth(snapshot,true),monthError);
+  bind(firebaseRef.child('programSchedules'),'value',snapshot=>{
     try{state.programSchedules=directionList(snapshot.val());queueDirectionRealtimeRender();}
     catch(error){firebaseLastError=String(error?.message||error||'ERRO AO PROCESSAR GRADE');console.warn('DIRECTION FIREBASE PROGRAMS ERROR',error);directionScheduleFirebaseRetry(1200);}
-  },error=>{firebaseLastError=String(error?.message||error||'LISTENER GRADE');console.warn('DIRECTION FIREBASE PROGRAMS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);});
+  },error=>{resetDirectionFirebaseListeners();firebaseConnected=false;firebaseLastError=String(error?.message||error||'LISTENER GRADE');console.warn('DIRECTION FIREBASE PROGRAMS LISTENER ERROR',error);directionScheduleFirebaseRetry(1200);});
 }
 async function directionFirebaseHealthCheck(){
   if(navigator.onLine===false)return false;
@@ -1563,6 +1573,7 @@ function initDirectionFirebase(){
       if(++attempts<30){setTimeout(wait,250);return;}
       firebaseStarted=false;
       firebaseLastError='SDK DO FIREBASE NÃO CARREGOU';
+      directionFirebaseRestRead(true);
       if(!directionHasRecentServerActivity())updateConnection(false,firebaseLastError,'error');
       directionScheduleFirebaseRetry(3500);
     };
@@ -1581,13 +1592,14 @@ function initDirectionFirebase(){
     firebaseStarted=false;firebaseReady=false;firebaseConnected=false;
     firebaseLastError=String(error?.message||error||'ERRO AO INICIALIZAR FIREBASE');
     console.warn('DIRECTION FIREBASE INIT ERROR',error);
+    directionFirebaseRestRead(true);
     updateConnection(false,firebaseLastError,'error');
     directionScheduleFirebaseRetry(3000);
   }
 }
 function directionForceFirebaseConnect(force=false){
   if(navigator.onLine===false){firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','offline');return;}
-  if(!firebaseReady){initDirectionFirebase();directionFirebaseRestRead(force);return;}
+  if(!firebaseReady){initDirectionFirebase();return;}
   try{if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();}catch(error){console.warn('DIRECTION FIREBASE GOONLINE ERROR',error);}
   directionFirebaseBootstrap(force||!firebaseConnected||!firebaseServerLoaded||!directionHasRecentServerActivity());
 }
@@ -1599,15 +1611,15 @@ function startDirectionFirebaseAutoConnect(){
 }
 
 directionInitUI();
-// Firebase é a única fonte. A leitura REST consulta o mesmo RTDB enquanto o SDK inicializa.
+// SDK primeiro; REST é usado como recuperação após falha do bootstrap.
 directionShowConnecting('CONECTANDO AUTOMATICAMENTE');
-directionFirebaseRestRead(true).finally(()=>initDirectionFirebase());
+initDirectionFirebase();
 startDirectionFirebaseAutoConnect();
 setInterval(async()=>{
   if(navigator.onLine===false)return;
   if(directionHasRecentServerActivity(90000))return;
   const healthy=await directionFirebaseHealthCheck();
-  if(!healthy)directionForceFirebaseConnect(true);
+  if(!healthy){firebaseConnected=false;directionForceFirebaseConnect(true);}
 },30000);
 window.addEventListener('online',()=>{if(!directionHasRecentServerActivity())directionShowConnecting('INTERNET RESTABELECIDA · RECONECTANDO');directionForceFirebaseConnect(true);});
 window.addEventListener('offline',()=>{firebaseConnected=false;updateConnection(false,'NAVEGADOR SEM INTERNET','offline');});

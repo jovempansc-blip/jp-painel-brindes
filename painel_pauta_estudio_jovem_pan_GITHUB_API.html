@@ -2614,7 +2614,9 @@ let firebaseServerLoaded=false;
 let firebaseConnected=false;
 let firebaseLastSnapshotAt=0;
 let firebaseReconnectTimer=null;
+let studioRefreshPromise=null;
 let studioRealtimeBound=false;
+let studioRealtimeSubscriptions=[];
 let studioRealtimeRenderTimer=null;
 let winnerBankRef=null;
 let winnerBankStarted=false;
@@ -2645,6 +2647,8 @@ async function ensureStudioFirebaseOnline(){
   if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
   if(!firebaseReady||!firebaseRef||!firebaseConnected) await forceStudioFirebaseRefresh(true);
   if(!firebaseReady||!firebaseRef) throw new Error('FIREBASE INDISPONÍVEL.');
+  // A transação abaixo confirma a gravação; conexão ativa dispensa um GET preliminar.
+  if(firebaseConnected&&firebaseServerLoaded)return true;
   try{
     await Promise.race([
       firebaseRef.child('savedAt').get(),
@@ -2797,6 +2801,16 @@ function scheduleStudioFirebaseReconnect(delay=1200){
   firebaseReconnectTimer=setTimeout(()=>forceStudioFirebaseRefresh(true),delay);
 }
 async function forceStudioFirebaseRefresh(full=true){
+  if(studioRefreshPromise)return studioRefreshPromise;
+  if(firebaseConnected&&firebaseServerLoaded&&studioRealtimeBound)return true;
+  studioRefreshPromise=Promise.resolve().then(()=>loadStudioFirebaseState(full));
+  try{return await studioRefreshPromise;}finally{studioRefreshPromise=null;}
+}
+function readStudioBootstrapNode(key){
+  const ref=firebaseRef.child(key);
+  return !firebaseServerLoaded&&studioRealtimeBound ? ref.once('value') : ref.get();
+}
+async function loadStudioFirebaseState(full=true){
   if(navigator.onLine===false)return false;
   if(!firebaseReady||!firebaseRef){firebaseStarted=false;initFirebaseSync();}
   if(!firebaseReady||!firebaseRef)return false;
@@ -2804,10 +2818,10 @@ async function forceStudioFirebaseRefresh(full=true){
     if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
     const [monthsSnap,programSnap,publishedSnap,catalogSnap]=await Promise.race([
       Promise.all([
-        firebaseRef.child('months').get(),
-        firebaseRef.child('programSchedules').get(),
-        firebaseRef.child('publishedPrograms').get(),
-        firebaseRef.child('prizeCatalog').get()
+        readStudioBootstrapNode('months'),
+        readStudioBootstrapNode('programSchedules'),
+        readStudioBootstrapNode('publishedPrograms'),
+        readStudioBootstrapNode('prizeCatalog')
       ]),
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('TIMEOUT FIREBASE')),7000))
     ]);
@@ -2820,6 +2834,7 @@ async function forceStudioFirebaseRefresh(full=true){
     });
     firebaseLastSnapshotAt=Date.now();firebaseConnected=true;firebaseServerLoaded=true;
     selectStudioMonth();if(!manual)selectedIndex=-1;render();
+    attachStudioRealtimeListeners();
     clearTimeout(firebaseReconnectTimer);return true;
   }catch(error){
     firebaseConnected=false;console.warn('FIREBASE REFRESH ERROR',error);scheduleStudioFirebaseReconnect(1200);return false;
@@ -2833,10 +2848,17 @@ function queueStudioRealtimeRender(){
     selectStudioMonth();if(!manual)selectedIndex=-1;render();
   },35);
 }
+function resetStudioRealtimeListeners(){
+  studioRealtimeBound=false;
+  const subscriptions=studioRealtimeSubscriptions;studioRealtimeSubscriptions=[];
+  subscriptions.forEach(({ref,event,handler})=>ref.off(event,handler));
+}
 function attachStudioRealtimeListeners(){
   if(studioRealtimeBound||!firebaseRef)return;
+  resetStudioRealtimeListeners();
   studioRealtimeBound=true;
-  const fail=(key,error)=>{firebaseConnected=false;console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleStudioFirebaseReconnect(900);};
+  const fail=(key,error)=>{resetStudioRealtimeListeners();firebaseConnected=false;console.warn(`FIREBASE ${key} LISTENER ERROR`,error);scheduleStudioFirebaseReconnect(900);};
+  const bind=(ref,event,handler,onError)=>{studioRealtimeSubscriptions.push({ref,event,handler});ref.on(event,handler,onError);};
   const monthsRef=firebaseRef.child('months');
   const applyMonth=(snapshot,removed=false)=>{
     const key=snapshot.key;if(!key)return;
@@ -2848,9 +2870,9 @@ function attachStudioRealtimeListeners(){
     }
     queueStudioRealtimeRender();
   };
-  monthsRef.on('child_added',snapshot=>applyMonth(snapshot,false),error=>fail('months',error));
-  monthsRef.on('child_changed',snapshot=>applyMonth(snapshot,false),error=>fail('months',error));
-  monthsRef.on('child_removed',snapshot=>applyMonth(snapshot,true),error=>fail('months',error));
+  bind(monthsRef,'child_added',snapshot=>applyMonth(snapshot,false),error=>fail('months',error));
+  bind(monthsRef,'child_changed',snapshot=>applyMonth(snapshot,false),error=>fail('months',error));
+  bind(monthsRef,'child_removed',snapshot=>applyMonth(snapshot,true),error=>fail('months',error));
   const applyPart=(key,value)=>{
     if(key==='programSchedules')state.programSchedules=studioRows(value);
     else if(key==='publishedPrograms')state.publishedPrograms=value||{};
@@ -2858,7 +2880,7 @@ function attachStudioRealtimeListeners(){
     queueStudioRealtimeRender();
   };
   ['programSchedules','publishedPrograms','prizeCatalog'].forEach(key=>{
-    firebaseRef.child(key).on('value',snapshot=>applyPart(key,snapshot.val()),error=>fail(key,error));
+    bind(firebaseRef.child(key),'value',snapshot=>applyPart(key,snapshot.val()),error=>fail(key,error));
   });
 }
 function initFirebaseSync(){
@@ -2889,7 +2911,7 @@ function initFirebaseSync(){
 function syncStateFromApi(force=false){
   initFirebaseSync();
   if(force)return forceStudioFirebaseRefresh(true);
-  if(!firebaseReady||!firebaseRef||!firebaseConnected||Date.now()-firebaseLastSnapshotAt>18000)scheduleStudioFirebaseReconnect(0);
+  if(!firebaseReady||!firebaseRef||!firebaseConnected||!firebaseServerLoaded||!studioRealtimeBound)scheduleStudioFirebaseReconnect(0);
 }
 function winnerPlain(value){
   return upper(value).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
@@ -5279,7 +5301,7 @@ setInterval(()=>{
 },3000);
 setInterval(()=>{
   if(document.hidden||navigator.onLine===false)return;
-  if(!firebaseConnected||Date.now()-firebaseLastSnapshotAt>18000)forceStudioFirebaseRefresh(true);
+  if(!firebaseConnected||!firebaseServerLoaded||!studioRealtimeBound)forceStudioFirebaseRefresh(true);
 },12000);
 selectStudioMonth();
 if($('historyDateInput')) $('historyDateInput').value=todayISO();

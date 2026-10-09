@@ -587,3 +587,10 @@ body.programDragActive #view-programacao .programPeriodLane[data-drop-date][data
 .prizeCatalogDetailTimeline{display:grid;gap:7px;max-height:48vh;overflow:auto}.prizeCatalogTimelineRow{display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px;padding:8px 0;border-top:1px solid #edf0f3}.prizeCatalogTimelineRow:first-child{border-top:0}.prizeCatalogTimelineRow>span{font-size:7px;font-weight:900;color:#8f263e}.prizeCatalogTimelineRow strong{display:block;font-size:8.5px;line-height:1.3;color:#283548}.prizeCatalogTimelineRow small{display:block;margin-top:3px;color:#7e8a99;font-size:7.5px;line-height:1.35}
 @media(max-width:950px){.prizeCatalogKpi{flex:1 1 180px!important}.prizeCatalogTable{min-width:980px!important}}
 @media(max-width:600px){.prizeCatalogToolbar{grid-template-columns:1fr!important}.prizeCatalogKpi{flex:1 1 100%!important}}
+
+/* AV58.1.8 — catálogo compacto com filtro de situação */
+.prizeCatalogKpi{flex-basis:190px!important;min-width:150px!important;padding:8px 11px!important;border-radius:13px!important}
+.prizeCatalogKpi strong{font-size:19px!important;margin-top:3px!important}
+.prizeCatalogToolbar{grid-template-columns:minmax(240px,1fr) minmax(180px,220px) 180px!important}
+@media(max-width:950px){.prizeCatalogToolbar{grid-template-columns:1fr 1fr!important}.prizeCatalogSearchField{grid-column:1/-1}}
+@media(max-width:600px){.prizeCatalogToolbar{grid-template-columns:1fr!important}.prizeCatalogSearchField{grid-column:auto}}

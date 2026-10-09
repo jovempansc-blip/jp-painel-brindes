@@ -1,0 +1,32 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const file=fs.readFileSync(require('node:path').join(__dirname,'..','painel_pauta_estudio_jovem_pan_GITHUB_API.html'),'utf8');
+const refs=new Map();
+function ref(path){if(!refs.has(path))refs.set(path,{path,handlers:[],child:key=>ref(path+'/'+key),on(event,fn,fail){this.handlers.push({event,fn,fail});},off(event,fn){this.handlers=this.handlers.filter(x=>x.event!==event||x.fn!==fn);},get:async()=>({val:()=>({})})});return refs.get(path);}
+const ctx={studioRealtimeBound:false,studioRealtimeSubscriptions:[],firebaseRef:ref('state'),firebaseConnected:true,state:{months:{}},console:{warn(){}},scheduleStudioFirebaseReconnect(){},normalizeStudioStateShape:x=>x,studioRows:x=>x,queueStudioRealtimeRender(){}};
+vm.createContext(ctx);
+const start=file.indexOf('function resetStudioRealtimeListeners');
+const attach=file.indexOf('function attachStudioRealtimeListeners');
+vm.runInContext(file.slice(start<0?attach:start,file.indexOf('function initFirebaseSync',attach)),ctx);
+ctx.attachStudioRealtimeListeners();
+const changed=ref('state/months').handlers.find(x=>x.event==='child_changed');
+changed.fail(new Error('listener canceled'));
+assert.equal(ctx.studioRealtimeBound,false,'canceled subscription must be marked unbound');
+ctx.attachStudioRealtimeListeners();
+assert.equal(ref('state/months').handlers.filter(x=>x.event==='child_changed').length,1,'rebind must not duplicate listeners');
+ref('state/months').handlers.find(x=>x.event==='child_changed').fn({key:'2026-10',val:()=>({items:[{id:'remote-update'}]})});
+assert.equal(ctx.state.months['2026-10'].items[0].id,'remote-update','future remote updates must remain visible');
+console.log('PASS: 3 canceled-listener recovery cases');
+
+const direction=fs.readFileSync(require('node:path').join(__dirname,'..','preview.html'),'utf8');
+const dc={firebaseReady:true,firebaseRef:ref('direction'),firebaseDatabase:{ref},firebaseListenerAttached:false,directionRealtimeRenderTimer:null,firebaseConnected:true,state:{months:{}},console:{warn(){}},directionScheduleFirebaseRetry(){},clearTimeout(){},setTimeout(){return 1;}};
+vm.createContext(dc);
+const ds=direction.indexOf('let directionRealtimeSubscriptions=[];');
+vm.runInContext(direction.slice(ds,direction.indexOf('async function directionFirebaseHealthCheck',ds)),dc);
+dc.directionAttachFirebaseListeners();
+ref('direction/months').handlers.find(x=>x.event==='child_changed').fail(new Error('canceled'));
+assert.equal(dc.firebaseListenerAttached,false);
+dc.directionAttachFirebaseListeners();
+assert.equal(ref('direction/months').handlers.filter(x=>x.event==='child_changed').length,1);
+ref('direction/months').handlers.find(x=>x.event==='child_changed').fn({key:'2026-10',val:()=>({items:[{id:'new-direction-data'}]})});
+assert.equal(dc.state.months['2026-10'].items[0].id,'new-direction-data');
+console.log('PASS: 3 direction listener recovery cases');

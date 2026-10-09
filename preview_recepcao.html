@@ -757,7 +757,7 @@ tbody tr:focus-within td{background:#fff8fa}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/av58-admin.css">
+<link rel="stylesheet" href="assets/av58-admin.css?v=AV58_1_8">
 <style id="reception-campaign-style">
 .receptionCampaignSection{border:1px solid #e2e7ee;border-radius:15px;background:#fff;padding:14px;margin:0 0 18px}
 .receptionCampaignHeading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.receptionCampaignHeading h2{font-size:11px;color:#596779;letter-spacing:.04em;margin:0}.receptionCampaignHeading>span{font-size:9px;background:#fff3e4;color:#9d5a1c;padding:5px 8px;border-radius:8px;font-weight:800}
@@ -918,6 +918,7 @@ function receptionOperatorIdentity(){
 function receptionStageError(stage,error){const message=String(error?.message||error||'ERRO NÃO IDENTIFICADO').replace(/^ETAPA [^:]+:\s*/i,'');const wrapped=new Error(`ETAPA ${stage}: ${message}`);wrapped.retryable=error?.retryable;return wrapped;}
 async function ensureReceptionOnline(){
   if(navigator.onLine===false)throw new Error('NAVEGADOR SEM CONEXÃO. A RETIRADA CONTINUA PENDENTE.');
+  if(receptionConnected)return true; // A gravação continua aguardando confirmação real.
   try{
     await Promise.race([firebaseRef.child('savedAt').get(),new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONSULTAR O FIREBASE.')),6000))]);
     return true;
