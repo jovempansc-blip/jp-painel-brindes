@@ -2492,6 +2492,16 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 <style id="studio-result-compact">
 .resultBox.studioResultCard{width:100%;max-width:940px;margin:16px auto;border:1px solid #dfe6ef;border-radius:20px;padding:18px;background:rgba(249,251,254,.88);box-shadow:0 8px 25px rgba(36,46,60,.03);text-align:left}.studioResultCardHead{display:flex;align-items:center;gap:12px;margin-bottom:16px}.studioResultCardHead>div{flex:1;min-width:0}.studioResultEyebrow{display:block;color:#77879a;font:700 10px/1.4 'Segoe UI',Arial,sans-serif;letter-spacing:.02em}.studioResultCardHead strong{display:block;margin-top:4px;color:#334357;font:700 16px/1.3 'Segoe UI',Arial,sans-serif}.studioResultDate{padding:6px 9px;border:1px solid #e0e7ef;border-radius:20px;color:#7b899b;font:700 9px/1.4 'Segoe UI',Arial,sans-serif;white-space:nowrap}.studioResultCard .resultWinnersList{border:0!important;background:transparent!important;padding:0!important;gap:14px}.studioResultCard .promoWinnerCandidate{border:0!important;background:transparent!important;padding:0!important}.studioResultCard .resultWinnerLine input{min-height:43px;font-size:15px!important;font-weight:600!important;border-color:#dfe6ef!important}.studioResultCard .resultAddBtn,.studioResultCard .resultRemoveBtn{width:43px;height:43px;border-radius:12px;background:#f4f7fb;border-color:#dfe6ef;color:#738194}.studioResultCard .winnerEligibility{min-height:0!important;margin-top:6px!important;border:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;color:#7f8fa1;font-size:10px!important}.studioResultCard .winnerEligibility.apto{color:#679178}.studioResultCard .winnerEligibility.bloqueado{color:#a86b79}.studioResultCardFooter{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e4eaf1;padding-top:12px;margin-top:14px}.studioResultSave{background:#e8f4ed!important;border:1px solid #b8d9c6!important;color:#4a7e63!important;border-radius:13px!important;font-size:12px!important;min-height:42px;padding:10px 18px!important;box-shadow:none!important}.studioResultSave:disabled{background:#f1f4f5!important;border-color:#dfe6e8!important;color:#a0aba8!important;opacity:1!important}.studioResultCancel{border:0;background:transparent;color:#8793a2;font:600 11px/1.4 'Segoe UI',Arial,sans-serif;padding:8px;cursor:pointer}.studioResultSavedHint{font-size:9px;color:#8a98a8;margin-top:9px}.studioInlineReadActions[hidden]{display:none!important}@media(max-width:650px){.studioResultCardHead{flex-wrap:wrap}.studioResultDate{margin-left:auto}.studioResultCardHead strong{font-size:14px}}
 </style>
+<style id="studio-reading-due-av58-1-11">
+/* Aviso compacto dentro da área do estúdio, somente para leituras da hora atual. */
+.studioReadingDueBanner{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;width:min(940px,100%);box-sizing:border-box;margin:10px auto 12px;padding:8px;border:1px solid rgba(213,143,157,.62);border-radius:16px;background:rgba(255,247,249,.93);box-shadow:0 4px 15px rgba(115,34,55,.05)}
+.studioReadingDueBanner[hidden],.studioReadingDueButton[hidden]{display:none!important}
+.studioReadingDueButton{display:inline-flex;align-items:center;gap:8px;min-height:35px;padding:6px 12px;border-radius:12px;border:1px solid #e5a3b1;background:#b92242;color:#fff;cursor:pointer;font:800 10px/1.4 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.02em;animation:studioReadingDuePulse 1.2s ease-in-out infinite}
+.studioReadingDueButton strong{font-size:13px;font-weight:900}.studioReadingDueButton:hover,.studioReadingDueButton:focus-visible{background:#9b1731;outline:2px solid rgba(155,23,49,.35);outline-offset:2px}
+@keyframes studioReadingDuePulse{0%,100%{background:#b92242;box-shadow:0 0 0 0 rgba(185,34,66,0)}50%{background:#e04762;box-shadow:0 0 0 4px rgba(185,34,66,.1)}}
+@media(prefers-reduced-motion:reduce){.studioReadingDueButton{animation:none!important}}
+@media(max-width:650px){.studioReadingDueBanner{width:100%}.studioReadingDueButton{flex:1;justify-content:center;font-size:9px}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -2500,6 +2510,10 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
     </header>
 
   <section class="panel" id="pautaPanel"></section>
+  <div class="studioReadingDueBanner" id="studioReadingDueBanner" hidden aria-label="LEITURAS PENDENTES DA HORA ATUAL">
+    <button type="button" class="studioReadingDueButton" id="studioReadingDuePromo" hidden onclick="studioReadingDueClick('promo')"><strong>P</strong> <span id="studioReadingDuePromoText">PAUTAS PENDENTES</span></button>
+    <button type="button" class="studioReadingDueButton" id="studioReadingDueMerchan" hidden onclick="studioReadingDueClick('merchan')"><strong>M</strong> <span id="studioReadingDueMerchanText">MERCHANS PENDENTES</span></button>
+  </div>
 </div>
 
 <div class="modalBackdrop" id="winnerModal">
@@ -2574,7 +2588,7 @@ let studioDrawerMode='';
 let studioReadSheetPromoId=null;
 let studioReadContext=null;
 let studioReadSaving=false;
-const STUDIO_SHORTCUT_ALERT_IDS=['promoListBtn','merchanListBtn','historyListBtn','studioPendingBellBtn'];
+const STUDIO_SHORTCUT_ALERT_IDS=['promoListBtn','merchanListBtn'];
 let studioShortcutReadClock='';
 let studioShortcutFlashOn=true;
 let studioShortcutFlashTimer=null;
@@ -5091,6 +5105,23 @@ function studioPautaItemClick(event,promoId){if(event){event.preventDefault();ev
 window.studioShortcutClick=studioShortcutClick;
 window.studioPautaItemClick=studioPautaItemClick;
 
+function studioReadingDueClick(mode){
+  if(!['promo','merchan'].includes(mode))return;
+  if(studioDrawerMode!==mode)toggleStudioDrawer(mode);
+  $('pautaPanel')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function refreshStudioReadingDueBanner(){
+  const banner=$('studioReadingDueBanner');if(!banner)return;
+  // Usar a mesma regra da lista P/M: apenas leituras da hora atual, ainda não confirmadas.
+  const current=studioCurrentReadItem();
+  const counts={promo:studioDrawerPendingCount('promo',current),merchan:studioDrawerPendingCount('merchan',current)};
+  banner.hidden=!(counts.promo||counts.merchan);
+  [['promo','Promo'],['merchan','Merchan']].forEach(([kind,label])=>{
+    const button=$('studioReadingDue'+label),copy=$('studioReadingDue'+label+'Text');
+    if(button)button.hidden=!counts[kind];
+    if(copy)copy.textContent=counts[kind]===1?(kind==='promo'?'1 LEITURA DE PAUTA PENDENTE':'1 MERCHAN PENDENTE'):(kind==='promo'?`${counts[kind]} LEITURAS DE PAUTA PENDENTES`:`${counts[kind]} MERCHANS PENDENTES`);
+  });
+}
 function refreshStudioShortcutAlerts(){
   const clock=`${todayISO()}|${currentSlotDate().getHours()}`;
   if(studioShortcutReadClock!==clock){studioShortcutReadClock=clock;studioPendingReadCache=null;['promo','merchan'].forEach(mode=>{const b=document.getElementById(mode==='promo'?'promoListBtn':'merchanListBtn');if(b)b.classList.toggle('hasPending',studioDrawerPendingCount(mode,currentDisplayItem)>0);});}
@@ -5233,6 +5264,7 @@ function render(){
   const drawerClose=$('studioDrawerClose'); if(drawerClose) drawerClose.onclick=closeStudioDrawer;
   document.querySelectorAll('.promoListItem[data-promo-id], .promoPill[data-promo-id], .hourReadList .promoListItem[data-promo-id], .studioDrawerItem[data-promo-id]').forEach(btn=>{if(btn.dataset.programSlot)btn.onclick=e=>studioProgramMerchanClick(e,btn.dataset.promoId,btn.dataset.programDate,btn.dataset.programSlot);else btn.onclick=e=>studioPautaItemClick(e,btn.dataset.promoId);});
   refreshStudioShortcutAlerts();
+  refreshStudioReadingDueBanner();
 }
 $('cancelWinnerBtn').addEventListener('click',closeWinnerModal);
 $('saveWinnerBtn').addEventListener('click',saveWinner);
