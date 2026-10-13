@@ -9290,6 +9290,14 @@ function promoStatusData(p){
   const startDate=p?.startDate||p?.date||p?.drawDate||'';
   const endDate = p.endDate || p.drawDate || p.resultDate || startDate || '';
   if(startDate&&startDate>today)return {label:'FUTURA',cls:'future',key:'future'};
+  // O último resultado confirmado encerra o sorteio no mesmo instante,
+  // mesmo quando a vigência cadastral ainda termina no fim do dia.
+  // Somente promoções com ocorrências reais são encerradas por resultado;
+  // pauta e merchan conservam integralmente suas regras de vigência.
+  if(promoTypeKey(p)==='promo'){
+    const draws=(Array.isArray(p?.occurrences)?p.occurrences:[]).filter(o=>normalizeStatus(o?.status)!=='CANCELADO');
+    if(draws.length&&draws.every(o=>normalizeStatus(o.status)==='REALIZADO'&&(Number(o.actualQty)>0||!!o.resultAt)))return {label:'ENCERRADA',cls:'ended',key:'ended'};
+  }
   if(endDate&&endDate<today)return {label:'ENCERRADA',cls:'ended',key:'ended'};
   return {label:'ATIVA',cls:'green',key:'active'};
 }

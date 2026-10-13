@@ -768,6 +768,24 @@ tbody tr:focus-within td{background:#fff8fa}
 .receptionCampaign summary strong{display:block;color:#26384e;font-size:10px;overflow-wrap:anywhere}.receptionCampaign summary small{display:block;font-size:8px;color:#7b8798;margin-top:4px}.receptionCampaign .campaignName small{color:#98702f}.receptionCampaign .campaignName small.pending{color:#b52b43}.campaignSegment{font-size:9px;color:#6b7c90;font-weight:800}.campaignNext{font-size:9px;color:#526a83}
 .campaignDetails{display:grid;grid-template-columns:1fr 1fr;gap:9px 16px;border-top:1px solid #e6ebf1;background:#fff;padding:12px;font-size:9px;color:#607287;line-height:1.5}.campaignDetails b{display:block;font-size:8px;color:#8b96a5;margin-bottom:2px}.campaignDrawDetails{grid-column:1/-1;max-height:150px;overflow:auto;padding-top:6px;border-top:1px solid #edf0f4}.campaignDrawDetails span{display:block;margin-bottom:5px}.receptionCampaignEmpty{padding:10px;font-size:9px;color:#7b8798;background:#f8f9fc;border-radius:9px}
 @media(max-width:760px){.receptionCampaignLabels{display:none}.receptionCampaign summary{grid-template-columns:1fr 1fr;gap:9px}.campaignName{grid-column:1/-1}.campaignNext{grid-column:1/-1}.campaignDetails{grid-template-columns:1fr}}
+
+/* AV58.1.12 — recepção por obrigação de entrega, não por vigência */
+.receptionCampaignLabels,.receptionCampaign summary{grid-template-columns:minmax(160px,1.15fr) minmax(125px,1fr) minmax(165px,1.25fr) minmax(135px,.95fr)}
+.receptionCampaign.hasExpired{border-color:#f3b5c0;background:#fff7f8}
+.receptionCampaign.hasExpired summary{box-shadow:inset 3px 0 0 #be3049}
+.receptionCampaign summary .campaignNext.overdue,.receptionCampaign .campaignName small.overdue{color:#b61c32}
+.campaignWinnerList{display:grid;gap:6px;background:#fff;padding:10px;border-top:1px solid #e6ebf1;max-height:310px;overflow:auto}
+.campaignWinner{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.65fr);align-items:center;gap:12px;width:100%;text-align:left;border:1px solid #e2e7ee;background:#fbfcff;border-radius:10px;padding:9px 11px;color:#26384e;cursor:pointer;font-family:inherit;font-size:10px;font-weight:800}
+.campaignWinner:hover,.campaignWinner:focus-visible{background:#eef4fc;border-color:#cbd9eb}
+.campaignWinner strong{display:block;color:#26384e;font-size:11px;overflow-wrap:anywhere}
+.campaignWinner small{display:block;color:#667a91;font-size:9px;font-weight:650;margin-top:4px;overflow-wrap:anywhere}
+.campaignWinner .campaignDeadline{text-align:right;font-size:9px;font-weight:850;color:#42705b}
+.campaignWinner .campaignDeadline.overdue{color:#b61c32}
+.campaignWinner.overdue{background:#fff4f5;border-color:#f1bdc5}
+.campaignWinnerEmpty{color:#7b8798;font-size:10px;font-weight:700;padding:4px 2px}
+.receptionCampaign .campaignSegment{color:#26384e;font-size:10px}
+.receptionCampaign .campaignPrize{font-size:9px;color:#526a83;overflow-wrap:anywhere}
+@media(max-width:760px){.receptionCampaign summary{grid-template-columns:1fr 1fr}.campaignName{grid-column:1/-1}.campaignNext{grid-column:auto}.campaignWinner{grid-template-columns:1fr;gap:5px}.campaignWinner .campaignDeadline{text-align:left}}
 </style>
 <style id="promo-profile-fields">
 .promoWinnerRowLabel{color:#8491a1;font:700 10px/1.4 'Segoe UI',Arial,sans-serif;margin-bottom:5px;text-align:left}.promoProfileGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.promoProfileField{display:flex;flex-direction:column;gap:5px;text-align:left}.promoProfileField span{color:#7e8c9d;font:700 9px/1.4 'Segoe UI',Arial,sans-serif}.promoProfileField input,.promoProfileInput{min-width:0;width:100%;min-height:40px;border:1px solid #dfe6ef;border-radius:11px;background:rgba(255,255,255,.94);color:#384759;padding:9px 11px;font:600 13px/1.4 'Segoe UI',Arial,sans-serif;outline:none}.promoProfileField input:focus{border-color:#b7c9da;box-shadow:0 0 0 3px rgba(184,204,224,.13)}.promoWinnerDetails{margin-top:10px;text-align:left}.promoWinnerDetails summary{cursor:pointer;color:#8391a1;font:700 10px/1.5 'Segoe UI',Arial,sans-serif}.promoCompanionFields{margin:12px 0 0;padding:10px;border:1px solid #e4eaf0;border-radius:12px}.promoCompanionFields legend{font-size:9px;font-weight:700;color:#8a95a3}.promoProfileStatus{margin-top:8px;text-align:left;color:#9a815e;font:600 10px/1.5 'Segoe UI',Arial,sans-serif}.promoProfileStatus.ready{color:#6a987e}.promoProfileStatus.waiting{color:#9a815e}@media(max-width:650px){.promoProfileGrid{grid-template-columns:1fr}}
@@ -797,9 +815,9 @@ tbody tr:focus-within td{background:#fff8fa}
     <div class="filterField searchField"><label>BUSCA</label><input id="searchFilter" type="search" placeholder="BUSCAR GANHADOR, PRÊMIO OU PROGRAMA"></div>
     <div class="receptionStats" id="receptionStats"></div>
   </section>
-  <section class="receptionCampaignSection" aria-label="Promoções em andamento">
-    <div class="receptionCampaignHeading"><h2>PROMOÇÕES EM ANDAMENTO</h2><span id="receptionCampaignCount">0 ATIVAS</span></div>
-    <div class="receptionCampaignLabels" aria-hidden="true"><span>PROMOÇÃO</span><span>SEGMENTO</span><span>PRÊMIO / QUANTIDADE</span><span>PRÓXIMO SORTEIO</span></div>
+  <section class="receptionCampaignSection" aria-label="Promoções e retiradas pendentes">
+    <div class="receptionCampaignHeading"><h2>PROMOÇÕES · RESULTADOS E RETIRADAS</h2><span id="receptionCampaignCount">0 PENDENTES</span></div>
+    <div class="receptionCampaignLabels" aria-hidden="true"><span>PROMOÇÃO / STATUS</span><span>PRÊMIO</span><span>GANHADOR / ACOMPANHANTES</span><span>RETIRADA</span></div>
     <div id="receptionCampaignList"></div>
   </section>
   <main class="list" id="resultList"></main>
@@ -855,10 +873,7 @@ function receptionPromosForDate(date=''){
 }
 /* RECEPTION_CAMPAIGNS_START */
 function receptionIsCampaign(p){const kind=upper(p?.kind||p?.promoKind||p?.type||'');return kind==='PROMO'||kind==='PROMOÇÃO'||kind==='PROMOCAO'||(!kind&&p?.drawDate&&p?.drawTime);}
-function receptionCampaignVisible(p){return receptionIsCampaign(p)&&!p.opecArchived&&!p.opecForceEnded&&String(p.opecPublicationStatus||'published').toLowerCase()!=='draft'&&!['CANCELADO','CANCELADA'].includes(upper(p.status||''));}
-function receptionActiveCampaigns(date=todayISO()){
-  return receptionPromosForDate().filter(receptionCampaignVisible).filter(p=>{const start=p.startDate||p.drawDate||'',end=p.endDate||p.drawDate||start;return (!start||start<=date)&&(!end||end>=date);}).sort((a,b)=>promoTitle(a).localeCompare(promoTitle(b)));
-}
+function receptionCampaignVisible(p){return receptionIsCampaign(p);}
 function receptionCampaignSegment(p){
   const labels={ar:'RÁDIO',rs:'REDES SOCIAIS',app:'APP',rua:'EXTERNA',camarote:'CAMAROTE',camarim:'CAMARIM',reservado:'RESERVADO'};
   return labels[String(p.segmentKey||'').toLowerCase()]||upper(p.segmentKey||'SEGMENTO NÃO INFORMADO');
@@ -868,22 +883,64 @@ function receptionCampaignOccurrences(p){
   return occurrences.filter(o=>o.date&&!['CANCELADO','CANCELADA'].includes(upper(o.status||''))).map(o=>{
     const record=receptionPromosForDate(o.date).find(row=>row.id===p.id)||p,time=timeToHHMM(o.time||p.drawTime);
     const winners=promoWinnerOccurrences(record).filter(w=>w.occurrenceDate===o.date&&timeToHHMM(w.occurrenceTime)===time);
-    const done=winners.length>0||upper(o.status)==='REALIZADO',due=new Date(`${o.date}T${time}:00`).getTime()<=Date.now();
+    const done=winners.length>0||(upper(o.status)==='REALIZADO'&&(Number(o.actualQty)>0||!!o.resultAt)),due=new Date(`${o.date}T${time}:00`).getTime()<=Date.now();
     return {...o,time,winners,done,pending:!done&&due,qtyPlanned:Math.max(1,Number(o.qtyPlanned||p.winnersPerDraw||p.qtyPerDraw)||1),unitsPerWinner:Math.max(1,Number(o.unitsPerWinner||p.unitsPerWinner)||1)};
   }).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
 }
-function renderReceptionCampaigns(){
+function receptionCampaignRows(p,allRows){
+  return (allRows||[]).filter(r=>(r.source==='promo'&&r.id===p.id)||(r.source==='item'&&r.promoResultId===p.id));
+}
+function receptionCampaignState(p,allRows=[],date=todayISO()){
+  const occurrences=receptionCampaignOccurrences(p),winners=receptionCampaignRows(p,allRows);
+  const pending=winners.filter(r=>!r.deliveredAt);
+  const allDone=occurrences.length>0&&occurrences.every(o=>o.done);
+  const end=p.endDate||p.drawDate||p.startDate||'',start=p.startDate||p.drawDate||'';
+  const inPeriod=(!start||start<=date)&&(!end||end>=date);
+  const hasDueResult=occurrences.some(o=>o.pending);
+  const nonOperational=p.opecArchived||p.opecForceEnded||String(p.opecPublicationStatus||'published').toLowerCase()==='draft'||['CANCELADO','CANCELADA'].includes(upper(p.status||''));
+  // Cada confirmação retira apenas o próprio ganhador da frente; histórico permanece.
+  // Depois do último sorteio, a promoção só desaparece após TODAS as retiradas.
+  const complete=allDone&&winners.length>0&&!pending.length;
+  const visible=receptionCampaignVisible(p)&&!complete&&(pending.length>0||hasDueResult||(!nonOperational&&inPeriod));
+  const ended=allDone||!!p.opecForceEnded||(end&&end<date);
+  return {p,occurrences,winners,pending,allDone,ended,visible,expired:pending.some(r=>r.expired)};
+}
+function receptionActiveCampaigns(date=todayISO(),allRows=[]){
+  return receptionPromosForDate().filter(receptionCampaignVisible)
+    .map(p=>receptionCampaignState(p,allRows,date)).filter(g=>g.visible)
+    .sort((a,b)=>Number(b.expired)-Number(a.expired)||promoTitle(a.p).localeCompare(promoTitle(b.p)));
+}
+function receptionCampaignCompanions(row){
+  const profile=receptionPromoProfile(row),winner=profile?.w||{},rules=profile?promoWinnerRules(profile.p,winner):null;
+  const companions=Array.isArray(winner.companions)?winner.companions:[],count=Math.max(Number(rules?.companionsPerWinner||row.companionCount)||0,companions.length);
+  if(!count)return '';
+  const names=companions.map(c=>upper(c?.fullName||c?.name||c?.instagram||'')).filter(Boolean);
+  if(names.length)return `ACOMPANHANTE${count===1?'':'S'}: ${names.join(' · ')}${names.length<count?` · ${count-names.length} A INFORMAR`:''}`;
+  const identifying=rules&&Object.values(rules.companionFields||{}).some(mode=>mode!=='off');
+  return `+ ${count} ACOMPANHANTE${count===1?'':'S'} · ${identifying?'IDENTIFICAÇÃO PENDENTE':'SEM IDENTIFICAÇÃO EXIGIDA'}`;
+}
+function receptionCampaignWinnerHtml(row){
+  const overdue=!!row.expired,companion=receptionCampaignCompanions(row);
+  const status=overdue?'FORA DO PRAZO DE RETIRADA':row.profileManaged&&!row.profileReady?'CADASTRO A COMPLETAR':row.deadlineLabel||'AGUARDANDO RETIRADA';
+  return `<button class="campaignWinner${overdue?' overdue':''}" type="button" data-reception-winner-open data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-id="${esc(row.winnerId||'')}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}"><span><strong>${esc(row.result||'GANHADOR NÃO IDENTIFICADO')}</strong>${companion?`<small>${esc(companion)}</small>`:''}</span><span class="campaignDeadline${overdue?' overdue':''}">${esc(status)}<small>${esc(formatBR(row.date||''))} · ABRIR FICHA</small></span></button>`;
+}
+function renderReceptionCampaigns(allRows=[]){
   const list=$('receptionCampaignList'),count=$('receptionCampaignCount');if(!list||!count)return;
   const expanded=new Set(Array.from(document.querySelectorAll('details[data-reception-campaign]')).filter(el=>el.open).map(el=>el.dataset.receptionCampaign));
   const query=searchKey($('searchFilter')?.value||'');
-  const all=receptionActiveCampaigns(),campaigns=all.filter(p=>!query||searchKey([promoTitle(p),promoPrizeTitle(p),receptionCampaignSegment(p),p.local].join(' ')).includes(query));
-  count.textContent=`${all.length} ATIVA${all.length===1?'':'S'}`;
-  list.innerHTML=campaigns.length?campaigns.map(p=>{
-    const occurrences=receptionCampaignOccurrences(p),next=occurrences.find(o=>o.pending)||occurrences.find(o=>!o.done),units=Math.max(1,Number(p.unitsPerWinner)||1);
-    const reserve=occurrences.reduce((n,o)=>n+o.qtyPlanned*o.unitsPerWinner,0),station=receptionStationCode(p.station)==='ALL'?'AMBAS AS RÁDIOS':receptionStationCode(p.station)==='JPNEWS983'?'JPNEWS 98,3':'JOVEMPAN 101,7';
-    const when=next?`${formatBR(next.date)} · ${formatTime(next.time)}`:'RESULTADOS CONFIRMADOS';
-    return `<details class="receptionCampaign" data-reception-campaign="${esc(p.id)}" ${expanded.has(p.id)?'open':''}><summary><span class="campaignName"><strong>${esc(promoTitle(p))}</strong><small class="${next?.pending?'pending':''}">${next?.pending?'RESULTADO PENDENTE':'EM ANDAMENTO'}</small></span><span class="campaignSegment">${esc(receptionCampaignSegment(p))}</span><span class="campaignPrize"><strong>${esc(promoPrizeTitle(p))}</strong><small>${units} UNID. POR GANHADOR</small></span><span class="campaignNext">${esc(when)}<small>${next?.pending?'AGUARDANDO ESTÚDIO':next?'PRÓXIMO SORTEIO':'SEM SORTEIO PENDENTE'}</small></span></summary><div class="campaignDetails"><span><b>VIGÊNCIA</b> ${esc(formatBR(p.startDate||p.drawDate))} A ${esc(formatBR(p.endDate||p.drawDate))}</span><span><b>RÁDIO</b> ${esc(station)}</span><span><b>CANAL</b> ${esc(upper(p.local||'NÃO INFORMADO'))}</span><span><b>RESERVA</b> ${reserve} UNIDADE${reserve===1?'':'S'} RESERVADA${reserve===1?'':'S'}</span><div class="campaignDrawDetails">${occurrences.map(o=>`<span>${esc(formatBR(o.date))} · ${esc(formatTime(o.time))} · ${o.qtyPlanned} GANHADOR(ES) · ${o.done?'RESULTADO CONFIRMADO':o.pending?'RESULTADO PENDENTE':'AGENDADO'}</span>`).join('')}</div></div></details>`;
-  }).join(''):`<div class="receptionCampaignEmpty">${all.length?'NENHUMA PROMOÇÃO ENCONTRADA NESTA BUSCA.':'NENHUMA PROMOÇÃO EM ANDAMENTO.'}</div>`;
+  const all=receptionActiveCampaigns(todayISO(),allRows),campaigns=all.filter(g=>!query||searchKey([promoTitle(g.p),promoPrizeTitle(g.p),receptionCampaignSegment(g.p),g.p.local,...g.pending.flatMap(r=>[r.result,receptionCampaignCompanions(r)])].join(' ')).includes(query));
+  const pendingCount=all.reduce((sum,g)=>sum+g.pending.length,0);
+  count.textContent=`${pendingCount} RETIRADA${pendingCount===1?'':'S'} PENDENTE${pendingCount===1?'':'S'}`;
+  list.innerHTML=campaigns.length?campaigns.map(g=>{
+    const p=g.p,next=g.occurrences.find(o=>o.pending)||g.occurrences.find(o=>!o.done),first=g.pending[0];
+    const status=g.allDone?'RESULTADOS CONFIRMADOS':next?.pending?'RESULTADO PENDENTE':next?'PRÓXIMO SORTEIO':'EM ANDAMENTO';
+    const sub=g.ended?'ENCERRADA · RETIRADA PENDENTE':next?`${formatBR(next.date)} · ${formatTime(next.time)}`:'AGUARDANDO RETIRADA';
+    const preview=first?first.result||'GANHADOR NÃO IDENTIFICADO':next?'AGUARDANDO RESULTADO':'SEM GANHADOR REGISTRADO';
+    const companion=first?receptionCampaignCompanions(first):'';
+    const deadline=g.expired?'FORA DO PRAZO DE RETIRADA':g.pending.length?`${g.pending.length} AGUARDANDO RETIRADA`:status;
+    const noResult=g.occurrences.filter(o=>o.pending).map(o=>`<div class="campaignWinnerEmpty">RESULTADO PENDENTE · ${esc(formatBR(o.date))} · ${esc(formatTime(o.time))}</div>`).join('');
+    return `<details class="receptionCampaign${g.expired?' hasExpired':''}" data-reception-campaign="${esc(p.id)}" ${expanded.has(p.id)?'open':''}><summary><span class="campaignName"><strong>${esc(promoTitle(p))}</strong><small class="${g.expired?'overdue':next?.pending?'pending':''}">${esc(status)} · ${esc(sub)}</small></span><span class="campaignPrize">${esc(promoPrizeTitle(p))}</span><span class="campaignSegment">${esc(preview)}${companion?`<small>${esc(companion)}</small>`:''}${g.pending.length>1?`<small>+ ${g.pending.length-1} OUTRO${g.pending.length===2?'':'S'} GANHADOR${g.pending.length===2?'':'ES'}</small>`:''}</span><span class="campaignNext${g.expired?' overdue':''}">${esc(deadline)}<small>${g.pending.length?'CLIQUE PARA VER OS GANHADORES':next?'SORTEIO A REALIZAR':'AGUARDANDO RESULTADO'}</small></span></summary><div class="campaignWinnerList">${g.pending.map(receptionCampaignWinnerHtml).join('')}${noResult||(!g.pending.length?'<div class="campaignWinnerEmpty">AGUARDANDO RESULTADO DO SORTEIO.</div>':'')}</div></details>`;
+  }).join(''):`<div class="receptionCampaignEmpty">${all.length?'NENHUMA PROMOÇÃO ENCONTRADA NESTA BUSCA.':'NENHUMA PROMOÇÃO COM RESULTADO OU RETIRADA PENDENTE.'}</div>`;
 }
 /* RECEPTION_CAMPAIGNS_END */
 
@@ -1329,7 +1386,7 @@ async function saveReceptionWinnerFields(){
 }
 function pickupButton(row){
   if(row.profileManaged&&!row.profileReady&&!row.deliveredAt)return `<div class="pickupWrap"><button class="pickupBtn profilePending" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date)}">COMPLETAR DADOS</button></div>`;
-  if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">NÃO RETIRADO NO PRAZO<br>PRÊMIO VOLTOU À CIRCULAÇÃO</div><button class="pickupBtn expiredPickup" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
+  if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">FORA DO PRAZO DE RETIRADA<br>AINDA NÃO RETIRADO</div><button class="pickupBtn expiredPickup" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
   const done=!!row.deliveredAt;
   if(done){
     return `<div class="pickupWrap"><span class="pickupStatus done">RETIRADO ${esc(row.deliveredAtLabel||'')}</span><button class="undoPickupBtn" type="button" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CANCELAR RETIRADA</button></div>`;
@@ -1444,10 +1501,10 @@ function closeReceptionSheet(){if(pickupBusy||receptionProfileSaving)return;rece
 function showReceptionToast(message,error=false){const t=$('receptionToast');t.textContent=message;t.classList.toggle('error',error);t.hidden=false;clearTimeout(showReceptionToast.timer);showReceptionToast.timer=setTimeout(()=>{t.hidden=true;},error?4500:3000);}
 function refreshOpenReceptionSheet(){if(receptionProfileDirty||receptionProfileSaving)return;if(!activeReceptionRow||$('receptionModal').hidden)return;const row=findReceptionRow(activeReceptionRow);if(row)openReceptionSheet(row);}
 function render(){
-  renderReceptionCampaigns();
+  const allRows=allResultRows();
+  renderReceptionCampaigns(allRows);
   const date=$('dateFilter').value||todayISO();
   const query=upper($('searchFilter')?.value||'');
-  const allRows=allResultRows();
   const sourceRows=(query||receptionStatusFilter!=='ALL')?receptionCurrentMonthRows(allRows):resultRowsForDate(date);
   const filtered=applyReceptionFilters(sourceRows);
   renderReceptionStats(allRows);
@@ -1465,6 +1522,8 @@ function render(){
 }
 document.addEventListener('click',e=>{
   if(e.target.closest('#sheetSaveWinnerFields')){saveReceptionWinnerFields();return;}
+  const campaignWinner=e.target.closest('[data-reception-winner-open]');
+  if(campaignWinner){const ref=rowFromButton(campaignWinner);ref.winnerId=campaignWinner.dataset.winnerId||'';const row=findReceptionRow(ref);if(row)openReceptionSheet(row);else showReceptionToast('DADOS ATUALIZADOS EM OUTRA TELA. AGUARDE A SINCRONIZAÇÃO.',true);return;}
   const stat=e.target.closest('[data-reception-filter]');
   if(stat){receptionStatusFilter=stat.dataset.receptionFilter||'ALL';render();return;}
   if(e.target.closest('#receptionModalClose')){closeReceptionSheet();return;}
