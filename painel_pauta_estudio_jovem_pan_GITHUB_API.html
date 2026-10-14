@@ -2653,6 +2653,11 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 }
 @media(prefers-reduced-motion:reduce){.studioSideRailCard.pending,.studioSideRailTickerTrack{animation:none!important}}
 
+
+/* AV58.1.17 · AJUSTES FINAIS APROVADOS */
+.studioSideRailCard.pending .studioSideRailText{display:flex!important;align-items:center!important;min-height:38px!important}
+.studioCampaignCard .studioCampaignStatus{display:none!important}
+
 </style>
 </head>
 <body>
@@ -3853,22 +3858,20 @@ function studioCampaignDraws(p){
   }).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
 }
 function studioCampaignList(){
-  const active=studioActiveCampaigns(),seen=new Set(active.map(p=>p.id));
-  studioPromoPool().filter(studioCampaignVisible).filter(p=>stationAllowed(p)).forEach(p=>{if(!seen.has(p.id)&&studioCampaignDraws(p).some(o=>o.pending)){seen.add(p.id);active.push(p);}});
-  return active;
+  return studioActiveCampaigns();
 }
 function studioCampaignButtonMarkup(){
   const count=studioActiveCampaigns().length;
-  return `<button class="promoListBtn studioCampaignBtn ${studioDrawerMode==='campaigns'?'active':''}" id="studioCampaignBtn" type="button" onclick="studioShortcutClick(event,'campaigns')" aria-label="PROMOÇÕES · ${count} ATIVA${count===1?'':'S'}" title="PROMOÇÕES ATIVAS E RESULTADOS"><span class="studioGiftGlyph" aria-hidden="true">${studioDrawerIcon('campaigns')}</span>${count?`<span class="studioCampaignCount" aria-hidden="true">${count}</span>`:''}</button>`;
+  return `<button class="promoListBtn studioCampaignBtn ${studioDrawerMode==='campaigns'?'active':''}" id="studioCampaignBtn" type="button" onclick="studioShortcutClick(event,'campaigns')" aria-label="PROMOÇÕES ATIVAS · ${count}" title="PROMOÇÕES ATIVAS"><span class="studioGiftGlyph" aria-hidden="true">${studioDrawerIcon('campaigns')}</span>${count?`<span class="studioCampaignCount" aria-hidden="true">${count}</span>`:''}</button>`;
 }
 function studioCampaignPrize(p){const d=distributionById(p.distributionId)||{};return upper(p.prizeTitle||d.title||d.show||d.prize||p.prize||'PRÊMIO DA PROMOÇÃO');}
 function studioCampaignSegment(p){const labels={ar:'RÁDIO',rs:'REDES SOCIAIS',app:'APP',rua:'EXTERNA',camarote:'CAMAROTE',camarim:'CAMARIM',reservado:'RESERVADO'};return labels[String(p.segmentKey||'').toLowerCase()]||upper(p.segmentKey||'SEGMENTO NÃO INFORMADO');}
 function studioCampaignDrawerRows(){
   const campaigns=studioCampaignList();
-  if(!campaigns.length)return '<div class="studioDrawerEmpty">NENHUMA PROMOÇÃO ATIVA OU RESULTADO PENDENTE.</div>';
+  if(!campaigns.length)return '<div class="studioDrawerEmpty">NENHUMA PROMOÇÃO ATIVA.</div>';
   return campaigns.map(p=>{
-    const active=studioMaterialInForce(p,todayISO()),draws=studioCampaignDraws(p),units=Math.max(1,Number(p.unitsPerWinner)||1);
-    return `<section class="studioCampaignCard"><strong>${esc(upper(p.name||p.title||'PROMOÇÃO'))}</strong><span class="studioCampaignStatus">${active?'EM ANDAMENTO':'RESULTADO PENDENTE'}</span><p>${esc(studioCampaignSegment(p))} · ${esc(studioCampaignPrize(p))} · ${units} UNID. / GANHADOR</p>${draws.map(o=>`<button class="studioCampaignDraw ${o.done?'done':o.pending?'pending':'scheduled'}" type="button" data-campaign-id="${esc(p.id)}" data-occurrence-id="${esc(o.id)}"><span>${esc(formatBR(o.date))} · ${esc(formatStudioTime(o.time))}<small>${o.qtyPlanned} GANHADOR${o.qtyPlanned===1?'':'ES'}</small></span><b>${o.done?'OK · '+esc(o.winners.map(w=>w.name).join(', ')||'RESULTADO CONFIRMADO'):o.pending?'RESULTADO PENDENTE':'SORTEIO AGENDADO'}</b></button>`).join('')||'<p>SEM SORTEIO CADASTRADO.</p>'}</section>`;
+    const draws=studioCampaignDraws(p),units=Math.max(1,Number(p.unitsPerWinner)||1);
+    return `<section class="studioCampaignCard"><strong>${esc(upper(p.name||p.title||'PROMOÇÃO'))}</strong><p>${esc(studioCampaignSegment(p))} · ${esc(studioCampaignPrize(p))} · ${units} UNID. / GANHADOR</p>${draws.map(o=>`<button class="studioCampaignDraw ${o.done?'done':o.pending?'pending':'scheduled'}" type="button" data-campaign-id="${esc(p.id)}" data-occurrence-id="${esc(o.id)}"><span>${esc(formatBR(o.date))} · ${esc(formatStudioTime(o.time))}<small>${o.qtyPlanned} GANHADOR${o.qtyPlanned===1?'':'ES'}</small></span><b>${o.done?'EDITAR RESULTADO':o.pending?'CADASTRAR RESULTADO':'ABRIR RESULTADO'}</b></button>`).join('')||'<p>SEM SORTEIO CADASTRADO.</p>'}</section>`;
   }).join('');
 }
 function studioResultContextMatchesItem(item){return !studioCampaignContext||(item?.promoId===studioCampaignContext.promoId&&item.date===studioCampaignContext.date&&timeToHHMM(item.slot)===timeToHHMM(studioCampaignContext.slot));}
@@ -5299,7 +5302,7 @@ function studioSideRailIcon(kind){
   if(kind==='merchan')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h5l8 5V7l-8 5H3v0Z"></path><path d="M18 8a4 4 0 0 1 0 8"></path></svg>';
   return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 7h6M9 11h6M9 15h4"></path></svg>';
 }
-function studioSideRailLabel(kind){return kind==='merchan'?'MERCHANS DO HORÁRIO':'PROMO/PAUTA';}
+function studioSideRailLabel(kind){return kind==='merchan'?'MERCHAN':'PROMO/PAUTA';}
 function studioSideRailSubLabel(kind){return kind==='merchan'?'LEITURAS DO HORÁRIO':'PAUTAS DO HORÁRIO';}
 function studioSideRailName(p,kind){
   const fallback=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||p?.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
@@ -5325,7 +5328,7 @@ function studioToggleSideRail(kind){studioSideRailState[kind]=!studioSideRailSta
 window.studioToggleSideRail=studioToggleSideRail;
 function studioSideRailCardMarkup(kind,p,item){
   const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;
-  const name=studioSideRailName(p,kind),safeId=esc(p.id),slot=esc(formatStudioTime(item.slot));
+  const name=studioSideRailName(p,kind),safeId=esc(p.id);
   const cardAttrs=`type="button" data-promo-id="${safeId}" aria-label="${esc(name)}"`;
   if(done){
     const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');
@@ -5334,7 +5337,7 @@ function studioSideRailCardMarkup(kind,p,item){
   if(failed){
     return `<button class="studioSideRailCard missed" ${cardAttrs}><span class="studioSideRailDot" aria-hidden="true">–</span><span class="studioSideRailText"><span class="studioSideRailName">${esc(name)}</span><span class="studioSideRailMeta">NÃO REALIZADA</span></span><span class="studioSideRailArrow" aria-hidden="true">›</span></button>`;
   }
-  return `<button class="studioSideRailCard pending" ${cardAttrs}><span class="studioSideRailDot" aria-hidden="true"></span><span class="studioSideRailText"><span class="studioSideRailName">${esc(name)}</span><span class="studioSideRailMeta">${slot}</span></span><span class="studioSideRailArrow" aria-hidden="true">›</span></button>`;
+  return `<button class="studioSideRailCard pending" ${cardAttrs}><span class="studioSideRailDot" aria-hidden="true"></span><span class="studioSideRailText"><span class="studioSideRailName">${esc(name)}</span></span><span class="studioSideRailArrow" aria-hidden="true">›</span></button>`;
 }
 function renderStudioSideRail(kind,item){
   const root=$(kind==='merchan'?'studioSideMerchanRail':'studioSidePromoRail');
