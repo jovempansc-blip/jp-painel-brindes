@@ -441,7 +441,7 @@ body{
 }
 .modalField input{
   width:100%;
-  min-height:48px;
+  min-height:44px;
   border:1px solid #d8dee7;
   border-radius:14px;
   padding:0 14px;
@@ -599,7 +599,7 @@ body{
 }
 .winnerLabel{font-size:14px !important}
 .winnerName{font-size:30px !important}
-.promoFooter{min-height:52px !important}
+.promoFooter{min-height:48px !important}
 .promoPill{
   font-size:10.5px !important;
   min-height:20px !important;
@@ -803,7 +803,7 @@ body{
 .readHistoryTicker{
   margin:10px auto 0;
   width:min(1180px,100%);
-  height:52px;
+  height:48px;
   border:1px solid #dfe5ec;
   border-radius:18px;
   background:rgba(255,255,255,.88);
@@ -869,7 +869,7 @@ body{
 
 /* === V20: PROMO / MERCHAN NA JANELA LARANJA + LETREIRO VERDE === */
 .promoFooter{
-  min-height:48px!important;
+  min-height:44px!important;
   background:#fff0da!important;
   border-top:1px solid #f0c584!important;
 }
@@ -886,7 +886,7 @@ body{
   letter-spacing:.05em;
 }
 .promoPill{
-  min-height:26px!important;
+  min-height:24px!important;
   max-width:360px!important;
   padding:0 12px!important;
   font-size:10px!important;
@@ -1195,7 +1195,7 @@ body{
 .promoFooter{
   margin-top:0!important;
   height:46px!important;
-  min-height:46px!important;
+  min-height:42px!important;
   max-height:46px!important;
   flex:0 0 46px!important;
   display:flex!important;
@@ -1218,8 +1218,8 @@ body{
   content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
   display:inline-flex;
   align-items:center;
-  min-height:26px;
-  max-height:26px;
+  min-height:24px;
+  max-height:24px;
   color:#b46a00;
   font-size:8.5px;
   font-weight:1000;
@@ -1290,9 +1290,9 @@ body{
     padding:5px 8px!important;
   }
   .promoPill{
-    height:26px!important;
-    min-height:26px!important;
-    max-height:26px!important;
+    height:24px!important;
+    min-height:24px!important;
+    max-height:24px!important;
     max-width:250px!important;
     font-size:9.5px!important;
     padding:0 10px!important;
@@ -1559,7 +1559,7 @@ body{
   overflow:hidden!important;
 }
 .promoFooterList.isEmpty::before{
-  min-height:26px!important;
+  min-height:24px!important;
   color:#a76500!important;
   opacity:.72!important;
   font-size:8px!important;
@@ -1652,18 +1652,18 @@ body{
   }
   .promoPill{
     width:clamp(150px,44vw,250px)!important;
-    height:26px!important;
-    min-height:26px!important;
-    max-height:26px!important;
+    height:24px!important;
+    min-height:24px!important;
+    max-height:24px!important;
     font-size:9.5px!important;
     padding:0 10px!important;
   }
-  .promoPill .verticalMarquee{height:26px}
-  .promoPill .verticalStack{height:52px}
-  .promoPill .verticalStack span{height:26px;min-height:26px}
+  .promoPill .verticalMarquee{height:24px}
+  .promoPill .verticalStack{height:48px}
+  .promoPill .verticalStack span{height:24px;min-height:24px}
   @keyframes footerVerticalFlipV27{
     0%,42%{transform:translateY(0)}
-    50%,90%{transform:translateY(-26px)}
+    50%,90%{transform:translateY(-24px)}
     100%{transform:translateY(0)}
   }
 }
@@ -1958,11 +1958,12 @@ body{
 /* AV58.1.13 · TRILHOS LATERAIS COMPACTOS NO RESPIRO DO ESTÚDIO */
 body{overflow-x:hidden}
 .wrap{position:relative;overflow:visible}
-.studioSideRail{position:absolute;top:94px;width:132px;display:none;flex-direction:column;gap:8px;z-index:70;pointer-events:auto}
-.studioSideRail.left{left:-138px}
-.studioSideRail.right{right:-138px}
+.studioLayoutShell{position:relative}
+.studioSideRail{position:absolute;top:132px;width:124px;display:none;flex-direction:column;gap:8px;z-index:18;pointer-events:auto}
+.studioSideRail.left{left:12px}
+.studioSideRail.right{right:12px}
 .studioSideRail[hidden]{display:none!important}
-.studioSideRailToggle{appearance:none;width:100%;min-height:48px;display:flex;align-items:center;gap:8px;padding:10px 10px 10px 12px;border:1px solid rgba(223,229,238,.92);border-radius:18px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);box-shadow:0 12px 24px rgba(23,31,45,.06);color:#5b6778;cursor:pointer;text-align:left}
+.studioSideRailToggle{appearance:none;width:100%;min-height:44px;display:flex;align-items:center;gap:8px;padding:9px 9px 9px 11px;border:1px solid rgba(223,229,238,.92);border-radius:18px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);box-shadow:0 12px 24px rgba(23,31,45,.06);color:#5b6778;cursor:pointer;text-align:left}
 .studioSideRailToggle:hover,.studioSideRailToggle:focus-visible{outline:none;border-color:#d8dee8;box-shadow:0 12px 26px rgba(23,31,45,.09)}
 .studioSideRailGlyph{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#8f5466;flex:0 0 24px}
 .studioSideRailGlyph svg{width:18px;height:18px;display:block;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -1972,7 +1973,7 @@ body{overflow-x:hidden}
 .studioSideRailCount{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:999px;border:1px solid #e2e8f0;background:#f8fafc;color:#7b8795;font:900 8px/1 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.05em;padding:0 6px}
 .studioSideRailBody{display:grid;gap:7px;max-height:0;overflow:hidden;opacity:0;transform:translateY(-4px);transition:max-height .24s ease,opacity .18s ease,transform .18s ease}
 .studioSideRail.open .studioSideRailBody{max-height:520px;opacity:1;transform:none}
-.studioSideRailCard{appearance:none;width:100%;min-height:46px;border:1px solid rgba(226,232,240,.95);border-radius:17px;background:rgba(255,255,255,.78);backdrop-filter:blur(14px);box-shadow:0 8px 18px rgba(24,32,45,.045);padding:10px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;color:#2d3948;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease,background .14s ease}
+.studioSideRailCard{appearance:none;width:100%;min-height:42px;border:1px solid rgba(226,232,240,.95);border-radius:17px;background:rgba(255,255,255,.78);backdrop-filter:blur(14px);box-shadow:0 8px 18px rgba(24,32,45,.045);padding:8px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;color:#2d3948;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease,background .14s ease}
 .studioSideRailCard:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(24,32,45,.075)}
 .studioSideRailDot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;background:#c0ccd8;box-shadow:0 0 0 3px rgba(192,204,216,.16)}
 .studioSideRailText{min-width:0;display:block;width:100%}
@@ -1987,16 +1988,16 @@ body{overflow-x:hidden}
 .studioSideRailCard.read .studioSideRailMeta{display:none}
 .studioSideRailCard.missed{border-color:#dddfe4;background:rgba(247,248,250,.95);color:#768292}
 .studioSideRailCard.missed .studioSideRailDot{background:#9ca8b5;box-shadow:0 0 0 3px rgba(156,168,181,.14)}
-.studioSideRailTicker{position:relative;display:block;width:100%;height:26px;overflow:hidden}
-.studioSideRailTickerTrack{display:block;height:52px;animation:studioSideTickerSwap 4.6s ease-in-out infinite}
-.studioSideRailTickerTrack span{display:flex;align-items:center;height:26px;font:900 9px/1.1 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.studioSideRailTicker{position:relative;display:block;width:100%;height:24px;overflow:hidden}
+.studioSideRailTickerTrack{display:block;height:48px;animation:studioSideTickerSwap 4.6s ease-in-out infinite}
+.studioSideRailTickerTrack span{display:flex;align-items:center;height:24px;font:900 9px/1.1 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
 .studioSideRailTickerTrack span:last-child{font-size:8px;letter-spacing:.11em;color:#5a8c6b}
 .studioSideRailEmpty{padding:12px 10px;border:1px dashed #dce3eb;border-radius:16px;background:rgba(255,255,255,.74);color:#8490a0;text-align:center;font:800 8px/1.4 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase}
-@keyframes studioSideTickerSwap{0%,44%{transform:translateY(0)}50%,94%{transform:translateY(-26px)}100%{transform:translateY(-26px)}}
+@keyframes studioSideTickerSwap{0%,44%{transform:translateY(0)}50%,94%{transform:translateY(-24px)}100%{transform:translateY(-24px)}}
 @keyframes studioSidePendingPulse{0%,100%{box-shadow:0 8px 18px rgba(24,32,45,.045)}50%{box-shadow:0 10px 20px rgba(182,138,67,.11)}}
 @media(prefers-reduced-motion:reduce){.studioSideRailCard.pending,.studioSideRailTickerTrack{animation:none!important}}
-@media(min-width:1560px){.studioSideRail{display:flex}}
-@media(max-width:1559px){.studioSideRail{display:none!important}}
+@media(min-width:1320px){.studioSideRail{display:flex}}
+@media(max-width:1319px){.studioSideRail{display:none!important}}
 
 </style>
 
@@ -2117,8 +2118,8 @@ tbody tr:focus-within td{background:#fff8fa}
   content:'SEM PROMO / MERCHAN PROGRAMADO PARA ESTE HORÁRIO';
   display:inline-flex!important;
   align-items:center!important;
-  min-height:26px!important;
-  max-height:26px!important;
+  min-height:24px!important;
+  max-height:24px!important;
   padding:0 2px!important;
   color:#a76500!important;
   font-size:8px!important;
@@ -2369,7 +2370,7 @@ tbody tr:focus-within td{background:#fff8fa}
 
 <style>
 /* AV-57.6 · ALERTA FIXO DE RESULTADO DE PROMOÇÃO */
-.studioPromoResultDayAlert{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:26px!important;border:1px solid #d64258!important;border-radius:999px!important;background:#c91e3b!important;color:#fff!important;padding:0 11px!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.06em!important;box-shadow:0 4px 13px rgba(185,13,47,.18)!important;white-space:nowrap!important}
+.studioPromoResultDayAlert{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:24px!important;border:1px solid #d64258!important;border-radius:999px!important;background:#c91e3b!important;color:#fff!important;padding:0 11px!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.06em!important;box-shadow:0 4px 13px rgba(185,13,47,.18)!important;white-space:nowrap!important}
 .studioPromoResultDayAlert.soon{animation:studioPromoResultPulse 1.25s ease-in-out infinite!important}
 .studioPromoResultDayAlert.now,.studioPromoResultDayAlert.late{background:#ad102d!important;border-color:#ad102d!important;animation:studioPromoResultPulse .78s ease-in-out infinite!important;box-shadow:0 0 0 4px rgba(185,13,47,.10),0 0 20px rgba(185,13,47,.22)!important}
 .studioPromoResultDayAlert.done{background:#eaf7ef!important;border-color:#b9dfc8!important;color:#28724b!important;animation:none!important;box-shadow:none!important}
@@ -2446,7 +2447,7 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 .studioMainColumn{min-width:0!important;transition:width .25s cubic-bezier(.2,.75,.2,1)!important}
 .studioContextDrawer{min-width:0;overflow:hidden;border-left:1px solid transparent;background:rgba(247,249,251,.64);backdrop-filter:blur(13px);opacity:0;transform:translateX(14px);pointer-events:none;transition:opacity .18s ease,transform .25s cubic-bezier(.2,.75,.2,1),border-color .18s ease;display:flex;flex-direction:column}
 .studioLayoutShell.drawerOpen .studioContextDrawer{opacity:1;transform:none;pointer-events:auto;border-left-color:rgba(211,219,228,.82)}
-.studioDrawerHead{min-height:58px;padding:10px 12px 10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(215,223,232,.80)}
+.studioDrawerHead{min-height:58px;padding:8px 10px 10px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(215,223,232,.80)}
 .studioDrawerHeadIcon{width:34px;height:34px;flex:0 0 34px;border-radius:12px;background:rgba(255,255,255,.75);border:1px solid rgba(211,220,230,.82);color:#667486;display:flex;align-items:center;justify-content:center}
 .studioDrawerHeadIcon svg,.studioDrawerState svg,.studioDrawerArrow svg,.studioReadSheetIcon svg,.studioReadSheetAction svg{width:16px;height:16px;display:block;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .studioDrawerCount{margin-left:auto;min-width:24px;height:24px;padding:0 7px;border-radius:999px;background:rgba(255,255,255,.72);border:1px solid rgba(210,219,229,.9);color:#667486;display:flex;align-items:center;justify-content:center;font:800 10px/1 "Segoe UI",Arial,sans-serif}
@@ -2461,7 +2462,7 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 .headNav .promoListBtn{position:relative!important;width:42px!important;min-width:42px!important;height:42px!important;min-height:42px!important;padding:0!important;border-radius:50%!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;font:800 14px/1 "Segoe UI",Arial,sans-serif!important;background:rgba(255,255,255,.58)!important;border:1px solid rgba(210,218,228,.76)!important;color:#657284!important;box-shadow:0 4px 16px rgba(38,48,62,.04)!important;backdrop-filter:blur(12px)!important}.headNav .promoListBtn small{display:none!important}.headNav .promoListBtn:hover,.headNav .promoListBtn.active{color:#8f253d!important;background:rgba(255,247,249,.86)!important;border-color:#e6cbd2!important}
 .studioShortcutBadge{position:absolute;top:-6px;right:-6px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:#bf5163;color:#fff;border:2px solid rgba(255,255,255,.96);font:800 9px/1 "Segoe UI",Arial,sans-serif;box-shadow:0 3px 8px rgba(143,37,61,.16)}
 .studioReadSheet{position:fixed;z-index:22000;inset:0;background:rgba(36,44,57,.22);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:22px}.studioReadSheet.show{display:flex}.studioReadSheetCard{width:min(760px,94vw);max-height:86vh;overflow:auto;background:rgba(255,255,255,.95);border:1px solid rgba(255,255,255,.97);border-radius:22px;box-shadow:0 24px 64px rgba(37,47,61,.18);backdrop-filter:blur(20px)}
-.studioReadSheetHead{min-height:58px;display:flex;align-items:center;padding:10px 12px 10px 18px;border-bottom:1px solid #e4e9ef}.studioReadSheetIcon{width:30px;height:30px;border-radius:10px;background:#f5f7fa;border:1px solid #e0e6ed;display:flex;align-items:center;justify-content:center;color:#687688}.studioReadSheetActions{margin-left:auto;display:flex;gap:6px}.studioReadSheetAction{appearance:none;border:1px solid rgba(210,218,228,.85);background:rgba(255,255,255,.72);color:#687586;width:36px;height:36px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}.studioReadSheetAction.confirm{color:#2d8a61;background:#f0faf5;border-color:#cee9dc}.studioReadSheetAction.confirm:hover{color:#237750;background:#e8f7ef;border-color:#bfe3d1}.studioReadSheetAction[hidden]{display:none!important}.studioReadSheetAction.busy{opacity:.55;pointer-events:none}
+.studioReadSheetHead{min-height:58px;display:flex;align-items:center;padding:8px 10px 10px 18px;border-bottom:1px solid #e4e9ef}.studioReadSheetIcon{width:30px;height:30px;border-radius:10px;background:#f5f7fa;border:1px solid #e0e6ed;display:flex;align-items:center;justify-content:center;color:#687688}.studioReadSheetActions{margin-left:auto;display:flex;gap:6px}.studioReadSheetAction{appearance:none;border:1px solid rgba(210,218,228,.85);background:rgba(255,255,255,.72);color:#687586;width:36px;height:36px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}.studioReadSheetAction.confirm{color:#2d8a61;background:#f0faf5;border-color:#cee9dc}.studioReadSheetAction.confirm:hover{color:#237750;background:#e8f7ef;border-color:#bfe3d1}.studioReadSheetAction[hidden]{display:none!important}.studioReadSheetAction.busy{opacity:.55;pointer-events:none}
 .studioReadSheetContent{padding:24px 24px 20px}.studioReadSheetContent h2{margin:0;color:#243247;font:800 clamp(21px,2.5vw,30px)/1.08 "Segoe UI",Arial,sans-serif;letter-spacing:-.025em}.studioReadSheetMeta{margin-top:7px;color:#8994a3;font:600 10px/1.35 "Segoe UI",Arial,sans-serif}.studioReadSheetContext{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}.studioReadSheetContext span{display:inline-flex;align-items:center;min-height:24px;padding:0 8px;border:1px solid #e0e6ed;border-radius:999px;background:#f7f9fb;color:#657284;font:700 9px/1 "Segoe UI",Arial,sans-serif}.studioReadSheetBanner{margin-top:16px;border:1px solid #e1e7ed;border-radius:15px;overflow:hidden;background:#f4f6f8}.studioReadSheetBanner img{display:block;width:100%;max-height:180px;object-fit:cover}.studioReadSheetText{margin-top:18px;padding:18px 20px;border:1px solid #e3e9ef;border-radius:16px;background:rgba(247,249,251,.82);color:#404e61;font:600 16px/1.55 "Segoe UI",Arial,sans-serif;white-space:pre-line}
 @media(max-width:1000px){.studioLayoutShell.drawerOpen{--studio-drawer-width:min(335px,39vw)}}
 @media(max-width:760px){.studioLayoutShell{grid-template-columns:1fr!important}.studioLayoutShell.drawerOpen{--studio-drawer-width:0px}.studioContextDrawer{position:absolute;z-index:40;top:60px;right:0;bottom:0;width:min(330px,88vw);transform:translateX(104%);box-shadow:-14px 0 30px rgba(39,50,66,.08)}.studioLayoutShell.drawerOpen .studioContextDrawer{transform:none}.headNav .promoListBtn{width:38px!important;min-width:38px!important;height:38px!important;min-height:38px!important}}
@@ -2558,8 +2559,6 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
     <button type="button" class="studioReadingDueButton" id="studioReadingDuePromo" hidden onclick="studioReadingDueClick('promo')"><strong>P</strong> <span id="studioReadingDuePromoText">PAUTAS PENDENTES</span></button>
     <button type="button" class="studioReadingDueButton" id="studioReadingDueMerchan" hidden onclick="studioReadingDueClick('merchan')"><strong>M</strong> <span id="studioReadingDueMerchanText">MERCHANS PENDENTES</span></button>
   </div>
-  <aside class="studioSideRail left" id="studioSidePromoRail" hidden></aside>
-  <aside class="studioSideRail right" id="studioSideMerchanRail" hidden></aside>
 </div>
 
 <div class="modalBackdrop" id="winnerModal">
@@ -5300,7 +5299,8 @@ function render(){
       <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'GANHADOR REGISTRADO' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'GANHADOR REGISTRADO · BOTÃO DIREITO NO NOME PARA CORRIGIR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
     `;
   $('pautaPanel').innerHTML=`
-    <div class="studioLayoutShell ${studioDrawerMode&&!studioReadingMenuActive()?'drawerOpen':''}"><div class="studioMainColumn">
+    <div class="studioLayoutShell ${studioDrawerMode&&!studioReadingMenuActive()?'drawerOpen':''}">
+    <aside class="studioSideRail left" id="studioSidePromoRail" hidden></aside><div class="studioMainColumn">
     <div class="pautaHead">
       <div class="pautaTime ${timeClass(item)}">${esc(formatStudioTime(item.slot))}</div>
       <div class="pautaProgram">${promo ? (isMerchan(promo)?'MERCHAN':upper(promo.kind||promo.promoKind||promo.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO') : isVirtual ? 'SEM PAUTA' : esc(upper(item.program||'PROGRAMA'))}</div>
@@ -5316,7 +5316,7 @@ function render(){
     </div>
     ${buildStudioContext(item,promo)}
     <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${studioReadingMenuActive()?buildStudioReadingMenu():promoBody}</div>
-    </div>${buildStudioDrawer(item)}</div>`;
+    </div><aside class="studioSideRail right" id="studioSideMerchanRail" hidden></aside>${buildStudioDrawer(item)}</div>`;
   $('prevItem').addEventListener('click',()=>step(-1));
   $('nextItem').addEventListener('click',()=>step(1));
   const winnerBtn=$('markWinnerBtn'); if(winnerBtn) winnerBtn.onclick=openWinnerModal;
