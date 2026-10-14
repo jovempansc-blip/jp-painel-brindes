@@ -1954,6 +1954,50 @@ body{
 @media(max-width:760px){.promoFooter .promoPill.read{width:150px!important;min-width:150px!important;max-width:150px!important}.promoPill.read .busTickerTrack{animation-duration:3.5s!important}}
 @media(prefers-reduced-motion:reduce){.promoPill.pending,.promoPill.pending.promo,.promoPill.pending.merchan,.studioPendingBell.hasPending::before,.studioPendingBell.hasLate::before,.studioPendingBell.hasPending .studioBellCount,.studioPendingBell.hasLate .studioBellCount,.promoPill.read .busTickerTrack{animation:none!important;transform:none!important}}
 
+
+/* AV58.1.13 · TRILHOS LATERAIS COMPACTOS NO RESPIRO DO ESTÚDIO */
+body{overflow-x:hidden}
+.wrap{position:relative;overflow:visible}
+.studioSideRail{position:absolute;top:94px;width:132px;display:none;flex-direction:column;gap:8px;z-index:70;pointer-events:auto}
+.studioSideRail.left{left:-138px}
+.studioSideRail.right{right:-138px}
+.studioSideRail[hidden]{display:none!important}
+.studioSideRailToggle{appearance:none;width:100%;min-height:48px;display:flex;align-items:center;gap:8px;padding:10px 10px 10px 12px;border:1px solid rgba(223,229,238,.92);border-radius:18px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);box-shadow:0 12px 24px rgba(23,31,45,.06);color:#5b6778;cursor:pointer;text-align:left}
+.studioSideRailToggle:hover,.studioSideRailToggle:focus-visible{outline:none;border-color:#d8dee8;box-shadow:0 12px 26px rgba(23,31,45,.09)}
+.studioSideRailGlyph{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;color:#8f5466;flex:0 0 24px}
+.studioSideRailGlyph svg{width:18px;height:18px;display:block;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.studioSideRailLabel{display:flex;flex-direction:column;min-width:0;flex:1}
+.studioSideRailLabel strong{font:900 10px/1.15 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.05em;color:#334256;text-transform:uppercase}
+.studioSideRailLabel span{margin-top:3px;font:800 8px/1.2 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.07em;color:#8c98a7;text-transform:uppercase}
+.studioSideRailCount{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:999px;border:1px solid #e2e8f0;background:#f8fafc;color:#7b8795;font:900 8px/1 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.05em;padding:0 6px}
+.studioSideRailBody{display:grid;gap:7px;max-height:0;overflow:hidden;opacity:0;transform:translateY(-4px);transition:max-height .24s ease,opacity .18s ease,transform .18s ease}
+.studioSideRail.open .studioSideRailBody{max-height:520px;opacity:1;transform:none}
+.studioSideRailCard{appearance:none;width:100%;min-height:46px;border:1px solid rgba(226,232,240,.95);border-radius:17px;background:rgba(255,255,255,.78);backdrop-filter:blur(14px);box-shadow:0 8px 18px rgba(24,32,45,.045);padding:10px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;text-align:left;color:#2d3948;transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease,background .14s ease}
+.studioSideRailCard:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(24,32,45,.075)}
+.studioSideRailDot{width:9px;height:9px;border-radius:50%;flex:0 0 9px;background:#c0ccd8;box-shadow:0 0 0 3px rgba(192,204,216,.16)}
+.studioSideRailText{min-width:0;display:block;width:100%}
+.studioSideRailName{display:block;font:900 10px/1.2 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.02em;color:#2d3948;text-transform:uppercase;white-space:normal;word-break:break-word}
+.studioSideRailMeta{display:block;margin-top:4px;font:800 7.5px/1.2 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.08em;color:#8f9baa;text-transform:uppercase}
+.studioSideRailCard.pending{border-color:#ead6b6;background:rgba(251,247,240,.92);color:#7f5b29;animation:studioSidePendingPulse 1.35s ease-in-out infinite}
+.studioSideRailCard.pending .studioSideRailDot{background:#d8a05f;box-shadow:0 0 0 3px rgba(216,160,95,.16)}
+.studioSideRailCard.pending .studioSideRailName{color:#7c5621}
+.studioSideRailCard.read{border-color:#cfe2d6;background:rgba(241,249,244,.94);color:#3f6b52;overflow:hidden}
+.studioSideRailCard.read .studioSideRailDot{background:#54a56c;box-shadow:0 0 0 3px rgba(84,165,108,.14)}
+.studioSideRailCard.read .studioSideRailName{display:none}
+.studioSideRailCard.read .studioSideRailMeta{display:none}
+.studioSideRailCard.missed{border-color:#dddfe4;background:rgba(247,248,250,.95);color:#768292}
+.studioSideRailCard.missed .studioSideRailDot{background:#9ca8b5;box-shadow:0 0 0 3px rgba(156,168,181,.14)}
+.studioSideRailTicker{position:relative;display:block;width:100%;height:26px;overflow:hidden}
+.studioSideRailTickerTrack{display:block;height:52px;animation:studioSideTickerSwap 4.6s ease-in-out infinite}
+.studioSideRailTickerTrack span{display:flex;align-items:center;height:26px;font:900 9px/1.1 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.studioSideRailTickerTrack span:last-child{font-size:8px;letter-spacing:.11em;color:#5a8c6b}
+.studioSideRailEmpty{padding:12px 10px;border:1px dashed #dce3eb;border-radius:16px;background:rgba(255,255,255,.74);color:#8490a0;text-align:center;font:800 8px/1.4 "Segoe UI Variable Text","Segoe UI",Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+@keyframes studioSideTickerSwap{0%,44%{transform:translateY(0)}50%,94%{transform:translateY(-26px)}100%{transform:translateY(-26px)}}
+@keyframes studioSidePendingPulse{0%,100%{box-shadow:0 8px 18px rgba(24,32,45,.045)}50%{box-shadow:0 10px 20px rgba(182,138,67,.11)}}
+@media(prefers-reduced-motion:reduce){.studioSideRailCard.pending,.studioSideRailTickerTrack{animation:none!important}}
+@media(min-width:1560px){.studioSideRail{display:flex}}
+@media(max-width:1559px){.studioSideRail{display:none!important}}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
@@ -2514,6 +2558,8 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
     <button type="button" class="studioReadingDueButton" id="studioReadingDuePromo" hidden onclick="studioReadingDueClick('promo')"><strong>P</strong> <span id="studioReadingDuePromoText">PAUTAS PENDENTES</span></button>
     <button type="button" class="studioReadingDueButton" id="studioReadingDueMerchan" hidden onclick="studioReadingDueClick('merchan')"><strong>M</strong> <span id="studioReadingDueMerchanText">MERCHANS PENDENTES</span></button>
   </div>
+  <aside class="studioSideRail left" id="studioSidePromoRail" hidden></aside>
+  <aside class="studioSideRail right" id="studioSideMerchanRail" hidden></aside>
 </div>
 
 <div class="modalBackdrop" id="winnerModal">
@@ -5141,6 +5187,61 @@ function initStudioShortcutAlerts(){
   },400);
 }
 
+
+const studioSideRailState={promo:true,merchan:true};
+function studioSideRailIcon(kind){
+  if(kind==='merchan')return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h5l8 5V7l-8 5H3v0Z"></path><path d="M18 8a4 4 0 0 1 0 8"></path></svg>';
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M9 7h6M9 11h6M9 15h4"></path></svg>';
+}
+function studioSideRailLabel(kind){return kind==='merchan'?'MERCHANS DO HORÁRIO':'PROMO/PAUTA';}
+function studioSideRailSubLabel(kind){return kind==='merchan'?'LEITURAS DO HORÁRIO':'PAUTAS DO HORÁRIO';}
+function studioSideRailName(p,kind){
+  const fallback=isMerchan(p)?'MERCHAN':(upper(p?.kind||p?.promoKind||p?.type||'')==='PAUTA'?'PAUTA':'PROMOÇÃO');
+  const name=upper(p?.name||p?.title||fallback);
+  const client=upper(p?.opecClientName||p?.clientName||p?.client||p?.advertiser||'');
+  if(kind==='merchan'&&client&&client!==name)return client;
+  return name;
+}
+function studioSideRailEntries(kind,item){
+  const base=item&&item.date&&item.slot?item:(currentDisplayItem&&currentDisplayItem.date&&currentDisplayItem.slot?currentDisplayItem:studioCurrentReadItem());
+  if(!base||!base.date||!base.slot)return {base:null,rows:[]};
+  const source=kind==='merchan'?merchansForItemHour(base,true):promosForItemHour(base,true);
+  const rows=source.map(p=>({p,item:base})).sort((a,b)=>{
+    const ap=studioAV57Progress(a.p,a.item),bp=studioAV57Progress(b.p,b.item);
+    const ar=ap.remaining===0&&ap.missed===0,br=bp.remaining===0&&bp.missed===0;
+    const af=ap.remaining===0&&ap.missed>0,bf=bp.remaining===0&&bp.missed>0;
+    const ao=ar?1:af?2:0,bo=br?1:bf?2:0;
+    return ao-bo || studioSideRailName(a.p,kind).localeCompare(studioSideRailName(b.p,kind));
+  });
+  return {base,rows};
+}
+function studioToggleSideRail(kind){studioSideRailState[kind]=!studioSideRailState[kind];renderStudioSideRails(currentDisplayItem||studioCurrentReadItem());}
+window.studioToggleSideRail=studioToggleSideRail;
+function studioSideRailCardMarkup(kind,p,item){
+  const progress=studioAV57Progress(p,item),done=progress.remaining===0&&progress.missed===0,failed=progress.remaining===0&&progress.missed>0;
+  const name=studioSideRailName(p,kind),safeId=esc(p.id),click=`onclick="studioPautaItemClick(event,'${safeId}')"`;
+  if(done){
+    const time=readTimeLabel(readTimestampForHour(p,item)).replace('FEITA ','');
+    return `<button class="studioSideRailCard read" type="button" data-promo-id="${safeId}" ${click} title="${esc(name)} · LIDO ${esc(time)}"><span class="studioSideRailDot" aria-hidden="true"></span><span class="studioSideRailText"><span class="studioSideRailTicker"><span class="studioSideRailTickerTrack"><span>${esc(name)}</span><span>LIDO ${esc(time)}</span></span></span></span></button>`;
+  }
+  if(failed){
+    return `<button class="studioSideRailCard missed" type="button" data-promo-id="${safeId}" ${click} title="${esc(name)} · NÃO REALIZADA"><span class="studioSideRailDot" aria-hidden="true"></span><span class="studioSideRailText"><span class="studioSideRailName">${esc(name)}</span><span class="studioSideRailMeta">NÃO REALIZADA</span></span></button>`;
+  }
+  return `<button class="studioSideRailCard pending" type="button" data-promo-id="${safeId}" ${click} title="${esc(name)}"><span class="studioSideRailDot" aria-hidden="true"></span><span class="studioSideRailText"><span class="studioSideRailName">${esc(name)}</span></span></button>`;
+}
+function renderStudioSideRail(kind,item){
+  const root=$(kind==='merchan'?'studioSideMerchanRail':'studioSidePromoRail');
+  if(!root)return;
+  const {base,rows}=studioSideRailEntries(kind,item);
+  root.hidden=false;
+  root.className=`studioSideRail ${kind==='merchan'?'right':'left'} ${studioSideRailState[kind]?'open':''}`;
+  const open=!!studioSideRailState[kind];
+  const count=rows.reduce((sum,row)=>{const progress=studioAV57Progress(row.p,row.item);return sum+(progress.remaining>0?progress.remaining:1);},0);
+  const body=rows.length?rows.map(row=>studioSideRailCardMarkup(kind,row.p,row.item)).join(''):`<div class="studioSideRailEmpty">SEM ${kind==='merchan'?'MERCHAN':'PAUTA'} NESTE HORÁRIO</div>`;
+  root.innerHTML=`<button class="studioSideRailToggle" type="button" onclick="studioToggleSideRail('${kind}')" aria-expanded="${open?'true':'false'}"><span class="studioSideRailGlyph" aria-hidden="true">${studioSideRailIcon(kind)}</span><span class="studioSideRailLabel"><strong>${studioSideRailLabel(kind)}</strong><span>${base?esc(formatStudioTime(base.slot)):'AGORA'}</span></span><span class="studioSideRailCount">${count}</span></button><div class="studioSideRailBody">${body}</div>`;
+}
+function renderStudioSideRails(item){renderStudioSideRail('promo',item);renderStudioSideRail('merchan',item);}
+
 function render(){
   if(studioResultSaving)return;
   const editingPromo=currentPromoForRead();
@@ -5223,6 +5324,7 @@ function render(){
   const confirmPromo=$('confirmPromoReadInline'); if(confirmPromo) confirmPromo.onclick=confirmPromoRead;
   const savePromoResultBtn=$('savePromoResultInline'); if(savePromoResultBtn) savePromoResultBtn.addEventListener('click',savePromoResultInline);
   const cancelResult=$('cancelPromoResultInline');if(cancelResult)cancelResult.onclick=()=>studioCampaignContext?studioCloseCampaignResult():closePromoReadModal();
+  renderStudioSideRails(item);
   const resultList=$('promoResultWinnersList');
   if(resultList){
     resultList.addEventListener('input',e=>{ if(e.target.classList.contains('promoResultWinnerInput')||e.target.classList.contains('promoProfileInput')){studioCaptureCampaignDraft();validateAllPromoWinnerInputs();} });
