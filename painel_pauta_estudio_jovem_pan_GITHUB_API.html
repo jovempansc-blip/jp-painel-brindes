@@ -1999,6 +1999,45 @@ body{overflow-x:hidden}
 @media(min-width:1320px){.studioSideRail{display:flex}}
 @media(max-width:1319px){.studioSideRail{display:none!important}}
 
+
+/* AV58.1.15 · REFINO FINAL DOS TRILHOS INTERNOS + AJUSTE LEVE DO MIOLO */
+@media(min-width:1320px){
+  .studioLayoutShell{padding:0 156px;}
+  .studioMainColumn{min-width:0;}
+  .studioSideRail{top:112px;width:134px;gap:10px;z-index:12}
+  .studioSideRail.left{left:12px}
+  .studioSideRail.right{right:12px}
+  .studioSideRailToggle{min-height:54px;padding:10px 10px 10px 12px;border-radius:18px;background:rgba(255,255,255,.88);border-color:#dfe6ee;box-shadow:0 10px 24px rgba(22,30,44,.055)}
+  .studioSideRailGlyph{width:22px;height:22px;flex-basis:22px;color:#94606f}
+  .studioSideRailGlyph svg{width:16px;height:16px}
+  .studioSideRailLabel strong{font-size:9.5px;letter-spacing:.06em}
+  .studioSideRailLabel span{font-size:7px;letter-spacing:.11em;margin-top:4px}
+  .studioSideRailCount{min-width:22px;height:22px;font-size:7.5px;padding:0 5px}
+  .studioSideRailBody{gap:8px}
+  .studioSideRail.open .studioSideRailBody{max-height:560px}
+  .studioSideRailCard{min-height:58px;padding:11px 10px;border-radius:18px;background:rgba(255,255,255,.84)}
+  .studioSideRailCard.pending{background:rgba(251,247,240,.96);border-color:#e8d7bb}
+  .studioSideRailCard.read{background:rgba(240,249,243,.98);border-color:#cfe3d6}
+  .studioSideRailCard.missed{background:rgba(246,248,250,.98)}
+  .studioSideRailDot{width:10px;height:10px;flex-basis:10px}
+  .studioSideRailName{font-size:8.9px;line-height:1.22;letter-spacing:.03em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .studioSideRailMeta{font-size:7px;letter-spacing:.11em}
+  .studioSideRailTicker{height:30px}
+  .studioSideRailTickerTrack{height:60px}
+  .studioSideRailTickerTrack span{height:30px;font-size:8.4px;letter-spacing:.05em}
+  .studioSideRailTickerTrack span:last-child{font-size:7.2px;letter-spacing:.12em}
+  @keyframes studioSideTickerSwap{0%,44%{transform:translateY(0)}50%,94%{transform:translateY(-30px)}100%{transform:translateY(-30px)}}
+  .studioSideRailEmpty{padding:14px 10px;border-radius:18px;font-size:7.2px;line-height:1.45}
+  .studioMainColumn .pautaBody>.promoReadBanner,
+  .studioMainColumn .pautaBody>.titleBox,
+  .studioMainColumn .pautaBody>.descBox,
+  .studioMainColumn .pautaBody>.resultBox.studioResultCard,
+  .studioMainColumn .pautaBody>.emptyStudioBox{max-width:1000px!important}
+  .studioMainColumn .pautaBody{padding-left:22px!important;padding-right:22px!important}
+  .studioMainColumn .title{font-size:35px!important}
+  .studioMainColumn .desc{font-size:18px!important;line-height:1.48!important}
+}
+
 </style>
 
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
