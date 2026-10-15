@@ -13,7 +13,7 @@
   const liveItem=i=>i&&i.channel==='RÁDIO'&&!['CANCELADO','CANCELADA'].includes(String(i.status||'').toUpperCase());
   const locked=i=>!!(i&&(['REALIZADO','NO AR'].includes(String(i.status||'').toUpperCase())||i.resultAt||i.winnerName||(i.winnerNames||[]).length||i.resultName||i.deliveredAt||i.sourceType==='promo-result'||i.date<iso()||(i.date===iso()&&slotOrder(i.slot)<(new Date().getHours()+new Date().getMinutes()/60))));
   let mode='grade',date=iso(),station='JP1017',draft=null,busy=false,pending=null;
-  let prizeQuery='',pautaQuery='',filter='all';
+  let prizeQuery='',pautaQuery='',manualTab='prizes';
   function countryDate(d){return d.split('-').reverse().join('/');}
   function officialSlots(dateKey,stationKey){
     const set=new Set(),w=new Date(`${dateKey}T12:00:00`).getDay();
@@ -112,11 +112,21 @@
     const count=draft.pautas.filter(a=>a.promoId===p.id).length;
     return `<div class="jpManualStockRow" draggable="true" data-drag-type="pauta" data-drag-id="${clean(p.id)}" role="button" tabindex="0" title="ARRASTE OU CLIQUE PARA ESCOLHER HORÁRIO"><span class="dragDots">⠿</span><div><strong>${clean(p.name||p.title||'PAUTA')}</strong><small>${clean(countryDate(p.startDate||date))} — ${clean(countryDate(p.endDate||date))}</small></div><div class="counts"><span>${count} NESTE DIA</span><b>${p.promoReadMethod==='manual'?'MANUAL':'REFORÇO'}</b></div></div>`;
   }).join('')||'<div class="jpManualEmpty">SEM PAUTAS DENTRO DA VIGÊNCIA.</div>';}
+  function renderSidebar(){
+    const showPrizes=manualTab!=='pautas';
+    const prizeCount=prizes().length,pautaCount=promoPool().length;
+    const searchId=showPrizes?'jpPrizeSearch':'jpPautaSearch';
+    const searchValue=showPrizes?prizeQuery:pautaQuery;
+    const searchPlaceholder=showPrizes?'BUSCAR PRÊMIO...':'BUSCAR PAUTA...';
+    const stockId=showPrizes?'jpPrizeStock':'jpPautaStock';
+    const content=showPrizes?stockRows():pautaRows();
+    return `<aside class="jpManualPaper"><div class="jpManualStockHead"><strong>ITENS DISPONÍVEIS</strong><span>ARRASTE PARA A ESQUERDA ↖</span></div><div class="jpManualTabs" role="tablist" aria-label="TIPO DE ITEM"><button type="button" class="${showPrizes?'active':''}" data-manual-tab="prizes" role="tab" aria-selected="${showPrizes?'true':'false'}">♔ PRÊMIOS (${prizeCount})</button><button type="button" class="${showPrizes?'':'active'}" data-manual-tab="pautas" role="tab" aria-selected="${showPrizes?'false':'true'}">♧ PAUTAS (${pautaCount})</button></div><section class="jpManualStockGroup singleTab"><div class="jpManualGroupTitle ${showPrizes?'':'pautas'}"><strong>${showPrizes?'♔ &nbsp; PRÊMIOS DENTRO DA VIGÊNCIA':'♧ &nbsp; PAUTAS PROMOCIONAIS'}</strong><small>${showPrizes?`${prizeCount} CADASTRADOS`:`${pautaCount} EM VIGÊNCIA`}</small></div><input class="jpManualSearch" id="${searchId}" placeholder="${searchPlaceholder}" value="${clean(searchValue)}" aria-label="${searchPlaceholder}"><div id="${stockId}">${content}</div></section><div class="jpManualStockFooter">Arraste um item para o horário oficial. Os saldos mudam nesta prévia; a alteração só chega aos outros painéis depois de salvar no Firebase. Itens realizados não podem ser removidos nem movidos.</div></aside>`;
+  }
   function paint(){
     if(mode!=='manual'||!draft||!el('programManualMount'))return;
     const oldScroll=el('programManualMount')?.scrollTop||0;
     const total= draft.items.length+draft.pautas.length,dirty=hasChanges();
-    el('programManualMount').innerHTML=`<div class="jpManualShell"><section class="jpManualPaper"><header class="jpManualTop"><div class="jpManualDate"><strong>${clean(countryDate(date))}</strong><span>${clean(dayName(date))}</span></div><div class="jpManualControls"><label class="visuallyHidden" for="jpManualStation">EMISSORA</label><select id="jpManualStation" aria-label="EMISSORA"><option value="JP1017" ${station==='JP1017'?'selected':''}>JOVEM PAN 101,7</option><option value="JPNEWS983" ${station==='JPNEWS983'?'selected':''}>JPNEWS 98,3</option></select><label class="visuallyHidden" for="jpManualDate">DATA</label><input id="jpManualDate" type="date" value="${date}"><button type="button" class="jpManualBtn" id="jpManualReset">DESCARTAR</button><button type="button" class="jpManualBtn primary" id="jpManualSave" ${(!dirty||busy)?'disabled':''}>${busy?'SALVANDO...':'SALVAR PROGRAMAÇÃO'}</button></div></header><div class="jpManualSummary"><span>PROGRAMAÇÃO MANUAL · ${clean(stationLabel(station))}</span><span><b>${total}</b> ITENS NESTE DIA ${dirty?' · ALTERAÇÕES NÃO SALVAS':''}</span></div>${renderPeriods()}</section><aside class="jpManualPaper"><div class="jpManualStockHead"><strong>ITENS DISPONÍVEIS</strong><span>ARRASTE PARA A ESQUERDA ↖</span></div><section class="jpManualStockGroup"><div class="jpManualGroupTitle"><strong>♔ &nbsp; PRÊMIOS DENTRO DA VIGÊNCIA</strong><small>${prizes().length} CADASTRADOS</small></div><input class="jpManualSearch" id="jpPrizeSearch" placeholder="BUSCAR PRÊMIO..." value="${clean(prizeQuery)}" aria-label="BUSCAR PRÊMIO"><div id="jpPrizeStock">${stockRows()}</div></section><section class="jpManualStockGroup"><div class="jpManualGroupTitle pautas"><strong>♧ &nbsp; PAUTAS PROMOCIONAIS</strong><small>${promoPool().length} EM VIGÊNCIA</small></div><input class="jpManualSearch" id="jpPautaSearch" placeholder="BUSCAR PAUTA..." value="${clean(pautaQuery)}" aria-label="BUSCAR PAUTA"><div id="jpPautaStock">${pautaRows()}</div></section><div class="jpManualStockFooter">Arraste um item para o horário oficial. Os saldos mudam nesta prévia; a alteração só chega aos outros painéis depois de salvar no Firebase. Itens realizados não podem ser removidos nem movidos.</div></aside></div>`;
+    el('programManualMount').innerHTML=`<div class="jpManualShell"><section class="jpManualPaper"><header class="jpManualTop"><div class="jpManualDate"><strong>${clean(countryDate(date))}</strong><span>${clean(dayName(date))}</span></div><div class="jpManualControls"><label class="visuallyHidden" for="jpManualStation">EMISSORA</label><select id="jpManualStation" aria-label="EMISSORA"><option value="JP1017" ${station==='JP1017'?'selected':''}>JOVEM PAN 101,7</option><option value="JPNEWS983" ${station==='JPNEWS983'?'selected':''}>JPNEWS 98,3</option></select><label class="visuallyHidden" for="jpManualDate">DATA</label><input id="jpManualDate" type="date" value="${date}"><button type="button" class="jpManualBtn" id="jpManualReset">DESCARTAR</button><button type="button" class="jpManualBtn primary" id="jpManualSave" ${(!dirty||busy)?'disabled':''}>${busy?'SALVANDO...':'SALVAR PROGRAMAÇÃO'}</button></div></header><div class="jpManualSummary"><span>PROGRAMAÇÃO MANUAL · ${clean(stationLabel(station))}</span><span><b>${total}</b> ITENS NESTE DIA ${dirty?' · ALTERAÇÕES NÃO SALVAS':''}</span></div>${renderPeriods()}</section>${renderSidebar()}</div>`;
     el('programManualMount').scrollTop=oldScroll;
   }
   function reject(msg){window.alert(msg);return false;}
@@ -182,6 +192,7 @@
     host.addEventListener('drop',e=>{const target=e.target.closest('[data-target]');if(!target)return;e.preventDefault();target.classList.remove('dragOver');try{const data=JSON.parse(e.dataTransfer.getData('text/plain'));add(data.type,data.id,target.dataset.target);}catch(err){console.warn('ITEM INVÁLIDO PARA ARRASTE',err);}});
     host.addEventListener('click',e=>{
       if(e.target.closest('#jpManualSave')){save();return;}
+      const tabBtn=e.target.closest('[data-manual-tab]');if(tabBtn){manualTab=tabBtn.dataset.manualTab==='pautas'?'pautas':'prizes';paint();return;}
       if(e.target.closest('#jpManualReset')){if(!hasChanges()||confirm('DESCARTAR ALTERAÇÕES NÃO SALVAS?')){draft=snapshot();paint();}return;}
       const editQty=e.target.closest('[data-edit-qty]');
       if(editQty){
