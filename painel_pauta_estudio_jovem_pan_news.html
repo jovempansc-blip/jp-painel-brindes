@@ -2242,6 +2242,13 @@ tbody tr:focus-within td{background:#fff8fa}
 @media(prefers-reduced-motion:reduce){.studioPromoResultDayAlert{animation:none!important}}
 </style>
 
+<style id="studio-multi-prize-av58119">
+.studioMultiPrizes{width:100%;max-width:1000px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:7px;margin:0 auto 8px;padding:9px;border:1px solid #dfe5ed;border-radius:14px;background:#f7f9fc;text-align:center}
+.studioMultiPrizes span{font:800 10px/1.3 "Segoe UI",Arial,sans-serif;color:#7d8a9b;letter-spacing:.04em;margin-right:5px}
+.studioMultiPrizes button{max-width:210px;min-height:30px;padding:7px 10px;border:1px solid #e0e6ee;border-radius:10px;background:#fff;color:#526278;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:800 10px "Segoe UI",Arial,sans-serif;cursor:pointer}
+.studioMultiPrizes button.active{background:#fff3f5;color:#b42043;border-color:#e5b5c2}
+@media(max-width:760px){.studioMultiPrizes button{max-width:130px;font-size:9px}.studioMultiPrizes span{width:100%}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -2922,7 +2929,16 @@ function studioAV57SmartPlan(date){
     if(best){const key=`${best.program}|${best.slot}`;load.set(key,(load.get(key)||0)+1);own.push({...best,override:!!forced,overrideReason:override?.reason||''});out.set(token.p.id,own);}
   });return out;
 }
-function studioRequiredReadsForHour(p,item){if(!p||!item||!studioAV57Visible(p)||!stationAllowed(p)||!studioAV57DateAllowed(p,item.date||''))return 0;const program=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||''),slot=studioAV57HourSlot(item.slot);if(studioAV57Mode(p)==='rotation'){const plan=studioAV57SmartPlan(item.date||todayISO());return(plan.get(p.id)||[]).filter(c=>c.program===program&&c.slot===slot).length;}const candidates=studioAV57Candidates(p,item.date||'');if(candidates.length){if(!candidates.some(c=>c.program===program&&c.slot===slot))return 0;return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;}return studioAV57LegacyHourAllowed(p,item)?(studioAV57Scope(p)==='hour'?studioAV57Count(p):1):0;}
+function studioRequiredReadsAutomatic(p,item){if(!p||!item||!studioAV57Visible(p)||!stationAllowed(p)||!studioAV57DateAllowed(p,item.date||''))return 0;const program=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||''),slot=studioAV57HourSlot(item.slot);if(studioAV57Mode(p)==='rotation'){const plan=studioAV57SmartPlan(item.date||todayISO());return(plan.get(p.id)||[]).filter(c=>c.program===program&&c.slot===slot).length;}const candidates=studioAV57Candidates(p,item.date||'');if(candidates.length){if(!candidates.some(c=>c.program===program&&c.slot===slot))return 0;return studioAV57Scope(p)==='hour'?studioAV57Count(p):1;}return studioAV57LegacyHourAllowed(p,item)?(studioAV57Scope(p)==='hour'?studioAV57Count(p):1):0;}
+function studioRequiredReadsForHour(p,item){
+  if(!p||!item||!studioAV57Visible(p)||!stationAllowed(p))return 0;
+  const date=item.date||'',program=upper(programFromSchedule(date,item.slot,STUDIO_STATION)||item.program||''),hour=studioAV57HourSlot(item.slot);
+  const matches=(Array.isArray(p.manualReadAssignments)?p.manualReadAssignments:[]).filter(a=>a.date===date&&normalizeStationValue(a.station||p.station||STUDIO_STATION)===normalizeStationValue(STUDIO_STATION)&&studioAV57HourSlot(a.slot)===hour&&(!a.program||upper(a.program)===program));
+  const manual=matches.length?1:0;
+  if(p.promoReadMethod==='manual')return manual;
+  return Math.max(manual,studioRequiredReadsAutomatic(p,item));
+}
+
 function studioReadCountForHour(p,item){const logs=studioAV57Logs(p,item);if(logs.length)return logs.length;const direct=validReadTimestamp(hourMapValue(p?.readByHour,item,p));return direct?1:0;}
 function readTimestampForHour(p,item){const logs=studioAV57Logs(p,item);if(logs.length)return validReadTimestamp(logs[logs.length-1]?.confirmedAt||logs[logs.length-1]?.readAt||'');return validReadTimestamp(hourMapValue(p?.readByHour,item,p));}
 function promoEligibleForItemHour(p,item){return studioRequiredReadsForHour(p,item)>0;}
@@ -3440,7 +3456,33 @@ async function saveWinner(){
   const button=$('saveWinnerBtn');if(button?.dataset.busy==='1')return;const item=currentItemRecord();if(!item)return;const names=Array.from(document.querySelectorAll('.winnerNameField')).map(input=>upper(input.value)).filter(Boolean);if(!names.length){document.querySelector('.winnerNameField')?.focus();return;}const max=winnerCapacity(item);if(names.length>max){alert(`ESTE HORÁRIO PERMITE NO MÁXIMO ${max} GANHADOR(ES).`);return;}
   if(button){button.dataset.busy='1';button.disabled=true;button.textContent='SALVANDO...';}const now=new Date();try{await commitNewsOutcomeAtomic({collection:'items',recordId:item.id,patch:{winnerNames:names,winnerName:names.join(', '),winnerCapacity:max,status:'REALIZADO',resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')}});closeWinnerModal();render();}catch(error){console.error(error);alert(`NÃO FOI POSSÍVEL SALVAR OS GANHADORES.\n\n${error.message||'VERIFIQUE O FIREBASE.'}`);}finally{if(button){button.dataset.busy='0';button.disabled=false;button.textContent='SALVAR GANHADOR(ES)';}}
 }
+// AV58.1.19: vários prêmios na mesma hora; seleção individual preserva o ID e o histórico.
+let studioSelectedPrizeId='';
+function studioSameSlotPrizes(rows,item){
+  if(!item||item.__virtual||item.sourceType==='promo-result')return [];
+  const ns=timeToHHMM(item.slot);
+  return rows.filter(i=>i&&!i.__virtual&&i.sourceType!=='promo-result'&&i.date===item.date&&timeToHHMM(i.slot)===ns);
+}
+function studioChoosePrizeAtSlot(id){
+  if(!id)return;
+  studioSelectedPrizeId=id;
+  selectedPromoId=null;
+  render();
+}
+window.studioChoosePrizeAtSlot=studioChoosePrizeAtSlot;
+document.addEventListener('click',e=>{const button=e.target.closest('[data-studio-select-prize]');if(button){e.preventDefault();studioChoosePrizeAtSlot(button.dataset.studioSelectPrize);}});
+function studioMultiPrizeMarkup(rows,item){
+  const group=studioSameSlotPrizes(rows,item);
+  if(group.length<2)return '';
+  return `<nav class="studioMultiPrizes" aria-label="PRÊMIOS DESTE HORÁRIO"><span>${group.length} PRÊMIOS NESTE HORÁRIO</span>${group.map((i,index)=>`<button type="button" data-studio-select-prize="${esc(i.id)}" class="${i.id===item.id?'active':''}" title="${esc(upper(i.title||i.prize||'PRÊMIO'))}" aria-pressed="${i.id===item.id?'true':'false'}">${index+1} · ${esc(upper(i.title||i.prize||'PRÊMIO'))}</button>`).join('')}</nav>`;
+}
 function step(delta){
+  const same=currentDisplayItem?studioSameSlotPrizes(allPrizeRows(),currentDisplayItem):[];
+  if(same.length>1){
+    const n=same.findIndex(i=>i.id===currentDisplayItem.id),next=n+delta;
+    if(n>=0&&next>=0&&next<same.length){studioSelectedPrizeId=same[next].id;selectedPromoId=null;render();return;}
+  }
+  studioSelectedPrizeId='';
   const base = manualHourDateMs !== null
     ? new Date(manualHourDateMs)
     : (currentDisplayItem ? hourDateFromItem(currentDisplayItem) : currentSlotDate());
@@ -3510,6 +3552,12 @@ function render(){
     item=found.item;
   }
   if(item && !item.__virtual) item.__hasScheduledPrize = item.sourceType!=='promo-result';
+  const sameHourPrizes=studioSameSlotPrizes(rows,item);
+  if(sameHourPrizes.length>1){
+    const kept=sameHourPrizes.find(i=>i.id===studioSelectedPrizeId);
+    const chosen=kept||sameHourPrizes.find(i=>!i.winnerName&&i.status!=='REALIZADO')||sameHourPrizes[0];
+    item=chosen;selectedIndex=rows.indexOf(chosen);studioSelectedPrizeId=chosen.id;
+  }else studioSelectedPrizeId='';
   currentDisplayItem=item;
   if(selectedPromoId && item && !allPautasForItemHour(item,true).some(p=>p.id===selectedPromoId)){
     selectedPromoId=null;
@@ -3560,7 +3608,7 @@ function render(){
       </div>
     </div>
     ${buildStudioContext(item,promo)}
-    <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${promoBody}</div>
+    <div class="pautaBody ${isVirtual&&!promo?'emptyState':''}">${studioMultiPrizeMarkup(rows,item)}${promoBody}</div>
     ${buildPromoFooter(item)}</div>${buildStudioReadCenter(item)}</div>`;
   $('prevItem').addEventListener('click',()=>{selectedPromoId=null;step(-1);});
   $('nextItem').addEventListener('click',()=>{selectedPromoId=null;step(1);});

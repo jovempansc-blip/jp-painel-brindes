@@ -3735,6 +3735,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/av58-admin.css?v=AV58_1_10">
+<link rel="stylesheet" href="assets/prog-manual.css?v=AV58_1_19">
 <style id="promo-pi-editor-style">
 #promoDrawer .drawerCard{width:min(1320px,97vw)!important;max-width:1320px!important}
 #promoDrawer .promoFormLayout{grid-template-columns:minmax(0,3fr) minmax(340px,2fr)!important;gap:20px!important}
@@ -3838,6 +3839,8 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
     </section>
 
     <section class="view" id="view-programacao">
+      <div class="jpProgModes" role="group" aria-label="MODO DE PROGRAMAÇÃO"><button type="button" data-jp-prog-mode="grade" class="active" aria-pressed="true">GRADE</button><button type="button" data-jp-prog-mode="manual" aria-pressed="false">PROG MANUAL</button></div>
+      <div id="programGradeContainer">
       <div class="panel">
         <div class="panelBody">
           <div class="filterBar programFilterBar">
@@ -3853,6 +3856,8 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
           <div class="weeklyBoard" id="programWeekly"></div>
         </div>
       </div>
+      </div>
+      <div id="programManualMount" hidden aria-label="PROGRAMAÇÃO MANUAL"></div>
     </section>
 
     <section class="view" id="view-distribuicao">
@@ -4502,6 +4507,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
             <div id="promoPanelSchedule" role="tabpanel" aria-labelledby="promoTabSchedule" data-promo-editor-panel="schedule" hidden>
             <section class="promoFormSection">
               <div class="promoFormSectionTitle"><strong>DISTRIBUIÇÃO DAS LEITURAS</strong><span>DIAS, FREQUÊNCIA E HORÁRIOS</span></div>
+              <div class="field full" style="margin:11px 0 16px"><label for="promoReadMethod">PROGRAMAÇÃO DE PAUTA · COMO DISTRIBUIR AS LEITURAS?</label><select class="control" id="promoReadMethod"><option value="automatic">AUTOMÁTICA (REGRAS DA GRADE)</option><option value="manual">SOMENTE PROG MANUAL (SEM HORÁRIOS AUTOMÁTICOS)</option></select><span class="ticketFormHint">A OPÇÃO MANUAL DEIXA A PAUTA DISPONÍVEL NA PROG MANUAL; NÃO CADASTRA LEITURAS SOZINHA.</span></div>
               <div class="formGrid">
                 <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
                 <div class="field"><label>ENCERRAMENTO</label><input class="control" type="date" id="promoEndDate" required></div>
@@ -8509,6 +8515,7 @@ function render(){
   else if(activeView==='backup')renderBackup();
   else if(activeView==='sistema')renderSystemView();
   else if(activeView==='relatorios')renderAdminReports();
+  window.JPManual?.refreshIfOpen();
   renderReturnAlerts(); if($('miniAlertHost')) $('miniAlertHost').innerHTML=''; populateDatalists();populateProgramSelects();populateDistributionSelect();populatePromoDistributionSelect();updatePromoSegmentBalance();setEmptyDateFieldsToToday();
 }
 function renderFilters(){
@@ -9554,6 +9561,17 @@ function adminAV572FixedLoad(date,station,records=monthData().promos||[]){const 
 function adminAV572OverrideFor(p,date,sequence){const rows=(Array.isArray(p?.opecOverrides)?p.opecOverrides:[]).filter(o=>!o?.disabled&&o?.date===date&&Number(o?.occurrence||o?.sequence||1)===Number(sequence));if(!rows.length)return null;const row=rows[rows.length-1];return{program:norm(row.program||''),slot:adminAV572HourSlot(row.slot||''),reason:String(row.reason||'')};}
 function adminAV572SmartPlan(date,station,pool=monthData().promos||[]){const records=pool.filter(p=>adminAV572Visible(p)&&adminAV572Mode(p)==='rotation'&&sameStation(p?.station||'JP1017',station)),load=adminAV572FixedLoad(date,station,pool),out=new Map(),tokens=[];records.forEach(p=>adminAV572Tokens(p,date,station,pool).forEach(t=>tokens.push(t)));tokens.sort((a,b)=>a.candidates.length-b.candidates.length||String(a.p.endDate||a.p.drawDate||'9999').localeCompare(String(b.p.endDate||b.p.drawDate||'9999'))||((adminAV572Hash(`${date}|${a.p.id}|${a.ordinal}`)%997)-(adminAV572Hash(`${date}|${b.p.id}|${b.ordinal}`)%997)));tokens.forEach(token=>{const own=out.get(token.p.id)||[],last=adminAV572LastCandidate(token.p,date,station),override=adminAV572OverrideFor(token.p,date,token.sequence);let best=null,bestScore=Infinity;const forced=override?token.candidates.find(c=>norm(c.program)===norm(override.program)&&c.slot===override.slot):null;if(forced)best=forced;else token.candidates.forEach(c=>{const key=`${c.program}|${c.slot}`,loadScore=load.get(key)||0,hist=adminAV572HistoryCount(token.p,c.program,c.slot,date,station),repeat=own.filter(x=>x.program===c.program&&x.slot===c.slot).length,lastPenalty=last===key&&token.candidates.length>1?10000:0,score=loadScore*100+hist*13+repeat*48+lastPenalty+(adminAV572Hash(`${date}|${token.p.id}|${key}|${token.ordinal}`)%31)/100;if(score<bestScore){bestScore=score;best=c;}});if(best){const key=`${best.program}|${best.slot}`;load.set(key,(load.get(key)||0)+1);own.push({...best,override:!!forced,overrideReason:override?.reason||''});out.set(token.p.id,own);}});return out;}
 function adminAV572Assignments(p,date,station,pool=monthData().promos||[]){if(!adminAV572DateAllowed(p,date)||!adminAV572Visible(p)||!sameStation(p?.station||'JP1017',station))return[];if(adminAV572Mode(p)==='rotation')return adminAV572SmartPlan(date,station,pool).get(p.id)||[];let candidates=adminAV572Candidates(p,date,station,pool);if(!candidates.length){if(p?.opecPrograms?.length)return[];let hours=(p?.readHours||[]).map(adminAV572HourSlot).filter(Boolean);if((p?.readMode||'all')==='all'&&!hours.length){const set=new Set();programSchedules().filter(r=>sameStation(r.station,station)&&dayMatchesRule(date,scheduleDays(r))).forEach(r=>{for(let minute=Math.ceil(scheduleStartMinutes(r)/60)*60;minute<scheduleEndMinutes(r);minute+=60)set.add(`${String(Math.floor(minute/60)).padStart(2,'0')}H`);});hours=[...set].sort();}const wantedProgram=norm(p?.program||p?.programName||'');candidates=hours.map(slot=>({program:norm(programFromSchedule(date,slot,station)||wantedProgram||'PROGRAMA'),slot,station})).filter(c=>c.program&&(!wantedProgram||norm(c.program)===wantedProgram)&&!adminAV572PauseBlocks(p,date,c.slot));}const scope=adminAV572Scope(p),count=scope==='hour'?adminAV572Count(p):1;return candidates.flatMap(c=>Array.from({length:count},()=>({...c})));}
+// AV58.1.19: as pautas manuais/extra entram no espelho sem recriar o rodízio automático.
+const adminAV572AssignmentsOriginal=adminAV572Assignments;
+adminAV572Assignments=function(p,date,station,pool){
+  const additions=(Array.isArray(p?.manualReadAssignments)?p.manualReadAssignments:[])
+    .filter(a=>a.date===date&&sameStation(a.station||p.station||'JP1017',station)&&!!programFromSchedule(date,a.slot,station))
+    .map(a=>({program:norm(programFromSchedule(date,a.slot,station)),slot:adminAV572HourSlot(a.slot),station,source:'PROG_MANUAL'}));
+  if(p?.promoReadMethod==='manual')return additions;
+  const original=adminAV572AssignmentsOriginal(p,date,station,pool);
+  const keys=new Set(original.map(a=>`${a.program}|${a.slot}`));
+  return [...original,...additions.filter(a=>!keys.has(`${a.program}|${a.slot}`))];
+};
 function adminAV572StationsForView(p,filter){if(filter&&filter!=='ALL')return sameStation(p?.station||'JP1017',filter)?[filter]:[];const own=stationCanonical(p?.station||'JP1017');return own==='ALL'?['JP1017','JPNEWS983']:[own];}
 function adminAV572StudioMeta(p,date,stationFilter){const assignments=[];adminAV572StationsForView(p,stationFilter).forEach(st=>adminAV572Assignments(p,date,st).forEach(a=>assignments.push(a)));return assignments;}
 function adminAV572StudioHoursLabel(p){const rows=p?.__av572Assignments||[];const hours=[...new Set(rows.map(r=>r.slot).filter(Boolean))].sort();return hours.length?hours.join(', '):'SEM LEITURA';}
@@ -9693,6 +9711,7 @@ function setView(view){
   if(statsEl) statsEl.classList.toggle('hiddenStats', view === 'digital');
   if(view !== 'programacao') activeDistributionFilter='';
   render();
+  window.JPManual?.enter();
 }
 function syncDrawerLayerState(){
   const hasOpen=!!document.querySelector('.drawer.open');
@@ -13047,6 +13066,7 @@ function clearPromoForm(){
   $('promoImageData').value='';
   if($('promoKind')) $('promoKind').value='promo'; promoSetKindChoice('promo');
   if($('promoStation')) $('promoStation').value='JP1017';
+  if($('promoReadMethod')) $('promoReadMethod').value='automatic';
   if($('promoStartDate')) $('promoStartDate').value=todayISO();
   if($('promoDrawDate')) $('promoDrawDate').value=todayISO();
   if($('promoEndDate')) $('promoEndDate').value=todayISO();
@@ -13289,6 +13309,7 @@ function editPromo(pid){
   if($('promoSegmentKey')) $('promoSegmentKey').value=p.segmentKey||'';
   if($('promoKind')) $('promoKind').value=(p.kind||p.promoKind||p.type||'promo')==='pauta'?'pauta':'promo'; promoSetKindChoice($('promoKind').value);
   if($('promoStation')) $('promoStation').value=p.station||'JP1017';
+  if($('promoReadMethod')) $('promoReadMethod').value=p.promoReadMethod||'automatic';
   if($('promoScheduleMode')) $('promoScheduleMode').value=(p.promoScheduleMode||p.scheduleMode||'fixed')==='rotation'?'smart':(p.promoScheduleMode||p.scheduleMode||'fixed');
   if($('promoFrequencyScope')) $('promoFrequencyScope').value=p.promoFrequencyScope||((p.promoScheduleMode||'fixed')==='fixed'?'hour':'day');
   if($('promoFrequencyCount')) $('promoFrequencyCount').value=Math.max(1,num(p.promoFrequencyCount)||1);
@@ -13670,6 +13691,7 @@ $('promoForm').addEventListener('submit',async e=>{
     local:isPromo?norm($('promoLocal').value):'PAUTA',
     program:$('promoProgram') ? norm($('promoProgram').value) : '',
     station:$('promoStation')?.value || 'JP1017',
+    promoReadMethod:$('promoReadMethod')?.value||'automatic',
     promoScheduleMode:promoAV57SmartMode()?'smart':'fixed',
     promoFrequencyScope:promoAV57SmartMode()?($('promoFrequencyScope')?.value||'day'):'hour',
     promoFrequencyCount:Math.max(1,num($('promoFrequencyCount')?.value)||1),
@@ -13695,10 +13717,10 @@ $('promoForm').addEventListener('submit',async e=>{
   const av57Now=new Date().toISOString();
   const priorHistory=Array.isArray(existing.opecHistory)?existing.opecHistory:[];
   p.opecHistory=[...priorHistory,{at:av57Now,action:existing.id?'ALTERAÇÃO DE REGRA/PAUTA':'CADASTRO',operator:'PAINEL PRINCIPAL',scheduleMode:p.promoScheduleMode,frequencyScope:p.promoFrequencyScope,frequencyCount:p.promoFrequencyCount,periodTotal:p.promoPeriodTotal,programs:clone(p.opecPrograms),dateMode:p.promoReadDateMode,weekdays:[...p.promoReadWeekdays],specificDates:[...p.promoReadSpecificDates],excludedDates:[...p.promoReadExcludedDates],version:'AV-57.3'}].slice(-200);
-  if(promoAV57SmartMode() && !p.opecPrograms.length){ alert('NO RODÍZIO INTELIGENTE, SELECIONE PELO MENOS UM PROGRAMA E UMA FAIXA DE HORÁRIO.'); return; }
-  if(p.promoReadDateMode==='specific' && !p.promoReadSpecificDates.length){ alert('SELECIONE PELO MENOS UMA DATA ESPECÍFICA PARA A LEITURA.'); return; }
-  if(!promoAV57SmartMode() && p.readMode==='selected' && !p.readHours.length){ alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.'); return; }
-  if(!promoEditorPlanRows(p).length){promoValidationFail('promoProgramChoices','A PROGRAMAÇÃO NÃO TEM LEITURAS. SELECIONE UM PROGRAMA, HORÁRIOS E DIAS COMPATÍVEIS COM A GRADE.');return;}
+  if(p.promoReadMethod!=='manual' && promoAV57SmartMode() && !p.opecPrograms.length){ alert('NO RODÍZIO INTELIGENTE, SELECIONE PELO MENOS UM PROGRAMA E UMA FAIXA DE HORÁRIO.'); return; }
+  if(p.promoReadMethod!=='manual' && p.promoReadDateMode==='specific' && !p.promoReadSpecificDates.length){ alert('SELECIONE PELO MENOS UMA DATA ESPECÍFICA PARA A LEITURA.'); return; }
+  if(p.promoReadMethod!=='manual' && !promoAV57SmartMode() && p.readMode==='selected' && !p.readHours.length){ alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.'); return; }
+  if(p.promoReadMethod!=='manual' && !promoEditorPlanRows(p).length){promoValidationFail('promoProgramChoices','A PROGRAMAÇÃO NÃO TEM LEITURAS. SELECIONE UM PROGRAMA, HORÁRIOS E DIAS COMPATÍVEIS COM A GRADE.');return;}
   p.occurrences=isPromo?promoOccurrencesFromForm(p,existing):[];
   if(isPromo&&!p.occurrences.length){ alert('NÃO FOI POSSÍVEL GERAR A AGENDA DE SORTEIOS. CONFIRA AS DATAS.'); return; }
   if(isPromo&&p.occurrences.some(o=>o.date<p.startDate||o.date>p.endDate)){ alert('EXISTE SORTEIO FORA DO PERÍODO DA PROMOÇÃO.'); return; }
@@ -13936,5 +13958,7 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 
 <!-- AV-57.6.6.16 · PROGRAMAÇÃO COM ARRASTE + BOTÕES UNIFICADOS + SAVE PROMO EXPLÍCITO -->
 <script src="assets/distribution-unprogram-ui.js?v=AV58_1_10"></script>
+<div class="jpManualDialog" id="jpManualQtyDialog" hidden><section class="jpManualDialogCard" role="dialog" aria-modal="true" aria-labelledby="jpManualQtyTitle"><h3 id="jpManualQtyTitle">PROGRAMAR PRÊMIO</h3><p id="jpManualQtyHint">DEFINA A QUANTIDADE.</p><label for="jpManualQtyInput">QUANTIDADE A PROGRAMAR</label><input type="number" id="jpManualQtyInput" min="1" step="1" value="1"><div class="jpManualDialogActions"><button type="button" id="jpManualQtyCancel" class="jpManualBtn">CANCELAR</button><button type="button" id="jpManualQtyConfirm" class="jpManualBtn primary">ADICIONAR</button></div></section></div>
+<script src="assets/prog-manual.js?v=AV58_1_19"></script>
 </body>
 </html>
