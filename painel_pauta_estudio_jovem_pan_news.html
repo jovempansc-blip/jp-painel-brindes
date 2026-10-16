@@ -3276,6 +3276,42 @@ function closeHistoryModal(){
   $('historyModal').classList.remove('show');
 }
 
+
+/* AV58.1.22 · Rodízio de textos das PAUTAS: avanço exclusivamente pela leitura confirmada. */
+function studioPautaTextVariants(p){
+  const kind=String(p?.kind||p?.promoKind||p?.type||'').toLowerCase();
+  if(kind!=='pauta'||!p?.textRotationEnabled||!Array.isArray(p.textVariants)||p.textVariants.length<2)return [];
+  return p.textVariants.filter(v=>v&&String(v.id||'')&&String(v.text||'').trim());
+}
+function studioPautaRotationCount(p,overrideMonth='',overrideLogs=null){
+  const seen=new Set();let count=0;
+  Object.entries(state.months||{}).forEach(([monthKey,month])=>{
+    if(overrideMonth&&monthKey===overrideMonth)return;
+    const row=(Array.isArray(month?.promos)?month.promos:Object.values(month?.promos||{})).find(x=>x?.id===p.id);
+    (row?.readLog||[]).forEach(log=>{
+      if(!log?.confirmedAt||!log.textVariantId)return;
+      const key=log.id||`${log.confirmedAt}|${log.date}|${log.slot}|${log.station}`;
+      if(!seen.has(key)){seen.add(key);count++;}
+    });
+  });
+  const local=overrideLogs??(overrideMonth?(Array.isArray(state.months?.[overrideMonth]?.promos)?state.months[overrideMonth].promos:Object.values(state.months?.[overrideMonth]?.promos||{})).find(x=>x?.id===p.id)?.readLog:[]);
+  (Array.isArray(local)?local:[]).forEach(log=>{
+    if(!log?.confirmedAt||!log.textVariantId)return;
+    const key=log.id||`${log.confirmedAt}|${log.date}|${log.slot}|${log.station}`;
+    if(!seen.has(key)){seen.add(key);count++;}
+  });
+  return count;
+}
+function studioPautaRotationChoice(p,item){
+  const versions=studioPautaTextVariants(p);
+  if(!versions.length)return {id:'',index:0,text:String(p?.description||'')};
+  const history=studioAV57Logs(p,item).slice(-1)[0];
+  if(studioAV57Progress(p,item).remaining===0&&history?.textVariantId&&history?.textSnapshot){return {id:String(history.textVariantId),index:Number(history.textVariantIndex)||0,text:String(history.textSnapshot),historical:true};}
+  const monthKey=String(item?.date||todayISO()).slice(0,7);
+  const index=studioPautaRotationCount(p,monthKey,(Array.isArray(state.months?.[monthKey]?.promos)?state.months[monthKey].promos:Object.values(state.months?.[monthKey]?.promos||{})).find(x=>x?.id===p.id)?.readLog||[])%versions.length;
+  return {...versions[index],index};
+}
+
 function startPromoRead(promoId){
   const p=findPromoById(promoId);
   if(!p) return;
@@ -3303,27 +3339,39 @@ async function confirmPromoReadV56(event){
   const required=studioRequiredReadsForHour(p,item),before=studioReadCountForHour(p,item),beforeMissed=studioMissedCountForHour(p,item),beforeResolved=before+beforeMissed;
   if(required<1){alert('ESTA PAUTA NÃO ESTÁ PROGRAMADA PARA ESTE HORÁRIO.');selectedPromoId=null;render();return;}
   if(beforeResolved>=required){selectedPromoId=null;render();return;}
+  const displayedText=typeof document==='undefined'?null:document.querySelector('#pautaPanel .desc[data-text-variant-id]');
+  const displayedVariantId=displayedText?.dataset.textVariantId||'';
+  const displayedVariantText=displayedText?.textContent||'';
   const operator=newsOperatorIdentity(true);
   if(button){button.dataset.busy='1';button.disabled=true;button.textContent='SALVANDO...';}
   let savedOccurrence=beforeResolved+1;
   try{
     await ensureStudioFirebaseOnline();
     const now=new Date(),iso=now.toISOString(),key=readHourKey(item,p),logId=`READ-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,monthKey=studioRecordMonths('promos',p.id,item.date||todayISO())[0]||newsMonthKey(item.date||todayISO());
-    let found=false,changed=false,alreadyComplete=false;
+    let found=false,changed=false,alreadyComplete=false,staleRotation=false;
     const result=await studioRetry(async()=>{
-      found=false;changed=false;alreadyComplete=false;
+      found=false;changed=false;alreadyComplete=false;staleRotation=false;
       const tx=await firebaseRef.child('months').child(monthKey).child('promos').transaction(current=>{
         const rows=Array.isArray(current)?current.filter(Boolean):Object.values(current||{}).filter(Boolean),index=rows.findIndex(row=>row?.id===p.id);if(index<0)return;found=true;
         const row=rows[index],logs=studioAV57Logs(row,item);let existingCount=logs.length;
         if(!existingCount&&validReadTimestamp(hourMapValue(row?.readByHour,item,row)))existingCount=1;
         const existingMissed=studioMissedCountForHour(row,item),existingResolved=existingCount+existingMissed;
         if(existingResolved>=required){alreadyComplete=true;return rows;}
+        const variants=typeof studioPautaTextVariants==='function'?studioPautaTextVariants(row):[];
+        let rotationVersion=null,rotationIndex=0;
+        if(variants.length){
+          const priorMonthCount=studioPautaRotationCount(row,monthKey,[]);
+          const localCount=(row.readLog||[]).filter(log=>log?.confirmedAt&&log.textVariantId).length;
+          rotationIndex=(priorMonthCount+localCount)%variants.length;
+          rotationVersion=variants[rotationIndex];
+          if(!displayedVariantId||displayedVariantId!==rotationVersion.id||displayedVariantText!==rotationVersion.text){staleRotation=true;return;}
+        }else if(displayedVariantId){staleRotation=true;return;}
         savedOccurrence=existingResolved+1;
         row.readByHour={...(row.readByHour||{}),[key]:iso};row.readLog=Array.isArray(row.readLog)?row.readLog:[];
-        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,plannerVersion:'AV57_3_SMART_BALANCE_V3',opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textSnapshot:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
+        row.readLog.push({id:logId,key,date:item.date||todayISO(),scheduledHour:timeToHHMM(item.slot),slot:formatStudioTime(item.slot),station:STUDIO_STATION,program:upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA'),type:pautaTypeLabel(row),name:upper(row.name||row.title||'PAUTA'),occurrenceIndex:savedOccurrence,requiredReads:required,plannerVersion:'AV57_3_SMART_BALANCE_V3',opecClientId:row.opecClientId||'',opecClientName:upper(row.opecClientName||row.clientName||''),opecTextType:studioOpecTextType(row),opecTextVersion:studioOpecVersion(row),titleSnapshot:upper(row.name||row.title||'PAUTA'),textVariantId:rotationVersion?.id||'',textVariantIndex:rotationVersion?rotationIndex:-1,textVariantLabel:rotationVersion?`VERSÃO ${String(rotationIndex+1).padStart(2,'0')}`:'',textSnapshot:rotationVersion?rotationVersion.text:String(row.description||''),confirmedAt:iso,confirmedAtLabel:`${pad(now.getHours())}:${pad(now.getMinutes())}`,operatorName:operator.name,operatorSector:operator.sector});
         row.readAt=iso;row.readAtLabel=now.toLocaleString('pt-BR');row.readSlot=formatStudioTime(item.slot);row.readStation=STUDIO_STATION;row.readProgram=upper(programFromSchedule(item.date,item.slot,STUDIO_STATION)||item.program||'PROGRAMA');row.updatedAt=iso;rows[index]=row;changed=true;return rows;
       },undefined,false);
-      if(!tx?.committed){const error=new Error(found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found;throw error;}return tx;
+      if(!tx?.committed){const error=new Error(staleRotation?'OUTRA CONFIRMAÇÃO OU EDIÇÃO ALTEROU A VERSÃO DESTA PAUTA. REABRA A LEITURA PARA CONFERIR O TEXTO CORRETO.':found?'A LEITURA NÃO FOI CONFIRMADA.':'A PAUTA NÃO FOI LOCALIZADA NA BASE OFICIAL.');error.retryable=!found&&!staleRotation;throw error;}return tx;
     });
     const remoteRows=result.snapshot.val();if(state.months?.[monthKey])state.months[monthKey].promos=Array.isArray(remoteRows)?remoteRows:Object.values(remoteRows||{}).filter(Boolean);
     if(changed){await Promise.allSettled([firebaseRef.update({updatedAt:window.firebase.database.ServerValue.TIMESTAMP,savedAt:iso,source:'ESTUDIO_JPNEWS',version:'AV57_SMART_READ'}),appendNewsAudit({id:`LOG_${logId}`,action:'LEITURA DE PAUTA CONFIRMADA',target:upper(p.name||p.title||'PAUTA'),targetId:p.id,origin:'ESTÚDIO JP NEWS 98,3',operatorName:operator.name,operatorSector:operator.sector,note:`${item.date||todayISO()} · ${formatStudioTime(item.slot)} · LEITURA ${savedOccurrence}/${required}`,createdAt:iso,createdAtLabel:now.toLocaleString('pt-BR')})]);}
@@ -3575,7 +3623,7 @@ function render(){
   const promoBody = promo ? `
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
       <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1><small class="rotationInfo av57 studioValidityInfo">${esc(studioValidityLabel(promo))}</small>${studioOpecContextLabel(promo)?`<small class="rotationInfo av57">${esc(studioOpecContextLabel(promo))}</small>`:''}<small class="rotationInfo av57">LEITURAS NESTA HORA · ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}</small></div>
-      <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
+      <div class="descBox"><p class="desc" data-text-variant-id="${esc(studioPautaRotationChoice(promo,item).id)}" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(studioPautaRotationChoice(promo,item).text||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
       <div class="pautaActions"><button class="modalBtn" id="cancelPromoReadInline" type="button">VOLTAR</button><button class="modalBtn primary" id="confirmPromoReadInline" type="button" onclick="confirmPromoRead(event)">CONFIRMAR LEITURA ${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required>1?`${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).done+1}/${studioAV57Progress(promo,currentDisplayItem||virtualCurrentItem()).required}`:''}</button></div>
     ` : isVirtual ? `
