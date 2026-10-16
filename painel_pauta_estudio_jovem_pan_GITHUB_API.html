@@ -2656,6 +2656,39 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 .studioMultiPrizes button{max-width:210px;min-height:30px;padding:7px 10px;border:1px solid #e0e6ee;border-radius:10px;background:#fff;color:#526278;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:800 10px "Segoe UI",Arial,sans-serif;cursor:pointer}
 .studioMultiPrizes button.active{background:#fff3f5;color:#b42043;border-color:#e5b5c2}
 @media(max-width:760px){.studioMultiPrizes button{max-width:130px;font-size:9px}.studioMultiPrizes span{width:100%}}
+
+/* AV58.1.21 — ajuste localizado no Estúdio oficial claro: confirmar no título,
+   pendentes primeiro, confirmados abaixo e letreiro vertical rápido. */
+.studioMainColumn .pautaBody>.titleBox.studioReadingTitleBox{position:relative!important;padding-right:72px!important;padding-left:72px!important;min-width:0!important}
+.studioReadingTitleBox .title{min-width:0!important;width:100%!important;overflow-wrap:anywhere!important;text-align:center!important}
+.studioReadingHeaderConfirm{
+  appearance:none;position:absolute;right:16px;top:50%;transform:translateY(-50%);
+  width:46px;height:46px;min-width:46px;min-height:46px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;border:1px solid #16814a;background:linear-gradient(145deg,#3bbe77,#168b50);
+  color:#fff;box-shadow:0 5px 13px rgba(31,142,79,.17);cursor:pointer;z-index:2;
+  transition:box-shadow .16s ease,filter .16s ease;
+}
+/* Sobrepõe o seletor legado #confirmPromoReadInline, que força vermelho/cantos quadrados. */
+#confirmPromoReadInline.studioReadingHeaderConfirm{background:linear-gradient(145deg,#3bbe77,#168b50)!important;border:1px solid #16814a!important;color:#fff!important;border-radius:50%!important;width:46px!important;height:46px!important;min-width:46px!important;min-height:46px!important;padding:0!important;box-shadow:0 5px 13px rgba(31,142,79,.17)!important;transform:translateY(-50%)!important}
+#confirmPromoReadInline.studioReadingHeaderConfirm:hover{background:linear-gradient(145deg,#48c983,#168b50)!important;transform:translateY(-50%)!important}
+.studioReadingHeaderConfirm svg{width:26px;height:26px;stroke:#fff;stroke-width:2.9;stroke-linecap:round;stroke-linejoin:round;fill:none;display:block}
+.studioReadingHeaderConfirm:hover{filter:brightness(1.06);box-shadow:0 6px 17px rgba(31,142,79,.24)}
+.studioReadingHeaderConfirm:focus-visible{outline:3px solid #6da3dc;outline-offset:3px}
+.studioReadingHeaderConfirm.busy,.studioReadingHeaderConfirm:disabled{opacity:.6;cursor:wait;pointer-events:none}
+/* Os cards laterais são identificados exclusivamente por cor e nome (máx. duas linhas). */
+.studioSideRailCard .studioSideRailText{min-width:0!important;display:block!important;overflow:hidden!important}
+.studioSideRailCard .studioSideRailName{display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;overflow:hidden!important;white-space:normal!important;word-break:normal!important;overflow-wrap:break-word!important;line-height:1.28!important;max-height:2.56em!important;margin:0!important}
+.studioSideRailCard.pending .studioSideRailText{display:flex!important;align-items:center!important;min-height:32px!important}
+.studioSideRailCard .studioSideRailMeta{display:none!important}
+.studioSideRailCard.read .studioSideRailTicker{height:38px!important;overflow:hidden!important;width:100%!important;display:block!important}
+.studioSideRailCard.read .studioSideRailTickerTrack{height:76px!important;display:block!important;animation:studioReadVerticalTickerV21 2.8s ease-in-out infinite!important}
+.studioSideRailCard.read .studioSideRailTickerTrack span{height:38px!important;max-height:38px!important;display:-webkit-box!important;-webkit-box-orient:vertical!important;-webkit-line-clamp:2!important;overflow:hidden!important;white-space:normal!important;align-content:center!important;line-height:1.25!important;overflow-wrap:break-word!important}
+.studioSideRailCard.read .studioSideRailTickerTrack span:last-child{color:#328553!important;font-weight:900!important}
+@keyframes studioReadVerticalTickerV21{0%,36%{transform:translateY(0)}47%,87%{transform:translateY(-38px)}98%,100%{transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.studioSideRailCard.read .studioSideRailTickerTrack{animation:none!important}}
+@media(max-width:1199px){.studioMainColumn .pautaBody>.titleBox.studioReadingTitleBox{padding-left:62px!important;padding-right:62px!important}#confirmPromoReadInline.studioReadingHeaderConfirm{width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;right:11px}}
+@media(max-width:650px){.studioMainColumn .pautaBody>.titleBox.studioReadingTitleBox{padding-left:54px!important;padding-right:54px!important}#confirmPromoReadInline.studioReadingHeaderConfirm{right:8px;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important}.studioReadingHeaderConfirm svg{width:23px;height:23px}}
+
 </style>
 </head>
 <body>
@@ -5007,7 +5040,7 @@ async function confirmPromoReadV56(event){
   if(required<1){alert('ESTA PAUTA NÃO ESTÁ PROGRAMADA PARA ESTE HORÁRIO.');closeStudioReadSheet();return;}
   if(beforeResolved>=required){closeStudioReadSheet();return;}
   const operator=studioOperatorIdentity(true);
-  if(button){button.dataset.busy='1';button.disabled=true;if(button.classList.contains('studioReadSheetConfirm')){button.classList.add('busy');button.setAttribute('aria-busy','true');}else{button.dataset.originalText=button.textContent;button.textContent='SALVANDO...';}}
+  if(button){button.dataset.busy='1';button.disabled=true;if(button.classList.contains('studioReadSheetConfirm')||button.classList.contains('studioReadingHeaderConfirm')){button.classList.add('busy');button.setAttribute('aria-busy','true');button.setAttribute('aria-label','SALVANDO LEITURA');}else{button.dataset.originalText=button.textContent;button.textContent='SALVANDO...';}}
   studioReadSaving=true;
   $('cancelPromoReadInline')?.setAttribute('aria-disabled','true');if($('cancelPromoReadInline'))$('cancelPromoReadInline').disabled=true;
   let savedOccurrence=beforeResolved+1;
@@ -5043,7 +5076,7 @@ async function confirmPromoReadV56(event){
     studioReadSaving=false;
     const cancel=$('cancelPromoReadInline');if(cancel){cancel.disabled=false;cancel.setAttribute('aria-disabled','false');}
     for(const active of new Set([button,$('confirmPromoReadInline')].filter(Boolean))){
-      active.dataset.busy='0';active.disabled=false;active.classList.remove('busy');active.setAttribute('aria-busy','false');
+      active.dataset.busy='0';active.disabled=false;active.classList.remove('busy');active.setAttribute('aria-busy','false');if(active.classList.contains('studioReadingHeaderConfirm'))active.setAttribute('aria-label','CONFIRMAR LEITURA');
       if(!active.classList.contains('studioReadSheetConfirm')&&active.dataset.originalText)active.textContent=active.dataset.originalText;
     }
   }
@@ -5428,12 +5461,12 @@ function render(){
   const promoBody = promo ? `
       ${studioCampaignContext?studioCampaignResultInfo(promo,item):''}
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
-      <div class="titleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1></div>
+      <div class="titleBox studioReadingTitleBox"><h1 class="title" style="${inlineTextStyle(promo.titleStyle,'title')}">${esc(upper(promo.name||promo.title||(isMerchan(promo)?'MERCHAN':'PROMOÇÃO')))}</h1>
+      ${!studioCampaignContext&&!shouldShowPromoResultBox(promo,item)&&studioAV57Progress(promo,item).remaining>0?`<button class="studioReadingHeaderConfirm ${studioReadSaving?'busy':''}" id="confirmPromoReadInline" type="button" ${studioReadSaving?'disabled':''} aria-busy="${studioReadSaving?'true':'false'}" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA" onclick="confirmPromoRead(event)">${studioDrawerStateIcon('done')}</button>`:''}</div>
       <div class="descBox"><p class="desc" style="${inlineTextStyle(promo.descriptionStyle,'desc')}">${esc(promo.description||'SEM DESCRIÇÃO CADASTRADA.')}</p></div>
       ${shouldShowPromoResultBox(promo,currentDisplayItem || virtualCurrentItem())?buildPromoResultBox(promo,currentDisplayItem || virtualCurrentItem()):''}
       ${studioCampaignContext&&!shouldShowPromoResultBox(promo,item)?'<div class="studioCampaignResultInfo">SORTEIO AGENDADO · O RESULTADO PODERÁ SER CONFIRMADO NO HORÁRIO DO SORTEIO.</div>':''}
       <div class="pautaActions studioInlineReadActions" ${shouldShowPromoResultBox(promo,item)?'hidden':''}>
-        ${!studioCampaignContext&&!shouldShowPromoResultBox(promo,item)&&studioAV57Progress(promo,item).remaining>0?`<button class="studioReadSheetAction confirm studioReadSheetConfirm ${studioReadSaving?'busy':''}" id="confirmPromoReadInline" type="button" ${studioReadSaving?'disabled':''} aria-busy="${studioReadSaving?'true':'false'}" title="CONFIRMAR LEITURA" aria-label="CONFIRMAR LEITURA" onclick="confirmPromoRead(event)">${studioDrawerStateIcon('done')}</button>`:''}
         <button class="studioReadSheetAction" id="cancelPromoReadInline" type="button" ${studioReadSaving?'disabled':''} title="FECHAR E VOLTAR AO PRÊMIO" aria-label="FECHAR E VOLTAR AO PRÊMIO">${studioDrawerStateIcon('missed')}</button>
       </div>
     ` : isVirtual ? `
