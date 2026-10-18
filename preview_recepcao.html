@@ -793,6 +793,7 @@ tbody tr:focus-within td{background:#fff8fa}
 <style id="reception-profile-status">
 .winnerCenter{flex-direction:column;gap:4px}.receptionProfileBadge{font-size:8px!important;font-weight:700;color:#9a815e;line-height:1.35}.receptionProfileBadge.ready{color:#6a987e}.pickupBtn.profilePending{background:#faf5ec!important;border:1px solid #e5d7bd!important;color:#a08762!important}.receptionProfileFields{margin:12px 0;padding:12px;border:1px solid #e2e8ef;border-radius:14px;background:#fafcfe}.pickupSheetAction.secondary{margin-top:10px;background:#eef4f8!important;color:#778ba0!important;border:1px solid #dce5ee!important}.pickupSheetAction:disabled{background:#f3f5f7;color:#9ba6b3;cursor:default;opacity:1}
 </style>
+<link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
 </head>
 <body>
 <div class="wrap">
@@ -860,6 +861,30 @@ let state={months:{}}, currentMonth='';
 function monthData(){return state.months?.[currentMonth]||{items:[],promos:[],distributions:[]};}
 function receptionConsolidatedCollection(collection){const map=new Map();Object.entries(state.months||{}).forEach(([month,m])=>(m?.[collection]||[]).forEach((row,index)=>{if(!row)return;const id=String(row.id||`LEGACY_${collection}_${month}_${index}_${row.date||row.startDate||''}`),current=map.get(id);if(!current){map.set(id,{row,month});return;}const a=Date.parse(current.row.updatedAt||current.row.createdAt||current.row.resultAt||'')||0,b=Date.parse(row.updatedAt||row.createdAt||row.resultAt||'')||0,canonical=String(row.date||row.resultDate||row.drawDate||row.startDate||'').slice(0,7)===month,prevCanonical=String(current.row.date||current.row.resultDate||current.row.drawDate||current.row.startDate||'').slice(0,7)===current.month;if(b>a||(b===a&&canonical&&!prevCanonical))map.set(id,{row,month});}));return[...map.values()].map(entry=>entry.row);}
 function receptionAllItems(){return receptionConsolidatedCollection('items');}
+function receptionItemsForDate(date=''){
+  const requestedMonth=String(date||'').slice(0,7),map=new Map(),pinned=new Set();
+  if(/^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)){
+    (state.months?.[requestedMonth]?.items||[]).forEach((row,index)=>{
+      if(!row||row.date!==date) return;
+      const id=String(row.id||`LEGACY_items_${requestedMonth}_${index}_${row.date||''}`);
+      map.set(id,row);
+      pinned.add(id);
+    });
+  }
+  Object.entries(state.months||{}).forEach(([month,m])=>(m?.items||[]).forEach((row,index)=>{
+    if(!row||row.date!==date) return;
+    const id=String(row.id||`LEGACY_items_${month}_${index}_${row.date||''}`);
+    if(pinned.has(id)) return;
+    const current=map.get(id);
+    if(!current){ map.set(id,row); return; }
+    const a=Date.parse(current.updatedAt||current.createdAt||current.resultAt||'')||0;
+    const b=Date.parse(row.updatedAt||row.createdAt||row.resultAt||'')||0;
+    const canonical=String(row.date||'').slice(0,7)===month;
+    const prevCanonical=String(current.date||'').slice(0,7)===requestedMonth;
+    if(b>a||(b===a&&canonical&&!prevCanonical)) map.set(id,row);
+  }));
+  return [...map.values()];
+}
 function receptionAllPromos(){return receptionConsolidatedCollection('promos');}
 function receptionPromosForDate(date=''){
   const requestedMonth=String(date||'').slice(0,7),map=new Map(),pinned=new Set();
@@ -1286,14 +1311,16 @@ function isExpiredNoPickup(dateValue){
 function resultRowsForDate(date){
   selectMonthForDate(date);
   const items=[];
-  receptionAllItems()
-    .filter(i=>i.date===date && (upper(i.status)==='REALIZADO' || upper(i.winnerName) || (Array.isArray(i.winnerNames)&&i.winnerNames.length)))
+  receptionItemsForDate(date)
+    .filter(i=>upper(i.status)==='REALIZADO' || upper(i.winnerName) || (Array.isArray(i.winnerNames)&&i.winnerNames.length) || upper(i.resultName) || (Array.isArray(i.resultNames)&&i.resultNames.length))
     .forEach(i=>{
       const linkedPromo=i.sourceType==='promo-result'?receptionPromosForDate(date).find(p=>p.id===i.promoId):null;
       const linkedOccurrence=linkedPromo?(linkedPromo.occurrences||[]).find(o=>o.date===date&&timeToHHMM(o.time||linkedPromo.drawTime)===timeToHHMM(i.slot)):null;
       const names=(Array.isArray(i.winnerNames)&&i.winnerNames.length)
         ? i.winnerNames.map(upper).filter(Boolean)
-        : String(i.winnerName||'').split(',').map(upper).filter(Boolean);
+        : (Array.isArray(i.resultNames)&&i.resultNames.length)
+          ? i.resultNames.map(name=>upper(typeof name==='string'?name:name?.name||'')).filter(Boolean)
+          : String(i.winnerName||i.resultName||'').split(',').map(upper).filter(Boolean);
       const winners=names.length?names:['REALIZADO'];
       const deliveries=Array.isArray(i.winnerDeliveries)?i.winnerDeliveries:[];
       winners.forEach((name,idx)=>{
@@ -1343,7 +1370,7 @@ function resultRowsForDate(date){
 function allResultRows(){
   const dates=new Set();
   Object.values(state.months||{}).forEach(m=>{
-    (m.items||[]).forEach(i=>{if(i?.date) dates.add(i.date);});
+    (m.items||[]).forEach(i=>{if(i?.date&&(upper(i.status)==='REALIZADO'||upper(i.winnerName||'')||(Array.isArray(i.winnerNames)&&i.winnerNames.length)||upper(i.resultName||'')||(Array.isArray(i.resultNames)&&i.resultNames.length))) dates.add(i.date);});
     (m.promos||[]).forEach(p=>{
       promoWinnerOccurrences(p).forEach(w=>{if(w?.occurrenceDate) dates.add(w.occurrenceDate);});
     });

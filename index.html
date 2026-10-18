@@ -3778,6 +3778,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 .promoRotationVariantHeader button{border:1px solid #eed5db;background:#fff5f6;color:#aa3f58;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:9px;font-weight:800}
 .promoRotationVariant textarea{min-height:90px!important;resize:vertical}.promoRotationAdd{width:100%;padding:12px;border:1px dashed #c8d5e3;background:#f8fafc;border-radius:11px;color:#526c89;font-size:10px;font-weight:800;cursor:pointer;margin-top:10px}
 </style>
+<link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
 </head>
 <body>
 <div class="wrap">
@@ -4489,7 +4490,10 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
         <input type="hidden" id="promoId">
         <input type="hidden" id="promoImageData">
         <div class="promoFormLayout">
-          <div class="promoEditorFields">
+            <div class="promoEditorFields">
+            <input type="hidden" id="promoLinkedPromotionId" value="">
+            <div class="jpPautaParentField" id="jpPautaParentField" hidden><label for="jpPautaParentSelect">PROMOÇÃO VINCULADA (OPCIONAL)</label><select class="control" id="jpPautaParentSelect"><option value="">PAUTA INDEPENDENTE · SEM VÍNCULO</option></select><small>Use para associar esta pauta a uma promoção já cadastrada, sem alterar o estoque nem o sorteio.</small></div>
+            <div class="jpLinkContext" id="jpLinkedPautaContext" hidden role="status"><strong>PAUTA VINCULADA À PROMOÇÃO</strong><span id="jpLinkedPautaContextName"></span><small>A pauta divulga o evento sem consumir estoque de prêmios. Escolha a distribuição das leituras na aba PROGRAMAÇÃO.</small></div>
             <div class="promoTypeChoice">
               <span>O QUE SERÁ CADASTRADO?</span>
               <div class="promoTypeButtons">
@@ -4512,6 +4516,11 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
                 <div class="field" id="promoLocalField" data-promo-only="1"><label id="promoLocalLabel">CANAL DA PROMOÇÃO</label><select class="control" id="promoLocal"></select></div>
               </div>
             </section>
+            <section class="promoFormSection jpOptionalPauta" data-promo-only="1" id="jpPromoPautaOptionSection">
+              <div class="promoFormSectionTitle"><strong>PAUTA PROMOCIONAL VINCULADA</strong><span>OPCIONAL</span></div>
+              <div class="jpOptionalPautaRow"><div><strong>TERÁ PAUTA PARA LEITURA?</strong><small>Após salvar a promoção, você será encaminhado para criar a pauta, se escolher SIM. O rodízio de textos é opcional.</small></div><select class="control" id="promoHasLinkedPauta" aria-label="CRIAR PAUTA VINCULADA"><option value="no">NÃO · APENAS PROMOÇÃO E SORTEIO</option><option value="yes">SIM · CADASTRAR PAUTA DEPOIS</option></select></div>
+              <p class="jpLinkedStatus" id="jpLinkedStatus" hidden></p>
+            </section>
             <section class="promoFormSection">
               <div class="promoFormSectionTitle"><strong>TEXTO E BANNER</strong><span>PRÉVIA AO LADO</span></div>
               <div class="formGrid">
@@ -4532,7 +4541,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
             <div id="promoPanelSchedule" role="tabpanel" aria-labelledby="promoTabSchedule" data-promo-editor-panel="schedule" hidden>
             <section class="promoFormSection">
               <div class="promoFormSectionTitle"><strong>DISTRIBUIÇÃO DAS LEITURAS</strong><span>DIAS, FREQUÊNCIA E HORÁRIOS</span></div>
-              <div class="field full" style="margin:11px 0 16px"><label for="promoReadMethod">PROGRAMAÇÃO DE PAUTA · COMO DISTRIBUIR AS LEITURAS?</label><select class="control" id="promoReadMethod"><option value="automatic">AUTOMÁTICA (REGRAS DA GRADE)</option><option value="manual">SOMENTE PROG MANUAL (SEM HORÁRIOS AUTOMÁTICOS)</option></select><span class="ticketFormHint">A OPÇÃO MANUAL DEIXA A PAUTA DISPONÍVEL NA PROG MANUAL; NÃO CADASTRA LEITURAS SOZINHA.</span></div>
+              <div class="field full" style="margin:11px 0 16px"><label for="promoReadMethod">PROGRAMAÇÃO DE PAUTA · COMO DISTRIBUIR AS LEITURAS?</label><select class="control" id="promoReadMethod"><option value="automatic">AUTOMÁTICA (REGRAS DA GRADE)</option><option value="manual">SOMENTE PROG MANUAL (SEM HORÁRIOS AUTOMÁTICOS)</option></select><span class="ticketFormHint">NO MODO MANUAL, VOCÊ PODE INSERIR QUANTAS LEITURAS QUISER, DENTRO DA VIGÊNCIA, NA PROG MANUAL.</span></div>
               <div class="formGrid">
                 <div class="field"><label>INÍCIO</label><input class="control" type="date" id="promoStartDate" required></div>
                 <div class="field"><label>ENCERRAMENTO</label><input class="control" type="date" id="promoEndDate" required></div>
@@ -8463,7 +8472,9 @@ function promoUpdateMechanics(){
 }
 function updatePromoKindMode(){
   const kind=$('promoKind')?.value || 'promo',isPromo=kind==='promo',smart=promoAV57SmartMode();
+  $('promoDrawer')?.classList.toggle('jpManualReadMode',$('promoReadMethod')?.value==='manual');
   promoSetKindChoice(kind);
+  jpUpdateLinkedPautaForm();
   if($('promoLocal')) $('promoLocal').required=isPromo;
   if($('promoDistributionId')) $('promoDistributionId').required=isPromo;
   if($('promoSegmentKey')) $('promoSegmentKey').required=isPromo;
@@ -13290,6 +13301,11 @@ function clearPromoForm(){
   promoEditorNewId=id('PR');
   $('promoImageData').value='';
   if($('promoKind')) $('promoKind').value='promo'; promoSetKindChoice('promo');
+  if($('promoHasLinkedPauta')) $('promoHasLinkedPauta').value='no';
+  if($('promoLinkedPromotionId')) $('promoLinkedPromotionId').value='';
+  if($('jpPautaParentSelect')) $('jpPautaParentSelect').value='';
+  if($('jpLinkedPautaContext')) $('jpLinkedPautaContext').hidden=true;
+  if($('jpLinkedStatus')) $('jpLinkedStatus').hidden=true;
   if($('promoStation')) $('promoStation').value='JP1017';
   if($('promoReadMethod')) $('promoReadMethod').value='automatic';
   if($('promoStartDate')) $('promoStartDate').value=todayISO();
@@ -13353,7 +13369,11 @@ function startPromoRegistration(kind){
   }
   promoSetKindChoice(selected);
   if($('promoKind')) $('promoKind').value=selected;
+  // Promoção nova controla sorteio e estoque; leituras extras nascem de pauta opcional.
+  // Registros antigos preservam seu modo original quando editados.
+  if(selected==='promo'&&$('promoReadMethod'))$('promoReadMethod').value='manual';
   if(selected==='pauta'){
+    jpPopulateParentPromoOptions();
     if($('promoScheduleMode')) $('promoScheduleMode').value='smart';
     if($('promoFrequencyScope')) $('promoFrequencyScope').value='program';
     if($('promoFrequencyCount')) $('promoFrequencyCount').value='1';
@@ -13368,6 +13388,59 @@ function startPromoRegistration(kind){
     const first=selected==='pauta'?$('promoName'):$('promoDistributionId');
     first?.focus?.();
   },40);
+}
+/* AV58.1.25 · Uma promoção pode iniciar uma pauta opcional após gravar o resultado.
+   Não cria a pauta automaticamente, preserva os identificadores e impede saldo duplicado. */
+function jpLinkedPautasFor(promoId){
+  if(!promoId) return [];
+  const records=new Map();
+  Object.values(state.months||{}).forEach(month=>(month.promos||[]).forEach(row=>{
+    if(row?.kind==='pauta'&&row.linkedPromotionId===promoId&&row.id)records.set(row.id,row);
+  }));
+  return [...records.values()];
+}
+function jpPopulateParentPromoOptions(){
+  const select=$('jpPautaParentSelect');if(!select)return;
+  const current=$('promoLinkedPromotionId')?.value||select.value||'';
+  const parents=new Map();
+  Object.values(state.months||{}).forEach(month=>(month.promos||[]).forEach(row=>{
+    if(row&&row.id&&['promo','promoção','promocao'].includes(String(row.kind||row.promoKind||'promo').toLowerCase()))parents.set(row.id,row);
+  }));
+  select.replaceChildren(new Option('PAUTA INDEPENDENTE · SEM VÍNCULO',''));
+  [...parents.values()].sort((a,b)=>String(a.name||a.title||'').localeCompare(String(b.name||b.title||''),'pt-BR')).forEach(row=>{
+    select.add(new Option(String(row.name||row.title||'PROMOÇÃO'),row.id));
+  });
+  if(current&&![...select.options].some(o=>o.value===current))select.add(new Option('PROMOÇÃO VINCULADA · NÃO LOCALIZADA NO MÊS',current));
+  select.value=current;
+}
+function jpUpdateLinkedPautaForm(){
+  const idValue=$('promoLinkedPromotionId')?.value||'';
+  const parentField=$('jpPautaParentField');
+  if(parentField)parentField.hidden=$('promoKind')?.value!=='pauta';
+  const linked=idValue?consolidatedPromoById(idValue):null;
+  const context=$('jpLinkedPautaContext'),label=$('jpLinkedPautaContextName');
+  if(context)context.hidden=$('promoKind')?.value!=='pauta'||!idValue;
+  if(label)label.textContent=linked?.name||linked?.title||'PROMOÇÃO VINCULADA';
+  const info=$('jpLinkedStatus'),promoId=$('promoId')?.value||'';
+  const linkedPautas=jpLinkedPautasFor(promoId);
+  if(info){info.hidden=$('promoKind')?.value!=='promo'||!linkedPautas.length;info.textContent=linkedPautas.length?`${linkedPautas.length} PAUTA(S) JÁ VINCULADA(S). SALVAR NOVAMENTE NÃO CRIARÁ DUPLICATAS.`:'';}
+}
+function jpOpenLinkedPautaAfterSave(promotion){
+  startPromoRegistration('pauta');
+  if($('promoLinkedPromotionId'))$('promoLinkedPromotionId').value=promotion.id;
+  jpPopulateParentPromoOptions();
+  if($('promoStation'))$('promoStation').value=promotion.station||'JP1017';
+  if($('promoStartDate'))$('promoStartDate').value=promotion.startDate||'';
+  if($('promoEndDate'))$('promoEndDate').value=promotion.endDate||'';
+  if($('promoName'))$('promoName').value=`PAUTA · ${promotion.name||promotion.title||'PROMOÇÃO'}`;
+  if($('promoDescription'))$('promoDescription').value='';
+  if($('promoReadMethod'))$('promoReadMethod').value='manual';
+  $('promoDrawer')?.classList.add('jpManualReadMode');
+  jpUpdateLinkedPautaForm();
+  promoAV57UpdateScheduleUI();
+  updatePromoPreview();
+  promoEditorShowTab('content');
+  $('promoDescription')?.focus();
 }
 window.openPromoStartModal=openPromoStartModal;
 window.closePromoStartModal=closePromoStartModal;
@@ -13522,6 +13595,10 @@ function editPromo(pid){
   promoWinnerRegistrationSetForm(p);
   $('promoDrawerTitle').textContent='EDITAR PROMOÇÃO';
   $('promoId').value=p.id;
+  if($('promoHasLinkedPauta')) $('promoHasLinkedPauta').value=p.hasLinkedPauta?'yes':'no';
+  if($('promoLinkedPromotionId')) $('promoLinkedPromotionId').value=p.linkedPromotionId||'';
+  jpPopulateParentPromoOptions();
+  jpUpdateLinkedPautaForm();
   $('promoStartDate').value=p.startDate||'';
   $('promoDrawDate').value=p.drawDate||'';
   $('promoDrawTime').value=p.drawTime||'';
@@ -13915,6 +13992,8 @@ $('promoForm').addEventListener('submit',async e=>{
     distributionId:$('promoDistributionId')?.value||'',
     segmentKey:$('promoSegmentKey')?.value||'',
     kind,
+    hasLinkedPauta:isPromo?$('promoHasLinkedPauta')?.value==='yes':false,
+    linkedPromotionId:!isPromo?($('promoLinkedPromotionId')?.value||existing.linkedPromotionId||''):'',
     local:isPromo?norm($('promoLocal').value):'PAUTA',
     program:$('promoProgram') ? norm($('promoProgram').value) : '',
     station:$('promoStation')?.value || 'JP1017',
@@ -13967,6 +14046,10 @@ $('promoForm').addEventListener('submit',async e=>{
   closeDrawer('promoDrawer');
   render();
   toast(`${promoKindLabel(kind)} CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO AUTOMATICAMENTE.`);
+  // Encaminhamento somente após confirmação do Firebase. Nunca cria pauta duplicada.
+  if(isPromo&&p.hasLinkedPauta&&!jpLinkedPautasFor(p.id).length){
+    jpOpenLinkedPautaAfterSave(p);
+  }
   }catch(error){
     console.error('ERRO AO SALVAR PROMOÇÃO/PAUTA',error);
     alert(`NÃO FOI POSSÍVEL SALVAR.\n\n${error?.message||error}`);
@@ -14014,6 +14097,15 @@ bind('deleteProgramWeekBtn','click',()=>clearProgramScope('week'));
 bind('deleteProgramMonthBtn','click',()=>clearProgramScope('month'));
 bind('addPromoBtn','click',openPromoStartModal);
 bind('promoStartCloseBtn','click',closePromoStartModal);
+bind('jpPautaParentSelect','change',()=>{
+  if($('promoLinkedPromotionId')) $('promoLinkedPromotionId').value=$('jpPautaParentSelect')?.value||'';
+  jpUpdateLinkedPautaForm();
+});
+bind('promoReadMethod','change',()=>{
+  $('promoDrawer')?.classList.toggle('jpManualReadMode',$('promoReadMethod')?.value==='manual');
+  promoAV57UpdateScheduleUI();
+  promoEditorQueuePlan();
+});
 bind('promoStartModal','click',event=>{if(event.target===event.currentTarget)closePromoStartModal();});
 bind('clearDistFiltersBtn','click',()=>{ $('distSearchInput').value=''; $('distStatusFilter').value=''; renderDistribuicao(); });
 ['weekFilter','programStationFilter','statusFilter'].forEach(id=>bind(id,'input',()=>{if(id==='weekFilter')$('weekFilter').dataset.allWeeks=$('weekFilter').value?'0':'1';renderProgramacao();renderClearProgramDrawer();}));

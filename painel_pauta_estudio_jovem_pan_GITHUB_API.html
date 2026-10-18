@@ -230,6 +230,43 @@ body{
   color:#17492d;
   letter-spacing:-.03em;
 }
+.winnerList{
+  list-style:none;
+  margin:0;
+  padding:0;
+  display:grid;
+  gap:8px;
+  text-align:left;
+}
+.winnerListItem{
+  display:grid;
+  grid-template-columns:24px minmax(0,1fr);
+  align-items:flex-start;
+  gap:10px;
+}
+.winnerListIndex{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:24px;
+  min-width:24px;
+  height:24px;
+  border-radius:999px;
+  background:#e5f4ea;
+  color:#24613a;
+  font-size:11px;
+  font-weight:1000;
+  line-height:1;
+}
+.winnerListName{
+  display:block;
+  min-width:0;
+  font-size:26px;
+  line-height:1.12;
+  color:#17492d;
+  letter-spacing:-.03em;
+  text-wrap:balance;
+}
 .pautaActions{
   width:min(1040px,100%);
   display:flex;
@@ -2690,6 +2727,10 @@ body{background-image:linear-gradient(rgba(244,246,248,.77),rgba(244,246,248,.77
 @media(max-width:650px){.studioMainColumn .pautaBody>.titleBox.studioReadingTitleBox{padding-left:54px!important;padding-right:54px!important}#confirmPromoReadInline.studioReadingHeaderConfirm{right:8px;width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important}.studioReadingHeaderConfirm svg{width:23px;height:23px}}
 
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
 </head>
 <body>
 <div class="wrap">
@@ -5505,7 +5546,8 @@ function render(){
   }
   const promo=currentPromoForRead();
   const isVirtual=!!item.__virtual;
-  const winnerBlock = item.winnerName ? `<div class="winnerBox" data-has-winner="1" title="BOTÃO DIREITO: AÇÕES DO GANHADOR"><span class="winnerLabel">GANHADOR</span><strong class="winnerName">${esc(item.winnerName)}</strong></div>` : '';
+  const winnerNamesForDisplay=existingWinnerNames(item);
+  const winnerBlock = winnerNamesForDisplay.length ? `<div class="winnerBox" data-has-winner="1" title="BOTÃO DIREITO: AÇÕES DO GANHADOR"><span class="winnerLabel">${winnerNamesForDisplay.length>1?'GANHADORES':'GANHADOR'}</span>${winnerNamesForDisplay.length>1?`<div class="winnerList">${winnerNamesForDisplay.map((name,index)=>`<div class="winnerListItem"><span class="winnerListIndex">${index+1}</span><strong class="winnerListName">${esc(name)}</strong></div>`).join('')}</div>`:`<strong class="winnerName">${esc(winnerNamesForDisplay[0])}</strong>`}</div>` : '';
   const promoBody = promo ? `
       ${studioCampaignContext?studioCampaignResultInfo(promo,item):''}
       ${promo.imageData?`<div class="promoReadBanner"><img src="${promo.imageData}" alt="IMAGEM DA PROMOÇÃO"></div>`:''}
