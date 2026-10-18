@@ -4727,6 +4727,22 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 <datalist id="distTitleDatalist"></datalist>
 <div class="toast" id="toast"></div>
 
+<style id="jp-action-help-126">
+.jpActionHelpDialog{width:min(510px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:min(650px,calc(100dvh - 32px));padding:0;border:1px solid #dee5ed;border-radius:17px;color:#273346;background:#fff;box-shadow:0 28px 75px #17223835;overflow:auto}
+.jpActionHelpDialog::backdrop{background:rgba(20,28,40,.42);backdrop-filter:blur(3px)}
+.jpActionHelpHead{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#f6f8fb;padding:14px 17px;border-bottom:1px solid #e4e9ef}
+.jpActionHelpHead strong{font-size:12px;line-height:1.35;letter-spacing:.02em}
+.jpActionHelpClose{width:32px;height:32px;border:1px solid #dce4eb;border-radius:10px;background:#fff;font-size:20px;line-height:1;color:#5c6775;cursor:pointer}
+.jpActionHelpBody{padding:18px;font-size:12px;line-height:1.65;text-transform:none;color:#566476}.jpActionHelpBody p{margin:0 0 12px}.jpActionHelpBody p:last-child{margin-bottom:0}
+.jpActionHelpFoot{padding:12px 17px;border-top:1px solid #e7ebf1;display:flex;justify-content:flex-end}
+</style>
+<!-- AV58.1.26 · Ajuda do catálogo acessível por clique, toque e teclado -->
+<dialog id="prizeCatalogHelpDialog" class="jpActionHelpDialog" aria-labelledby="prizeCatalogHelpTitle">
+  <div class="jpActionHelpHead"><strong id="prizeCatalogHelpTitle">COMO FUNCIONA O CATÁLOGO DE PRÊMIOS</strong><button id="prizeCatalogHelpClose" class="jpActionHelpClose" type="button" aria-label="FECHAR AJUDA">×</button></div>
+  <div class="jpActionHelpBody"><p>O catálogo guarda o título e a descrição padrão de cada prêmio. Quando você reutiliza um título em uma nova distribuição, a descrição é carregada automaticamente e continua editável.</p><p>A edição do catálogo não altera o histórico dos sorteios, os resultados confirmados ou distribuições antigas. Para atualizar a programação, use as ações próprias da distribuição e da grade.</p></div>
+  <div class="jpActionHelpFoot"><button id="prizeCatalogHelpUnderstood" class="btn red" type="button">ENTENDI</button></div>
+</dialog>
+
 <script src="assets/distribution-unprogram.js?v=AV58_1_10"></script>
 <script>
 // AV57.6.6.24: sem base operacional embutida; dados somente do Firebase RTDB.
@@ -14095,6 +14111,21 @@ bind('addProgramBtn','click',openProgramItemDrawer);
 bind('clearProgramBtn','click',openClearProgramDrawer);
 bind('deleteProgramWeekBtn','click',()=>clearProgramScope('week'));
 bind('deleteProgramMonthBtn','click',()=>clearProgramScope('month'));
+// AV58.1.26: o ícone de informações agora executa uma ação por clique (inclusive toque e teclado).
+function openPrizeCatalogHelp(){
+  const dialog=$('prizeCatalogHelpDialog');if(!dialog)return;
+  if(typeof dialog.showModal==='function') {if(!dialog.open)dialog.showModal();}
+  else dialog.removeAttribute('hidden');
+}
+function closePrizeCatalogHelp(){
+  const dialog=$('prizeCatalogHelpDialog');if(!dialog)return;
+  if(typeof dialog.close==='function'&&dialog.open)dialog.close();
+  else dialog.setAttribute('hidden','');
+}
+bind('prizeCatalogInfoBtn','click',openPrizeCatalogHelp);
+bind('prizeCatalogHelpClose','click',closePrizeCatalogHelp);
+bind('prizeCatalogHelpUnderstood','click',closePrizeCatalogHelp);
+bind('prizeCatalogHelpDialog','click',event=>{if(event.target===event.currentTarget)closePrizeCatalogHelp();});
 bind('addPromoBtn','click',openPromoStartModal);
 bind('promoStartCloseBtn','click',closePromoStartModal);
 bind('jpPautaParentSelect','change',()=>{
@@ -14285,6 +14316,6 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 <!-- AV-57.6.6.16 · PROGRAMAÇÃO COM ARRASTE + BOTÕES UNIFICADOS + SAVE PROMO EXPLÍCITO -->
 <script src="assets/distribution-unprogram-ui.js?v=AV58_1_10"></script>
 <div class="jpManualDialog" id="jpManualQtyDialog" hidden><section class="jpManualDialogCard" role="dialog" aria-modal="true" aria-labelledby="jpManualQtyTitle"><h3 id="jpManualQtyTitle">PROGRAMAR PRÊMIO</h3><p id="jpManualQtyHint">DEFINA A QUANTIDADE.</p><label for="jpManualQtyInput">QUANTIDADE A PROGRAMAR</label><input type="number" id="jpManualQtyInput" min="1" step="1" value="1"><div class="jpManualDialogActions"><button type="button" id="jpManualQtyCancel" class="jpManualBtn">CANCELAR</button><button type="button" id="jpManualQtyConfirm" class="jpManualBtn primary">ADICIONAR</button></div></section></div>
-<script src="assets/prog-manual.js?v=AV58_1_20"></script>
+<script src="assets/prog-manual.js?v=AV58_1_26"></script>
 </body>
 </html>

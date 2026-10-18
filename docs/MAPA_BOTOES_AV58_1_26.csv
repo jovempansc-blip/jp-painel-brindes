@@ -1,0 +1,177 @@
+painel,ordem,rotulo,id,acao_declarada,destino_ou_callback,verificacao
+index.html,1,CONECTANDO,syncStatusBtn,Controle por ID,syncStatusBtn,Referência de código encontrada
+index.html,2,PDF EXPORTAR EM PDF,exportPdfBtn,Controle por ID,exportPdfBtn,Referência de código encontrada
+index.html,3,🔔 0 RETORNOS,returnBellBtn,Controle por ID,returnBellBtn,Referência de código encontrada
+index.html,4,CENTRAL,,Navegação entre abas,central,Testada offline
+index.html,5,DISTRIBUIÇÃO GERAL,,Navegação entre abas,distribuicao,Testada offline
+index.html,6,PRÊMIOS,,Navegação entre abas,premios,Testada offline
+index.html,7,PROGRAMAÇÃO,,Navegação entre abas,programacao,Testada offline
+index.html,8,PROMO / MERCHAN,,Navegação entre abas,digital,Testada offline
+index.html,9,HORÁRIOS,,Navegação entre abas,horarios,Testada offline
+index.html,10,AGENDAMENTO,,Navegação entre abas,agendamento,Testada offline
+index.html,11,BANCO DE GANHADORES,,Navegação entre abas,ganhadores,Testada offline
+index.html,12,BACKUP,,Navegação entre abas,backup,Testada offline
+index.html,13,SISTEMA,,Navegação entre abas,sistema,Testada offline
+index.html,14,RELATÓRIOS,,Navegação entre abas,relatorios,Testada offline
+index.html,15,VER SISTEMA,,Ação inline,setView('sistema'),Função referenciada (análise estática)
+index.html,16,ABRIR GRADE,,Ação inline,setView('programacao'),Função referenciada (análise estática)
+index.html,17,DISTRIBUIÇÃO PRÊMIOS E SALDOS ABRIR →,,Ação inline,setView('distribuicao'),Função referenciada (análise estática)
+index.html,18,PROMO / MERCHAN CAMPANHAS E LEITURAS ABRIR →,,Ação inline,setView('digital'),Função referenciada (análise estática)
+index.html,19,GANHADORES BANCO E ELEGIBILIDADE ABRIR →,,Ação inline,setView('ganhadores'),Função referenciada (análise estática)
+index.html,20,RELATÓRIOS CONSULTA CONSOLIDADA ABRIR →,,Ação inline,setView('relatorios'),Função referenciada (análise estática)
+index.html,21,GRADE,,Modo de programação,grade,Testada offline
+index.html,22,PROG MANUAL,,Modo de programação,manual,Testada offline
+index.html,23,+ NOVO ITEM,addProgramBtn,Controle por ID,addProgramBtn,Referência de código encontrada
+index.html,24,🗑,clearProgramBtn,Controle por ID,clearProgramBtn,Referência de código encontrada
+index.html,25,COMPACTA,,Ação inline,setDistributionViewMode('compact'),Função referenciada (análise estática)
+index.html,26,DETALHADA,,Ação inline,setDistributionViewMode('detailed'),Função referenciada (análise estática)
+index.html,27,＋ NOVO BRINDE / SHOW,addDistBtn,Controle por ID,addDistBtn,Referência de código encontrada
+index.html,28,VER PROGRAMAÇÃO,distProgramSearchBtn,Controle por ID,distProgramSearchBtn,Referência de código encontrada
+index.html,29,PRÊMIO ATIVOS ⌄,distPrizeFilterButton,Ação inline,toggleDistributionLifecycleMenu(event),Função referenciada (análise estática)
+index.html,30,ATIVOS,,Ação inline,"setDistributionLifecycleFilter('active',event)",Função referenciada (análise estática)
+index.html,31,ENCERRADOS,,Ação inline,"setDistributionLifecycleFilter('ended',event)",Função referenciada (análise estática)
+index.html,32,TODOS,,Ação inline,"setDistributionLifecycleFilter('all',event)",Função referenciada (análise estática)
+index.html,33,COMO FUNCIONA O REAPROVEITAMENTO AUTOMÁTICO,prizeCatalogInfoBtn,Controle por ID,prizeCatalogInfoBtn,Testada offline
+index.html,34,NOVA DISTRIBUIÇÃO,newDistFromCatalogBtn,Controle por ID,newDistFromCatalogBtn,Referência de código encontrada
+index.html,35,＋ NOVO CADASTRO,addPromoBtn,Controle por ID,addPromoBtn,Referência de código encontrada
+index.html,36,JOVEMPAN,,Filtro emissora,JP1017,Rota declarada
+index.html,37,JPNEWS,,Filtro emissora,JPNEWS983,Rota declarada
+index.html,38,+ NOVO PROGRAMA,addProgramScheduleBtn,Controle por ID,addProgramScheduleBtn,Referência de código encontrada
+index.html,39,SALVAR AGENDAMENTO,,Enviar formulário,scheduleForm,Requer cenário válido/Firebase
+index.html,40,LIMPAR,clearScheduleFormBtn,Controle por ID,clearScheduleFormBtn,Referência de código encontrada
+index.html,41,EQUIVALÊNCIAS,winnerEquivalencesBtn,Controle por ID,winnerEquivalencesBtn,Referência de código encontrada
+index.html,42,NÃO SORTEAR,blockWinnerBtn,Controle por ID,blockWinnerBtn,Referência de código encontrada
+index.html,43,IMPORTAR EXCEL,importWinnersBtn,Controle por ID,importWinnersBtn,Referência de código encontrada
+index.html,44,+ NOVO REGISTRO,addWinnerRecordBtn,Controle por ID,addWinnerRecordBtn,Referência de código encontrada
+index.html,45,ATUALIZAR BANCO,refreshWinnerBankBtn,Controle por ID,refreshWinnerBankBtn,Referência de código encontrada
+index.html,46,VERIFICAR FIREBASE,verifyFirebaseBtn,Controle por ID,verifyFirebaseBtn,Referência de código encontrada
+index.html,47,RECARREGAR BASE OFICIAL,forceLoadFirebaseBtn,Controle por ID,forceLoadFirebaseBtn,Referência de código encontrada
+index.html,48,EXPORTAR BACKUP DO FIREBASE,exportBackupBtn,Controle por ID,exportBackupBtn,Referência de código encontrada
+index.html,49,RESTAURAR BACKUP MANUAL,chooseBackupBtn,Controle por ID,chooseBackupBtn,Referência de código encontrada
+index.html,50,LIMPAR SELEÇÃO,clearBackupLocalBtn,Controle por ID,clearBackupLocalBtn,Referência de código encontrada
+index.html,51,EXPORTAR PDF,adminReportPdfBtn,Controle por ID,adminReportPdfBtn,Referência de código encontrada
+index.html,52,IMPRIMIR,adminReportPrintBtn,Controle por ID,adminReportPrintBtn,Referência de código encontrada
+index.html,53,VERIFICAR AGORA,systemCheckBtn,Controle por ID,systemCheckBtn,Referência de código encontrada
+index.html,54,FECHAR MÊS,monthCloseBtn,Controle por ID,monthCloseBtn,Referência de código encontrada
+index.html,55,FECHAR,,Fechar janela,programScheduleDrawer,Rota declarada
+index.html,56,SALVAR PROGRAMA,,Enviar formulário,programScheduleForm,Requer cenário válido/Firebase
+index.html,57,CANCELAR,,Fechar janela,programScheduleDrawer,Rota declarada
+index.html,58,FECHAR,,Fechar janela,clearProgramDrawer,Rota declarada
+index.html,59,EXCLUIR SEMANA SEMANA SELECIONADA,deleteProgramWeekBtn,Controle por ID,deleteProgramWeekBtn,Referência de código encontrada
+index.html,60,EXCLUIR MÊS MÊS ATUAL,deleteProgramMonthBtn,Controle por ID,deleteProgramMonthBtn,Referência de código encontrada
+index.html,61,FECHAR,,Fechar janela,itemDrawer,Rota declarada
+index.html,62,SALVAR NA PROGRAMAÇÃO,itemSaveBtn,Enviar formulário,itemForm,Requer cenário válido/Firebase
+index.html,63,CANCELAR,,Fechar janela,itemDrawer,Rota declarada
+index.html,64,FECHAR,,Fechar janela,distDrawer,Rota declarada
+index.html,65,+ ADICIONAR DATA,distEventAdd,Controle por ID,distEventAdd,Referência de código encontrada
+index.html,66,+ ADICIONAR DESTINO,addDistDestBtn,Controle por ID,addDistDestBtn,Referência de código encontrada
+index.html,67,GERAR DISTRIBUIÇÃO INTELIGENTE,generateDistRadioBtn,Controle por ID,generateDistRadioBtn,Referência de código encontrada
+index.html,68,SALVAR DISTRIBUIÇÃO,,Enviar formulário,distForm,Requer cenário válido/Firebase
+index.html,69,CANCELAR,,Fechar janela,distDrawer,Rota declarada
+index.html,70,FECHAR,,Fechar janela,prizeCatalogDetailDrawer,Rota declarada
+index.html,71,FECHAR,,Fechar janela,prizeCatalogDrawer,Rota declarada
+index.html,72,SALVAR DESCRIÇÃO PADRÃO,,Enviar formulário,prizeCatalogForm,Requer cenário válido/Firebase
+index.html,73,CANCELAR,,Fechar janela,prizeCatalogDrawer,Rota declarada
+index.html,74,FECHAR,,Fechar janela,radioConcentrationDrawer,Rota declarada
+index.html,75,GERAR SUGESTÃO,confirmRadioGenerationStrategyBtn,Controle por ID,confirmRadioGenerationStrategyBtn,Referência de código encontrada
+index.html,76,CANCELAR,,Fechar janela,radioConcentrationDrawer,Rota declarada
+index.html,77,FECHAR,,Fechar janela,smartRadioReportDrawer,Rota declarada
+index.html,78,REFAZER / AJUSTAR HORÁRIOS,redoSmartRadioBtn,Ação inline,redoSmartRadioReport(),Função referenciada (análise estática)
+index.html,79,CONFIRMAR E LANÇAR NA PROGRAMAÇÃO,confirmSmartRadioBtn,Ação inline,confirmSmartRadioReport(),Função referenciada (análise estática)
+index.html,80,FECHAR,,Fechar janela,radioPlannerDrawer,Rota declarada
+index.html,81,+ ADICIONAR HORÁRIO MANUAL,addRadioPlannerRowBtn,Controle por ID,addRadioPlannerRowBtn,Referência de código encontrada
+index.html,82,SALVAR HORÁRIOS NA PROGRAMAÇÃO,saveRadioPlannerBtn,Controle por ID,saveRadioPlannerBtn,Referência de código encontrada
+index.html,83,FECHAR,,Fechar janela,returnDrawer,Rota declarada
+index.html,84,FECHAR,,Fechar janela,returnReuseDrawer,Rota declarada
+index.html,85,FECHAR,,Fechar janela,reserveDrawer,Rota declarada
+index.html,86,SALVAR RESERVA,saveReserveNoteBtn,Controle por ID,saveReserveNoteBtn,Referência de código encontrada
+index.html,87,CANCELAR,,Fechar janela,reserveDrawer,Rota declarada
+index.html,88,×,promoStartCloseBtn,Controle por ID,promoStartCloseBtn,Referência de código encontrada
+index.html,89,"PROMOÇÃO PRÊMIO VINCULADO À DISTRIBUIÇÃO, SORTEIO, GANHADORES, DATA/HORA DO RESULTADO E PRAZO D",,Ação inline,startPromoRegistration('promo'),Função referenciada (análise estática)
+index.html,90,"PAUTA LEITURA OPERACIONAL COM PROGRAMA, HORÁRIOS, DIAS, FREQUÊNCIA E RODÍZIO INTELIGENTE, SEM M",,Ação inline,startPromoRegistration('pauta'),Função referenciada (análise estática)
+index.html,91,"MERCHAN ABRE O OMR PARA CADASTRO, PLANEJAMENTO, RODÍZIO, VERSÕES DE TEXTO E RELATÓRIO DE LEITUR",,Ação inline,startPromoRegistration('merchan'),Função referenciada (análise estática)
+index.html,92,FECHAR,,Fechar janela,promoDrawer,Rota declarada
+index.html,93,CONTEÚDO,promoTabContent,Controle por ID,promoTabContent,Referência de código encontrada
+index.html,94,PROGRAMAÇÃO,promoTabSchedule,Controle por ID,promoTabSchedule,Referência de código encontrada
+index.html,95,SORTEIO,promoTabDraw,Controle por ID,promoTabDraw,Referência de código encontrada
+index.html,96,＋ ADICIONAR VERSÃO DE TEXTO,promoAddRotationVariant,Controle por ID,promoAddRotationVariant,Referência de código encontrada
+index.html,97,+,promoAddSpecificDate,Controle por ID,promoAddSpecificDate,Referência de código encontrada
+index.html,98,+,promoAddExcludedDate,Controle por ID,promoAddExcludedDate,Referência de código encontrada
+index.html,99,SALVAR PROMOÇÃO,promoSaveBtn,Enviar formulário,promoForm,Requer cenário válido/Firebase
+index.html,100,CANCELAR,,Fechar janela,promoDrawer,Rota declarada
+index.html,101,AMPLIAR,promoPreviewExpand,Controle por ID,promoPreviewExpand,Referência de código encontrada
+index.html,102,✓,,Controle por delegação,,Bloqueado na marcação — verificar pré-condição ou visualização
+index.html,103,×,,Controle por delegação,,Bloqueado na marcação — verificar pré-condição ou visualização
+index.html,104,FECHAR,,Fechar janela,winnerDetailDrawer,Rota declarada
+index.html,105,FECHAR,,Fechar janela,winnerRecordDrawer,Rota declarada
+index.html,106,SALVAR REGISTRO,,Enviar formulário,winnerRecordForm,Requer cenário válido/Firebase
+index.html,107,CANCELAR,,Fechar janela,winnerRecordDrawer,Rota declarada
+index.html,108,FECHAR,,Fechar janela,winnerImportDrawer,Rota declarada
+index.html,109,CONFIRMAR IMPORTAÇÃO,confirmWinnerImportBtn,Controle por ID,confirmWinnerImportBtn,Bloqueado na marcação — verificar pré-condição ou visualização
+index.html,110,CANCELAR,,Fechar janela,winnerImportDrawer,Rota declarada
+index.html,111,FECHAR,,Fechar janela,winnerEquivalenceDrawer,Rota declarada
+index.html,112,ADICIONAR GRUPO,,Enviar formulário,winnerEquivalenceForm,Requer cenário válido/Firebase
+index.html,113,FECHAR,,Fechar janela,winnerEquivalenceDrawer,Rota declarada
+index.html,114,FECHAR,,Fechar janela,distProgramSearchDrawer,Rota declarada
+index.html,115,REManejar,distProgramMoveApplyBtn,Controle por ID,distProgramMoveApplyBtn,Referência de código encontrada
+index.html,116,CANCELAR,distProgramMoveCancelBtn,Controle por ID,distProgramMoveCancelBtn,Referência de código encontrada
+index.html,117,FECHAR,,Fechar janela,distDetailDrawer,Rota declarada
+index.html,118,FECHAR,,Fechar janela,distUnprogramDrawer,Rota declarada
+index.html,119,VER VÍNCULOS,distUnprogramToggleLinks,Controle por ID,distUnprogramToggleLinks,Vinculação dinâmica / conferir
+index.html,120,DESPROGRAMAR,distUnprogramApply,Controle por ID,distUnprogramApply,Bloqueado na marcação — verificar pré-condição ou visualização
+index.html,121,CANCELAR,,Fechar janela,distUnprogramDrawer,Rota declarada
+index.html,122,×,prizeCatalogHelpClose,Controle por ID,prizeCatalogHelpClose,Testada offline
+index.html,123,ENTENDI,prizeCatalogHelpUnderstood,Controle por ID,prizeCatalogHelpUnderstood,Testada offline
+index.html,124,CANCELAR,jpManualQtyCancel,Controle por ID,jpManualQtyCancel,Vinculação dinâmica / conferir
+index.html,125,ADICIONAR,jpManualQtyConfirm,Controle por ID,jpManualQtyConfirm,Vinculação dinâmica / conferir
+merchan_radios.html,1,CADASTRO,,Aba interna,cadastro,Testada offline
+merchan_radios.html,2,PAUTAS ATIVAS,,Aba interna,ativas,Testada offline
+merchan_radios.html,3,CLIENTES E TEXTOS,,Aba interna,banco,Testada offline
+merchan_radios.html,4,RELATÓRIO DE LEITURAS,,Aba interna,relatorio,Testada offline
+merchan_radios.html,5,TODAS,selectAllHoursBtn,Controle por ID,selectAllHoursBtn,Referência de código encontrada
+merchan_radios.html,6,LIMPAR,clearHoursBtn,Controle por ID,clearHoursBtn,Referência de código encontrada
+merchan_radios.html,7,ADICIONAR,addSpecificDateBtn,Controle por ID,addSpecificDateBtn,Referência de código encontrada
+merchan_radios.html,8,EXCLUIR,addExcludedDateBtn,Controle por ID,addExcludedDateBtn,Referência de código encontrada
+merchan_radios.html,9,ADICIONAR EXCEÇÃO,addOverrideBtn,Controle por ID,addOverrideBtn,Referência de código encontrada
+merchan_radios.html,10,LIMPAR,resetBtn,Controle por ID,resetBtn,Referência de código encontrada
+merchan_radios.html,11,VISUALIZAR NO ESTÚDIO,openPreviewBtn,Controle por ID,openPreviewBtn,Referência de código encontrada
+merchan_radios.html,12,SALVAR RASCUNHO,saveDraftBtn,Controle por ID,saveDraftBtn,Referência de código encontrada
+merchan_radios.html,13,PUBLICAR TEXTO,saveMerchanBtn,Enviar formulário,merchanForm,Requer cenário válido/Firebase
+merchan_radios.html,14,DIA,,Filtro de relatórios,dia,Testada offline
+merchan_radios.html,15,MÊS,,Filtro de relatórios,mes,Testada offline
+merchan_radios.html,16,POR PAUTA,,Filtro de relatórios,pauta,Testada offline
+merchan_radios.html,17,EXPORTAR CSV,exportCsvBtn,Controle por ID,exportCsvBtn,Referência de código encontrada
+merchan_radios.html,18,IMPRIMIR / PDF,printReportBtn,Controle por ID,printReportBtn,Referência de código encontrada
+merchan_radios.html,19,×,closePreviewBtn,Controle por ID,closePreviewBtn,Referência de código encontrada
+merchan_radios.html,20,×,closeHistoryBtn,Controle por ID,closeHistoryBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,1,+,addWinnerBtn,Controle por ID,addWinnerBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,2,MOVER PARA OUTRO PRÊMIO,moveWinnerBtn,Controle por ID,moveWinnerBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,3,REMOVER GANHADOR,removeWinnerOutcomeBtn,Controle por ID,removeWinnerOutcomeBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,4,CONFIRMAR MUDANÇA,confirmMoveWinnerBtn,Controle por ID,confirmMoveWinnerBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,5,CANCELAR,cancelWinnerBtn,Controle por ID,cancelWinnerBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,6,SALVAR GANHADOR(ES),saveWinnerBtn,Controle por ID,saveWinnerBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,7,✎ CORRIGIR NOME,,Controle por delegação,data-winner-action=correct,Vinculação dinâmica / conferir
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,8,↔ MOVER PARA OUTRO PRÊMIO,,Controle por delegação,data-winner-action=move,Vinculação dinâmica / conferir
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,9,× REMOVER GANHADOR,,Controle por delegação,data-winner-action=remove,Vinculação dinâmica / conferir
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,10,HOJE,historyTodayBtn,Controle por ID,historyTodayBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,11,FECHAR,closeHistoryBtn,Controle por ID,closeHistoryBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,12,FECHAR,,Ação inline,closeStudioPendingModal(),Função referenciada (análise estática)
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,13,×,,Ação inline,closeStudioMissedReason(),Função referenciada (análise estática)
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,14,CANCELAR,,Ação inline,closeStudioMissedReason(),Função referenciada (análise estática)
+painel_pauta_estudio_jovem_pan_GITHUB_API.html,15,CONFIRMAR NÃO REALIZADA,studioMissedReasonConfirm,Ação inline,confirmStudioMissedReason(),Função referenciada (análise estática)
+painel_pauta_estudio_jovem_pan_news.html,1,+,addWinnerBtn,Controle por ID,addWinnerBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_news.html,2,CANCELAR,cancelWinnerBtn,Controle por ID,cancelWinnerBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_news.html,3,SALVAR GANHADOR(ES),saveWinnerBtn,Controle por ID,saveWinnerBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_news.html,4,HOJE,historyTodayBtn,Controle por ID,historyTodayBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_news.html,5,FECHAR,closeHistoryBtn,Controle por ID,closeHistoryBtn,Referência de código encontrada
+painel_pauta_estudio_jovem_pan_news.html,6,×,,Ação inline,closeStudioPendingModal(),Função referenciada (análise estática)
+painel_pauta_estudio_jovem_pan_news.html,7,×,,Ação inline,closeStudioMissedReason(),Função referenciada (análise estática)
+painel_pauta_estudio_jovem_pan_news.html,8,CANCELAR,,Ação inline,closeStudioMissedReason(),Função referenciada (análise estática)
+painel_pauta_estudio_jovem_pan_news.html,9,CONFIRMAR NÃO REALIZADA,studioMissedReasonConfirm,Ação inline,confirmStudioMissedReason(),Função referenciada (análise estática)
+preview_recepcao.html,1,×,receptionModalClose,Controle por ID,receptionModalClose,Referência de código encontrada
+preview.html,1,CONECTANDO AO FIREBASE,syncBadge,Controle por ID,syncBadge,Referência de código encontrada
+preview.html,2,DISTRIBUIÇÃO,,Aba interna,distribuicao,Testada offline
+preview.html,3,PROGRAMAÇÃO,,Aba interna,programacao,Testada offline
+preview.html,4,PROMO / MERCHAN,,Aba interna,promocoes,Testada offline
+preview.html,5,RETIRADAS,,Aba interna,retiradas,Testada offline
+preview.html,6,RELATÓRIOS,,Aba interna,relatorios,Testada offline

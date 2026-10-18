@@ -5,7 +5,7 @@ const js=fs.readFileSync(path.join(root,'assets/prog-manual.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'assets/prog-manual.css'),'utf8');
 assert(admin.includes('data-jp-prog-mode="grade"')&&admin.includes('data-jp-prog-mode="manual"'));
 assert(admin.includes('id="programManualMount"')&&admin.includes('id="programGradeContainer"'));
-assert(admin.includes('src="assets/prog-manual.js?v=AV58_1_20"'));
+assert(admin.includes('src="assets/prog-manual.js?v=AV58_1_26"')); // Recurso atualizado deve vencer o cache
 assert(admin.includes('href="assets/prog-manual.css?v=AV58_1_20"'));
 assert(js.includes("root.child('months').child(targetMonth).transaction"),'A gravação deve usar transação no mês');
 assert(js.includes('const oldItems=rows(remote?.items)'),'Deve comparar gravações concorrentes');

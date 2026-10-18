@@ -101,7 +101,7 @@
     if(!official.length)return `<div class="jpManualEmpty">NÃO HÁ HORÁRIOS OFICIAIS CADASTRADOS PARA ESTA DATA E EMISSORA. CADASTRE-OS EM HORÁRIOS ANTES DE PROGRAMAR.</div>`;
     return periods.map(([key,label,glyph,r])=>{
       const all=official.filter(s=>periodKey(s)===key);if(!all.length)return '';
-      return `<section class="jpManualPeriod"><div class="jpManualPeriodName"><span class="periodGlyph">${glyph}</span><b>${label}</b><small>${r}</small></div><div class="jpManualSlots">${all.map(s=>`<div class="jpManualSlot" data-slot="${clean(s)}"><strong class="jpManualSlotTime">${clean(s.replace('H',':').replace(/:$/,'H00').replace(/:(\d+)/,'H$1'))}</strong><div class="jpManualSlotBody">${itemCards(s)}<div class="jpManualDrop" data-target="${clean(s)}" tabindex="0" role="button" title="SOLTE UM PRÊMIO OU PAUTA AQUI" aria-label="ADICIONAR ITEM EM ${clean(s)}">+ &nbsp; ARRASTE UM PRÊMIO OU PAUTA AQUI</div></div></div>`).join('')}</div></section>`;
+      return `<section class="jpManualPeriod"><div class="jpManualPeriodName"><span class="periodGlyph">${glyph}</span><b>${label}</b><small>${r}</small></div><div class="jpManualSlots">${all.map(s=>`<div class="jpManualSlot" data-slot="${clean(s)}"><strong class="jpManualSlotTime">${clean(s.replace('H',':').replace(/:$/,'H00').replace(/:(\d+)/,'H$1'))}</strong><div class="jpManualSlotBody">${itemCards(s)}<div class="jpManualDrop" data-target="${clean(s)}" title="SOLTE UM PRÊMIO OU PAUTA AQUI" aria-label="ÁREA PARA SOLTAR ITEM EM ${clean(s)}">+ &nbsp; ARRASTE UM PRÊMIO OU PAUTA AQUI</div></div></div>`).join('')}</div></section>`;
     }).join('');
   }
   function stockRows(){return prizes().filter(d=>String(distributionLabel(d)).toLowerCase().includes(prizeQuery.toLowerCase())).map(d=>{
@@ -182,6 +182,14 @@
     host.addEventListener('input',e=>{
       if(e.target.id==='jpPrizeSearch'){prizeQuery=e.target.value;el('jpPrizeStock').innerHTML=stockRows();}
       if(e.target.id==='jpPautaSearch'){pautaQuery=e.target.value;el('jpPautaStock').innerHTML=pautaRows();}
+    });
+    // AV58.1.26: cards anunciados como botões devem responder também a Enter e Espaço.
+    // Usa a mesma rota de clique já existente, sem gravar nem contornar validações.
+    host.addEventListener('keydown',e=>{
+      const row=e.target.closest('.jpManualStockRow[role="button"]');
+      if(!row||e.target!==row||!['Enter',' '].includes(e.key))return;
+      e.preventDefault();
+      if(!row.classList.contains('disabled'))row.click();
     });
     host.addEventListener('dragstart',e=>{
       const source=e.target.closest('[data-drag-type]');if(!source||source.classList.contains('disabled')||source.draggable===false){e.preventDefault();return;}
