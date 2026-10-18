@@ -4798,6 +4798,8 @@ let firebaseBaseEmpty = false;
 let firebaseUsesWrappedState = null;
 let firebaseSaveTimer = null;
 let firebaseImmediateSavePromise = null;
+let firebaseSaveInFlight = null;
+let firebaseMutationRevision = 0;
 let firebaseApplyingRemote = false;
 let firebaseLastLocalWrite = 0;
 let firebasePendingSave = false;
@@ -4809,6 +4811,24 @@ let firebaseBootstrapInFlight = false;
 let firebaseRetryTimer = null;
 let firebaseLastServerActivity = 0;
 let firebaseGranularListenersStarted = false;
+// AV58.1.28: medições sem dados pessoais ou conteúdo de prêmios/ganhadores.
+const jpFirebaseTelemetry = Object.create(null);
+function jpFirebaseNow(){ return typeof performance!=='undefined' && typeof performance.now==='function' ? performance.now() : Date.now(); }
+function jpFirebaseMeasure(operation,started,success=true){
+  const duration=Math.max(0,jpFirebaseNow()-started);
+  const series=jpFirebaseTelemetry[operation]||(jpFirebaseTelemetry[operation]=[]);
+  series.push({ms:Math.round(duration),ok:!!success});
+  if(series.length>120) series.shift();
+}
+function jpFirebasePerformanceReport(){
+  return Object.fromEntries(Object.entries(jpFirebaseTelemetry).map(([operation,series])=>{
+    const times=series.filter(item=>item.ok).map(item=>item.ms).sort((a,b)=>a-b);
+    const percentile=p=>times.length?times[Math.ceil((p/100)*times.length)-1]:null;
+    return [operation,{amostras:series.length,erros:series.filter(item=>!item.ok).length,p50_ms:percentile(50),p95_ms:percentile(95)}];
+  }));
+}
+window.JPWorkspaceFirebasePerformance=jpFirebasePerformanceReport;
+
 let firebaseUiRefreshTimer = null;
 let winnerBankRef = null;
 let winnerBankStarted = false;
@@ -4975,23 +4995,10 @@ async function persistCollectionDiff(relativePath,baseRows,localRows){
   if(!plan.replace && !plan.changes.length && !plan.deleted.length) return;
   const writeRoot=firebaseStateRootRef();
   if(!writeRoot) throw new Error('FIREBASE INDISPONÍVEL PARA GRAVAÇÃO.');
-  await writeRoot.child(relativePath).transaction(current=>{
-    if(plan.replace) return clone(plan.value);
-    let rows=firebaseList(current);
-    if(plan.deleted.length){
-      const removed=new Set(plan.deleted);
-      rows=rows.filter((row,index)=>!removed.has(recordIdentity(row,index)));
-    }
-    plan.changes.forEach(change=>{
-      const index=rows.findIndex((row,rowIndex)=>recordIdentity(row,rowIndex)===change.id);
-      if(index<0){
-        rows.push(clone(change.local));
-        return;
-      }
-      rows[index]=applyNodeDiff(rows[index],change.diff);
-    });
-    return rows.filter(Boolean);
-  });
+  // Aplica somente as alterações locais. Se o mesmo registro foi editado em
+  // outra sessão, a transação recusa sobrescrita; registros independentes coexistem.
+  await writeRoot.child(relativePath).transaction(current=>
+    applyCollectionPlanToRows(current,baseRows,localRows,relativePath),undefined,false);
 }
 function applyCollectionPlanToRows(currentRows,baseRows,localRows,context='REGISTRO'){
   const plan=collectionPlan(baseRows,localRows);
@@ -5060,21 +5067,21 @@ function mergeAuditRows(remoteRows,localRows){
   });
   return [...map.values()].sort((a,b)=>String(a.createdAt||a.timestamp||'').localeCompare(String(b.createdAt||b.timestamp||''))).slice(-2500);
 }
-function refreshFirebaseBaselineAfterSave(baseline,dirtyMonthKeys,dirtyRootKeys){
+function refreshFirebaseBaselineAfterSave(baseline,dirtyMonthKeys,dirtyRootKeys,savedSnapshot){
   const next=baseline?.months ? baseline : emptyWorkspaceState();
   next.months ||= {};
   dirtyMonthKeys.forEach(key=>{
-    const localMonth=state.months?.[key];
+    const localMonth=savedSnapshot.months?.[key];
     next.months[key]=clone(localMonth||{label:key,items:[],promos:[],distributions:[]});
   });
   dirtyRootKeys.forEach(key=>{
     const fallback=['schedules','programSchedules','auditLog','trash','pendingOps'].includes(key)?[]:{};
-    next[key]=clone(state[key]===undefined?fallback:state[key]);
+    next[key]=clone(savedSnapshot[key]===undefined?fallback:savedSnapshot[key]);
   });
-  next.currentMonth=state.currentMonth;
+  next.currentMonth=savedSnapshot.currentMonth;
   firebaseBaselineState=next;
 }
-async function persistGranularState(){
+async function persistGranularState(savedSnapshot){
   // firebaseBaselineState já chega normalizado pelo bootstrap/listeners.
   // Usar a referência confirmada evita clonar/normalizar toda a árvore antes de cada gravação.
   const baseline=firebaseBaselineState?.months ? firebaseBaselineState : emptyWorkspaceState();
@@ -5083,10 +5090,10 @@ async function persistGranularState(){
   const tasks=[];
   const dirtyMonthKeys=new Set();
   const dirtyRootKeys=new Set();
-  const monthKeys=new Set([...Object.keys(baseline.months||{}),...Object.keys(state.months||{})]);
+  const monthKeys=new Set([...Object.keys(baseline.months||{}),...Object.keys(savedSnapshot.months||{})]);
   monthKeys.forEach(key=>{
     const baseMonth=baseline.months?.[key]||{items:[],promos:[],distributions:[]};
-    const localMonth=state.months?.[key]||{items:[],promos:[],distributions:[]};
+    const localMonth=savedSnapshot.months?.[key]||{items:[],promos:[],distributions:[]};
     // FAST SYNC: meses sem alteração não entram no diff de coleções.
     if(sameValue(baseMonth,localMonth)) return;
     dirtyMonthKeys.add(key);
@@ -5101,7 +5108,7 @@ async function persistGranularState(){
     }
   });
   [['schedules','AGENDAMENTOS'],['programSchedules','HORÁRIOS']].forEach(([collection])=>{
-    const baseRows=baseline[collection]||[],localRows=state[collection]||[];
+    const baseRows=baseline[collection]||[],localRows=savedSnapshot[collection]||[];
     const plan=collectionPlan(baseRows,localRows);
     if(plan.replace||plan.changes.length||plan.deleted.length){
       dirtyRootKeys.add(collection);
@@ -5113,35 +5120,37 @@ async function persistGranularState(){
     dirtyRootKeys.add(path);
     tasks.push(writeRoot.child(path).transaction(current=>mergeAuditRows(current||[],localRows||[]),undefined,false));
   };
-  mergeLogNode('auditLog',baseline.auditLog,state.auditLog);
-  mergeLogNode('trash',baseline.trash,state.trash);
-  mergeLogNode('pendingOps',baseline.pendingOps,state.pendingOps);
-  if(!sameValue(baseline.prizeCatalog||{},state.prizeCatalog||{})){
+  mergeLogNode('auditLog',baseline.auditLog,savedSnapshot.auditLog);
+  mergeLogNode('trash',baseline.trash,savedSnapshot.trash);
+  mergeLogNode('pendingOps',baseline.pendingOps,savedSnapshot.pendingOps);
+  if(!sameValue(baseline.prizeCatalog||{},savedSnapshot.prizeCatalog||{})){
     dirtyRootKeys.add('prizeCatalog');
-    tasks.push(writeRoot.child('prizeCatalog').transaction(current=>applyKeyedObjectPlan(current||{},baseline.prizeCatalog||{},state.prizeCatalog||{},'CATÁLOGO DE PRÊMIOS'),undefined,false));
+    tasks.push(writeRoot.child('prizeCatalog').transaction(current=>applyKeyedObjectPlan(current||{},baseline.prizeCatalog||{},savedSnapshot.prizeCatalog||{},'CATÁLOGO DE PRÊMIOS'),undefined,false));
   }
   if(tasks.length) await Promise.all(tasks);
   const metadata={
-    currentMonth:state.currentMonth,
+    currentMonth:savedSnapshot.currentMonth,
     updatedAt:window.firebase.database.ServerValue.TIMESTAMP,
     savedAt:new Date().toISOString(),
     source:'PAINEL_PRINCIPAL',
     version:'FIREBASE_RTDB_AV57_6_6_34_FAST_SYNC'
   };
-  if(!sameValue(baseline.publishedPrograms||{},state.publishedPrograms||{})){
-    metadata.publishedPrograms=clone(state.publishedPrograms||{});
+  if(!sameValue(baseline.publishedPrograms||{},savedSnapshot.publishedPrograms||{})){
+    metadata.publishedPrograms=clone(savedSnapshot.publishedPrograms||{});
     dirtyRootKeys.add('publishedPrograms');
   }
-  if(!sameValue(baseline.programVersions||{},state.programVersions||{})){
-    metadata.programVersions=clone(state.programVersions||{});
+  if(!sameValue(baseline.programVersions||{},savedSnapshot.programVersions||{})){
+    metadata.programVersions=clone(savedSnapshot.programVersions||{});
     dirtyRootKeys.add('programVersions');
   }
-  if(!sameValue(baseline.systemMeta||{},state.systemMeta||{})){
-    metadata.systemMeta=clone(state.systemMeta||{});
+  if(!sameValue(baseline.systemMeta||{},savedSnapshot.systemMeta||{})){
+    metadata.systemMeta=clone(savedSnapshot.systemMeta||{});
     dirtyRootKeys.add('systemMeta');
   }
+  // Evita round trip e eventos de sincronização quando nada mudou.
+  if(tasks.length===0 && Object.keys(metadata).every(key=>['updatedAt','savedAt','source','version','currentMonth'].includes(key)) && baseline.currentMonth===savedSnapshot.currentMonth) return true;
   await writeRoot.update(metadata);
-  refreshFirebaseBaselineAfterSave(baseline,dirtyMonthKeys,dirtyRootKeys);
+  refreshFirebaseBaselineAfterSave(baseline,dirtyMonthKeys,dirtyRootKeys,savedSnapshot);
   return true;
 }
 async function forceSetStateToApi(source='PAINEL_PRINCIPAL'){
@@ -5323,6 +5332,8 @@ async function firebaseBootstrapRead(force=false){
   if(!firebaseReady || !firebaseRef || firebaseBootstrapInFlight) return;
   if(!force && firebaseConnected && firebaseServerLoaded) return;
   firebaseBootstrapInFlight=true;
+  const bootstrapStarted=jpFirebaseNow();
+  let bootstrapOK=false;
   updateSyncStatus('saving',firebaseServerLoaded?'RECONECTANDO':'CONECTANDO');
   try{
     if(firebaseDatabase && typeof firebaseDatabase.goOnline==='function') firebaseDatabase.goOnline();
@@ -5331,6 +5342,7 @@ async function firebaseBootstrapRead(force=false){
       new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONECTAR AO FIREBASE.')),9000))
     ]);
     firebaseApplySnapshot(snapshot,'bootstrap');
+    bootstrapOK=true;
     startGranularFirebaseListeners();
     clearTimeout(firebaseRetryTimer);
     if(firebasePendingSave && firebaseServerLoaded) queueApiSave(100);
@@ -5346,6 +5358,7 @@ async function firebaseBootstrapRead(force=false){
       scheduleFirebaseRetry(2500);
     }
   }finally{
+    jpFirebaseMeasure('carregamento_inicial',bootstrapStarted,bootstrapOK);
     firebaseBootstrapInFlight=false;
   }
 }
@@ -5471,6 +5484,7 @@ function handleBrowserConnectionChange(){
   firebaseBootstrapRead(true);
 }
 function queueApiSave(delay=80){
+  firebaseMutationRevision+=1;
   clearTimeout(firebaseSaveTimer);
   updateSyncStatus('saving','SALVANDO');
   firebaseSaveTimer = setTimeout(()=>{ saveStateToApi().catch(error=>console.warn('FIREBASE DIRECT SAVE FAILED',error)); }, delay);
@@ -5486,7 +5500,22 @@ function workspaceEmptyAfterTrackedDeletion(data,baseline){
     )
   );
 }
+// Serializa gravações para não criar duas transações concorrentes na mesma sessão.
+// Novas edições enquanto uma gravação está em curso formam um lote posterior.
 async function saveStateToApi(){
+  if(firebaseSaveInFlight) return firebaseSaveInFlight;
+  firebaseSaveInFlight=(async()=>{
+    do {
+      const revision=firebaseMutationRevision;
+      await performFirebaseSaveBatch(revision);
+    }while(firebasePendingSave && firebaseReady && firebaseConnected);
+    return true;
+  })().finally(()=>{firebaseSaveInFlight=null;});
+  return firebaseSaveInFlight;
+}
+async function performFirebaseSaveBatch(revision){
+  const started=jpFirebaseNow();
+  let succeeded=false;
   if(!firebaseReady || !firebaseRef){
     initFirebaseSync();
     if(!firebaseReady || !firebaseRef) throw new Error('FIREBASE INDISPONÍVEL PARA GRAVAÇÃO.');
@@ -5509,16 +5538,19 @@ async function saveStateToApi(){
       updateSyncStatus('saving','CARREGANDO BASE');
       throw new Error('BASE OFICIAL AINDA NÃO FOI CARREGADA DO FIREBASE.');
     }
-    await persistGranularState();
-    // O estado local já é exatamente o que acabou de ser confirmado. Evita
-    // clonar + normalizar toda a base novamente após cada gravação.
+    // Fotografia imutável do lote. Alterações feitas durante o await não podem
+    // ser marcadas como salvas antes de uma segunda confirmação.
+    const savingSnapshot=clone(state);
+    await persistGranularState(savingSnapshot);
+    succeeded=true;
+    // O estado local pode ter recebido outra edição enquanto o Firebase gravava.
     lastFirebaseSaveLabel=new Date().toLocaleString('pt-BR');
     firebaseBaseEmpty=false;
     firebaseServerLoaded=true;
-    firebasePendingSave=false;
-    updateSyncStatus(firebaseConnected?'online':'offline',firebaseConnected?'FIREBASE ONLINE':'FIREBASE OFFLINE');
+    firebasePendingSave=firebaseMutationRevision!==revision;
+    updateSyncStatus(firebasePendingSave?'saving':firebaseConnected?'online':'offline',firebasePendingSave?'SALVANDO NOVAS ALTERAÇÕES':firebaseConnected?'FIREBASE ONLINE':'FIREBASE OFFLINE');
     renderBackup();
-    if(hadPendingSave) toast('ALTERAÇÕES CONFIRMADAS NO FIREBASE.');
+    if(hadPendingSave&&!firebasePendingSave) toast('ALTERAÇÕES CONFIRMADAS NO FIREBASE.');
     return true;
   }catch(err){
     console.warn('FIREBASE SAVE ERROR',err);
@@ -5526,6 +5558,8 @@ async function saveStateToApi(){
     renderBackup();
     if(navigator.onLine!==false) scheduleFirebaseRetry(900);
     throw err;
+  }finally{
+    jpFirebaseMeasure('gravar_principal',started,succeeded);
   }
 }
 
