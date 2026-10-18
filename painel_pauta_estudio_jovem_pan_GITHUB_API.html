@@ -4084,9 +4084,30 @@ function studioFullStationLabel(){
   return STUDIO_STATION==='JPNEWS983' ? 'JPNEWS 98,3' : 'JOVEMPAN 101,7';
 }
 function studioPrizeMomentAlert(item,promo){return '';}
+// AV58.1.27: alertas somente para sorteios efetivos da emissora/grade do dia.
+// Um horário inválido não pode ser convertido silenciosamente para 00H.
+function studioAlertEligiblePromoResult(row){
+  if(!row||row.sourceType!=='promo-result'||row.date!==todayISO()||!slotParts(row.slot))return false;
+  if(normalizeStationValue(row.station||STUDIO_STATION)!==normalizeStationValue(STUDIO_STATION))return false;
+  const promo=row.promoId?studioCampaignRecord(row.promoId,row.date):null;
+  if(!promo||!studioCampaignVisible(promo)||!stationAllowed(promo))return false;
+  const scheduled=promoOccurrences(promo).some(o=>o.date===row.date
+    &&slotParts(o.time||promo.drawTime)
+    &&timeToHHMM(o.time||promo.drawTime)===timeToHHMM(row.slot)
+    &&!['CANCELADO','CANCELADA'].includes(upper(o.status||'')));
+  if(!scheduled)return false;
+  // A ausência de um programa na grade não autoriza reutilizar o nome salvo no registro.
+  // Sorteios incluídos manualmente de forma explícita continuam válidos.
+  return !!programFromSchedule(row.date,row.slot,STUDIO_STATION)
+    ||!!(row.manualOverride&&!row.__virtualPromoResult);
+}
 function studioTodayPromoResultRows(){
-  const date=todayISO(),seen=new Map(),source=[...studioPublishedPrizeItems(),...promoResultVirtualRows()];
-  source.filter(r=>r&&r.sourceType==='promo-result'&&r.date===date&&normalizeStationValue(r.station||STUDIO_STATION)===normalizeStationValue(STUDIO_STATION)).forEach(r=>{const key=r.occurrenceId||`${r.promoId}|${r.date}|${formatStudioTime(r.slot)}`;const current=seen.get(key);if(!current||(!current.winnerName&&r.winnerName))seen.set(key,r);});
+  const seen=new Map(),source=[...studioPublishedPrizeItems(),...promoResultVirtualRows()];
+  source.filter(studioAlertEligiblePromoResult).forEach(r=>{
+    const key=r.occurrenceId||`${r.promoId}|${r.date}|${formatStudioTime(r.slot)}`;
+    const current=seen.get(key);
+    if(!current||(!current.winnerName&&r.winnerName))seen.set(key,r);
+  });
   return [...seen.values()].sort((a,b)=>minutesOf(a.slot)-minutesOf(b.slot));
 }
 function studioPromoResultDayAlert(){
@@ -4094,11 +4115,15 @@ function studioPromoResultDayAlert(){
   const now=currentSlotDate(),nowMinutes=now.getHours()*60+now.getMinutes();
   const pending=rows.filter(r=>upper(r.status||'PENDENTE')!=='REALIZADO'&&!upper(r.winnerName||''));
   if(!pending.length){const last=rows.at(-1);return `<span class="studioPromoResultDayAlert done">RESULTADO REALIZADO · ${esc(formatStudioTime(last.slot))}</span>`;}
-  let target=pending.find(r=>minutesOf(r.slot)>=nowMinutes)||pending[0],targetMin=minutesOf(target.slot),diff=targetMin-nowMinutes,cls='',prefix='RESULTADO DE PROMOÇÃO HOJE';
+  // Priorizar o resultado atrasado mais próximo, em vez de destacar uma madrugada antiga.
+  const overdue=pending.filter(r=>minutesOf(r.slot)<=nowMinutes);
+  const target=overdue.length?overdue.at(-1):pending[0];
+  const targetMin=minutesOf(target.slot),diff=targetMin-nowMinutes;
+  let cls='',prefix='RESULTADO DE PROMOÇÃO HOJE';
   if(diff>0&&diff<=30){cls='soon';prefix=`RESULTADO EM ${diff} MIN`;}
   else if(diff<=0&&diff>-60){cls='now';prefix='RESULTADO DA PROMOÇÃO AGORA';}
   else if(diff<=-60){cls='late';prefix='RESULTADO ATRASADO';}
-  const program=upper(target.program||programFromSchedule(target.date,target.slot,STUDIO_STATION)||'PROGRAMA');
+  const program=upper(programFromSchedule(target.date,target.slot,STUDIO_STATION)||'SORTEIO MANUAL');
   const extra=pending.length>1?` · +${pending.length-1}`:'';
   return `<span class="studioPromoResultDayAlert ${cls}">${esc(prefix)} · ${esc(formatStudioTime(target.slot))} · ${esc(program)}${extra}</span>`;
 }

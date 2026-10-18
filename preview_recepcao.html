@@ -1481,6 +1481,7 @@ function rowStatusClass(row){
   return st==='RETIRADO'?'retirado':st==='VENCIDO'?'vencido':st==='VENCE_HOJE'?'vence-hoje':st==='VENCE_AMANHA'?'vence-amanha':'pendente';
 }
 let receptionStatusFilter='ALL';
+let receptionDateScope='month'; // O filtro TOTAL sempre corresponde ao mês dos indicadores.
 function applyReceptionFilters(rows){
   const query=searchKey($('searchFilter')?.value||'');
   return rows.filter(r=>{
@@ -1488,16 +1489,17 @@ function applyReceptionFilters(rows){
       const hay=searchKey(`${r.result||''} ${r.title||''} ${r.sub||''} ${r.date||''} ${formatBR(r.date||'')} ${r.time||''} ${r.deadlineLabel||''}`);
       if(!hay.includes(query)) return false;
     }
-    if(receptionStatusFilter!=='ALL' && rowStatus(r)!==receptionStatusFilter)return false;
+    if(receptionStatusFilter==='PENDENTE' && !isPickupPending(r))return false;
+    if(receptionStatusFilter!=='ALL'&&receptionStatusFilter!=='PENDENTE'&&rowStatus(r)!==receptionStatusFilter)return false;
     return true;
   });
 }
 function receptionCurrentMonthRows(rows){
-  const month=todayISO().slice(0,7);
+  const month=String($('dateFilter')?.value||todayISO()).slice(0,7);
   return (rows||[]).filter(r=>String(r?.date||'').slice(0,7)===month);
 }
 function receptionCurrentMonthLabel(){
-  const [y,m]=todayISO().slice(0,7).split('-').map(Number);
+  const [y,m]=String($('dateFilter')?.value||todayISO()).slice(0,7).split('-').map(Number);
   return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).toUpperCase();
 }
 function renderReceptionStats(rows){
@@ -1505,8 +1507,10 @@ function renderReceptionStats(rows){
   const counts=monthRows.reduce((acc,r)=>{acc[rowStatus(r)]=(acc[rowStatus(r)]||0)+1;return acc;},{});
   const pending=pickupPendingCount(monthRows);
   const total=monthRows.length;
-  const button=(key,label,value)=>`<button class="statChip statChipBtn ${receptionStatusFilter===key?'active':''}" type="button" data-reception-filter="${key}" aria-pressed="${receptionStatusFilter===key?'true':'false'}">${label} <strong>${value}</strong></button>`;
-  const html=`<span class="statChip statMonthLabel">${esc(receptionCurrentMonthLabel())}</span>${button('ALL','TOTAL',total)}${button('PENDENTE','PENDENTES',pending)}${button('RETIRADO','RETIRADOS',counts.RETIRADO||0)}${button('VENCE_HOJE','VENCE HOJE',counts.VENCE_HOJE||0)}${button('VENCIDO','VENCIDOS',counts.VENCIDO||0)}`;
+  const button=(key,label,value)=>`<button class="statChip statChipBtn ${receptionDateScope==='month'&&receptionStatusFilter===key?'active':''}" type="button" data-reception-filter="${key}" aria-pressed="${receptionStatusFilter===key?'true':'false'}">${label} <strong>${value}</strong></button>`;
+  const dayMode=receptionDateScope==='day';
+  const dayChip=dayMode?`<button class="statChip statChipBtn active" type="button" data-reception-scope="day" aria-pressed="true">DIA ${esc(formatBR($('dateFilter')?.value||todayISO()))}</button>`:'';
+  const html=`<span class="statChip statMonthLabel">${esc(receptionCurrentMonthLabel())}</span>${dayChip}${button('ALL','TOTAL',total)}${button('PENDENTE','PENDENTES',pending)}${button('RETIRADO','RETIRADOS',counts.RETIRADO||0)}${button('VENCE_HOJE','VENCE HOJE',counts.VENCE_HOJE||0)}${button('VENCIDO','VENCIDOS',counts.VENCIDO||0)}`;
   const box=$('receptionStats'); if(box) box.innerHTML=html;
 }
 
@@ -1532,7 +1536,7 @@ function render(){
   renderReceptionCampaigns(allRows);
   const date=$('dateFilter').value||todayISO();
   const query=upper($('searchFilter')?.value||'');
-  const sourceRows=(query||receptionStatusFilter!=='ALL')?receptionCurrentMonthRows(allRows):resultRowsForDate(date);
+  const sourceRows=receptionDateScope==='day'?resultRowsForDate(date):receptionCurrentMonthRows(allRows);
   const filtered=applyReceptionFilters(sourceRows);
   renderReceptionStats(allRows);
   $('resultList').innerHTML=filtered.length?filtered.map(r=>{
@@ -1552,7 +1556,7 @@ document.addEventListener('click',e=>{
   const campaignWinner=e.target.closest('[data-reception-winner-open]');
   if(campaignWinner){const ref=rowFromButton(campaignWinner);ref.winnerId=campaignWinner.dataset.winnerId||'';const row=findReceptionRow(ref);if(row)openReceptionSheet(row);else showReceptionToast('DADOS ATUALIZADOS EM OUTRA TELA. AGUARDE A SINCRONIZAÇÃO.',true);return;}
   const stat=e.target.closest('[data-reception-filter]');
-  if(stat){receptionStatusFilter=stat.dataset.receptionFilter||'ALL';render();return;}
+  if(stat){receptionStatusFilter=stat.dataset.receptionFilter||'ALL';receptionDateScope='month';render();return;}
   if(e.target.closest('#receptionModalClose')){closeReceptionSheet();return;}
   if(e.target.id==='sheetConfirmPickup'){
     if(!activeReceptionRow||pickupBusy)return;
@@ -1590,7 +1594,7 @@ document.addEventListener('contextmenu',e=>{
 });
 
 $('dateFilter').value=todayISO();
-$('dateFilter').addEventListener('change',render);
+$('dateFilter').addEventListener('change',()=>{receptionDateScope='day';receptionStatusFilter='ALL';render();});
 let searchTimer=null;$('searchFilter').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,90);});
 setInterval(render,60000);
 function receptionScheduleReconnect(delay=1600){
