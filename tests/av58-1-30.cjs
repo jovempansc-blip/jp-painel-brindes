@@ -1,7 +1,7 @@
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert');
 const js=fs.readFileSync(path.join(__dirname,'../assets/prog-manual.js'),'utf8');
 const main=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
-assert(main.includes('assets/prog-manual.js?v=AV58_1_32'),'cache atualizado');
+assert(main.includes('assets/prog-manual.js?v=AV58_1_33'),'cache atualizado');
 assert(js.includes("'merchan','merchandising'"),'merchans preservados na seleção');
 const date='2026-10-19',monthKey='2026-10';
 const original={items:[

@@ -70,3 +70,65 @@
 .jpManualTabs button:nth-child(2){border-radius:0}
 .jpManualTabs button:last-child{border-radius:0 12px 12px 0}
 @media(max-width:550px){.jpManualTabs button{font-size:9px;letter-spacing:0}}
+
+/* AV58.1.33 — programação com rolagem independente; painel de materiais fixo. */
+@media (min-width: 851px) {
+  #programManualMount .jpManualShell {
+    height: clamp(360px, calc(100dvh - 172px), 980px);
+    align-items: stretch;
+    min-height: 0;
+  }
+  #programManualMount .jpManualProgramPane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #programManualMount .jpManualProgramPane > .jpManualTop,
+  #programManualMount .jpManualProgramPane > .jpManualSummary {
+    flex: 0 0 auto;
+  }
+  #programManualMount .jpManualScheduleScroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+  #programManualMount .jpManualAvailablePane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #programManualMount .jpManualAvailablePane > .jpManualStockHead,
+  #programManualMount .jpManualAvailablePane > .jpManualTabs,
+  #programManualMount .jpManualAvailablePane > .jpManualStockFooter {
+    flex: 0 0 auto;
+  }
+  #programManualMount .jpManualAvailablePane > .jpManualStockGroup {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  #programManualMount .jpManualAvailablePane .jpManualGroupTitle,
+  #programManualMount .jpManualAvailablePane .jpManualSearch {
+    flex: 0 0 auto;
+  }
+  #programManualMount .jpManualMaterialList {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+}
+@media (max-width: 850px) {
+  /* Tela estreita: mantém leitura sequencial, sem cortar a coluna disponível. */
+  #programManualMount .jpManualScheduleScroll,
+  #programManualMount .jpManualMaterialList {overflow: visible;}
+}
