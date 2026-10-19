@@ -3321,7 +3321,7 @@ function closeHistoryModal(){
 /* AV58.1.22 · Rodízio de textos das PAUTAS: avanço exclusivamente pela leitura confirmada. */
 function studioPautaTextVariants(p){
   const kind=String(p?.kind||p?.promoKind||p?.type||'').toLowerCase();
-  if(kind!=='pauta'||!p?.textRotationEnabled||!Array.isArray(p.textVariants)||p.textVariants.length<2)return [];
+  if(!['pauta','merchan'].includes(kind)||!p?.textRotationEnabled||!Array.isArray(p.textVariants)||p.textVariants.length<2)return [];
   return p.textVariants.filter(v=>v&&String(v.id||'')&&String(v.text||'').trim());
 }
 function studioPautaRotationCount(p,overrideMonth='',overrideLogs=null){
