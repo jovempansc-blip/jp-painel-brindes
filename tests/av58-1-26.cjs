@@ -8,7 +8,7 @@ assert(html.indexOf('id="prizeCatalogHelpDialog"')<html.indexOf("bind('prizeCata
 for(const id of ['prizeCatalogInfoBtn','prizeCatalogHelpUnderstood','prizeCatalogHelpClose']){
   assert(html.includes(`bind('${id}','click'`),`Sem ação de clique: ${id}`);
 }
-assert(html.includes('assets/prog-manual.js?v=AV58_1_26'),'A versão JS precisa vencer o cache anterior');
+assert(/assets\/prog-manual\.js\?v=AV58_1_(?:2[6-9]|[3-9]\d)/.test(html),'A versão JS precisa vencer o cache anterior');
 assert(manual.includes("host.addEventListener('keydown'"),'A lista deve aceitar teclado');
 assert(manual.includes("['Enter',' '].includes(e.key)"),'Enter e Espaço devem funcionar');
 assert(!manual.includes('class="jpManualDrop" data-target="${clean(s)}" tabindex="0" role="button"'),'Alvo de arraste não pode anunciar ação por clique não implementada');

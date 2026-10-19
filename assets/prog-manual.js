@@ -34,7 +34,7 @@
     return [...map.values()].filter(p=>{
       if(!p||p.opecArchived||p.opecForceEnded||p.opecPaused||p.opecPublicationStatus==='draft')return false;
       const status=String(p.status||'').toUpperCase();if(['CANCELADO','CANCELADA'].includes(status))return false;
-      const kind=String(p.kind||p.promoKind||p.type||'').toLowerCase();if(!['pauta','promo','promoção','promocao'].includes(kind))return false;
+      const kind=String(p.kind||p.promoKind||p.type||'').toLowerCase();if(!['pauta','promo','promoção','promocao','merchan','merchandising'].includes(kind))return false;
       if(!sameStation(p.station||'JP1017',station))return false;
       const start=p.startDate||p.drawDate||'',end=p.endDate||p.drawDate||start;
       return (!start||date>=start)&&(!end||date<=end);
@@ -93,7 +93,7 @@
       const d=prizes().find(d=>d.id===i.distributionId),title=i.title||i.prize||distributionLabel(d)||'PRÊMIO';
       return `<div class="jpManualEntry" data-card="${clean(i.id)}" draggable="${!locked(i)}" data-drag-type="item" data-drag-id="${clean(i.id)}"><span class="icon">♔</span><div><strong>${clean(title)}</strong><small>PRÊMIO · ${qty(i.qty)} ${qty(i.qty)===1?'UNIDADE':'UNIDADES'}${locked(i)?' · REALIZADO / BLOQUEADO':''}</small></div><div class="jpManualEntryActions"><button type="button" data-edit-qty="${clean(i.id)}" ${locked(i)?'disabled':''} aria-label="EDITAR QUANTIDADE">QTD</button><button type="button" data-remove-item="${clean(i.id)}" ${locked(i)?'disabled':''} aria-label="REMOVER PRÊMIO">×</button></div></div>`;
     }),...pautas.map(p=>{
-      const promo=promoPool().find(x=>x.id===p.promoId);return `<div class="jpManualEntry pauta" data-card="${clean(p.key)}" draggable="${!pautaAlreadyRead(p.promoId,p.slot)}" data-drag-type="assigned-pauta" data-drag-id="${clean(p.key)}"><span class="icon">♧</span><div><strong>${clean(promo?.name||promo?.title||'PAUTA')}</strong><small>PAUTA PROMOCIONAL · LEITURA MANUAL</small></div><button type="button" data-remove-pauta="${clean(p.key)}" ${pautaAlreadyRead(p.promoId,p.slot)?'disabled':''} aria-label="REMOVER PAUTA">×</button></div>`;
+      const promo=promoPool().find(x=>x.id===p.promoId);return `<div class="jpManualEntry pauta" data-card="${clean(p.key)}" draggable="${!pautaAlreadyRead(p.promoId,p.slot)}" data-drag-type="assigned-pauta" data-drag-id="${clean(p.key)}"><span class="icon">♧</span><div><strong>${clean(promo?.name||promo?.title||'PAUTA')}</strong><small>${['merchan','merchandising'].includes(String(promo?.kind||'').toLowerCase())?'MERCHAN':'PAUTA PROMOCIONAL'} · LEITURA MANUAL</small></div><button type="button" data-remove-pauta="${clean(p.key)}" ${pautaAlreadyRead(p.promoId,p.slot)?'disabled':''} aria-label="REMOVER PAUTA">×</button></div>`;
     })].join('');
   }
   function renderPeriods(){
@@ -110,17 +110,18 @@
   }).join('')||'<div class="jpManualEmpty">NENHUM PRÊMIO DISPONÍVEL NA VIGÊNCIA.</div>';}
   function pautaRows(){return promoPool().filter(p=>String(p.name||p.title).toLowerCase().includes(pautaQuery.toLowerCase())).map(p=>{
     const count=draft.pautas.filter(a=>a.promoId===p.id).length;
-    return `<div class="jpManualStockRow" draggable="true" data-drag-type="pauta" data-drag-id="${clean(p.id)}" role="button" tabindex="0" title="ARRASTE OU CLIQUE PARA ESCOLHER HORÁRIO"><span class="dragDots">⠿</span><div><strong>${clean(p.name||p.title||'PAUTA')}</strong><small>${clean(countryDate(p.startDate||date))} — ${clean(countryDate(p.endDate||date))}</small></div><div class="counts"><span>${count} NESTE DIA</span><b>${p.promoReadMethod==='manual'?'MANUAL':'REFORÇO'}</b></div></div>`;
+    const isMerchan=['merchan','merchandising'].includes(String(p.kind||p.promoKind||p.type||'').toLowerCase());
+    return `<div class="jpManualStockRow" draggable="true" data-drag-type="pauta" data-drag-id="${clean(p.id)}" role="button" tabindex="0" title="ARRASTE OU CLIQUE PARA ESCOLHER HORÁRIO"><span class="dragDots">⠿</span><div><strong>${clean(p.name||p.title||'PAUTA')}</strong><small>${clean(isMerchan?'MERCHAN · ':'PAUTA · ')}${clean(countryDate(p.startDate||date))} — ${clean(countryDate(p.endDate||date))}</small></div><div class="counts"><span>${count} NESTE DIA</span><b>${p.promoReadMethod==='manual'?'MANUAL':'REFORÇO'}</b></div></div>`;
   }).join('')||'<div class="jpManualEmpty">SEM PAUTAS DENTRO DA VIGÊNCIA.</div>';}
   function renderSidebar(){
     const showPrizes=manualTab!=='pautas';
     const prizeCount=prizes().length,pautaCount=promoPool().length;
     const searchId=showPrizes?'jpPrizeSearch':'jpPautaSearch';
     const searchValue=showPrizes?prizeQuery:pautaQuery;
-    const searchPlaceholder=showPrizes?'BUSCAR PRÊMIO...':'BUSCAR PAUTA...';
+    const searchPlaceholder=showPrizes?'BUSCAR PRÊMIO...':'BUSCAR PAUTA OU MERCHAN...';
     const stockId=showPrizes?'jpPrizeStock':'jpPautaStock';
     const content=showPrizes?stockRows():pautaRows();
-    return `<aside class="jpManualPaper"><div class="jpManualStockHead"><strong>ITENS DISPONÍVEIS</strong><span>ARRASTE PARA A ESQUERDA ↖</span></div><div class="jpManualTabs" role="tablist" aria-label="TIPO DE ITEM"><button type="button" class="${showPrizes?'active':''}" data-manual-tab="prizes" role="tab" aria-selected="${showPrizes?'true':'false'}">♔ PRÊMIOS (${prizeCount})</button><button type="button" class="${showPrizes?'':'active'}" data-manual-tab="pautas" role="tab" aria-selected="${showPrizes?'false':'true'}">♧ PAUTAS (${pautaCount})</button></div><section class="jpManualStockGroup singleTab"><div class="jpManualGroupTitle ${showPrizes?'':'pautas'}"><strong>${showPrizes?'♔ &nbsp; PRÊMIOS DENTRO DA VIGÊNCIA':'♧ &nbsp; PAUTAS PROMOCIONAIS'}</strong><small>${showPrizes?`${prizeCount} CADASTRADOS`:`${pautaCount} EM VIGÊNCIA`}</small></div><input class="jpManualSearch" id="${searchId}" placeholder="${searchPlaceholder}" value="${clean(searchValue)}" aria-label="${searchPlaceholder}"><div id="${stockId}">${content}</div></section><div class="jpManualStockFooter">Arraste um item para o horário oficial. Os saldos mudam nesta prévia; a alteração só chega aos outros painéis depois de salvar no Firebase. Itens realizados não podem ser removidos nem movidos.</div></aside>`;
+    return `<aside class="jpManualPaper"><div class="jpManualStockHead"><strong>ITENS DISPONÍVEIS</strong><span>ARRASTE PARA A ESQUERDA ↖</span></div><div class="jpManualTabs" role="tablist" aria-label="TIPO DE ITEM"><button type="button" class="${showPrizes?'active':''}" data-manual-tab="prizes" role="tab" aria-selected="${showPrizes?'true':'false'}">♔ PRÊMIOS (${prizeCount})</button><button type="button" class="${showPrizes?'':'active'}" data-manual-tab="pautas" role="tab" aria-selected="${showPrizes?'false':'true'}">♧ PAUTAS (${pautaCount})</button></div><section class="jpManualStockGroup singleTab"><div class="jpManualGroupTitle ${showPrizes?'':'pautas'}"><strong>${showPrizes?'♔ &nbsp; PRÊMIOS DENTRO DA VIGÊNCIA':'♧ &nbsp; PAUTAS E MERCHANS'}</strong><small>${showPrizes?`${prizeCount} CADASTRADOS`:`${pautaCount} EM VIGÊNCIA`}</small></div><input class="jpManualSearch" id="${searchId}" placeholder="${searchPlaceholder}" value="${clean(searchValue)}" aria-label="${searchPlaceholder}"><div id="${stockId}">${content}</div></section><div class="jpManualStockFooter">Arraste um item para o horário oficial. Os saldos mudam nesta prévia; a alteração só chega aos outros painéis depois de salvar no Firebase. Itens realizados não podem ser removidos nem movidos.</div></aside>`;
   }
   function paint(){
     if(mode!=='manual'||!draft||!el('programManualMount'))return;
@@ -216,9 +217,10 @@
       const src=e.target.closest('.jpManualStockRow');if(src){if(src.classList.contains('disabled'))return;const choices=officialSlots(date,station),answer=prompt(`EM QUAL HORÁRIO PROGRAMAR?\n${choices.join(' · ')}`,choices[0]||'');if(answer!==null){const chosen=slot(answer);add(src.dataset.dragType,src.dataset.dragId,chosen);}return;}
     });
   }
-  function alertCollision(baseItems,basePautas,remote,desiredPautas){
+  function alertCollision(baseItems,basePautas,remote,desiredPautas,itemsChanged=true,pautasChanged=true){
     const oldItems=rows(remote?.items).filter(i=>i.date===date&&itemStation(i)===station&&liveItem(i));
-    if(JSON.stringify(oldItems)!==JSON.stringify(baseItems))return 'OUTRA SESSÃO ALTEROU OS PRÊMIOS DESTE DIA. RECARREGUE O RASCUNHO.';
+    if(itemsChanged&&JSON.stringify(oldItems)!==JSON.stringify(baseItems))return 'OUTRA SESSÃO ALTEROU OS PRÊMIOS DESTE DIA. RECARREGUE O RASCUNHO.';
+    if(!pautasChanged)return '';
     const touchedIds=new Set([...basePautas,...desiredPautas].map(a=>a.promoId));
     for(const id of touchedIds){
       const p=rows(remote?.promos).find(p=>p.id===id),current=promoPool().find(p=>p.id===id);
@@ -236,28 +238,44 @@
     if(typeof firebaseStateRootRef!=='function'||!firebaseConnected||!firebaseServerLoaded||firebasePendingSave||!firebaseReady)return reject('O FIREBASE AINDA NÃO ESTÁ CONECTADO OU HÁ OUTRA GRAVAÇÃO EM ANDAMENTO. NADA FOI ALTERADO.');
     if(!confirm(`SALVAR A PROGRAMAÇÃO MANUAL DE ${countryDate(date)}?\n\nOS PAINÉIS CONECTADOS RECEBERÃO AS ALTERAÇÕES PELO FIREBASE. CONFIRA QUANTIDADES E LEITURAS.`))return;
     busy=true;paint();
-    const targetMonth=date.slice(0,7),baseItems=cloneJSON([...draft.originalsMap.values()]),basePautas=cloneJSON(draft.originalPautas),desiredItems=cloneJSON(draft.items),desiredPautas=cloneJSON(draft.pautas),basePrizes=prizes().filter(d=>desiredItems.some(i=>i.distributionId===d.id)).map(d=>({id:d.id,total:totalAvailable(d),starts:distStartDate(d),ends:distEndDate(d)}));
+    const targetMonth=date.slice(0,7),baseItems=cloneJSON([...draft.originalsMap.values()]),basePautas=cloneJSON(draft.originalPautas),desiredItems=cloneJSON(draft.items),desiredPautas=cloneJSON(draft.pautas);
+    const itemsChanged=JSON.stringify(desiredItems)!==JSON.stringify(baseItems);
+    const pautasChanged=JSON.stringify(desiredPautas)!==JSON.stringify(basePautas);
+    const originalById=new Map(baseItems.map(i=>[i.id,i])),plannedById=new Map(desiredItems.map(i=>[i.id,i]));
+    const touchedPrizeIds=new Set();
+    for(const id of new Set([...originalById.keys(),...plannedById.keys()])){
+      const before=originalById.get(id),after=plannedById.get(id);
+      if(JSON.stringify(before)===JSON.stringify(after))continue;
+      if(before?.distributionId)touchedPrizeIds.add(before.distributionId);
+      if(after?.distributionId)touchedPrizeIds.add(after.distributionId);
+    }
     let failure='';
     try{
       const root=firebaseStateRootRef();if(!root)throw new Error('RAIZ OFICIAL DO FIREBASE INDISPONÍVEL.');
       const tx=await root.child('months').child(targetMonth).transaction(month=>{
         if(!month||!month.items||!month.distributions){failure='MÊS NÃO ENCONTRADO NA BASE OFICIAL. NÃO FOI ALTERADO.';return;}
-        failure=alertCollision(baseItems,basePautas,month,desiredPautas);if(failure)return;
+        failure=alertCollision(baseItems,basePautas,month,desiredPautas,itemsChanged,pautasChanged);if(failure)return;
         const storedItems=rows(month.items),storedDist=rows(month.distributions),storedPromos=rows(month.promos);
         const currentPrizeSet=new Map(storedDist.map(d=>[d.id,d]));
-        for(const d of basePrizes){const target=currentPrizeSet.get(d.id);if(!target){failure='PRÊMIO SEM SNAPSHOT NESTE MÊS. CONFIRA A DISTRIBUIÇÃO GERAL.';return;}}
+        // Alterações de pauta/merchan não regravam nem revalidam prêmios já distribuídos.
+        // Isso preserva programação automática e resultados existentes.
         const itemIds=new Set(baseItems.map(i=>i.id));
-        const revised=[...storedItems.filter(i=>!itemIds.has(i.id)),...desiredItems];
-        for(const d of basePrizes){
-          const remote=currentPrizeSet.get(d.id);if(date<distStartDate(remote)||date>distEndDate(remote)){failure=`VIGÊNCIA ALTERADA: ${distributionLabel(remote)}`;return;}
-          const spent=revised.filter(i=>i.distributionId===d.id&&String(i.date||'').slice(0,7)===targetMonth&&liveItem(i)).reduce((sum,i)=>sum+qty(i.qty),0);
-          if(spent>qty(remote.ar)){failure=`SALDO INSUFICIENTE: ${distributionLabel(remote)}. TOTAL PROGRAMADO ${spent} / COTA RÁDIO ${qty(remote.ar)}`;return;}
+        const revised=itemsChanged?[...storedItems.filter(i=>!itemIds.has(i.id)),...desiredItems]:storedItems;
+        for(const id of touchedPrizeIds){
+          const remote=currentPrizeSet.get(id);
+          if(!remote){failure='PRÊMIO SEM SNAPSHOT NESTE MÊS. CONFIRA A DISTRIBUIÇÃO GERAL.';return;}
+          if(date<distStartDate(remote)||date>distEndDate(remote)){failure=`VIGÊNCIA ALTERADA: ${distributionLabel(remote)}`;return;}
+          const count=items=>items.filter(i=>i.distributionId===id&&String(i.date||'').slice(0,7)===targetMonth&&liveItem(i)).reduce((sum,i)=>sum+qty(i.qty),0);
+          const previous=count(storedItems),spent=count(revised),limit=qty(remote.ar);
+          // Excesso anterior é sinalizado na lista de saldo, mas só bloqueia
+          // alterações que AUMENTEM o excesso. Mover/reduzir continua permitido.
+          if(spent>limit&&spent>previous){failure=`SALDO INSUFICIENTE: ${distributionLabel(remote)}. TOTAL PROGRAMADO ${spent} / COTA RÁDIO ${limit}`;return;}
         }
         const audit={id:`MP_${date}_${station}_${Date.now()}`,date,station,at:new Date().toISOString(),source:'PROG_MANUAL',before:baseItems.map(i=>({id:i.id,slot:i.slot,qty:i.qty,distributionId:i.distributionId})),after:desiredItems.map(i=>({id:i.id,slot:i.slot,qty:i.qty,distributionId:i.distributionId})),beforePautas:basePautas.map(a=>({id:a.promoId,slot:a.slot})),afterPautas:desiredPautas.map(a=>({id:a.promoId,slot:a.slot}))};
         month.manualProgramHistory=[...rows(month.manualProgramHistory),audit].slice(-300);
-        month.items=revised;
+        if(itemsChanged)month.items=revised;
         const touched=new Set([...basePautas,...desiredPautas].map(p=>p.promoId));
-        month.promos=storedPromos.map(p=>{
+        if(pautasChanged)month.promos=storedPromos.map(p=>{
           if(!touched.has(p.id))return p;
           const other=rows(p.manualReadAssignments).filter(a=>a.date!==date||!sameStation(a.station||p.station||'JP1017',station));
           const mine=desiredPautas.filter(a=>a.promoId===p.id).map(a=>({key:a.key,date:a.date,station:a.station,slot:a.slot,program:a.program,source:'PROG_MANUAL'}));
