@@ -1,8 +1,8 @@
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert');
 const js=fs.readFileSync(path.join(__dirname,'../assets/prog-manual.js'),'utf8');
 const main=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
-assert(main.includes('assets/prog-manual.js?v=AV58_1_30'),'cache atualizado');
-assert(js.includes("'merchan','merchandising'"),'merchans na aba Pautas');
+assert(main.includes('assets/prog-manual.js?v=AV58_1_32'),'cache atualizado');
+assert(js.includes("'merchan','merchandising'"),'merchans preservados na seleção');
 const date='2026-10-19',monthKey='2026-10';
 const original={items:[
  {id:'old1',date,slot:'08H',station:'JP1017',channel:'RÁDIO',distributionId:'D1',qty:10,status:'PENDENTE'},

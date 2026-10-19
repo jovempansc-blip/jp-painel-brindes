@@ -13,7 +13,7 @@
   const liveItem=i=>i&&i.channel==='RÁDIO'&&!['CANCELADO','CANCELADA'].includes(String(i.status||'').toUpperCase());
   const locked=i=>!!(i&&(['REALIZADO','NO AR'].includes(String(i.status||'').toUpperCase())||i.resultAt||i.winnerName||(i.winnerNames||[]).length||i.resultName||i.deliveredAt||i.sourceType==='promo-result'||i.date<iso()||(i.date===iso()&&slotOrder(i.slot)<(new Date().getHours()+new Date().getMinutes()/60))));
   let mode='grade',date=iso(),station='JP1017',draft=null,busy=false,pending=null;
-  let prizeQuery='',pautaQuery='',manualTab='prizes';
+  let prizeQuery='',pautaQuery='',merchanQuery='',manualTab='prizes';
   function countryDate(d){return d.split('-').reverse().join('/');}
   function officialSlots(dateKey,stationKey){
     const set=new Set(),w=new Date(`${dateKey}T12:00:00`).getDay();
@@ -108,20 +108,26 @@
     const available=balance(d),name=distributionLabel(d);
     return `<div class="jpManualStockRow ${available<=0||!state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===d.id)?'disabled':''}" draggable="${available>0&&!!state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===d.id)}" data-drag-type="prize" data-drag-id="${clean(d.id)}" role="button" tabindex="0" title="ARRASTE OU CLIQUE PARA ESCOLHER HORÁRIO"><span class="dragDots">⠿</span><div><strong>${clean(name)}</strong><small>${clean(validity(d))}</small></div><div class="counts"><span class="countTotal">${state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===d.id)?'RÁDIO '+totalAvailable(d):'SEM COTA NO MÊS'}</span><span>PROG. ${used(d)}</span><b>SALDO ${available}</b></div></div>`;
   }).join('')||'<div class="jpManualEmpty">NENHUM PRÊMIO DISPONÍVEL NA VIGÊNCIA.</div>';}
-  function pautaRows(){return promoPool().filter(p=>String(p.name||p.title).toLowerCase().includes(pautaQuery.toLowerCase())).map(p=>{
-    const count=draft.pautas.filter(a=>a.promoId===p.id).length;
-    const isMerchan=['merchan','merchandising'].includes(String(p.kind||p.promoKind||p.type||'').toLowerCase());
-    return `<div class="jpManualStockRow" draggable="true" data-drag-type="pauta" data-drag-id="${clean(p.id)}" role="button" tabindex="0" title="ARRASTE OU CLIQUE PARA ESCOLHER HORÁRIO"><span class="dragDots">⠿</span><div><strong>${clean(p.name||p.title||'PAUTA')}</strong><small>${clean(isMerchan?'MERCHAN · ':'PAUTA · ')}${clean(countryDate(p.startDate||date))} — ${clean(countryDate(p.endDate||date))}</small></div><div class="counts"><span>${count} NESTE DIA</span><b>${p.promoReadMethod==='manual'?'MANUAL':'REFORÇO'}</b></div></div>`;
-  }).join('')||'<div class="jpManualEmpty">SEM PAUTAS DENTRO DA VIGÊNCIA.</div>';}
+  function isMerchanRecord(p){return ['merchan','merchandising'].includes(String(p.kind||p.promoKind||p.type||'').toLowerCase());}
+  function pautaRows(group='pautas'){
+    const isMerchanTab=group==='merchans',query=(isMerchanTab?merchanQuery:pautaQuery).toLowerCase();
+    return promoPool().filter(p=>isMerchanRecord(p)===isMerchanTab&&String(p.name||p.title).toLowerCase().includes(query)).map(p=>{
+      const count=draft.pautas.filter(a=>a.promoId===p.id).length;
+      return `<div class="jpManualStockRow" draggable="true" data-drag-type="pauta" data-drag-id="${clean(p.id)}" role="button" tabindex="0" title="ARRASTE OU CLIQUE PARA ESCOLHER HORÁRIO"><span class="dragDots">⠿</span><div><strong>${clean(p.name||p.title||(isMerchanTab?'MERCHAN':'PAUTA'))}</strong><small>${clean(isMerchanTab?'MERCHAN · ':'PAUTA · ')}${clean(countryDate(p.startDate||date))} — ${clean(countryDate(p.endDate||date))}</small></div><div class="counts"><span>${count} NESTE DIA</span><b>${p.promoReadMethod==='manual'?'MANUAL':'REFORÇO'}</b></div></div>`;
+    }).join('')||`<div class="jpManualEmpty">${isMerchanTab?'NENHUM MERCHAN':'NENHUMA PAUTA'} NA VIGÊNCIA / BUSCA.</div>`;
+  }
   function renderSidebar(){
-    const showPrizes=manualTab!=='pautas';
-    const prizeCount=prizes().length,pautaCount=promoPool().length;
-    const searchId=showPrizes?'jpPrizeSearch':'jpPautaSearch';
-    const searchValue=showPrizes?prizeQuery:pautaQuery;
-    const searchPlaceholder=showPrizes?'BUSCAR PRÊMIO...':'BUSCAR PAUTA OU MERCHAN...';
-    const stockId=showPrizes?'jpPrizeStock':'jpPautaStock';
-    const content=showPrizes?stockRows():pautaRows();
-    return `<aside class="jpManualPaper"><div class="jpManualStockHead"><strong>ITENS DISPONÍVEIS</strong><span>ARRASTE PARA A ESQUERDA ↖</span></div><div class="jpManualTabs" role="tablist" aria-label="TIPO DE ITEM"><button type="button" class="${showPrizes?'active':''}" data-manual-tab="prizes" role="tab" aria-selected="${showPrizes?'true':'false'}">♔ PRÊMIOS (${prizeCount})</button><button type="button" class="${showPrizes?'':'active'}" data-manual-tab="pautas" role="tab" aria-selected="${showPrizes?'false':'true'}">♧ PAUTAS (${pautaCount})</button></div><section class="jpManualStockGroup singleTab"><div class="jpManualGroupTitle ${showPrizes?'':'pautas'}"><strong>${showPrizes?'♔ &nbsp; PRÊMIOS DENTRO DA VIGÊNCIA':'♧ &nbsp; PAUTAS E MERCHANS'}</strong><small>${showPrizes?`${prizeCount} CADASTRADOS`:`${pautaCount} EM VIGÊNCIA`}</small></div><input class="jpManualSearch" id="${searchId}" placeholder="${searchPlaceholder}" value="${clean(searchValue)}" aria-label="${searchPlaceholder}"><div id="${stockId}">${content}</div></section><div class="jpManualStockFooter">Arraste um item para o horário oficial. Os saldos mudam nesta prévia; a alteração só chega aos outros painéis depois de salvar no Firebase. Itens realizados não podem ser removidos nem movidos.</div></aside>`;
+    const group=manualTab==='merchans'?'merchans':manualTab==='pautas'?'pautas':'prizes';
+    const showPrizes=group==='prizes',showMerchans=group==='merchans';
+    const pool=promoPool(),prizeCount=prizes().length,pautaCount=pool.filter(p=>!isMerchanRecord(p)).length,merchanCount=pool.filter(isMerchanRecord).length;
+    const searchId=showPrizes?'jpPrizeSearch':showMerchans?'jpMerchanSearch':'jpPautaSearch';
+    const searchValue=showPrizes?prizeQuery:showMerchans?merchanQuery:pautaQuery;
+    const searchPlaceholder=showPrizes?'BUSCAR PRÊMIO...':showMerchans?'BUSCAR MERCHAN...':'BUSCAR PAUTA...';
+    const stockId=showPrizes?'jpPrizeStock':showMerchans?'jpMerchanStock':'jpPautaStock';
+    const content=showPrizes?stockRows():pautaRows(group);
+    const title=showPrizes?'♔ &nbsp; PRÊMIOS DENTRO DA VIGÊNCIA':showMerchans?'♧ &nbsp; MERCHANS':'♧ &nbsp; PAUTAS PROMOCIONAIS';
+    const count=showPrizes?prizeCount:showMerchans?merchanCount:pautaCount;
+    return `<aside class="jpManualPaper"><div class="jpManualStockHead"><strong>ITENS DISPONÍVEIS</strong><span>ARRASTE PARA A ESQUERDA ↖</span></div><div class="jpManualTabs" role="tablist" aria-label="TIPO DE ITEM"><button type="button" class="${showPrizes?'active':''}" data-manual-tab="prizes" role="tab" aria-selected="${showPrizes?'true':'false'}">♔ PRÊMIOS (${prizeCount})</button><button type="button" class="${group==='pautas'?'active':''}" data-manual-tab="pautas" role="tab" aria-selected="${group==='pautas'?'true':'false'}">♧ PAUTAS (${pautaCount})</button><button type="button" class="${showMerchans?'active':''}" data-manual-tab="merchans" role="tab" aria-selected="${showMerchans?'true':'false'}">♧ MERCHAN (${merchanCount})</button></div><section class="jpManualStockGroup singleTab"><div class="jpManualGroupTitle ${showPrizes?'':'pautas'}"><strong>${title}</strong><small>${count} EM VIGÊNCIA</small></div><input class="jpManualSearch" id="${searchId}" placeholder="${searchPlaceholder}" value="${clean(searchValue)}" aria-label="${searchPlaceholder}"><div id="${stockId}">${content}</div></section><div class="jpManualStockFooter">Arraste um item para o horário oficial. Os saldos mudam nesta prévia; a alteração só chega aos outros painéis depois de salvar no Firebase. Itens realizados não podem ser removidos nem movidos.</div></aside>`;
   }
   function paint(){
     if(mode!=='manual'||!draft||!el('programManualMount'))return;
@@ -182,7 +188,8 @@
     });
     host.addEventListener('input',e=>{
       if(e.target.id==='jpPrizeSearch'){prizeQuery=e.target.value;el('jpPrizeStock').innerHTML=stockRows();}
-      if(e.target.id==='jpPautaSearch'){pautaQuery=e.target.value;el('jpPautaStock').innerHTML=pautaRows();}
+      if(e.target.id==='jpPautaSearch'){pautaQuery=e.target.value;el('jpPautaStock').innerHTML=pautaRows('pautas');}
+      if(e.target.id==='jpMerchanSearch'){merchanQuery=e.target.value;el('jpMerchanStock').innerHTML=pautaRows('merchans');}
     });
     // AV58.1.26: cards anunciados como botões devem responder também a Enter e Espaço.
     // Usa a mesma rota de clique já existente, sem gravar nem contornar validações.
@@ -201,7 +208,7 @@
     host.addEventListener('drop',e=>{const target=e.target.closest('[data-target]');if(!target)return;e.preventDefault();target.classList.remove('dragOver');try{const data=JSON.parse(e.dataTransfer.getData('text/plain'));add(data.type,data.id,target.dataset.target);}catch(err){console.warn('ITEM INVÁLIDO PARA ARRASTE',err);}});
     host.addEventListener('click',e=>{
       if(e.target.closest('#jpManualSave')){save();return;}
-      const tabBtn=e.target.closest('[data-manual-tab]');if(tabBtn){manualTab=tabBtn.dataset.manualTab==='pautas'?'pautas':'prizes';paint();return;}
+      const tabBtn=e.target.closest('[data-manual-tab]');if(tabBtn){manualTab=['prizes','pautas','merchans'].includes(tabBtn.dataset.manualTab)?tabBtn.dataset.manualTab:'prizes';paint();return;}
       if(e.target.closest('#jpManualReset')){if(!hasChanges()||confirm('DESCARTAR ALTERAÇÕES NÃO SALVAS?')){draft=snapshot();paint();}return;}
       const editQty=e.target.closest('[data-edit-qty]');
       if(editQty){

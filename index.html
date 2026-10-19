@@ -3735,7 +3735,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/av58-admin.css?v=AV58_1_10">
-<link rel="stylesheet" href="assets/prog-manual.css?v=AV58_1_20">
+<link rel="stylesheet" href="assets/prog-manual.css?v=AV58_1_32">
 <link rel="stylesheet" href="assets/event-variants.css?v=AV58_1_23">
 <style id="promo-pi-editor-style">
 #promoDrawer .drawerCard{width:min(1320px,97vw)!important;max-width:1320px!important}
@@ -5571,7 +5571,7 @@ async function flushFirebaseNow(label='ALTERAÇÃO',maxAttempts=4){
     for(let attempt=1;attempt<=maxAttempts;attempt+=1){
       try{
         if(!firebaseReady||!firebaseRef){ firebaseStarted=false; initFirebaseSync(); }
-        if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function') firebaseDatabase.goOnline();
+        if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function'&&!firebaseConnected) firebaseDatabase.goOnline();
         if(firebaseReady&&firebaseRef&&(!firebaseConnected||!firebaseServerLoaded)) await firebaseBootstrapRead(true);
         if(firebaseReady&&firebaseRef&&firebaseConnected&&firebaseServerLoaded){
           await saveStateToApi();
@@ -13025,6 +13025,23 @@ function promoEditorPlanRows(draft,dates){
   });});
   return [...groups.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.slot.localeCompare(b.slot)||a.station.localeCompare(b.station)||a.program.localeCompare(b.program));
 }
+// AV58.1.32: valida a existência de leitura sem calcular/renderizar
+// todo o roteiro da campanha. A prévia completa permanece em promoEditorPlanRows.
+function promoEditorHasAnyPlannedRead(draft){
+  if(!draft?.startDate||!draft?.endDate||draft.endDate<draft.startDate||!draft.opecPrograms?.some(c=>c.program&&c.hours?.length))return false;
+  if((draft.promoReadDateMode||'range')==='range'&&!draft.promoReadWeekdays?.length&&!draft.promoReadSpecificDates?.length)return false;
+  const stations=draft.station==='ALL'?['JP1017','JPNEWS983']:[draft.station||'JP1017'];
+  const monthlyPool=new Map();
+  for(const date of adminAV572DateRange(draft.startDate,draft.endDate)){
+    const monthKey=date.slice(0,7);
+    if(!monthlyPool.has(monthKey))monthlyPool.set(monthKey,promoEditorPoolForDate(draft,date));
+    const pool=monthlyPool.get(monthKey);
+    for(const station of stations){
+      if(adminAV572Assignments(draft,date,station,pool).length)return true;
+    }
+  }
+  return false;
+}
 function promoEditorShowTab(tab){
   if(!['content','schedule','draw'].includes(tab)||tab==='draw'&&$('promoKind')?.value!=='promo')tab='content';
   document.querySelectorAll('[data-promo-editor-tab]').forEach(button=>{const active=button.dataset.promoEditorTab===tab;button.setAttribute('aria-selected',String(active));button.tabIndex=active?0:-1;});
@@ -14011,6 +14028,9 @@ $('promoForm').addEventListener('submit',async e=>{
   e.stopPropagation();
   if(promoSaveInFlight) return;
   promoSaveInFlight=true;
+  const promoSaveStarted=jpFirebaseNow();
+  let promoSavePreparedAt=0;
+  let promoSaveConfirmed=false;
   const saveButton=$('promoSaveBtn');
   const originalLabel=saveButton?.textContent||'SALVAR';
   if(saveButton){saveButton.disabled=true;saveButton.textContent='SALVANDO...';}
@@ -14077,7 +14097,7 @@ $('promoForm').addEventListener('submit',async e=>{
   if(p.promoReadMethod!=='manual' && promoAV57SmartMode() && !p.opecPrograms.length){ alert('NO RODÍZIO INTELIGENTE, SELECIONE PELO MENOS UM PROGRAMA E UMA FAIXA DE HORÁRIO.'); return; }
   if(p.promoReadMethod!=='manual' && p.promoReadDateMode==='specific' && !p.promoReadSpecificDates.length){ alert('SELECIONE PELO MENOS UMA DATA ESPECÍFICA PARA A LEITURA.'); return; }
   if(p.promoReadMethod!=='manual' && !promoAV57SmartMode() && p.readMode==='selected' && !p.readHours.length){ alert('SELECIONE PELO MENOS UM HORÁRIO DE LEITURA.'); return; }
-  if(p.promoReadMethod!=='manual' && !promoEditorPlanRows(p).length){promoValidationFail('promoProgramChoices','A PROGRAMAÇÃO NÃO TEM LEITURAS. SELECIONE UM PROGRAMA, HORÁRIOS E DIAS COMPATÍVEIS COM A GRADE.');return;}
+  if(p.promoReadMethod!=='manual' && !promoEditorHasAnyPlannedRead(p)){promoValidationFail('promoProgramChoices','A PROGRAMAÇÃO NÃO TEM LEITURAS. SELECIONE UM PROGRAMA, HORÁRIOS E DIAS COMPATÍVEIS COM A GRADE.');return;}
   p.occurrences=isPromo?promoOccurrencesFromForm(p,existing):[];
   if(isPromo&&!p.occurrences.length){ alert('NÃO FOI POSSÍVEL GERAR A AGENDA DE SORTEIOS. CONFIRA AS DATAS.'); return; }
   if(isPromo&&p.occurrences.some(o=>o.date<p.startDate||o.date>p.endDate)){ alert('EXISTE SORTEIO FORA DO PERÍODO DA PROMOÇÃO.'); return; }
@@ -14091,8 +14111,12 @@ $('promoForm').addEventListener('submit',async e=>{
   if(isPromo)syncPromoResultToProgram(p,isNewPromoRecord?'':state.currentMonth);else removePromoResultFromProgram(p.id,isNewPromoRecord?'':state.currentMonth);
   storePromoAcrossMonths(p,state.currentMonth,isNewPromoRecord);
   auditEvent(existing.id?`ALTERAÇÃO DE ${promoKindLabel(kind)}`:`CADASTRO DE ${promoKindLabel(kind)}`,p.name||p.title||promoKindLabel(kind),{targetId:p.id,before:existing.id?existing:'',after:p});
+  promoSavePreparedAt=jpFirebaseNow();
+  jpFirebaseMeasure('promocao_preparacao',promoSaveStarted,true);
   if(!saveState(true)) throw new Error('FIREBASE INDISPONÍVEL. A PROMOÇÃO NÃO FOI SALVA.');
   await flushFirebaseNow(`${promoKindLabel(kind)} SALVA`);
+  promoSaveConfirmed=true;
+  jpFirebaseMeasure('promocao_confirmacao_firebase',promoSavePreparedAt,true);
   closeDrawer('promoDrawer');
   render();
   toast(`${promoKindLabel(kind)} CONFIRMADA NO FIREBASE · ESTÚDIO ATUALIZADO AUTOMATICAMENTE.`);
@@ -14104,6 +14128,8 @@ $('promoForm').addEventListener('submit',async e=>{
     console.error('ERRO AO SALVAR PROMOÇÃO/PAUTA',error);
     alert(`NÃO FOI POSSÍVEL SALVAR.\n\n${error?.message||error}`);
   }finally{
+    jpFirebaseMeasure('promocao_total',promoSaveStarted,promoSaveConfirmed);
+    if(promoSavePreparedAt&&!promoSaveConfirmed)jpFirebaseMeasure('promocao_confirmacao_firebase',promoSavePreparedAt,false);
     promoSaveInFlight=false;
     if(saveButton){saveButton.disabled=false;saveButton.textContent=originalLabel;}
   }
@@ -14350,6 +14376,6 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 <!-- AV-57.6.6.16 · PROGRAMAÇÃO COM ARRASTE + BOTÕES UNIFICADOS + SAVE PROMO EXPLÍCITO -->
 <script src="assets/distribution-unprogram-ui.js?v=AV58_1_10"></script>
 <div class="jpManualDialog" id="jpManualQtyDialog" hidden><section class="jpManualDialogCard" role="dialog" aria-modal="true" aria-labelledby="jpManualQtyTitle"><h3 id="jpManualQtyTitle">PROGRAMAR PRÊMIO</h3><p id="jpManualQtyHint">DEFINA A QUANTIDADE.</p><label for="jpManualQtyInput">QUANTIDADE A PROGRAMAR</label><input type="number" id="jpManualQtyInput" min="1" step="1" value="1"><div class="jpManualDialogActions"><button type="button" id="jpManualQtyCancel" class="jpManualBtn">CANCELAR</button><button type="button" id="jpManualQtyConfirm" class="jpManualBtn primary">ADICIONAR</button></div></section></div>
-<script src="assets/prog-manual.js?v=AV58_1_30"></script>
+<script src="assets/prog-manual.js?v=AV58_1_32"></script>
 </body>
 </html>
