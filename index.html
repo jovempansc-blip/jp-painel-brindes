@@ -177,6 +177,9 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 .distActions .actionIcon{width:21px;min-width:21px;min-height:21px;border-radius:7px}
 .distActions .actionIcon .iconGlyph{font-size:9px}
 .distInlineNum{width:48px;min-height:27px;padding:5px 5px;border:1px solid var(--line);border-radius:9px;background:#fff;text-align:center;font-size:12px;font-weight:800;color:var(--ink);margin:0 auto;display:block}
+/* AV58.1.34: abridor de edição de estoque, sem edição silenciosa da cota. */
+.distStockEditBtn{border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;font-weight:inherit;padding:5px 8px;cursor:pointer;min-width:42px}
+.distStockEditBtn:hover,.distStockEditBtn:focus-visible{background:#fff0f3;outline:1px solid rgba(174,27,55,.25)}
 .distInlineNum:focus{border-color:rgba(201,0,43,.42);box-shadow:0 0 0 3px rgba(201,0,43,.08)}
 .distStockMeta{display:flex;flex-wrap:wrap;gap:4px 7px;margin-top:5px;font-size:7.4px;font-weight:900;letter-spacing:.025em;color:#667181}
 .distStockMeta b{color:#263242}.distStockMeta .ok{color:#137947}.distStockMeta .warn{color:#a56700}.distStockMeta .bad{color:#b4233c}
@@ -4254,7 +4257,8 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
             </div>
           </div>
           <div class="field"><label id="distTotalLabel">TOTAL UNITÁRIO DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"><span class="ticketFormHint" id="distTotalHint">NO NOVO CADASTRO, INFORME O ESTOQUE FÍSICO TOTAL. O SISTEMA DIVIDE A COTA ENTRE OS MESES DA VIGÊNCIA.</span></div>
-          <div class="field" id="distMasterStockField" hidden><label>ESTOQUE TOTAL DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distMasterTotal" value="0"><span class="ticketFormHint">ESTOQUE FÍSICO GLOBAL. ALTERAR ESTE CAMPO NÃO MUDA AUTOMATICAMENTE AS COTAS DOS OUTROS MESES.</span></div>
+          <div class="field" id="distMasterStockField" hidden><label>ESTOQUE TOTAL DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distMasterTotal" value="0"><span class="ticketFormHint">ESTOQUE FÍSICO GLOBAL DA CAMPANHA. CONFIRA ABAIXO COMO DESTINAR AS NOVAS UNIDADES.</span></div>
+          <div class="field full" id="distStockAdjustmentField" hidden><label>AO AUMENTAR O ESTOQUE FÍSICO</label><select class="control" id="distStockAdjustmentMode"><option value="global">MANTER COTAS MENSAIS — NOVO SALDO NÃO ALOCADO</option><option value="current">ACRESCENTAR DIFERENÇA À COTA DESTE MÊS</option></select><span class="ticketFormHint">O SEGUNDO MODO ALTERA APENAS A COTA DA COMPETÊNCIA ABERTA. NÃO MODIFICA OUTROS MESES NEM REGISTROS REALIZADOS.</span><div class="serverSourceBox" id="distStockChangePreview" role="status">SEM ALTERAÇÕES NO ESTOQUE.</div></div>
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
           <div class="field"><label>PADRÃO DE ENTREGA</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE O MODO INICIAL. CADA DESTINO PODE SER ALTERADO ENTRE IND. E PAR.</span></div>
           <div class="field"><label>DISPONÍVEL</label><input class="control" id="distPairsPreview" readonly value="0 PRÊMIOS"></div>
@@ -9338,7 +9342,7 @@ function renderDistribuicao(){
     const lifecycle=distributionLifecycleStatus(d);
     return `<tr data-dist-row="${esc(d.id)}" class="distLifecycleRow ${lifecycle.key}">
       <td class="distPrizeCell"><div class="distPrizeWrap">${distributionPrizeIdentityHtml(d)}</div></td>
-      <td class="num">${num(d.total)}</td>
+      <td class="num"><button type="button" class="distStockEditBtn" data-dist-edit-stock="${esc(d.id)}" title="EDITAR ESTOQUE E COTA" aria-label="EDITAR ESTOQUE E COTA DE ${esc(distributionLabel(d))}">${num(d.total)}</button></td>
       <td class="num distPairCell" data-pairs-id="${esc(d.id)}">${ticketPairsCell(d)}</td>
       <td class="num">${inlineNum(d,'app','APP')}</td>
       <td class="num">${inlineNum(d,'camarote','CAMAROTE')}</td>
@@ -9479,6 +9483,10 @@ function promoProgramScheduleSummary(p){
   return{configs,hourCount,programCount,names,label:`${programCount} ${programCount===1?'PROGRAMA':'PROGRAMAS'} · ${hourCount} ${hourCount===1?'HORÁRIO':'HORÁRIOS'}`};
 }
 function promoProgramHoursMarkup(p){
+  if(promoTypeKey(p)==='promo'&&p.segmentKey&&p.segmentKey!=='ar'){
+    const destination=DESTINATION_LABELS[p.segmentKey]||p.segmentKey;
+    return `<div class="campaignSingleProgram"><strong>${esc(norm(p.local||destination))}</strong><span>${esc(destination)} · SORTEIOS / RESULTADOS</span></div>`;
+  }
   const summary=promoProgramScheduleSummary(p),configs=summary.configs;
   if(!configs.length)return `<span class="campaignProgramName">${esc(norm(p.local||'SEM PROGRAMA'))}</span>`;
   if(configs.length===1 && summary.hourCount<=4){
@@ -11916,6 +11924,8 @@ function clearDistForm(){
   if($('distMasterStockField')) $('distMasterStockField').hidden=true;
   if($('distMonthlyStockOverview')) $('distMonthlyStockOverview').hidden=true;
   if($('distMasterTotal')) $('distMasterTotal').value=0;
+  if($('distStockAdjustmentField')) $('distStockAdjustmentField').hidden=true;
+  if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='global';
   $('distDescription').dataset.catalogAutofilled='0';
   $('distDescription').dataset.catalogKey='';
   if($('distCatalogHint')) $('distCatalogHint').textContent='AO ESCOLHER UM TÍTULO JÁ CADASTRADO, A DESCRIÇÃO PADRÃO SERÁ CARREGADA AUTOMATICAMENTE.';
@@ -12503,10 +12513,13 @@ function editDist(distId){
   if($('distTotalHint')) $('distTotalHint').textContent='ALTERA SOMENTE A COTA DESTA COMPETÊNCIA. OS OUTROS MESES NÃO SÃO MODIFICADOS.';
   if($('distMasterStockField')) $('distMasterStockField').hidden=false;
   if($('distMasterTotal')) $('distMasterTotal').value=distributionCampaignMasterTotal(d);
+  if($('distStockAdjustmentField')) $('distStockAdjustmentField').hidden=false;
+  if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='global';
   if($('distMonthlyStockOverview')) $('distMonthlyStockOverview').hidden=false;
   if($('distMonthlyStockOverviewText')){const g=distributionCampaignGlobalBalance(d),m=distributionMonthStockStatus(d,state.currentMonth);$('distMonthlyStockOverviewText').innerHTML=`<strong>CONTROLE DE ESTOQUE:</strong> ESTOQUE FÍSICO ${g.master} · SOMA DAS COTAS ${g.planned} · ${g.balance<0?`DÉFICIT GLOBAL ${Math.abs(g.balance)}`:g.balance>0?`NÃO ALOCADO ${g.balance}`:'GLOBAL FECHADO'} · REALIZADO NESTE MÊS ${m.realized} · ${m.executionBalance<0?`DÉFICIT DO MÊS ${Math.abs(m.executionBalance)}`:`SALDO DO MÊS ${m.executionBalance}`}`;}
   if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; renderDistDestinations(destinationsFromDistribution(d)); if($('distDailyLimit')) $('distDailyLimit').value=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1)); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
   if(typeof eventVersionEditMode==='function')eventVersionEditMode(d);
+  updateDistStockChangePreview();
   $('distDescription').dataset.catalogAutofilled='0';
   $('distDescription').dataset.catalogKey=prizeCatalogKey(d.title||d.prize||'');
   if($('distCatalogHint')) $('distCatalogHint').textContent='DESCRIÇÃO DESTA DISTRIBUIÇÃO. AO SALVAR, ELA TAMBÉM SERÁ A NOVA DESCRIÇÃO PADRÃO DO TÍTULO.';
@@ -12695,7 +12708,33 @@ async function saveEventVariantsFromForm(){
   }finally{eventVariantSaving=false;if(submit)submit.disabled=false;}
 }
 
-function saveDistributionFromForm(generate=false){
+function distributionStockUpdateProposal(existing,monthInput,masterInput,mode){
+  const previousMaster=distributionCampaignMasterTotal(existing),oldMonth=num(existing.total);
+  const desiredMaster=Math.max(0,Number(masterInput));
+  const increase=desiredMaster-previousMaster;
+  const incomingMonth=Math.max(0,Number(monthInput));
+  const allocationMode=mode==='current'?'current':'global';
+  if(!Number.isSafeInteger(desiredMaster)||!Number.isSafeInteger(incomingMonth))throw new Error('ESTOQUE E COTA PRECISAM SER NÚMEROS INTEIROS VÁLIDOS.');
+  if(allocationMode==='current'&&increase<0)throw new Error('A DISTRIBUIÇÃO AUTOMÁTICA DE COTA É EXCLUSIVA PARA AUMENTO DE ESTOQUE. PARA REDUZIR, USE O MODO MANUAL.');
+  // If the operator changed the monthly quota manually, respect that explicit choice.
+  const monthTotal=allocationMode==='current'&&increase>0&&incomingMonth===oldMonth ? oldMonth+increase : incomingMonth;
+  return {previousMaster,masterTotal:desiredMaster,oldMonth,monthTotal,increase,allocationMode};
+}
+function updateDistStockChangePreview(){
+  const element=$('distStockChangePreview'),distId=$('distId')?.value||'',d=distributionById(distId);
+  if(!element||!d)return;
+  const mode=$('distStockAdjustmentMode')?.value||'global';
+  try{
+    const proposal=distributionStockUpdateProposal(d,$('distTotal')?.value,$('distMasterTotal')?.value,mode);
+    const effectivePlanned=distributionCampaignPlannedTotal(d.id)-proposal.oldMonth+proposal.monthTotal;
+    const physicalBalance=proposal.masterTotal-effectivePlanned;
+    element.innerHTML=`<strong>ANTES → DEPOIS</strong> · ESTOQUE ${proposal.previousMaster} → ${proposal.masterTotal} · COTA ${proposal.oldMonth} → ${proposal.monthTotal} · NÃO ALOCADO ${physicalBalance}${physicalBalance<0?' · ATENÇÃO: COTAS ACIMA DO ESTOQUE':''}`;
+  }catch(error){element.textContent=error.message;}
+}
+let distributionFormSaving=false;
+async function saveDistributionFromForm(generate=false){
+  if(distributionFormSaving)return null;
+
   if($('distEventMode')?.value==='event'){
     if(generate){alert('PROGRAME CADA DATA DO EVENTO INDIVIDUALMENTE APÓS O CADASTRO.');return null;}
     saveEventVariantsFromForm();return null;
@@ -12729,7 +12768,29 @@ function saveDistributionFromForm(generate=false){
   if(wasNew && num(d.total)>=0 && consumedReal>num(d.total)){ alert(`DISTRIBUIÇÃO INICIAL MAIOR QUE O ESTOQUE FÍSICO.\n\nESTOQUE TOTAL: ${num(d.total)}\nMODO: ${distributionDeliveryLabel(d)}\nDISTRIBUÍVEL: ${availablePackages}\nDISTRIBUÍDO: ${distributedPackages}\nCONSUMIDO REAL: ${consumedReal}`); return null; }
   const commitmentIssues=validateDistributionCampaignCommitments(d,state.currentMonth);
   const before=existing.id?clone(existing):'';
-  const masterTotal=wasNew?num(d.total):Math.max(0,num($('distMasterTotal')?.value ?? distributionCampaignMasterTotal(existing)));
+  let masterTotal=wasNew?num(d.total):distributionCampaignMasterTotal(existing);
+  if(!wasNew){
+    let proposal;
+    try{proposal=distributionStockUpdateProposal(existing,$('distTotal').value,$('distMasterTotal').value,$('distStockAdjustmentMode')?.value||'global');}
+    catch(error){alert(error.message);return null;}
+    masterTotal=proposal.masterTotal;
+    d.total=proposal.monthTotal;
+    const existingConsumption=allocated(existing);
+    if(d.total<existingConsumption && d.total<num(existing.total)){
+      alert(`NÃO É POSSÍVEL REDUZIR A COTA ABAIXO DO JÁ DESTINADO.\n\nCOTA PROPOSTA: ${d.total} · COMPROMETIDO: ${existingConsumption}`);return null;
+    }
+    const plannedAfter=distributionCampaignPlannedTotal(d.id)-num(existing.total)+d.total;
+    const plannedBefore=distributionCampaignPlannedTotal(d.id);
+    if(plannedAfter>masterTotal && (plannedAfter>plannedBefore || masterTotal<proposal.previousMaster)){
+      alert(`A SOMA DAS COTAS ULTRAPASSARIA O ESTOQUE FÍSICO.\n\nCOTAS: ${plannedAfter} · ESTOQUE: ${masterTotal}.`);return null;
+    }
+    if(proposal.increase!==0 || d.total!==proposal.oldMonth){
+      if(!confirm(`CONFIRMAR ALTERAÇÃO DE ESTOQUE?\n\nTOTAL FÍSICO: ${proposal.previousMaster} → ${masterTotal}\nCOTA DE ${labelMonth(state.currentMonth)}: ${proposal.oldMonth} → ${d.total}\n\nOS OUTROS MESES E OS RESULTADOS REALIZADOS SERÃO PRESERVADOS.`))return null;
+    }
+  }
+  const submitButton=$('distForm')?.querySelector('button[type="submit"]');
+  distributionFormSaving=true;if(submitButton)submitButton.disabled=true;
+  try{
   storeDistributionAcrossMonths(d,state.currentMonth,wasNew,masterTotal);
   rememberPrizeCatalog(d);
   if(!existing.eventGroupId)syncDistributionToLinkedRadioItems(d);
@@ -12745,7 +12806,8 @@ function saveDistributionFromForm(generate=false){
   if(globalStock.balance<0) deficitNotes.push(`DÉFICIT GLOBAL ${Math.abs(globalStock.balance)}`);
   if(commitmentIssues.length) deficitNotes.push(`COMPROMISSOS ACIMA DA COTA: ${commitmentIssues.join(' | ')}`);
   auditEvent(wasNew?'CADASTRO DE PRÊMIO':'ALTERAÇÃO MENSAL DE DISTRIBUIÇÃO',distributionLabel(savedMonth),{targetId:d.id,before,after:savedMonth,note:`COMPETÊNCIA ${state.currentMonth}${deficitNotes.length?' · '+deficitNotes.join(' · '):''}`});
-  saveState(true);
+  if(!saveState(true))throw new Error('FIREBASE INDISPONÍVEL. ALTERAÇÃO NÃO CONFIRMADA.');
+  await flushFirebaseNow('ALTERAÇÃO DE ESTOQUE E DISTRIBUIÇÃO');
   closeDrawer('distDrawer');
   render();
   if(generate){
@@ -12753,9 +12815,11 @@ function saveDistributionFromForm(generate=false){
   }else{
     const current=distributionByIdForMonth(d.id,state.currentMonth)||d;
     const ms=distributionMonthStockStatus(current,state.currentMonth),gs=distributionCampaignGlobalBalance(current);
-    toast(ms.planningBalance<0||ms.executionBalance<0||gs.balance<0?'DISTRIBUIÇÃO SALVA COM DÉFICIT REGISTRADO · FIREBASE':'DISTRIBUIÇÃO ALTERADA · SINCRONIZANDO COM FIREBASE...');
+    toast(ms.planningBalance<0||ms.executionBalance<0||gs.balance<0?'DISTRIBUIÇÃO CONFIRMADA COM DÉFICIT ANTERIOR REGISTRADO':'ESTOQUE E DISTRIBUIÇÃO CONFIRMADOS NO FIREBASE.');
   }
   return distributionByIdForMonth(d.id,state.currentMonth)||d;
+  }catch(error){console.warn('DISTRIBUTION SAVE',error);alert(`O FIREBASE NÃO CONFIRMOU A ALTERAÇÃO.\n\n${error?.message||error}\n\nREABRA O CADASTRO E CONFIRA OS VALORES ANTES DE TENTAR DE NOVO.`);return null;}
+  finally{distributionFormSaving=false;if(submitButton)submitButton.disabled=false;}
 }
 let pendingRadioGenerationRequest=null;
 function defaultRadioFocusWindow(d){
@@ -12839,6 +12903,12 @@ $('distForm').addEventListener('submit',e=>{
   e.preventDefault();
   saveDistributionFromForm(false);
 });
+$('distTable').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-dist-edit-stock]');if(!btn)return;
+  const distId=btn.dataset.distEditStock;if(!distId)return;
+  editDist(distId);
+  const input=$('distMasterTotal');if(input){setTimeout(()=>{input.scrollIntoView({block:'center',behavior:'smooth'});input.focus({preventScroll:true});},50);}
+});
 $('distTable').addEventListener('input',e=>{
   const input=e.target.closest('.distInlineNum');
   if(!input) return;
@@ -12903,8 +12973,9 @@ if($('radioPlannerSuggestions')) $('radioPlannerSuggestions').addEventListener('
   if(e.target.closest('.radioPlanRemove')){ e.target.closest('[data-plan-row]')?.remove(); refreshRadioPlannerRows(); }
 });
 if($('distStartDate')) $('distStartDate').addEventListener('change',()=>{ if($('distEndDate') && $('distEndDate').value < $('distStartDate').value) $('distEndDate').value=$('distStartDate').value; });
-if($('distTotal')) $('distTotal').addEventListener('input',updateDistPairsPreview);
-if($('distMasterTotal')) $('distMasterTotal').addEventListener('input',()=>{const d=distributionById($('distId')?.value||'');if(!d||!$('distMonthlyStockOverviewText'))return;const currentPlanned=distributionCampaignPlannedTotal(d.id),master=Math.max(0,num($('distMasterTotal').value));$('distMonthlyStockOverviewText').innerHTML=`<strong>ESTOQUE:</strong> NOVO ESTOQUE FÍSICO ${master} · COTAS MENSAIS ATUAIS ${currentPlanned} · ${master-currentPlanned<0?`DÉFICIT GLOBAL ${Math.abs(master-currentPlanned)}`:master-currentPlanned>0?`NÃO ALOCADO ${master-currentPlanned}`:'GLOBAL FECHADO'}.`;});
+if($('distTotal')) $('distTotal').addEventListener('input',()=>{updateDistPairsPreview();updateDistStockChangePreview();});
+if($('distStockAdjustmentMode'))$('distStockAdjustmentMode').addEventListener('change',updateDistStockChangePreview);
+if($('distMasterTotal')) $('distMasterTotal').addEventListener('input',()=>{updateDistStockChangePreview();const d=distributionById($('distId')?.value||'');if(!d||!$('distMonthlyStockOverviewText'))return;const currentPlanned=distributionCampaignPlannedTotal(d.id),master=Math.max(0,num($('distMasterTotal').value));$('distMonthlyStockOverviewText').innerHTML=`<strong>ESTOQUE:</strong> NOVO ESTOQUE FÍSICO ${master} · COTAS MENSAIS ATUAIS ${currentPlanned} · ${master-currentPlanned<0?`DÉFICIT GLOBAL ${Math.abs(master-currentPlanned)}`:master-currentPlanned>0?`NÃO ALOCADO ${master-currentPlanned}`:'GLOBAL FECHADO'}.`;});
 if($('distPrizeType')) $('distPrizeType').addEventListener('change',updateDistPairsPreview);
 if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').addEventListener('change',updateDistPairsPreview);
 if($('distPrize')) $('distPrize').addEventListener('input',autoDetectTicketType);
@@ -13962,27 +14033,71 @@ function existingPromoResultItems(promoId){
   });
   return rows;
 }
-function syncPromoResultToProgram(p,scopeMonth=''){
-  if(!p || !p.id) return;
-  const occurrences=((p.occurrences&&p.occurrences.length)?p.occurrences:generatePromoOccurrences(p,p)).filter(o=>!scopeMonth||String(o.date||'').slice(0,7)===scopeMonth);
-  const old=existingPromoResultItems(p.id).filter(r=>!scopeMonth||String(r.item?.date||'').slice(0,7)===scopeMonth||r.monthKey===scopeMonth);
-  const oldMap=new Map(old.map(r=>[`${r.item.station||'JP1017'}|${r.item.occurrenceId||promoOccurrenceKey(p,r.item.date,r.item.slot)}`,r.item]));
-  Object.entries(state.months||{}).forEach(([monthKey,m])=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===p.id && (!scopeMonth||String(i.date||'').slice(0,7)===scopeMonth||monthKey===scopeMonth))); });
-  occurrences.filter(o=>normalizeStatus(o.status)!=='CANCELADO').forEach(o=>{
-    const key=String(o.date).slice(0,7)||state.currentMonth, targetMonth=monthDataForKey(key), slot=normalizeSlot(o.time||p.drawTime), occurrenceId=o.id||promoOccurrenceKey(p,o.date,slot);
-    promoResultStations(p).forEach(station=>{
-      const previous=oldMap.get(`${station}|${occurrenceId}`)||{};
-      const mapKey=readHourKeyForAdmin(o.date,slot);
-      const winners=Array.isArray(p.resultWinnersByHour?.[mapKey])?p.resultWinnersByHour[mapKey]:[];
-      const winner=norm(winners.map(w=>typeof w==='string'?w:w?.name).filter(Boolean).join(', ')||p.resultByHour?.[mapKey]||previous.winnerName||'');
-      const status=previous.status==='CANCELADO'?'CANCELADO':(winner?'REALIZADO':normalizeStatus(previous.status||o.status||'PENDENTE'));
-      targetMonth.items.push({id:previous.id||id('BR'),date:o.date,day:dayName(o.date),week:weekLabel(o.date),slot,station,program:promoResultProgramTitle(p,station,slot,o.date),distributionId:p.distributionId||'',prize:norm(p.name||p.title||'PROMOÇÃO'),title:`RESULTADO: ${norm(p.name||p.title||'PROMOÇÃO')}`,qty:Math.max(1,num(o.qtyPlanned)||1),unitsPerWinner:Math.max(1,num(o.unitsPerWinner)||num(p.unitsPerWinner)||1),stockUnits:promoOccurrenceStockUnits(o,p),channel:'RÁDIO',status,winnerName:winner,notes:`RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR. ORIGEM: ${promoTypeDisplay(p)} · ${norm(p.local||'PROMOÇÃO')}.`,titleStyle:p.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:p.descriptionStyle||defaultPromoTextStyle('desc'),sourceType:'promo-result',promoId:p.id,occurrenceId,promoKind:p.kind||'promo',createdAt:previous.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()});
-    });
-  });
+function promoResultItemHasOutcome(row){
+  return !!(row?.resultAt||row?.winnerName||row?.resultName||(Array.isArray(row?.winnerNames)&&row.winnerNames.length)||(Array.isArray(row?.winnerDeliveries)&&row.winnerDeliveries.some(w=>w?.deliveredAt))||normalizeStatus(row?.status)==='REALIZADO');
 }
+function promoResultIdentity(row){return `${row?.station||'JP1017'}|${row?.date||''}|${timeToHHMM(row?.slot||'00:00')}`;}
+function syncPromoResultToProgram(p,scopeMonth=''){
+  if(!p?.id)return {added:0,updated:0,removed:0,preserved:0};
+  const today=todayISO(),stats={added:0,updated:0,removed:0,preserved:0};
+  const occurrences=((p.occurrences&&p.occurrences.length)?p.occurrences:generatePromoOccurrences(p,p))
+    .filter(o=>o?.date&&normalizeStatus(o.status)!=='CANCELADO'&&(!scopeMonth||o.date.slice(0,7)===scopeMonth));
+  const desired=new Map();
+  for(const o of occurrences){
+    const slot=normalizeSlot(o.time||p.drawTime),time=timeToHHMM(slot),date=o.date;
+    for(const station of promoResultStations(p))desired.set(`${station}|${date}|${time}`,{o,date,slot,station});
+  }
+  const existing=existingPromoResultItems(p.id);
+  const byIdentity=new Map();
+  existing.forEach(({monthKey,item})=>{
+    const identity=promoResultIdentity(item),rows=byIdentity.get(identity)||[];
+    rows.push({monthKey,item});byIdentity.set(identity,rows);
+  });
+  const seen=new Set();
+  // Preserve past, delivered and confirmed results verbatim, even if the schedule changes.
+  existing.forEach(({monthKey,item})=>{
+    if(scopeMonth&&item.date?.slice(0,7)!==scopeMonth)return;
+    if(item.date<today||promoResultItemHasOutcome(item)){stats.preserved++;return;}
+    const identity=promoResultIdentity(item),match=desired.get(identity);
+    if(!match||seen.has(identity)){
+      const bucket=state.months?.[monthKey]?.items||[];
+      const index=bucket.indexOf(item);if(index>=0){bucket.splice(index,1);stats.removed++;}
+      return;
+    }
+    seen.add(identity);
+    const {o,date,slot,station}=match;
+    Object.assign(item,{
+      day:dayName(date),week:weekLabel(date),slot,station,program:promoResultProgramTitle(p,station,slot,date),
+      distributionId:p.distributionId||'',prize:norm(p.name||p.title||'PROMOÇÃO'),
+      title:`RESULTADO: ${norm(p.name||p.title||'PROMOÇÃO')}`,qty:Math.max(1,num(o.qtyPlanned)||1),
+      unitsPerWinner:Math.max(1,num(o.unitsPerWinner)||num(p.unitsPerWinner)||1),stockUnits:promoOccurrenceStockUnits(o,p),
+      segmentKey:p.segmentKey||'',deliverySegmentLabel:DESTINATION_LABELS[p.segmentKey]||'RÁDIO',channel:'RÁDIO',
+      notes:`RESULTADO PROGRAMADO. SEGMENTO: ${DESTINATION_LABELS[p.segmentKey]||p.segmentKey||'RÁDIO'} · ${norm(p.local||'PROMOÇÃO')}.`,
+      occurrenceId:o.id||promoOccurrenceKey(p,date,slot),titleStyle:p.titleStyle||defaultPromoTextStyle('title'),
+      descriptionStyle:p.descriptionStyle||defaultPromoTextStyle('desc'),updatedAt:new Date().toISOString()
+    });stats.updated++;
+  });
+  desired.forEach(({o,date,slot,station},identity)=>{
+    if(seen.has(identity)||date<today)return;
+    if((byIdentity.get(identity)||[]).some(({item})=>promoResultItemHasOutcome(item))){stats.preserved++;return;}
+    const targetMonth=monthDataForKey(date.slice(0,7)),occurrenceId=o.id||promoOccurrenceKey(p,date,slot);
+    targetMonth.items||=[];
+    targetMonth.items.push({id:id('BR'),date,day:dayName(date),week:weekLabel(date),slot,station,
+      program:promoResultProgramTitle(p,station,slot,date),distributionId:p.distributionId||'',
+      prize:norm(p.name||p.title||'PROMOÇÃO'),title:`RESULTADO: ${norm(p.name||p.title||'PROMOÇÃO')}`,
+      qty:Math.max(1,num(o.qtyPlanned)||1),unitsPerWinner:Math.max(1,num(o.unitsPerWinner)||num(p.unitsPerWinner)||1),
+      stockUnits:promoOccurrenceStockUnits(o,p),channel:'RÁDIO',segmentKey:p.segmentKey||'',deliverySegmentLabel:DESTINATION_LABELS[p.segmentKey]||'RÁDIO',
+      status:'PENDENTE',winnerName:'',notes:`RESULTADO PROGRAMADO. SEGMENTO: ${DESTINATION_LABELS[p.segmentKey]||p.segmentKey||'RÁDIO'} · ${norm(p.local||'PROMOÇÃO')}.`,
+      titleStyle:p.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:p.descriptionStyle||defaultPromoTextStyle('desc'),
+      sourceType:'promo-result',promoId:p.id,occurrenceId,promoKind:p.kind||'promo',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});
+    stats.added++;
+  });
+  return stats;
+}
+
 function readHourKeyForAdmin(date,slot){ const t=timeToHHMM(slot); return `${date}-${t.slice(0,2)}${t.slice(3,5)}`; }
 function removePromoResultFromProgram(promoId,scopeMonth=''){
-  Object.entries(state.months||{}).forEach(([monthKey,m])=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result' && i.promoId===promoId && (!scopeMonth||String(i.date||'').slice(0,7)===scopeMonth||monthKey===scopeMonth))); });
+  Object.entries(state.months||{}).forEach(([monthKey,m])=>{ m.items=(m.items||[]).filter(i=>!(i.sourceType==='promo-result'&&i.promoId===promoId&&(!scopeMonth||String(i.date||'').slice(0,7)===scopeMonth)&&i.date>=todayISO()&&!promoResultItemHasOutcome(i))); });
 }
 function clearPromoValidationState(){
   document.querySelectorAll('#promoForm [aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
@@ -14108,8 +14223,22 @@ $('promoForm').addEventListener('submit',async e=>{
     if(seg&&seg.commitment>seg.available){ alert(`SALDO INSUFICIENTE NO SEGMENTO ${seg.label}.\n\nDISPONÍVEL PARA ESTA PROMOÇÃO: ${seg.available}\nCOMPROMETIDO PELOS SORTEIOS: ${seg.commitment}\n\nAUMENTE A QUANTIDADE NA ABA DISTRIBUIÇÃO.`); return; }
   }
   delete p.__months;
-  if(isPromo)syncPromoResultToProgram(p,isNewPromoRecord?'':state.currentMonth);else removePromoResultFromProgram(p.id,isNewPromoRecord?'':state.currentMonth);
+  const oldSegment=existing.segmentKey||'',newSegment=p.segmentKey||'';
+  if(isPromo&&existing.id&&oldSegment!==newSegment){
+    const future=existingPromoResultItems(p.id).filter(({item})=>item.date>=todayISO()&&!promoResultItemHasOutcome(item)).length;
+    if(!confirm(`ALTERAR O SEGMENTO DA PROMOÇÃO?\n\n${DESTINATION_LABELS[oldSegment]||oldSegment||'NÃO DEFINIDO'} → ${DESTINATION_LABELS[newSegment]||newSegment||'NÃO DEFINIDO'}\n\n${future} RESULTADO(S) FUTURO(S) PODERÃO SER RECONCILIADOS.\nGANHADORES E RESULTADOS CONFIRMADOS PERMANECEM INTACTOS.`))return;
+  }
+  if(isPromo){
+    for(const key of promoMonthKeys(p).filter(key=>key>=state.currentMonth)){
+      const monthCommitment=promoCommitmentQtyForMonth(p,key);
+      if(!monthCommitment)continue;
+      const available=distributionCampaignSegmentTotal(p.distributionId,p.segmentKey,key)-segmentPromoCommitment(p.distributionId,p.segmentKey,p.id,key);
+      if(monthCommitment>available){alert(`SALDO INSUFICIENTE EM ${labelMonth(key)} PARA ${DESTINATION_LABELS[p.segmentKey]||p.segmentKey}.\nNECESSÁRIO: ${monthCommitment} · DISPONÍVEL: ${Math.max(0,available)}.\nAJUSTE AS COTAS E O SEGMENTO ANTES DE SALVAR.`);return;}
+    }
+  }
   storePromoAcrossMonths(p,state.currentMonth,isNewPromoRecord);
+  // Keep historical results intact; update scheduled results from the edited month onwards.
+  if(isPromo)syncPromoResultToProgram(p);else removePromoResultFromProgram(p.id);
   auditEvent(existing.id?`ALTERAÇÃO DE ${promoKindLabel(kind)}`:`CADASTRO DE ${promoKindLabel(kind)}`,p.name||p.title||promoKindLabel(kind),{targetId:p.id,before:existing.id?existing:'',after:p});
   promoSavePreparedAt=jpFirebaseNow();
   jpFirebaseMeasure('promocao_preparacao',promoSaveStarted,true);

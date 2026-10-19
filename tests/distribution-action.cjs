@@ -1,7 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync(require('node:path').join(__dirname,'..','index.html'),'utf8');
 const pos=source.indexOf('function deleteDist('),start=source.slice(pos-6,pos)==='async '?pos-6:pos;
-const code=source.slice(start,source.indexOf('function saveDistributionFromForm',pos));
+const code=source.slice(start,source.indexOf('function distributionStockUpdateProposal(',pos));
 function setup(){
  const original={currentMonth:'2026-10',months:{'2026-10':{distributions:[{id:'D'}]},'2026-09':{distributions:[{id:'D'}]}}};
  const messages=[];let resolve;

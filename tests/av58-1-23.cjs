@@ -1,6 +1,6 @@
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert');
 const root=path.join(__dirname,'..');const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-const a=html.indexOf('/* AV58.1.23 — Evento com versões datadas');const b=html.indexOf('function saveDistributionFromForm(generate=false)',a);
+const a=html.indexOf('/* AV58.1.23 — Evento com versões datadas');const b=html.indexOf('function distributionStockUpdateProposal(',a);
 assert(a>0&&b>a,'NOVO CADASTRO DE EVENTO AUSENTE');
 const code=html.slice(a,b);
 const fields={
