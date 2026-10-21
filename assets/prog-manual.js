@@ -139,10 +139,22 @@
     if(el('jpManualMaterialList'))el('jpManualMaterialList').scrollTop=oldStockScroll;
   }
   function reject(msg){window.alert(msg);return false;}
+  // AV58.1.35: inserções de pauta/merchan podem ser feitas durante a HORA ATUAL,
+  // inclusive depois de seu minuto inicial (15H às 15h09, por exemplo).
+  // Não libera horas anteriores, datas passadas ou alterações retroativas em prêmios.
+  function manualSlotIsPast(type,targetDate,targetSlot,now=new Date()){
+    const localDate=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    if(targetDate<localDate)return true;
+    if(targetDate>localDate)return false;
+    const order=slotOrder(targetSlot);
+    if(!Number.isFinite(order))return true;
+    if(type==='pauta'||type==='assigned-pauta')return Math.floor(order)<now.getHours();
+    return order<(now.getHours()+now.getMinutes()/60+now.getSeconds()/3600);
+  }
   function add(type,idValue,to){
     if(!officialSlots(date,station).includes(to))return reject('ESSE HORÁRIO NÃO PERTENCE À GRADE OFICIAL.');
     if(date<iso())return reject('NÃO É PERMITIDO INSERIR PROGRAMAÇÃO EM DATA PASSADA.');
-    if(date===iso()&&slotOrder(to)<(new Date().getHours()+new Date().getMinutes()/60))return reject('NÃO É PERMITIDO INSERIR PROGRAMAÇÃO EM HORÁRIO QUE JÁ PASSOU.');
+    if(manualSlotIsPast(type,date,to))return reject('NÃO É PERMITIDO INSERIR PROGRAMAÇÃO EM HORÁRIO QUE JÁ PASSOU. PAUTAS E MERCHANS PODEM SER INCLUÍDOS DURANTE A HORA ATUAL.');
     if(type==='prize'){
       const d=prizes().find(d=>d.id===idValue);if(!d||balance(d)<1||!state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===idValue))return reject('PRÊMIO SEM SALDO OU SEM COTA CONFIGURADA NESTE MÊS.');
       pending={type,idValue,to};showQtyDialog(d);return true;

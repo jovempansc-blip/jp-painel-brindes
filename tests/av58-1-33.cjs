@@ -3,7 +3,7 @@ const root=path.join(__dirname,'..');
 const js=fs.readFileSync(path.join(root,'assets/prog-manual.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'assets/prog-manual.css'),'utf8');
 const main=fs.readFileSync(path.join(root,'index.html'),'utf8');
-assert(main.includes('assets/prog-manual.js?v=AV58_1_33'));
+assert(main.includes('assets/prog-manual.js?v=AV58_1_35'));
 assert(main.includes('assets/prog-manual.css?v=AV58_1_33'));
 assert(js.includes('class="jpManualPaper jpManualProgramPane"'));
 assert(js.includes('id="jpManualScheduleScroll" class="jpManualScheduleScroll"'));
