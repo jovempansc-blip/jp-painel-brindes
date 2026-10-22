@@ -132,3 +132,7 @@
   #programManualMount .jpManualScheduleScroll,
   #programManualMount .jpManualMaterialList {overflow: visible;}
 }
+
+/* AV58.1.36 · Crédito confirmado de SOBRA com ordenação por saldo. */
+#programManualMount .jpManualStockRow .counts .jpManualReturnCredit{color:#ad6d18;font-weight:900;font-size:9px}
+#programManualMount .jpManualStockRow .counts b.jpManualBalanceAvailable{color:#137b4b}

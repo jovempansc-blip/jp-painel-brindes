@@ -5498,6 +5498,17 @@ async function saveWinner(){
   try{
     const context=winnerContextForItem(item), now=new Date();
     const patch={winnerNames:names,winnerName:names.join(', '),winnerCapacity:max,status:'REALIZADO',resultAt:now.toISOString(),resultAtLabel:now.toLocaleString('pt-BR')};
+    // AV58.1.37: registra a unidade física ORIGINAL do sorteio, para que
+    // alterações posteriores de PAR/INDIVIDUAL não convertam sobras automaticamente.
+    const awardMonth=String(item.date||'').slice(0,7);
+    const awardDist=(state.months?.[awardMonth]?.distributions||[]).find(d=>d.id===item.distributionId);
+    if(awardDist){
+      const originalUnit=item.returnUnitSnapshot||awardDist.ticketUnits?.ar||awardDist.ticketDefaultUnit||'unit';
+      const originalSize=String(originalUnit).toLowerCase()==='pair'?2:1;
+      patch.returnUnitSnapshot=String(originalUnit).toLowerCase()==='pair'?'pair':'unit';
+      patch.returnUnitsPerWinner=Number(item.returnUnitsPerWinner)||originalSize;
+      patch.stockUnits=Number(item.stockUnits)||Math.max(1,Number(item.qty)||1)*patch.returnUnitsPerWinner;
+    }
     await commitStudioOutcomeAtomic({collection:'items',recordId:item.id,patch,names,context});
     render();
   }catch(error){

@@ -5,13 +5,13 @@ const js=fs.readFileSync(path.join(root,'assets/prog-manual.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'assets/prog-manual.css'),'utf8');
 assert(admin.includes('data-jp-prog-mode="grade"')&&admin.includes('data-jp-prog-mode="manual"'));
 assert(admin.includes('id="programManualMount"')&&admin.includes('id="programGradeContainer"'));
-assert(admin.includes('src="assets/prog-manual.js?v=AV58_1_35"')); // Recurso atualizado deve vencer o cache
-assert(admin.includes('href="assets/prog-manual.css?v=AV58_1_33"'));
+assert(admin.includes('src="assets/prog-manual.js?v=AV58_1_37"')); // Recurso atualizado deve vencer o cache
+assert(admin.includes('href="assets/prog-manual.css?v=AV58_1_37"'));
 assert(js.includes("root.child('months').child(targetMonth).transaction"),'A gravação deve usar transação no mês');
 assert(js.includes('const oldItems=rows(remote?.items)'),'Deve comparar gravações concorrentes');
 assert(js.includes("if(!tx?.committed)throw"),'Não deve informar sucesso sem confirmação');
 assert(js.includes("locked(item)"),'Registros confirmados não devem ser movidos');
-assert(js.includes('totalAvailable(d)-used(d)'),'O saldo deve acompanhar a programação');
+assert(js.includes('totalAvailable(d)+radioReturnCredits(d.id)-used(d)')&&js.includes('JPReturnBalance.compute'),'A mesma regra oficial deve fornecer os créditos de sobra');
 assert(css.includes('grid-template-columns:repeat(2,minmax(0,1fr))'));
 function functionSource(text,name){const start=text.indexOf(`function ${name}(`);assert(start>=0,name);let pos=text.indexOf('{',start),depth=0,quote='',escape=false;for(let i=pos;i<text.length;i++){const c=text[i];if(quote){if(escape)escape=false;else if(c==='\\')escape=true;else if(c===quote)quote='';continue;}if(c==='\''||c==='"'||c==='`'){quote=c;continue;}if(c==='{')depth++;if(c==='}'&&--depth===0)return text.slice(start,i+1);}throw Error('malformed '+name);}
 for(const file of ['painel_pauta_estudio_jovem_pan_GITHUB_API.html','painel_pauta_estudio_jovem_pan_news.html']){

@@ -2,8 +2,8 @@ const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('nod
 const root=path.join(__dirname,'..'),main=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const script=fs.readFileSync(path.join(root,'assets/prog-manual.js'),'utf8');
 const css=fs.readFileSync(path.join(root,'assets/prog-manual.css'),'utf8');
-assert(main.includes('assets/prog-manual.js?v=AV58_1_35'));
-assert(main.includes('assets/prog-manual.css?v=AV58_1_33'));
+assert(main.includes('assets/prog-manual.js?v=AV58_1_37'));
+assert(main.includes('assets/prog-manual.css?v=AV58_1_37'));
 assert(css.includes('grid-template-columns:repeat(3,minmax(0,1fr))'));
 assert(main.includes('function promoEditorHasAnyPlannedRead(draft)'));
 assert(main.includes("if(p.promoReadMethod!=='manual' && !promoEditorHasAnyPlannedRead(p))"));
@@ -13,6 +13,7 @@ assert(main.includes("typeof firebaseDatabase.goOnline==='function'&&!firebaseCo
 
 const date='2026-10-19';
 const context={
+ JPReturnBalance:require('../assets/return-balance.js'),
  state:{months:{'2026-10':{promos:[
  {id:'P1',kind:'pauta',name:'PAUTA 1',station:'JP1017',startDate:date,endDate:'2026-10-31',manualReadAssignments:[]},
  {id:'P2',kind:'promo',name:'PROMO 2',station:'JP1017',startDate:date,endDate:'2026-10-31',manualReadAssignments:[]},

@@ -1,7 +1,7 @@
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('assert');
 const js=fs.readFileSync(path.join(__dirname,'../assets/prog-manual.js'),'utf8');
 const main=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
-assert(main.includes('assets/prog-manual.js?v=AV58_1_35'),'cache atualizado');
+assert(main.includes('assets/prog-manual.js?v=AV58_1_37'),'cache atualizado');
 assert(js.includes("'merchan','merchandising'"),'merchans preservados na seleção');
 const date='2026-10-19',monthKey='2026-10';
 const original={items:[
@@ -13,7 +13,7 @@ const cp=obj=>JSON.parse(JSON.stringify(obj));
 function session(){
  let month=cp(original),externalMutation=()=>{},commits=0;
  const refs={child(){return this;},async transaction(callback){const live=cp(month);externalMutation(live);externalMutation=()=>{};const updated=callback(cp(live));if(updated===undefined)return{committed:false,snapshot:{val:()=>cp(month)}};month=cp(updated);commits++;return{committed:true,snapshot:{val:()=>cp(month)}};}};
- const s={state:{months:{[monthKey]:cp(month)}},todayISO:()=>date,document:{readyState:'loading',addEventListener(){},getElementById(){return null;}},window:{alert:x=>s.alerts.push(String(x))},alerts:[],firebaseStateRootRef:()=>refs,firebaseConnected:true,firebaseServerLoaded:true,firebasePendingSave:false,firebaseReady:true,confirm:()=>true,toast:()=>{},sameStation:(a,b)=>a===b,normalizeSlot:x=>x,itemStation:i=>i.station,distStartDate:d=>d.startDate,distEndDate:d=>d.endDate,distributionLabel:d=>d.title,programFromSchedule:()=>'ROCK N POP',console:{error(){},warn(){}},Date,Map,Set,Number,JSON,String,Array,Object,Math};
+ const s={JPReturnBalance:require('../assets/return-balance.js'),state:{months:{[monthKey]:cp(month)}},todayISO:()=>date,document:{readyState:'loading',addEventListener(){},getElementById(){return null;}},window:{alert:x=>s.alerts.push(String(x))},alerts:[],firebaseStateRootRef:()=>refs,firebaseConnected:true,firebaseServerLoaded:true,firebasePendingSave:false,firebaseReady:true,confirm:()=>true,toast:()=>{},sameStation:(a,b)=>a===b,normalizeSlot:x=>x,itemStation:i=>i.station,distStartDate:d=>d.startDate,distEndDate:d=>d.endDate,distributionLabel:d=>d.title,programFromSchedule:()=>'ROCK N POP',console:{error(){},warn(){}},Date,Map,Set,Number,JSON,String,Array,Object,Math};
  vm.createContext(s);
  const injected=js.replace(/\}\)\(\);\s*$/,'window.__test30={init(){draft=snapshot();mode="grade";},getDraft(){return draft;}, save, promoPool};})();');
  assert(injected.includes('window.__test30'));

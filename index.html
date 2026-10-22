@@ -645,6 +645,9 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
   display:grid;
   gap:10px;
 }
+.returnHandled{border:1px solid #e2e7ef;border-radius:14px;background:#fafbfd;padding:10px;display:grid;gap:8px}
+.returnHandled>summary{cursor:pointer;font-size:11px;font-weight:900;color:#283342;padding:4px 2px}
+.returnHandled[open]>.returnAlertCard{margin-top:8px}
 .returnAlertCard{
   border:1px solid #e2e7ef;
   border-radius:18px;
@@ -3738,7 +3741,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/av58-admin.css?v=AV58_1_10">
-<link rel="stylesheet" href="assets/prog-manual.css?v=AV58_1_33">
+<link rel="stylesheet" href="assets/prog-manual.css?v=AV58_1_37">
 <link rel="stylesheet" href="assets/event-variants.css?v=AV58_1_23">
 <style id="promo-pi-editor-style">
 #promoDrawer .drawerCard{width:min(1320px,97vw)!important;max-width:1320px!important}
@@ -4748,6 +4751,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 </dialog>
 
 <script src="assets/distribution-unprogram.js?v=AV58_1_10"></script>
+<script src="assets/return-balance.js?v=AV58_1_37"></script>
 <script>
 // AV57.6.6.24: sem base operacional embutida; dados somente do Firebase RTDB.
 const CHANNELS = [
@@ -7544,22 +7548,32 @@ function ticketSummaryText(d){
   if(unit==='pair') return ` | MODO PAR · ${ticketPairs(d)} PAR${ticketPairs(d)===1?'':'ES'}${ticketOdd(d)?' + 1 AVULSO':''}`;
   return ` | MODO INDIVIDUAL · ${num(d.total)} UNID.`;
 }
+// AV58.1.37: saldo de sorteios distinto do estoque físico/execução.
+function distributionReprogramStatus(d,monthKey=d?.snapshotMonth||state.currentMonth){
+  const month=monthDataForKey(monthKey);
+  const ids=distributionVisualIds(d);
+  const parts=ids.map(id=>{
+    const physical=(month.distributions||[]).find(row=>row.id===id)||d;
+    return JPReturnBalance.compute({month,distribution:physical,monthKey,today:todayISO()});
+  });
+  return {
+    available:parts.reduce((n,x)=>n+x.available,0),
+    credits:parts.reduce((n,x)=>n+x.credits,0),
+    returnedAvailable:parts.reduce((n,x)=>n+x.returnedAvailable,0),
+    returnedReallocated:parts.reduce((n,x)=>n+x.returnedReallocated,0),
+    physicalUnits:parts.reduce((n,x)=>n+x.physicalUnits,0),
+    issues:parts.flatMap(x=>x.issues),
+    unit:parts[0]?.unit||ticketUnit(d,'ar'),
+    parts
+  };
+}
 function distributionBalanceCell(d){
   const monthKey=d?.snapshotMonth||state.currentMonth;
-  const unit=distributionDeliveryUnit(d);
-  const planningLeft=leftTotal(d);
-  const stock=distributionMonthStockStatus(d,monthKey);
-  const executionLeft=stock.executionBalance;
-  const cls=executionLeft<0||planningLeft<0?'red':(executionLeft===0?'amber':'green');
-  const realizedText=`${stock.realized} REALIZ.`;
-  const planningAlert=planningLeft<0?` · PLANO -${Math.abs(planningLeft)}`:'';
-  if(unit==='pair'){
-    if(executionLeft<0) return `<div class="distSaldoStack"><span class="badge red">DÉFICIT ${Math.abs(executionLeft)}</span><small>${realizedText}${planningAlert}</small></div>`;
-    const pairBalance=Math.floor(executionLeft/2);
-    const odd=executionLeft%2;
-    return `<div class="distSaldoStack"><span class="badge ${cls}">${pairBalance} PAR${pairBalance===1?'':'ES'}${odd?' +1':''}</span><small>${realizedText}${planningAlert}</small></div>`;
-  }
-  return `<div class="distSaldoStack"><span class="badge ${cls}">${executionLeft}</span><small>${realizedText}${planningAlert}</small></div>`;
+  const result=distributionReprogramStatus(d,monthKey),balance=result.available;
+  const cls=balance<0?'red':balance===0?'amber':'green';
+  const label=result.unit==='pair'?(Math.abs(balance)+` PAR${Math.abs(balance)===1?'':'ES'}`):(Math.abs(balance)+` IND.`);
+  const warning=result.issues.length?` · ${result.issues.length} RETORNO(S) A CONFERIR`:'';
+  return `<div class="distSaldoStack"><span class="badge ${cls}">${balance<0?'DÉFICIT ':''}${label}</span><small>DISP. RÁDIO · SOBRA +${result.credits}${warning}</small></div>`;
 }
 function programmed(distId, channel=''){
   const target = channel ? normalizeChannel(channel) : '';
@@ -8811,8 +8825,9 @@ function filteredDistributions(monthKey=state.currentMonth){
   const order=$('distOrderFilter')?.value || 'alpha';
   const sourceRows=monthDataForKey(monthKey).distributions.filter(d=>{
     const left=leftTotal(d),stock=distributionMonthStockStatus(d,monthKey),global=distributionCampaignGlobalBalance(d);
-    const deficit=left<0||stock.executionBalance<0||global.balance<0;
-    const passStatus=!status||(status==='OK'&&!deficit&&left>=0)||(status==='SOBRA'&&!deficit&&left>0)||(status==='ZERADO'&&!deficit&&left===0)||(status==='ESTOURO'&&deficit);
+    const returnBalance=distributionReprogramStatus(d,monthKey);
+    const deficit=left<0||stock.executionBalance<0||global.balance<0||returnBalance.available<0;
+    const passStatus=!status||(status==='OK'&&!deficit&&left>=0)||(status==='SOBRA'&&returnBalance.credits>0)||(status==='ZERADO'&&!deficit&&left===0)||(status==='ESTOURO'&&deficit);
     return passTextFilter(d,text)&&passStatus;
   });
   const rows=consolidateDistributionVisualRows(sourceRows,monthKey).filter(d=>distributionMatchesLifecycleFilter(d,monthKey));
@@ -8887,17 +8902,23 @@ function returnRecords(includeHandled=false){
       if(w.reuseStatus&&!includeHandled) return;
       const dist=distributionCampaignCopies(p.distributionId||'')[0]?.d||{};
       const monthKey=(registered?`${registered.getFullYear()}-${String(registered.getMonth()+1).padStart(2,'0')}`:(keyDate||p.drawDate||state.currentMonth).slice(0,7));
-      records.push({kind:'promo',monthKey,promoId:p.id,winnerIndex:w._idx,occurrenceKey:w.occurrenceKey||'',id:`promo:${p.id}:${w.occurrenceKey||'top'}:${w._idx}:${winnerPersonKey(w.name)}`,distributionId:p.distributionId||'',prize:returnPromoPrize(p,w,dist),winner:w.name,deadline,deadlineDays:days,deadlineLabel:deadline.toLocaleDateString('pt-BR'),registeredLabel:registered?registered.toLocaleString('pt-BR'):'',status:w.reuseStatus||'pendente',source:p.local||'PROMOÇÃO',promo:p});
+      records.push({kind:'promo',monthKey,promoId:p.id,winnerIndex:w._idx,winnerId:w.id||'',occurrenceKey:w.occurrenceKey||'',id:`promo:${p.id}:${w.occurrenceKey||'top'}:${w._idx}:${winnerPersonKey(w.name)}`,distributionId:p.distributionId||'',prize:returnPromoPrize(p,w,dist),winner:w.name,deadline,deadlineDays:days,deadlineLabel:deadline.toLocaleDateString('pt-BR'),registeredLabel:registered?registered.toLocaleString('pt-BR'):'',status:w.reuseStatus||'pendente',source:p.local||'PROMOÇÃO',promo:p});
     });
   });
   Object.entries(state.months||{}).forEach(([monthKey,m])=>{
     (m.items||[]).filter(Boolean).forEach(i=>{
-      if(i.sourceType==='promo-result'||!i.winnerName||i.deliveredAt) return;
+      if(i.sourceType==='promo-result'||!i.winnerName) return;
       const registered=new Date(i.resultAt||i.winnerAt||`${i.date||monthKey+'-01'}T${timeToHHMM(i.slot||'23:59')}:00`);
       const deadline=Number.isNaN(registered.getTime())?null:addBusinessDaysFrom(registered,5);
       if(!deadline||deadline>now) return;
-      if(i.reuseStatus&&!includeHandled) return;
-      records.push({kind:'item',monthKey,itemId:i.id,id:returnRecordId('item',i.id,0),distributionId:i.distributionId||'',prize:returnItemPrize(i,m),winner:norm(i.winnerName),deadline,deadlineDays:5,deadlineLabel:deadline.toLocaleDateString('pt-BR'),registeredLabel:registered.toLocaleString('pt-BR'),status:i.reuseStatus||'pendente',source:i.program||i.channel||'RÁDIO',item:i});
+      const names=Array.isArray(i.winnerNames)&&i.winnerNames.length?i.winnerNames.filter(Boolean):String(i.winnerName).split(',').map(n=>norm(n)).filter(Boolean);
+      names.forEach((name,winnerIndex)=>{
+        const individual=i.winnerDeliveries?.[winnerIndex]||{};
+        if(individual.deliveredAt||(names.length===1&&i.deliveredAt))return;
+        const currentStatus=individual.reuseStatus||(names.length===1?i.reuseStatus:'');
+        if(currentStatus&&!includeHandled)return;
+        records.push({kind:'item',monthKey,itemId:i.id,winnerIndex,winnerCount:names.length,id:returnRecordId('item',i.id,winnerIndex),distributionId:i.distributionId||'',prize:returnItemPrize(i,m),winner:norm(name),deadline,deadlineDays:5,deadlineLabel:deadline.toLocaleDateString('pt-BR'),registeredLabel:registered.toLocaleString('pt-BR'),status:currentStatus||'pendente',source:i.program||i.channel||'RÁDIO',item:i});
+      });
     });
   });
   return records.sort((a,b)=>a.deadline-b.deadline||String(a.prize||'').localeCompare(String(b.prize||'')));
@@ -8916,12 +8937,10 @@ function returnCountsByDistribution(){
   return counts;
 }
 function returnCell(d,counts=null){
-  const map=counts||returnCountsByDistribution();
-  const c=distributionVisualIds(d).reduce((acc,id)=>{const row=map[id]||{};acc.pending+=num(row.pending);acc.sobra+=num(row.sobra);acc.realocado+=num(row.realocado);acc.total+=num(row.total);return acc;},{pending:0,sobra:0,realocado:0,total:0});
-  if(!c.total) return '<span class="badge">0</span>';
-  const cls=c.pending?'red':(c.sobra?'amber':'green');
-  const label=c.pending?`${c.pending} PEND.`:(c.sobra?`${c.sobra} SOBRA`:`${c.realocado} REAP.`);
-  return `<span class="badge ${cls}">${esc(label)}</span>${c.pending?'<small>VENCIDO</small>':''}`;
+  const result=distributionReprogramStatus(d,state.currentMonth);
+  const invalid=result.issues.length;
+  if(!result.credits&&!invalid)return '<span class="badge">0</span>';
+  return `<span class="badge ${invalid?'red':result.returnedAvailable?'amber':'green'}">${result.returnedAvailable} SOBRA${result.returnedAvailable===1?'':'S'} LIVRE${result.returnedAvailable===1?'':'S'}</span><small>${result.returnedReallocated} REPROGRAMADA(S) · ${result.physicalUnits} UNID. DEVOLVIDA(S)${invalid?` · ${invalid} A CONFERIR`:''}</small>`;
 }
 function activeBellNotifications(){
   const returns=pendingReturnRecords().map(r=>({type:'return',record:r}));
@@ -8945,14 +8964,16 @@ function renderReturnAlerts(){
   if(!box) return;
   const rows=pendingReturnRecords();
   const promos=promoEndingAlerts();
-  if(!rows.length && !promos.length){ box.innerHTML='<div class="returnDrawerEmpty">NENHUMA NOTIFICAÇÃO VIGENTE.</div>'; return; }
+  if(!rows.length && !promos.length && !returnRecords(true).some(r=>r.monthKey===state.currentMonth&&['sobra','realocado','cancelado'].includes(String(r.status||'').toLowerCase()))){ box.innerHTML='<div class="returnDrawerEmpty">NENHUMA NOTIFICAÇÃO VIGENTE.</div>'; return; }
   const returnHtml=rows.map(r=>`<div class="returnAlertCard">
     <div class="returnAlertTop"><strong>${esc(r.prize)}</strong><span>GANHADOR: ${esc(r.winner)}<br>ORIGEM: ${esc(r.source)}<br>REGISTRADO: ${esc(r.registeredLabel)} · PRAZO VENCEU: ${esc(r.deadlineLabel)}</span></div>
     <div class="returnAlertMeta"><em>SEM RETIRADA APÓS ${r.deadlineDays} DIA(S) ÚTEIS</em><em>DISPONÍVEL PARA REAPROVEITAMENTO</em></div>
     <div class="returnAlertActions"><button class="btn red small" onclick="reuseReturnedPrize('${esc(r.id)}')">CONFIRMAR REAPROVEITAMENTO</button><button class="btn ghost small" onclick="markReturnedAsSobra('${esc(r.id)}')">DEIXAR COMO SOBRA</button></div>
   </div>`).join('');
+  const handled=returnRecords(true).filter(r=>['sobra','realocado','cancelado'].includes(String(r.status||'').toLowerCase())).filter(r=>r.monthKey===state.currentMonth).slice(-30);
+  const handledHtml=handled.length?`<details class="returnHandled"><summary>SOBRAS E REAPROVEITAMENTOS · ${handled.length} REGISTRO(S)</summary>${handled.map(r=>`<div class="returnAlertCard"><div class="returnAlertTop"><strong>${esc(r.prize)}</strong><span>${esc(r.winner)} · ${esc(r.monthKey)} · ${esc(String(r.status).toUpperCase())}</span></div>${r.status==='sobra'?`<div class="returnAlertActions"><button class="btn ghost small" type="button" onclick="cancelReturnSobra('${esc(r.id)}')">CANCELAR SOBRA</button></div>`:''}</div>`).join('')}</details>`:'';
   const promoHtml=promos.map(a=>`<div class="returnAlertCard"><div class="returnAlertTop"><strong>${esc(a.title)}</strong><span>${esc(a.text)}</span></div><div class="returnAlertMeta"><em>NOTIFICAÇÃO VIGENTE</em><em>PROMO / MERCHAN</em></div><div class="returnAlertActions"><button class="btn small" type="button" onclick="closeDrawer('returnDrawer');setView('digital')">ABRIR PROMO / MERCHAN</button></div></div>`).join('');
-  box.innerHTML=returnHtml+promoHtml;
+  box.innerHTML=returnHtml+promoHtml+handledHtml;
 }
 function findReturnRecordById(idValue){
   return returnRecords(false).find(r=>r.id===idValue) || returnRecords(true).find(r=>r.id===idValue);
@@ -8981,10 +9002,15 @@ function updateWinnerReuseStatus(record,status,extra={}){
   if(record.kind==='item'){
     const i=(month.items||[]).find(x=>x.id===record.itemId);
     if(!i) return false;
-    i.reuseStatus=status;
-    i.reuseAt=new Date().toISOString();
-    i.reuseAtLabel=new Date().toLocaleString('pt-BR');
-    Object.assign(i,extra);
+    const when=new Date().toISOString(),label=new Date().toLocaleString('pt-BR');
+    if((record.winnerCount||1)>1){
+      const list=Array.isArray(i.winnerDeliveries)?clone(i.winnerDeliveries):[];
+      if(record.winnerIndex<0||record.winnerIndex>=record.winnerCount)return false;
+      list[record.winnerIndex]={...(list[record.winnerIndex]||{}),reuseStatus:status,reuseAt:when,reuseAtLabel:label,...extra};
+      i.winnerDeliveries=list;
+    }else{
+      i.reuseStatus=status;i.reuseAt=when;i.reuseAtLabel=label;Object.assign(i,extra);
+    }
     return true;
   }
   return false;
@@ -9015,10 +9041,11 @@ function returnReuseSamePrizeItems(d){
   }));
   return rows.sort((a,b)=>`${a.date}${normalizeSlot(a.slot)}`.localeCompare(`${b.date}${normalizeSlot(b.slot)}`));
 }
-function returnReuseEffectiveRange(d){
+function returnReuseEffectiveRange(d,originMonth=''){
   const today=todayISO();
   const start=(distStartDate(d)||today)>today?(distStartDate(d)||today):today;
-  const end=distEndDate(d)||monthEndDate(today.slice(0,7));
+  const sourceEnd=distEndDate(d)||monthEndDate(today.slice(0,7));
+  const end=originMonth?[sourceEnd,monthEndDate(originMonth)].sort()[0]:sourceEnd;
   return {start,end,valid:!!start&&!!end&&start<=end};
 }
 function returnReuseLastProgramming(d){
@@ -9026,7 +9053,8 @@ function returnReuseLastProgramming(d){
   return rows.length?rows[rows.length-1]:null;
 }
 function returnReuseCandidatePool(d,{allowRepeat=false,allowOccupied=false}={}){
-  const range=returnReuseEffectiveRange(d); if(!range.valid) return [];
+  const origin=findReturnRecordById(activeReturnReuseRecordId)?.monthKey||'';
+  const range=returnReuseEffectiveRange(d,origin); if(!range.valid) return [];
   const existing=returnReuseAllRadioItems(range.start,range.end,'JP1017');
   const samePrize=returnReuseSamePrizeItems(d);
   const allowed=[...new Set(rotationAllowedSlots(d).map(normalizeSlot))].sort((a,b)=>slotOrder(a)-slotOrder(b));
@@ -9077,7 +9105,7 @@ function openReturnReuseManual(){
 function openReturnReuseSuggestions(recordId){
   const r=findReturnRecordById(recordId); if(!r) return;
   const d=returnReuseDistribution(r) || {id:r.distributionId||'',startDate:todayISO(),endDate:monthEndDate(),prize:r.prize,title:r.prize};
-  const range=returnReuseEffectiveRange(d),last=returnReuseLastProgramming(d);
+  const range=returnReuseEffectiveRange(d,r.monthKey),last=returnReuseLastProgramming(d);
   activeReturnReuseRecordId=recordId;
   let options=returnReuseCandidatePool(d,{allowRepeat:false,allowOccupied:false}).slice(0,5),forced=false;
   if(!options.length){options=returnReuseCandidatePool(d,{allowRepeat:true,allowOccupied:false}).slice(0,5);forced=true;}
@@ -9095,12 +9123,15 @@ function openReturnReuseSuggestions(recordId){
 function applyReturnedPrizeReuse(index){
   const r=findReturnRecordById(activeReturnReuseRecordId),slot=activeReturnReuseSuggestions[index],d=returnReuseDistribution(r) || {id:r?.distributionId||'',prize:r?.prize,title:r?.prize};
   if(!r||!slot) return;
+  if(slot.date.slice(0,7)!==r.monthKey){alert('REALOCAR EM OUTRA COMPETÊNCIA EXIGE TRANSFERÊNCIA EXPLÍCITA.');return;}
+  const status=distributionReprogramStatus(d,r.monthKey);
+  if(status.unit!==JPReturnBalance.prizeUnits(d)){alert('MODALIDADE DE PRÊMIO ALTERADA. CONCILIE A DEVOLUÇÃO ANTES DA REALOCAÇÃO.');return;}
   const warning=slot.forced?'\n\nATENÇÃO: ESTA OPÇÃO NÃO RESPEITA O ESPAÇAMENTO RECOMENDADO DO MESMO PRÊMIO.':' ';
   if(!confirm(`CONFIRMAR REALOCAÇÃO?\n\n${r.prize}\n${formatBR(slot.date)} · ${slot.slot} · ${slot.program}${warning}`)) return;
   if(slot.forced&&!confirm('CONFIRMAÇÃO FINAL\n\nDESEJA REALOCAR MESMO ASSIM E REGISTRAR ESTA EXCEÇÃO NO LOG?')) return;
   const reuseTemplate=findPrizeCatalogTemplate(distributionLabel(d)||r.prize);
   const reuseDescription=textNorm(d.description||reuseTemplate?.description||'');
-  const newItem={id:id('BR'),date:slot.date,day:dayName(slot.date),week:weekLabel(slot.date),slot:slot.slot,program:slot.program||programForSlot(slot.date,slot.slot),distributionId:d.id||'',prize:distributionLabel(d)||r.prize,title:d.title||r.prize,description:reuseDescription,qty:1,winnerCapacity:1,channel:'RÁDIO',station:'JP1017',status:'PENDENTE',notes:`REAPROVEITAMENTO: PRÊMIO NÃO RETIRADO POR ${r.winner}. PRAZO VENCIDO EM ${r.deadlineLabel}.${slot.forced?' REALOCAÇÃO MANUAL FORA DO ESPAÇAMENTO RECOMENDADO.':''}`,titleStyle:d.titleStyle||reuseTemplate?.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:d.descriptionStyle||reuseTemplate?.descriptionStyle||defaultPromoTextStyle('desc'),returnedReuse:true,returnedFrom:r.id,forcedReuse:!!slot.forced,createdAt:new Date().toISOString()};
+  const newItem={id:id('BR'),date:slot.date,day:dayName(slot.date),week:weekLabel(slot.date),slot:slot.slot,program:slot.program||programForSlot(slot.date,slot.slot),distributionId:d.id||'',prize:distributionLabel(d)||r.prize,title:d.title||r.prize,description:reuseDescription,qty:1,winnerCapacity:1,channel:'RÁDIO',station:'JP1017',status:'PENDENTE',notes:`REAPROVEITAMENTO: PRÊMIO NÃO RETIRADO POR ${r.winner}. PRAZO VENCIDO EM ${r.deadlineLabel}.${slot.forced?' REALOCAÇÃO MANUAL FORA DO ESPAÇAMENTO RECOMENDADO.':''}`,titleStyle:d.titleStyle||reuseTemplate?.titleStyle||defaultPromoTextStyle('title'),descriptionStyle:d.descriptionStyle||reuseTemplate?.descriptionStyle||defaultPromoTextStyle('desc'),returnedReuse:true,returnedFrom:r.id,returnUnitSnapshot:ticketUnit(d,'ar'),stockUnits:ticketMultiplier(d,'ar'),forcedReuse:!!slot.forced,createdAt:new Date().toISOString()};
   const targetMonth=monthDataForKey(slot.date.slice(0,7)); targetMonth.items ||= []; targetMonth.items.push(newItem);
   updateWinnerReuseStatus(r,'realocado',{reusedItemId:newItem.id,reuseDecision:slot.forced?'REAPROVEITADO_FORCADO':'REAPROVEITADO',reuseDate:slot.date,reuseSlot:slot.slot});
   auditEvent(slot.forced?'REALOCAÇÃO MANUAL FORA DA RECOMENDAÇÃO':'REALOCAÇÃO INTELIGENTE DE PRÊMIO',r.prize,{note:`${formatBR(slot.date)} ${slot.slot} · ${slot.program} · GANHADOR ORIGINAL: ${r.winner}`,sourceId:r.id});
@@ -9109,16 +9140,36 @@ function applyReturnedPrizeReuse(index){
 function suggestedReuseSlot(d){return returnReuseCandidatePool(d,{allowRepeat:false,allowOccupied:false})[0]||null;}
 function reuseReturnedPrize(recordId){openReturnReuseSuggestions(recordId);}
 window.openReturnReuseSuggestions=openReturnReuseSuggestions;window.renderReturnReuseSequence=renderReturnReuseSequence;window.applyReturnedPrizeReuse=applyReturnedPrizeReuse;window.openReturnReuseManual=openReturnReuseManual;
+function cancelReturnSobra(recordId){
+  const record=findReturnRecordById(recordId);
+  if(!record||record.status!=='sobra')return;
+  const month=state.months?.[record.monthKey];
+  const d=(month?.distributions||[]).find(x=>x.id===record.distributionId);
+  if(!month||!d)return alert('DISTRIBUIÇÃO DA COMPETÊNCIA ORIGINAL NÃO LOCALIZADA.');
+  const sourceId=record.kind==='item'
+    ?`item:${record.itemId}:${record.winnerIndex||0}`
+    :`promo:${record.promoId}:${record.occurrenceKey}:${record.winnerId||record.winnerIndex}`;
+  const alreadyLinked=(month.items||[]).some(i=>normalizeStatus(i.status)!=='CANCELADO'&&(i.returnedFrom===sourceId||(i.returnSourceIds||[]).includes(sourceId)));
+  const balance=JPReturnBalance.compute({month,distribution:d,monthKey:record.monthKey,today:todayISO()});
+  if(alreadyLinked||balance.available<1){
+    alert('SOBRA JÁ COMPROMETIDA COM A PROGRAMAÇÃO. NÃO É POSSÍVEL CANCELAR DIRETAMENTE. DESPROGRAME E CONCILIE PRIMEIRO.');return;
+  }
+  if(!confirm(`CANCELAR A DEVOLUÇÃO DE ${record.prize}?\nGANHADOR: ${record.winner}\nO HISTÓRICO SERÁ PRESERVADO.`))return;
+  if(!updateWinnerReuseStatus(record,'cancelado',{reuseDecision:'SOBRA_CANCELADA',reuseCancelledAt:new Date().toISOString()}))return;
+  if(!saveState(true))return;
+  render();toast('CANCELAMENTO ENVIADO AO FIREBASE · AGUARDE CONFIRMAÇÃO.');
+}
+window.cancelReturnSobra=cancelReturnSobra;
 function markReturnedAsSobra(recordId){
   const r=findReturnRecordById(recordId);
   if(!r) return;
   if(!confirm(`MARCAR COMO SOBRA?\n\n${r.prize}\nGANHADOR ORIGINAL: ${r.winner}`)) return;
-  updateWinnerReuseStatus(r,'sobra',{reuseDecision:'SOBRA'});
-  saveState(true);
+  if(!updateWinnerReuseStatus(r,'sobra',{reuseDecision:'SOBRA'}))return;
+  if(!saveState(true))return;
   queueApiSave(80);
   render();
   renderReturnAlerts();
-  toast('PRÊMIO MARCADO COMO SOBRA.');
+  toast('SOBRA REGISTRADA LOCALMENTE · AGUARDANDO CONFIRMAÇÃO DO FIREBASE.');
 }
 
 function distributionMonthBounds(monthKey=state.currentMonth){
@@ -9270,15 +9321,16 @@ function renderDistributionCompact(rows){
   if(!rows.length){tb.innerHTML='<tr><td colspan="7"><div class="empty">NENHUMA DISTRIBUIÇÃO ENCONTRADA PARA A VISÃO ATUAL.</div></td></tr>';return;}
   tb.innerHTML=rows.map(d=>{
     const stock=distributionMonthStockStatus(d,state.currentMonth),prog=distributionVisualProgrammed(d,'RÁDIO'),life=distributionLifecycleVisualStyle(d,state.currentMonth);
-    const saldoClass=stock.executionBalance<0?'negative':stock.executionBalance===0?'zero':'positive';
-    return `<tr class="distCompactRow" data-dist-id="${esc(d.id)}"><td class="distLifecycleCell ${life.key}" style="--life-progress:${life.progress}%"><button class="distCompactPrize" type="button" onclick="openDistributionDetail('${esc(d.id)}')">${distributionPrizeIdentityHtml(d)}</button></td><td class="num"><strong>${num(d.total)}</strong></td><td class="num">${allocated(d)}</td><td class="num">${stock.realized}</td><td class="num"><span class="distCompactBalance ${saldoClass}">${stock.executionBalance}</span></td><td class="num">${prog}</td><td><div class="distCompactActions"><button class="actionIcon distUnprogramX" type="button" title="DESPROGRAMAR" aria-label="DESPROGRAMAR" data-unprogram-dist="${esc(d.id)}"><span aria-hidden="true">✕</span></button><button class="actionIcon ghost" type="button" title="VER VÍNCULOS" aria-label="VER VÍNCULOS" data-dist-links="${esc(d.id)}"><span aria-hidden="true">↗</span></button><button class="actionIcon" type="button" title="VER DETALHES" aria-label="VER DETALHES" onclick="openDistributionDetail('${esc(d.id)}')"><span class="iconGlyph">›</span></button><button class="actionIcon ghost" type="button" title="PROGRAMAR" aria-label="PROGRAMAR" onclick="programFromDist('${esc(d.id)}')"><span class="iconGlyph">＋</span></button></div></td></tr>`;
+    const reprogram=distributionReprogramStatus(d,state.currentMonth);
+    const saldoClass=reprogram.available<0?'negative':reprogram.available===0?'zero':'positive';
+    return `<tr class="distCompactRow" data-dist-id="${esc(d.id)}"><td class="distLifecycleCell ${life.key}" style="--life-progress:${life.progress}%"><button class="distCompactPrize" type="button" onclick="openDistributionDetail('${esc(d.id)}')">${distributionPrizeIdentityHtml(d)}</button></td><td class="num"><strong>${num(d.total)}</strong></td><td class="num">${allocated(d)}</td><td class="num">${stock.realized}</td><td class="num"><span class="distCompactBalance ${saldoClass}" title="DISPONÍVEL PARA NOVOS SORTEIOS · SOBRAS JÁ CONSIDERADAS">${reprogram.available}</span><small> RÁDIO · +${reprogram.credits} SOBRA</small></td><td class="num">${prog}</td><td><div class="distCompactActions"><button class="actionIcon distUnprogramX" type="button" title="DESPROGRAMAR" aria-label="DESPROGRAMAR" data-unprogram-dist="${esc(d.id)}"><span aria-hidden="true">✕</span></button><button class="actionIcon ghost" type="button" title="VER VÍNCULOS" aria-label="VER VÍNCULOS" data-dist-links="${esc(d.id)}"><span aria-hidden="true">↗</span></button><button class="actionIcon" type="button" title="VER DETALHES" aria-label="VER DETALHES" onclick="openDistributionDetail('${esc(d.id)}')"><span class="iconGlyph">›</span></button><button class="actionIcon ghost" type="button" title="PROGRAMAR" aria-label="PROGRAMAR" onclick="programFromDist('${esc(d.id)}')"><span class="iconGlyph">＋</span></button></div></td></tr>`;
   }).join('');
 }
 function openDistributionDetail(id){
   const d=distributionVisualRecord(id);if(!d)return;
-  const stock=distributionMonthStockStatus(d,state.currentMonth),global=distributionCampaignGlobalBalance(d),prog=distributionVisualProgrammed(d,'RÁDIO'),body=$('distDetailBody');
+  const stock=distributionMonthStockStatus(d,state.currentMonth),global=distributionCampaignGlobalBalance(d),prog=distributionVisualProgrammed(d,'RÁDIO'),reprogram=distributionReprogramStatus(d,state.currentMonth),body=$('distDetailBody');
   const channels=CHANNELS.map(([key,label])=>{const planned=num(d[key]),used=distributionVisualProgrammed(d,label);return `<div class="distDetailChannel"><span>${esc(label)}</span><strong>${planned}</strong><small>${used} PROGRAMADO(S)</small></div>`;}).join('');
-  if(body)body.innerHTML=`<div class="distDetailHero">${distributionPrizeIdentityHtml(d)}</div><div class="distDetailMetrics"><div><span>COTA DO MÊS</span><strong>${num(d.total)}</strong></div><div><span>DISTRIBUÍDO</span><strong>${allocated(d)}</strong></div><div><span>REALIZADO</span><strong>${stock.realized}</strong></div><div><span>SALDO</span><strong>${stock.executionBalance}</strong></div><div><span>PROG. RÁDIO</span><strong>${prog}</strong></div><div><span>SALDO GLOBAL</span><strong>${global.balance}</strong></div></div><div class="distDetailSection"><div class="distDetailSectionHead"><strong>DESTINAÇÃO</strong><span>QUANTIDADE DEFINIDA E PROGRAMAÇÃO ASSOCIADA.</span></div><div class="distDetailChannels">${channels}</div></div><div class="distDetailActions"><button class="btn red" type="button" onclick="closeDrawer('distDetailDrawer');programFromDist('${esc(d.id)}')">PROGRAMAR MANUAL</button><button class="btn" type="button" onclick="closeDrawer('distDetailDrawer');filterProgramByDist('${esc(d.id)}')">VER PROGRAMAÇÃO</button><button class="btn" type="button" onclick="closeDrawer('distDetailDrawer');editDist('${esc(d.id)}')">EDITAR PRÊMIO</button></div>`;
+  if(body)body.innerHTML=`<div class="distDetailHero">${distributionPrizeIdentityHtml(d)}</div><div class="distDetailMetrics"><div><span>COTA DO MÊS</span><strong>${num(d.total)}</strong></div><div><span>DISTRIBUÍDO</span><strong>${allocated(d)}</strong></div><div><span>REALIZADO</span><strong>${stock.realized}</strong></div><div><span>DISP. SORTEIOS (RÁDIO)</span><strong>${reprogram.available} ${reprogram.unit==='pair'?'PARES':'IND.'}</strong></div><div><span>PROG. RÁDIO</span><strong>${prog}</strong></div><div><span>SOBRAS / SALDO FÍSICO</span><strong>+${reprogram.credits} / ${stock.executionBalance}</strong></div></div><div class="distDetailSection"><div class="distDetailSectionHead"><strong>DESTINAÇÃO</strong><span>QUANTIDADE DEFINIDA E PROGRAMAÇÃO ASSOCIADA.</span></div><div class="distDetailChannels">${channels}</div></div><div class="distDetailActions"><button class="btn red" type="button" onclick="closeDrawer('distDetailDrawer');programFromDist('${esc(d.id)}')">PROGRAMAR MANUAL</button><button class="btn" type="button" onclick="closeDrawer('distDetailDrawer');filterProgramByDist('${esc(d.id)}')">VER PROGRAMAÇÃO</button><button class="btn" type="button" onclick="closeDrawer('distDetailDrawer');editDist('${esc(d.id)}')">EDITAR PRÊMIO</button></div>`;
   openDrawer('distDetailDrawer');
 }
 
@@ -14505,6 +14557,6 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 <!-- AV-57.6.6.16 · PROGRAMAÇÃO COM ARRASTE + BOTÕES UNIFICADOS + SAVE PROMO EXPLÍCITO -->
 <script src="assets/distribution-unprogram-ui.js?v=AV58_1_10"></script>
 <div class="jpManualDialog" id="jpManualQtyDialog" hidden><section class="jpManualDialogCard" role="dialog" aria-modal="true" aria-labelledby="jpManualQtyTitle"><h3 id="jpManualQtyTitle">PROGRAMAR PRÊMIO</h3><p id="jpManualQtyHint">DEFINA A QUANTIDADE.</p><label for="jpManualQtyInput">QUANTIDADE A PROGRAMAR</label><input type="number" id="jpManualQtyInput" min="1" step="1" value="1"><div class="jpManualDialogActions"><button type="button" id="jpManualQtyCancel" class="jpManualBtn">CANCELAR</button><button type="button" id="jpManualQtyConfirm" class="jpManualBtn primary">ADICIONAR</button></div></section></div>
-<script src="assets/prog-manual.js?v=AV58_1_35"></script>
+<script src="assets/prog-manual.js?v=AV58_1_37"></script>
 </body>
 </html>

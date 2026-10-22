@@ -40,6 +40,10 @@
       return (!start||date>=start)&&(!end||date<=end);
     }).sort((a,b)=>String(a.name||a.title).localeCompare(String(b.name||b.title),'pt-BR'));
   }
+  function prizeTitle(d){return String(d?.title||d?.prize||distributionLabel(d)||'SEM PRÊMIO').trim();}
+  function monthDistribution(d,monthKey=date.slice(0,7)){
+    return rows(state.months?.[monthKey]?.distributions).find(x=>x.id===d?.id)||null;
+  }
   function prizes(){
     const monthKey=date.slice(0,7),candidate=new Map();
     Object.values(state.months||{}).forEach(m=>rows(m?.distributions).forEach(d=>{
@@ -47,7 +51,8 @@
       if(date<distStartDate(d)||date>distEndDate(d))return;
       if(!candidate.has(d.id)||d.snapshotMonth===monthKey)candidate.set(d.id,d);
     }));
-    return [...candidate.values()].sort((a,b)=>String(distributionLabel(a)).localeCompare(String(distributionLabel(b)),'pt-BR'));
+    // AV58.1.36: ordens calculadas no stockRows (saldo e título cadastrado).
+    return [...candidate.values()].map(d=>monthDistribution(d,monthKey)||d);
   }
   function sourceDayItems(){return rows(state.months?.[date.slice(0,7)]?.items).filter(i=>i.date===date&&itemStation(i)===station&&liveItem(i)).map(cloneJSON);}
   function manualSlots(p){return rows(p?.manualReadAssignments).filter(a=>a.date===date&&sameStation(a.station||p.station||'JP1017',station));}
@@ -80,11 +85,21 @@
     draft.items.filter(i=>i.distributionId===d.id&&liveItem(i)).forEach(i=>count+=qty(i.qty));
     return count;
   }
-  function totalAvailable(d){
-    // Quantidades do canal Rádio são o limite operacional; par/individual conservam a unidade de programação.
-    return Math.max(0,qty(d.ar));
+  // AV58.1.37: a Distribuição e a PROG MANUAL consomem a mesma regra.
+  function officialReturnStatus(distId,monthData=state.months?.[date.slice(0,7)],itemsOverride=null){
+    const distribution=rows(monthData?.distributions).find(d=>d.id===distId)||monthDistribution({id:distId});
+    if(!distribution)return {radioQuota:0,credits:0,available:0,returnedAvailable:0,issues:[]};
+    return JPReturnBalance.compute({month:monthData||{},distribution,monthKey:date.slice(0,7),today:iso(),itemsOverride});
   }
-  function balance(d){return totalAvailable(d)-used(d);}
+  function radioReturnCredits(distId,monthData=state.months?.[date.slice(0,7)]){
+    return officialReturnStatus(distId,monthData).credits;
+  }
+  function totalAvailable(d){
+    // Par/individual já estão representados na unidade operacional d.ar.
+    const current=monthDistribution(d);
+    return Math.max(0,qty(current?.ar??d.ar));
+  }
+  function balance(d){return totalAvailable(d)+radioReturnCredits(d.id)-used(d);}
   function validity(d){return `${countryDate(distStartDate(d))} — ${countryDate(distEndDate(d))}`;}
   function itemCards(s){
     const entries=draft.items.filter(i=>slot(i.slot)===s).sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
@@ -104,9 +119,15 @@
       return `<section class="jpManualPeriod"><div class="jpManualPeriodName"><span class="periodGlyph">${glyph}</span><b>${label}</b><small>${r}</small></div><div class="jpManualSlots">${all.map(s=>`<div class="jpManualSlot" data-slot="${clean(s)}"><strong class="jpManualSlotTime">${clean(s.replace('H',':').replace(/:$/,'H00').replace(/:(\d+)/,'H$1'))}</strong><div class="jpManualSlotBody">${itemCards(s)}<div class="jpManualDrop" data-target="${clean(s)}" title="SOLTE UM PRÊMIO OU PAUTA AQUI" aria-label="ÁREA PARA SOLTAR ITEM EM ${clean(s)}">+ &nbsp; ARRASTE UM PRÊMIO OU PAUTA AQUI</div></div></div>`).join('')}</div></section>`;
     }).join('');
   }
-  function stockRows(){return prizes().filter(d=>String(distributionLabel(d)).toLowerCase().includes(prizeQuery.toLowerCase())).map(d=>{
-    const available=balance(d),name=distributionLabel(d);
-    return `<div class="jpManualStockRow ${available<=0||!state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===d.id)?'disabled':''}" draggable="${available>0&&!!state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===d.id)}" data-drag-type="prize" data-drag-id="${clean(d.id)}" role="button" tabindex="0" title="ARRASTE OU CLIQUE PARA ESCOLHER HORÁRIO"><span class="dragDots">⠿</span><div><strong>${clean(name)}</strong><small>${clean(validity(d))}</small></div><div class="counts"><span class="countTotal">${state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===d.id)?'RÁDIO '+totalAvailable(d):'SEM COTA NO MÊS'}</span><span>PROG. ${used(d)}</span><b>SALDO ${available}</b></div></div>`;
+  function stockRows(){return prizes()
+    .filter(d=>prizeTitle(d).toLocaleLowerCase('pt-BR').includes(prizeQuery.toLocaleLowerCase('pt-BR')))
+    .sort((a,b)=>{
+      const activeA=balance(a)>0&&!!monthDistribution(a),activeB=balance(b)>0&&!!monthDistribution(b);
+      if(activeA!==activeB)return activeA?-1:1;
+      return prizeTitle(a).localeCompare(prizeTitle(b),'pt-BR',{sensitivity:'base',numeric:true});
+    }).map(d=>{
+    const available=balance(d),name=prizeTitle(d),hasQuota=!!monthDistribution(d),returns=radioReturnCredits(d.id);
+    return `<div class="jpManualStockRow ${available<=0||!hasQuota?'disabled':''}" draggable="${available>0&&hasQuota}" data-drag-type="prize" data-drag-id="${clean(d.id)}" role="button" tabindex="0" title="ARRASTE OU CLIQUE PARA ESCOLHER HORÁRIO"><span class="dragDots">⠿</span><div><strong>${clean(name)}</strong><small>${clean(validity(d))}</small></div><div class="counts"><span class="countTotal">${hasQuota?'RÁDIO '+totalAvailable(d):'SEM COTA NO MÊS'}</span>${returns?`<span class="jpManualReturnCredit" title="PRÊMIO(S) NÃO RETIRADO(S), MARCADO(S) COMO SOBRA NESTE MÊS">SOBRA +${returns}</span>`:''}<span>PROG. ${used(d)}</span><b class="${available>0&&hasQuota?'jpManualBalanceAvailable':''}">SALDO ${available}</b></div></div>`;
   }).join('')||'<div class="jpManualEmpty">NENHUM PRÊMIO DISPONÍVEL NA VIGÊNCIA.</div>';}
   function isMerchanRecord(p){return ['merchan','merchandising'].includes(String(p.kind||p.promoKind||p.type||'').toLowerCase());}
   function pautaRows(group='pautas'){
@@ -287,7 +308,40 @@
           if(!remote){failure='PRÊMIO SEM SNAPSHOT NESTE MÊS. CONFIRA A DISTRIBUIÇÃO GERAL.';return;}
           if(date<distStartDate(remote)||date>distEndDate(remote)){failure=`VIGÊNCIA ALTERADA: ${distributionLabel(remote)}`;return;}
           const count=items=>items.filter(i=>i.distributionId===id&&String(i.date||'').slice(0,7)===targetMonth&&liveItem(i)).reduce((sum,i)=>sum+qty(i.qty),0);
-          const previous=count(storedItems),spent=count(revised),limit=qty(remote.ar);
+          const previous=count(storedItems),spent=count(revised);
+          // Crédito de SOBRA precisa existir no snapshot REMOTO da competência,
+          // não apenas na prévia local. A transação impede consumo duplo
+          // e recusa uma sobra cancelada/retirada por outra estação.
+          const authoritative=JPReturnBalance.compute({month,distribution:remote,monthKey:targetMonth,today:iso(),itemsOverride:storedItems,promosOverride:storedPromos});
+          const limit=authoritative.radioQuota+authoritative.credits;
+          // Carimba a origem de cada nova reprogramação que utiliza retorno.
+          // O vínculo permite bloquear cancelamento posterior da devolução utilizada.
+          if(itemsChanged&&spent>previous&&spent>authoritative.radioQuota){
+            const previousLinks=new Set(storedItems.filter(i=>liveItem(i)).flatMap(i=>[
+              ...rows(i.returnSourceIds).filter(x=>typeof x==='string'),...(i.returnedFrom?[i.returnedFrom]:[])
+            ]));
+            const freeOrigins=authoritative.returns.filter(r=>r.status==='sobra'&&!previousLinks.has(r.sourceId));
+            // Registros de versões anteriores podem ter consumido retornos sem
+            // vínculo. Reservamos conservadoramente essa quantidade antes das novas inclusões.
+            const legacySpent=Math.max(0,previous-authoritative.radioQuota-previousLinks.size);
+            freeOrigins.splice(0,legacySpent);
+            let toLink=Math.min(Math.max(0,spent-Math.max(previous,authoritative.radioQuota)),freeOrigins.length);
+            for(const item of revised){
+              if(toLink<=0)break;
+              if(item.distributionId!==id||!liveItem(item)||item.sourceType==='promo-result')continue;
+              const before=storedItems.find(old=>old.id===item.id);
+              const added=Math.max(0,qty(item.qty)-qty(before?.qty));
+              const sources=freeOrigins.splice(0,Math.min(added,toLink)).map(r=>r.sourceId);
+              if(!sources.length)continue;
+              item.returnSourceIds=[...new Set([...rows(item.returnSourceIds),...sources])];
+              if(qty(item.qty)===1&&sources.length===1)item.returnedFrom=sources[0];
+              item.returnedReuse=true;
+              toLink-=sources.length;
+            }
+            if(toLink>0){failure='NÃO FOI POSSÍVEL VINCULAR A ORIGEM DAS SOBRAS. ATUALIZE A PROGRAMAÇÃO.';return;}
+          }
+          // Não libera retorno ambíguo (modalidade divergente, vários ganhadores legados,
+          // premiação fora da vigência ou sem origem física verificável).
           // Excesso anterior é sinalizado na lista de saldo, mas só bloqueia
           // alterações que AUMENTEM o excesso. Mover/reduzir continua permitido.
           if(spent>limit&&spent>previous){failure=`SALDO INSUFICIENTE: ${distributionLabel(remote)}. TOTAL PROGRAMADO ${spent} / COTA RÁDIO ${limit}`;return;}
@@ -320,5 +374,5 @@
   document.addEventListener('click',e=>{const btn=e.target.closest('[data-jp-prog-mode]');if(!btn)return;const next=btn.dataset.jpProgMode;if(next===mode)return;mode=next;enter();});
   const initializeManual=()=>{onEvents();el('jpManualQtyCancel')?.addEventListener('click',closeQty);el('jpManualQtyConfirm')?.addEventListener('click',confirmQty);el('jpManualQtyInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();confirmQty();}});};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initializeManual,{once:true});else initializeManual();
-  window.JPManual={enter,refreshIfOpen(){if(mode==='manual'&&el('view-programacao')?.classList.contains('active')){if(draft&&!hasChanges())draft=snapshot();paint();}}, get mode(){return mode;},test:{officialSlots,qty}};
+  window.JPManual={enter,refreshIfOpen(){if(mode==='manual'&&el('view-programacao')?.classList.contains('active')){if(draft&&!hasChanges())draft=snapshot();paint();}}, get mode(){return mode;},test:{officialSlots,qty,radioReturnCredits,prizeTitle}};
 })();

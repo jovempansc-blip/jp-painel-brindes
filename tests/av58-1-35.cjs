@@ -3,7 +3,7 @@ const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('ass
 const root=path.join(__dirname,'..');
 const script=fs.readFileSync(path.join(root,'assets/prog-manual.js'),'utf8');
 const page=fs.readFileSync(path.join(root,'index.html'),'utf8');
-assert(page.includes('src="assets/prog-manual.js?v=AV58_1_35"'),'cache da correção deve atualizar');
+assert(page.includes('src="assets/prog-manual.js?v=AV58_1_37"'),'cache da correção deve atualizar');
 assert(script.includes('if(manualSlotIsPast(type,date,to))'),'bloqueio temporal centralizado');
 const src=script.slice(script.indexOf('  function manualSlotIsPast('),script.indexOf('  function showQtyDialog('));
 assert(src.startsWith('  function manualSlotIsPast(')&&src.includes('  function add('),'funções disponíveis');
