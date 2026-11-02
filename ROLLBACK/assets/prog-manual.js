@@ -148,7 +148,7 @@
     const content=showPrizes?stockRows():pautaRows(group);
     const title=showPrizes?'♔ &nbsp; PRÊMIOS DENTRO DA VIGÊNCIA':showMerchans?'♧ &nbsp; MERCHANS':'♧ &nbsp; PAUTAS PROMOCIONAIS';
     const count=showPrizes?prizeCount:showMerchans?merchanCount:pautaCount;
-    return `<aside class="jpManualPaper jpManualAvailablePane" aria-label="MATERIAIS DISPONÍVEIS"><div class="jpManualStockHead"><strong>ITENS DISPONÍVEIS</strong><span>ARRASTE PARA A ESQUERDA ↖</span></div><div class="jpManualTabs" role="tablist" aria-label="TIPO DE ITEM"><button type="button" class="${showPrizes?'active':''}" data-manual-tab="prizes" role="tab" aria-selected="${showPrizes?'true':'false'}">♔ PRÊMIOS (${prizeCount})</button><button type="button" class="${group==='pautas'?'active':''}" data-manual-tab="pautas" role="tab" aria-selected="${group==='pautas'?'true':'false'}">♧ PAUTAS (${pautaCount})</button><button type="button" class="${showMerchans?'active':''}" data-manual-tab="merchans" role="tab" aria-selected="${showMerchans?'true':'false'}">♧ MERCHAN (${merchanCount})</button></div><section class="jpManualStockGroup singleTab"><div class="jpManualGroupTitle ${showPrizes?'':'pautas'}"><strong>${title}</strong><small>${count} EM VIGÊNCIA</small></div><input class="jpManualSearch" id="${searchId}" placeholder="${searchPlaceholder}" value="${clean(searchValue)}" aria-label="${searchPlaceholder}"><div id="${stockId}" class="jpManualMaterialList">${content}</div></section><div class="jpManualStockFooter">Arraste um item para o horário oficial. Os saldos mudam nesta prévia; a alteração só chega aos outros painéis depois de salvar no Firebase. Itens realizados não podem ser removidos nem movidos.</div></aside>`;
+    return `<aside class="jpManualPaper jpManualAvailablePane" aria-label="MATERIAIS DISPONÍVEIS"><div class="jpManualStockHead"><strong>ITENS DISPONÍVEIS</strong><span>ARRASTE PARA A ESQUERDA ↖</span></div><div class="jpManualTabs" role="tablist" aria-label="TIPO DE ITEM"><button type="button" class="${showPrizes?'active':''}" data-manual-tab="prizes" role="tab" aria-selected="${showPrizes?'true':'false'}">♔ PRÊMIOS (${prizeCount})</button><button type="button" class="${group==='pautas'?'active':''}" data-manual-tab="pautas" role="tab" aria-selected="${group==='pautas'?'true':'false'}">♧ PAUTAS (${pautaCount})</button><button type="button" class="${showMerchans?'active':''}" data-manual-tab="merchans" role="tab" aria-selected="${showMerchans?'true':'false'}">♧ MERCHAN (${merchanCount})</button></div><section class="jpManualStockGroup singleTab"><div class="jpManualGroupTitle ${showPrizes?'':'pautas'}"><strong>${title}</strong><small>${count} EM VIGÊNCIA</small></div><input class="jpManualSearch" id="${searchId}" placeholder="${searchPlaceholder}" value="${clean(searchValue)}" aria-label="${searchPlaceholder}"><div id="${stockId}" class="jpManualMaterialList">${content}</div></section><div class="jpManualStockFooter">Arraste um item para o horário oficial. Os saldos mudam nesta prévia; a alteração só chega aos outros painéis depois de salvar no Firebase. Itens realizados não podem ser removidos nem movidos. REGULARIZAÇÃO: prêmios já sorteados hoje podem ser incluídos em horários passados; depois registre o ganhador no painel do estúdio.</div></aside>`;
   }
   function paint(){
     if(mode!=='manual'||!draft||!el('programManualMount'))return;
@@ -162,7 +162,7 @@
   function reject(msg){window.alert(msg);return false;}
   // AV58.1.35: inserções de pauta/merchan podem ser feitas durante a HORA ATUAL,
   // inclusive depois de seu minuto inicial (15H às 15h09, por exemplo).
-  // Não libera horas anteriores, datas passadas ou alterações retroativas em prêmios.
+  // HOTFIX 2026-11-02: retroatividade restrita a novos prêmios na data atual; pauta/merchan e alterações de itens históricos seguem bloqueadas.
   function manualSlotIsPast(type,targetDate,targetSlot,now=new Date()){
     const localDate=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
     if(targetDate<localDate)return true;
@@ -175,10 +175,10 @@
   function add(type,idValue,to){
     if(!officialSlots(date,station).includes(to))return reject('ESSE HORÁRIO NÃO PERTENCE À GRADE OFICIAL.');
     if(date<iso())return reject('NÃO É PERMITIDO INSERIR PROGRAMAÇÃO EM DATA PASSADA.');
-    if(manualSlotIsPast(type,date,to))return reject('NÃO É PERMITIDO INSERIR PROGRAMAÇÃO EM HORÁRIO QUE JÁ PASSOU. PAUTAS E MERCHANS PODEM SER INCLUÍDOS DURANTE A HORA ATUAL.');
+    if(manualSlotIsPast(type,date,to)&&type!=='prize')return reject('NÃO É PERMITIDO INSERIR PAUTAS, MERCHANS OU REMANEJAMENTOS EM HORÁRIOS ANTERIORES. A REGULARIZAÇÃO RETROATIVA É EXCLUSIVA PARA NOVOS PRÊMIOS.');
     if(type==='prize'){
       const d=prizes().find(d=>d.id===idValue);if(!d||balance(d)<1||!state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===idValue))return reject('PRÊMIO SEM SALDO OU SEM COTA CONFIGURADA NESTE MÊS.');
-      pending={type,idValue,to};showQtyDialog(d);return true;
+      pending={type,idValue,to,retroactive:manualSlotIsPast(type,date,to)};showQtyDialog(d);return true;
     }
     if(type==='pauta'){
       const p=promoPool().find(p=>p.id===idValue);if(!p)return false;
@@ -201,15 +201,24 @@
     const dlg=el('jpManualQtyDialog');if(!dlg)return;
     el('jpManualQtyTitle').textContent=`PROGRAMAR · ${distributionLabel(d)}`;
     el('jpManualQtyHint').textContent=`HORÁRIO ${pending.to} · SALDO ${balance(d)} ${distributionDeliveryUnit(d)==='pair'?'PARES':'UNIDADES'} NO CANAL RÁDIO`;
-    el('jpManualQtyInput').max=String(balance(d));el('jpManualQtyInput').value='1';dlg.hidden=false;el('jpManualQtyInput').focus();
+    el('jpManualQtyInput').max=String(balance(d));el('jpManualQtyInput').value='1';if(pending?.retroactive)el('jpManualQtyHint').textContent+=' · LANÇAMENTO RETROATIVO. CONFIRME O MOTIVO; DEPOIS SALVE O GANHADOR PELO PAINEL DO ESTÚDIO NO HORÁRIO REAL.';dlg.hidden=false;el('jpManualQtyInput').focus();
   }
   function closeQty(){el('jpManualQtyDialog').hidden=true;pending=null;}
   function confirmQty(){
     if(!pending)return;
     const d=prizes().find(x=>x.id===pending.idValue),amount=Number(el('jpManualQtyInput').value),max=d?balance(d):0;
     if(!Number.isSafeInteger(amount)||amount<1||amount>max)return reject(`INFORME UMA QUANTIDADE ENTRE 1 E ${max}.`);
+    let retroReason='';
+    if(pending.retroactive){
+      if(date!==iso())return reject('REGULARIZAÇÃO RETROATIVA PERMITIDA SOMENTE PARA O DIA DE HOJE.');
+      const answer=window.prompt('REGULARIZAÇÃO RETROATIVA — HORÁRIO '+pending.to+'\n\nINFORME O MOTIVO DA INCLUSÃO APÓS O HORÁRIO REAL (OBRIGATÓRIO):','INDISPONIBILIDADE DO PAINEL DURANTE A PREMIAÇÃO');
+      if(answer===null)return;
+      retroReason=String(answer).trim().slice(0,240);
+      if(!retroReason)return reject('INFORME O MOTIVO DO LANÇAMENTO RETROATIVO.');
+      if(!window.confirm('REGULARIZAR O PRÊMIO NO HORÁRIO '+pending.to+'?\n\nA PREMIAÇÃO JÁ ACONTECEU. ESTE LANÇAMENTO NÃO REFAZ O SORTEIO. DEPOIS DE SALVAR, O GANHADOR DEVE SER INFORMADO NO ESTÚDIO NO HORÁRIO ORIGINAL.'))return;
+    }
     const stamp=new Date().toISOString();
-    draft.items.push({id:`BRMAN_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,9)}`,date,day:dayName(date),week:weekLabel(date),slot:pending.to,station,program:programFromSchedule(date,pending.to,station),distributionId:d.id,prize:d.prize||distributionLabel(d),title:d.title||distributionLabel(d),description:d.description||'',qty:amount,channel:'RÁDIO',status:'PENDENTE',sourceType:'manual',manualOverride:true,manualCreated:true,createdAt:stamp,updatedAt:stamp});
+    draft.items.push({id:`BRMAN_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,9)}`,date,day:dayName(date),week:weekLabel(date),slot:pending.to,station,program:programFromSchedule(date,pending.to,station),distributionId:d.id,prize:d.prize||distributionLabel(d),title:d.title||distributionLabel(d),description:d.description||'',qty:amount,channel:'RÁDIO',status:'PENDENTE',sourceType:'manual',manualOverride:true,manualCreated:true,manualRetroactive:!!pending.retroactive,manualRetroactiveReason:retroReason,manualRetroactiveRegisteredAt:pending.retroactive?stamp:'',createdAt:stamp,updatedAt:stamp});
     closeQty();paint();
   }
   function onEvents(){
@@ -347,6 +356,14 @@
           if(spent>limit&&spent>previous){failure=`SALDO INSUFICIENTE: ${distributionLabel(remote)}. TOTAL PROGRAMADO ${spent} / COTA RÁDIO ${limit}`;return;}
         }
         const audit={id:`MP_${date}_${station}_${Date.now()}`,date,station,at:new Date().toISOString(),source:'PROG_MANUAL',before:baseItems.map(i=>({id:i.id,slot:i.slot,qty:i.qty,distributionId:i.distributionId})),after:desiredItems.map(i=>({id:i.id,slot:i.slot,qty:i.qty,distributionId:i.distributionId})),beforePautas:basePautas.map(a=>({id:a.promoId,slot:a.slot})),afterPautas:desiredPautas.map(a=>({id:a.promoId,slot:a.slot}))};
+        const retroEntries=desiredItems.filter(i=>i.manualRetroactive&&!originalById.has(i.id));
+        if(retroEntries.length){
+          if(date!==iso()||retroEntries.some(i=>!i.manualRetroactiveReason||i.status!=='PENDENTE'||i.resultAt)){
+            failure='REGULARIZAÇÃO RETROATIVA INVÁLIDA. REABRA A GRADE E CONFIRA OS REGISTROS.';return;
+          }
+          audit.source='PROG_MANUAL_REGULARIZACAO_RETROATIVA';
+          audit.retroactiveEntries=retroEntries.map(i=>({id:i.id,date:i.date,slot:i.slot,distributionId:i.distributionId,qty:i.qty,reason:i.manualRetroactiveReason,registeredAt:i.manualRetroactiveRegisteredAt}));
+        }
         month.manualProgramHistory=[...rows(month.manualProgramHistory),audit].slice(-300);
         if(itemsChanged)month.items=revised;
         const touched=new Set([...basePautas,...desiredPautas].map(p=>p.promoId));

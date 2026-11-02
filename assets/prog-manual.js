@@ -304,7 +304,14 @@
     try{
       const root=firebaseStateRootRef();if(!root)throw new Error('RAIZ OFICIAL DO FIREBASE INDISPONÍVEL.');
       const tx=await root.child('months').child(targetMonth).transaction(month=>{
-        if(!month||!month.items||!month.distributions){failure='MÊS NÃO ENCONTRADO NA BASE OFICIAL. NÃO FOI ALTERADO.';return;}
+        if(!month||typeof month!=='object'||Array.isArray(month)){
+          failure='COMPETÊNCIA '+targetMonth+' AINDA NÃO CADASTRADA NO FIREBASE. CADASTRE A DISTRIBUIÇÃO DO MÊS ANTES DE PROGRAMAR.';
+          return;
+        }
+        // FIX VIRADA DE MES: coleções vazias são omitidas no Realtime Database.
+        // A ausência de "items" ou "distributions" não significa mês inexistente.
+        // rows(undefined) representa [] sem inventar prêmios nem regravar coleções.
+        // O loop de touchedPrizeIds segue exigindo distribuição real para cada prêmio.
         failure=alertCollision(baseItems,basePautas,month,desiredPautas,itemsChanged,pautasChanged);if(failure)return;
         const storedItems=rows(month.items),storedDist=rows(month.distributions),storedPromos=rows(month.promos);
         const currentPrizeSet=new Map(storedDist.map(d=>[d.id,d]));

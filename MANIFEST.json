@@ -1,12 +1,23 @@
 {
-  "release": "JP_MANUAL_RETRO_2026-11-02",
-  "scope": "only index.html and assets/prog-manual.js",
-  "existing_index_sha256": "344e1474636a9933886a0546f13964f67e94e0794de66a6d6d2969529f6eef18",
-  "existing_asset_sha256": "98507f1e4630221c11adbc2a6346711bbdf869f9a0786a848c379f13b49a5044",
-  "new_index_sha256": "524379944469b91dc558a30d7038d42592c5fb857b76edd835fe0e7d3118e677",
-  "new_asset_sha256": "ac15d024e877c53005f8035f513af7388dda253bb4b7e6ea2641c0b86a9af698",
-  "tests": "8/8 local simulated; node --check pass",
-  "production_writes": "none",
-  "firebase_writes": "none",
-  "status": "candidate, not yet authorized for live commit"
+  "release": "JP_HOTFIX_VIRADA_MES_2026-11-02",
+  "type": "proposta de código, sem publicação",
+  "scope": [
+    "index.html",
+    "assets/prog-manual.js"
+  ],
+  "repo": "jovempansc-blip/jp-painel-brindes",
+  "base_source": "arquivo servido no GitHub Pages e validado por SHA-256",
+  "base_sha256": {
+    "index.html": "524379944469b91dc558a30d7038d42592c5fb857b76edd835fe0e7d3118e677",
+    "assets/prog-manual.js": "ac15d024e877c53005f8035f513af7388dda253bb4b7e6ea2641c0b86a9af698"
+  },
+  "candidate_sha256": {
+    "index.html": "1603dd56a455bb67574ccb85bb754407d4398348ff3b0c65edbabd2c5bb429c7",
+    "assets/prog-manual.js": "2f90e26e34ce38e43cae5c42f0d3bde6ea781924011dbb40af186390b9a08fed"
+  },
+  "backend_write": false,
+  "production_write": false,
+  "firebase_write": false,
+  "QA": "7 cenários de transação simulados aprovados no ambiente de desenvolvimento; validado novamente no pacote local",
+  "limitations": "sem teste real autenticado e integração em duas sessões; não publica automaticamente"
 }
