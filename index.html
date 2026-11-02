@@ -4261,6 +4261,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
           </div>
           <div class="field"><label id="distTotalLabel">TOTAL UNITÁRIO DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"><span class="ticketFormHint" id="distTotalHint">NO NOVO CADASTRO, INFORME O ESTOQUE FÍSICO TOTAL. O SISTEMA DIVIDE A COTA ENTRE OS MESES DA VIGÊNCIA.</span></div>
           <div class="field" id="distMasterStockField" hidden><label>ESTOQUE TOTAL DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distMasterTotal" value="0"><span class="ticketFormHint">ESTOQUE FÍSICO GLOBAL DA CAMPANHA. CONFIRA ABAIXO COMO DESTINAR AS NOVAS UNIDADES.</span></div>
+          <div class="field full" id="distStockReceiveField" hidden><label>RECEBIMENTO ADICIONAL DE PRÊMIOS / INGRESSOS</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="control" id="distStockReceiveUnits" type="number" min="1" step="1" placeholder="NOVAS UNIDADES RECEBIDAS" style="max-width:300px"><button class="btn" type="button" id="distStockReceiveBtn">+ ACRESCENTAR AO ESTOQUE</button></div><span class="ticketFormHint">ESTOQUE FÍSICO TOTAL É DIFERENTE DE COTA MENSAL. AS UNIDADES NOVAS NÃO SÃO DISTRIBUÍDAS AUTOMATICAMENTE ENTRE CANAIS.</span><label style="display:block;margin-top:8px">ORIGEM OU LOTE RECEBIDO — OBRIGATÓRIO</label><input class="control" id="distStockReceiveOrigin" type="text" maxlength="180" placeholder="EX.: INGRESSOS EXTRAS DA PRODUÇÃO EM 02/11"></div>
           <div class="field full" id="distStockAdjustmentField" hidden><label>AO AUMENTAR O ESTOQUE FÍSICO</label><select class="control" id="distStockAdjustmentMode"><option value="global">MANTER COTAS MENSAIS — NOVO SALDO NÃO ALOCADO</option><option value="current">ACRESCENTAR DIFERENÇA À COTA DESTE MÊS</option></select><span class="ticketFormHint">O SEGUNDO MODO ALTERA APENAS A COTA DA COMPETÊNCIA ABERTA. NÃO MODIFICA OUTROS MESES NEM REGISTROS REALIZADOS.</span><div class="serverSourceBox" id="distStockChangePreview" role="status">SEM ALTERAÇÕES NO ESTOQUE.</div></div>
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
           <div class="field"><label>PADRÃO DE ENTREGA</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE O MODO INICIAL. CADA DESTINO PODE SER ALTERADO ENTRE IND. E PAR.</span></div>
@@ -5099,12 +5100,58 @@ async function persistGranularState(savedSnapshot){
   const dirtyMonthKeys=new Set();
   const dirtyRootKeys=new Set();
   const monthKeys=new Set([...Object.keys(baseline.months||{}),...Object.keys(savedSnapshot.months||{})]);
+  const changedMonthKeys=[...monthKeys].filter(key=>!sameValue(baseline.months?.[key]||{},savedSnapshot.months?.[key]||{}));
+  const multiMonthAtomic=changedMonthKeys.length>1 && changedMonthKeys.some(key=>!sameValue(baseline.months?.[key]?.distributions||[],savedSnapshot.months?.[key]?.distributions||[]));
+  if(multiMonthAtomic){
+    // HOTFIX: write only changed paths in a single atomic multi-location update.
+    // Avoid a transaction on /months that would retransmit the entire database subtree.
+    // Compare all touched collections before writing; older clients may still write
+    // concurrently, so an operator maintenance window remains necessary.
+    const patch={};
+    const addDiffPaths=(prefix,diff)=>{
+      if(!diff)return;
+      if(diff.kind==='object'){
+        Object.entries(diff.changes||{}).forEach(([field,child])=>addDiffPaths(`${prefix}/${field}`,child));
+      }else if(diff.kind==='delete')patch[prefix]=null;
+      else patch[prefix]=clone(diff.value);
+    };
+    for(const key of changedMonthKeys){
+      const baseMonth=baseline.months?.[key]||{items:[],promos:[],distributions:[]};
+      const localMonth=savedSnapshot.months?.[key]||{items:[],promos:[],distributions:[]};
+      for(const collection of ['items','promos','distributions']){
+        const previous=baseMonth[collection]||[];
+        const desired=localMonth[collection]||[];
+        if(sameValue(previous,desired))continue;
+        const plan=collectionPlan(previous,desired);
+        const remoteSnapshot=await writeRoot.child(`months/${key}/${collection}`).once('value');
+        const remoteRows=firebaseList(remoteSnapshot.val());
+        // Checks for stale changes to the same prize before the atomic update.
+        const merged=applyCollectionPlanToRows(remoteRows,previous,desired,`MÊS ${key} / ${collection}`);
+        if(plan.replace||plan.deleted.length||plan.changes.some(change=>change.isNew)){
+          patch[`${key}/${collection}`]=merged;
+        }else{
+          // Existing records: modify specific fields, preserving unrelated records.
+          plan.changes.forEach(change=>{
+            const index=remoteRows.findIndex((row,i)=>recordIdentity(row,i)===change.id);
+            if(index<0)throw new Error(`REGISTRO DESAPARECEU EM ${key}/${collection}: ${change.id}`);
+            addDiffPaths(`${key}/${collection}/${index}`,change.diff);
+          });
+        }
+      }
+      if((localMonth.label||key)!==(baseMonth.label||key))patch[`${key}/label`]=localMonth.label||key;
+    }
+    // The RTDB SDK rejects oversized writes; never silently attempt a huge payload.
+    const serialized=JSON.stringify(patch);
+    if(serialized.length>8*1024*1024)throw new Error('ATUALIZAÇÃO MULTIMÊS MUITO GRANDE: SALVAMENTO BLOQUEADO PARA PROTEGER O FIREBASE.');
+    if(Object.keys(patch).length)await writeRoot.child('months').update(patch);
+  }
   monthKeys.forEach(key=>{
     const baseMonth=baseline.months?.[key]||{items:[],promos:[],distributions:[]};
     const localMonth=savedSnapshot.months?.[key]||{items:[],promos:[],distributions:[]};
     // FAST SYNC: meses sem alteração não entram no diff de coleções.
     if(sameValue(baseMonth,localMonth)) return;
     dirtyMonthKeys.add(key);
+    if(multiMonthAtomic)return; // committed in a single server transaction
     ['items','promos','distributions'].forEach(collection=>{
       const plan=collectionPlan(baseMonth[collection]||[],localMonth[collection]||[]);
       if(plan.replace||plan.changes.length||plan.deleted.length){
@@ -11976,6 +12023,9 @@ function clearDistForm(){
   if($('distMasterStockField')) $('distMasterStockField').hidden=true;
   if($('distMonthlyStockOverview')) $('distMonthlyStockOverview').hidden=true;
   if($('distMasterTotal')) $('distMasterTotal').value=0;
+  if($('distStockReceiveField')) $('distStockReceiveField').hidden=true;
+  if($('distStockReceiveUnits')) $('distStockReceiveUnits').value='';
+  if($('distStockReceiveOrigin')) $('distStockReceiveOrigin').value='';
   if($('distStockAdjustmentField')) $('distStockAdjustmentField').hidden=true;
   if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='global';
   $('distDescription').dataset.catalogAutofilled='0';
@@ -12549,6 +12599,14 @@ function storeDistributionAcrossMonths(d,editingMonth=state.currentMonth,isNew=f
   if(idx>=0)m.distributions[idx]=snapshot;else m.distributions.push(snapshot);
   // Global physical stock is explicit; changing it never alters monthly quotas.
   propagateCampaignMasterTotal(d.id,currentMaster);
+  // HOTFIX: metadata belongs to one prize across monthly snapshots.
+  // Do not overwrite monthly allocations, reservations, draws or results.
+  const administrativeFields=['date','show','prize','startDate','endDate','title','description','notes','titleStyle','descriptionStyle'];
+  distributionCampaignCopies(d.id).forEach(({monthKey,d:copy})=>{
+    if(monthKey===editingMonth)return;
+    administrativeFields.forEach(field=>{if(d[field]!==undefined)copy[field]=clone(d[field]);});
+    copy.updatedAt=new Date().toISOString();
+  });
   // Extending validity creates zero-quota months. The operator reallocates stock explicitly.
   keys.forEach(key=>{if(!(monthDataForKey(key).distributions||[]).some(x=>x.id===d.id)){const fresh=emptyDistributionMonthCopy(snapshot,key);monthDataForKey(key).distributions.push(fresh);}});
 }
@@ -12562,8 +12620,11 @@ function editDist(distId){
   const d=distributionById(distId); if(!d) return;
   clearDistForm(); $('distDrawerTitle').textContent=`EDITAR DISTRIBUIÇÃO · ${labelMonth(state.currentMonth)}`; $('distId').value=d.id; $('distDate').value=d.date||''; $('distShow').value=d.show||''; $('distStartDate').value=distStartDate(d); $('distEndDate').value=distEndDate(d); $('distPrize').value=d.prize||''; $('distTitle').value=d.title||''; $('distDescription').value=d.description||d.notes||''; setPromoStyleControls('distTitle',d.titleStyle,'title'); setPromoStyleControls('distDesc',d.descriptionStyle,'desc'); $('distTotal').value=num(d.total);
   if($('distTotalLabel')) $('distTotalLabel').textContent=`QUANTIDADE DE ${labelMonth(state.currentMonth)}`;
-  if($('distTotalHint')) $('distTotalHint').textContent='ALTERA SOMENTE A COTA DESTA COMPETÊNCIA. OS OUTROS MESES NÃO SÃO MODIFICADOS.';
+  if($('distTotalHint')) $('distTotalHint').textContent='COTA DESTE MÊS (NÃO É O ESTOQUE FÍSICO TOTAL). PARA NOVOS INGRESSOS RECEBIDOS, USE RECEBIMENTO ADICIONAL ABAIXO.';
   if($('distMasterStockField')) $('distMasterStockField').hidden=false;
+  if($('distStockReceiveField')) $('distStockReceiveField').hidden=false;
+  if($('distStockReceiveUnits')) $('distStockReceiveUnits').value='';
+  if($('distStockReceiveOrigin')) $('distStockReceiveOrigin').value='';
   if($('distMasterTotal')) $('distMasterTotal').value=distributionCampaignMasterTotal(d);
   if($('distStockAdjustmentField')) $('distStockAdjustmentField').hidden=false;
   if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='global';
@@ -12585,30 +12646,31 @@ function distributionDependencies(distId){
   return {items,promos,pendingWithdrawals};
 }
 async function deleteDist(distId){
-  const monthKey=state.currentMonth;
-  const m=monthDataForKey(monthKey);
-  const current=(m.distributions||[]).find(d=>d.id===distId);
-  if(!current) return;
+  const copies=distributionCampaignCopies(distId);
+  if(!copies.length)return;
   const dep=distributionDependencies(distId);
-  const monthItems=dep.items.filter(entry=>entry.monthKey===monthKey);
-  const monthPromos=dep.promos.filter(entry=>entry.monthKey===monthKey);
-  const activePromos=[...new Map(monthPromos.map(x=>[x.p.id,x])).values()].filter(({p})=>!p.endDate||p.endDate>=monthStartDate(monthKey));
-  if(monthItems.length||activePromos.length){
-    if(typeof openDistributionUnprogram==='function')openDistributionUnprogram(distId,{showLinks:true,blocked:true});else alert('ESTE PRÊMIO POSSUI VÍNCULOS. USE VER VÍNCULOS PARA CONFERIR.'); return;
+  const anyHistoricalLink=Object.values(state.months||{}).some(m=>(m.items||[]).some(i=>i.distributionId===distId)||(m.promos||[]).some(row=>row.distributionId===distId));
+  if(anyHistoricalLink||dep.items.length||dep.promos.length||dep.pendingWithdrawals.length){
+    alert('EXCLUSAO BLOQUEADA: ESTE PREMIO POSSUI SORTEIOS, PROMOCOES OU OUTROS VINCULOS EM ALGUM MES. HISTORICO PRESERVADO.');
+    return;
   }
-  const label=distributionLabel(current);
-  if(!confirm(`REMOVER ${label} SOMENTE DE ${labelMonth(monthKey)}?\n\nOS OUTROS MESES SERÃO PRESERVADOS. ESTE REGISTRO MENSAL IRÁ PARA A LIXEIRA.`)) return;
-  trashRecord('DISTRIBUIÇÃO',label,{id:distId,copies:[{monthKey,data:clone(current)}]},{sourceId:distId,monthKey});
-  m.distributions=(m.distributions||[]).filter(d=>d.id!==distId);
-  auditEvent('EXCLUSÃO MENSAL DE DISTRIBUIÇÃO',label,{targetId:distId,before:current,note:`COMPETÊNCIA ${monthKey} · OUTROS MESES PRESERVADOS`});
+  const label=distributionLabel(copies[0].d);
+  const months=copies.map(row=>row.monthKey);
+  if(!confirm('EXCLUIR '+label+' DE TODOS OS MESES ('+months.join(', ')+')?\n\nUMA COPIA PARA RESTAURACAO SERA MANTIDA NA LIXEIRA.'))return;
   try{
-    if(!saveState(true))throw new Error('FIREBASE INDISPONÍVEL.');
-    await flushFirebaseNow('EXCLUSÃO MENSAL DE DISTRIBUIÇÃO');
-    render();toast(`EXCLUSÃO DE ${labelMonth(monthKey)} CONFIRMADA · OUTROS MESES PRESERVADOS.`);
+    copies.forEach(({monthKey,d})=>trashRecord('DISTRIBUIÇÃO',label,{id:distId,copies:[{monthKey,data:clone(d)}]},{sourceId:distId,monthKey}));
+    months.forEach(key=>{
+      const m=monthDataForKey(key);
+      m.distributions=(m.distributions||[]).filter(d=>d.id!==distId);
+    });
+    auditEvent('EXCLUSÃO GLOBAL DE PRÊMIO SEM VÍNCULOS',label,{targetId:distId,before:copies.map(({monthKey,d})=>({monthKey,data:clone(d)}))});
+    if(!saveState(true))throw new Error('FIREBASE INDISPONIVEL');
+    await flushFirebaseNow('EXCLUSAO GLOBAL DE PREMIO');
+    render();
+    toast('EXCLUSAO CONFIRMADA NO FIREBASE EM TODOS OS MESES.');
   }catch(error){
-    console.warn('EXCLUSÃO DE DISTRIBUIÇÃO NÃO CONFIRMADA',error);
-    rollbackToFirebaseBaseline('EXCLUSÃO CANCELADA: FIREBASE NÃO CONFIRMOU.');
-    toast('NÃO FOI POSSÍVEL EXCLUIR · O CADASTRO FOI PRESERVADO.');
+    rollbackToFirebaseBaseline('EXCLUSAO NAO CONFIRMADA. RECARREGUE A BASE.');
+    alert('EXCLUSAO NAO CONFIRMADA. VERIFIQUE NO FIREBASE ANTES DE REPETIR. '+(error?.message||error));
   }
 }
 /* AV58.1.23 — Evento com versões datadas, independente do cadastro padrão. */
@@ -12783,6 +12845,22 @@ function updateDistStockChangePreview(){
     element.innerHTML=`<strong>ANTES → DEPOIS</strong> · ESTOQUE ${proposal.previousMaster} → ${proposal.masterTotal} · COTA ${proposal.oldMonth} → ${proposal.monthTotal} · NÃO ALOCADO ${physicalBalance}${physicalBalance<0?' · ATENÇÃO: COTAS ACIMA DO ESTOQUE':''}`;
   }catch(error){element.textContent=error.message;}
 }
+async function hotfixVerifyPrizeWrite(distId){
+  const root=firebaseStateRootRef();
+  if(!root||!firebaseConnected)throw new Error('NÃO É POSSÍVEL VERIFICAR A ALTERAÇÃO: FIREBASE DESCONECTADO.');
+  const copies=distributionCampaignCopies(distId);
+  if(!copies.length)throw new Error('PRÊMIO NÃO ENCONTRADO APÓS SALVAR.');
+  for(const {monthKey,d} of copies){
+    const snapshot=await root.child('months/'+monthKey+'/distributions').once('value');
+    const found=firebaseList(snapshot.val()).find(row=>row?.id===distId);
+    if(!found||found.startDate!==d.startDate||found.endDate!==d.endDate||
+       num(found.campaignStockTotal??found.masterTotal)!==distributionCampaignMasterTotal(d)||
+       num(found.total)!==num(d.total)){
+      throw new Error('GRAVAÇÃO NÃO CONFERIU COM O FIREBASE NO MÊS '+monthKey+'. VERIFIQUE ANTES DE REPETIR.');
+    }
+  }
+  return true;
+}
 let distributionFormSaving=false;
 async function saveDistributionFromForm(generate=false){
   if(distributionFormSaving)return null;
@@ -12820,13 +12898,22 @@ async function saveDistributionFromForm(generate=false){
   if(wasNew && num(d.total)>=0 && consumedReal>num(d.total)){ alert(`DISTRIBUIÇÃO INICIAL MAIOR QUE O ESTOQUE FÍSICO.\n\nESTOQUE TOTAL: ${num(d.total)}\nMODO: ${distributionDeliveryLabel(d)}\nDISTRIBUÍVEL: ${availablePackages}\nDISTRIBUÍDO: ${distributedPackages}\nCONSUMIDO REAL: ${consumedReal}`); return null; }
   const commitmentIssues=validateDistributionCampaignCommitments(d,state.currentMonth);
   const before=existing.id?clone(existing):'';
-  let masterTotal=wasNew?num(d.total):distributionCampaignMasterTotal(existing);
+  const previousPhysicalTotal=wasNew?0:distributionCampaignMasterTotal(existing);
+  let masterTotal=wasNew?num(d.total):previousPhysicalTotal;
+  let stockReceivingOrigin='';
   if(!wasNew){
     let proposal;
     try{proposal=distributionStockUpdateProposal(existing,$('distTotal').value,$('distMasterTotal').value,$('distStockAdjustmentMode')?.value||'global');}
     catch(error){alert(error.message);return null;}
     masterTotal=proposal.masterTotal;
     d.total=proposal.monthTotal;
+    if(proposal.increase>0){
+      stockReceivingOrigin=norm($('distStockReceiveOrigin')?.value||'');
+      if(!stockReceivingOrigin){
+        alert('PARA AUMENTAR O ESTOQUE FISICO INFORME A ORIGEM OU LOTE DAS NOVAS UNIDADES.');
+        return null;
+      }
+    }
     const existingConsumption=allocated(existing);
     if(d.total<existingConsumption && d.total<num(existing.total)){
       alert(`NÃO É POSSÍVEL REDUZIR A COTA ABAIXO DO JÁ DESTINADO.\n\nCOTA PROPOSTA: ${d.total} · COMPROMETIDO: ${existingConsumption}`);return null;
@@ -12857,9 +12944,18 @@ async function saveDistributionFromForm(generate=false){
   if(monthStock.executionBalance<0) deficitNotes.push(`DÉFICIT EXECUTADO ${Math.abs(monthStock.executionBalance)}`);
   if(globalStock.balance<0) deficitNotes.push(`DÉFICIT GLOBAL ${Math.abs(globalStock.balance)}`);
   if(commitmentIssues.length) deficitNotes.push(`COMPROMISSOS ACIMA DA COTA: ${commitmentIssues.join(' | ')}`);
+  if(!wasNew && masterTotal>previousPhysicalTotal){
+    auditEvent('RECEBIMENTO ADICIONAL DE ESTOQUE FÍSICO',distributionLabel(savedMonth),{
+      targetId:d.id,
+      before:{totalFisico:previousPhysicalTotal},
+      after:{totalFisico:masterTotal,unidadesAcrescentadas:masterTotal-previousPhysicalTotal},
+      note:'ORIGEM/LOTE: '+stockReceivingOrigin
+    });
+  }
   auditEvent(wasNew?'CADASTRO DE PRÊMIO':'ALTERAÇÃO MENSAL DE DISTRIBUIÇÃO',distributionLabel(savedMonth),{targetId:d.id,before,after:savedMonth,note:`COMPETÊNCIA ${state.currentMonth}${deficitNotes.length?' · '+deficitNotes.join(' · '):''}`});
   if(!saveState(true))throw new Error('FIREBASE INDISPONÍVEL. ALTERAÇÃO NÃO CONFIRMADA.');
   await flushFirebaseNow('ALTERAÇÃO DE ESTOQUE E DISTRIBUIÇÃO');
+  await hotfixVerifyPrizeWrite(d.id);
   closeDrawer('distDrawer');
   render();
   if(generate){
@@ -13027,6 +13123,18 @@ if($('radioPlannerSuggestions')) $('radioPlannerSuggestions').addEventListener('
 if($('distStartDate')) $('distStartDate').addEventListener('change',()=>{ if($('distEndDate') && $('distEndDate').value < $('distStartDate').value) $('distEndDate').value=$('distStartDate').value; });
 if($('distTotal')) $('distTotal').addEventListener('input',()=>{updateDistPairsPreview();updateDistStockChangePreview();});
 if($('distStockAdjustmentMode'))$('distStockAdjustmentMode').addEventListener('change',updateDistStockChangePreview);
+if($('distStockReceiveBtn'))$('distStockReceiveBtn').addEventListener('click',()=>{
+  const existing=distributionById($('distId')?.value||'');
+  if(!existing){alert('ABRA UM PREMIO JA CADASTRADO PARA ACRESCENTAR ESTOQUE.');return;}
+  const extra=Number($('distStockReceiveUnits')?.value);
+  const current=Number($('distMasterTotal')?.value);
+  if(!Number.isSafeInteger(extra)||extra<1){alert('INFORME QUANTAS UNIDADES FISICAS FORAM RECEBIDAS.');return;}
+  if(!Number.isSafeInteger(current)||current<0||current+extra>Number.MAX_SAFE_INTEGER){alert('ESTOQUE FISICO INVALIDO.');return;}
+  $('distMasterTotal').value=String(current+extra);
+  $('distStockReceiveUnits').value='';
+  updateDistStockChangePreview();
+  toast('ACRESCIMO PREPARADO. INFORME A ORIGEM E SALVE A DISTRIBUICAO PARA GRAVAR NO FIREBASE.');
+});
 if($('distMasterTotal')) $('distMasterTotal').addEventListener('input',()=>{updateDistStockChangePreview();const d=distributionById($('distId')?.value||'');if(!d||!$('distMonthlyStockOverviewText'))return;const currentPlanned=distributionCampaignPlannedTotal(d.id),master=Math.max(0,num($('distMasterTotal').value));$('distMonthlyStockOverviewText').innerHTML=`<strong>ESTOQUE:</strong> NOVO ESTOQUE FÍSICO ${master} · COTAS MENSAIS ATUAIS ${currentPlanned} · ${master-currentPlanned<0?`DÉFICIT GLOBAL ${Math.abs(master-currentPlanned)}`:master-currentPlanned>0?`NÃO ALOCADO ${master-currentPlanned}`:'GLOBAL FECHADO'}.`;});
 if($('distPrizeType')) $('distPrizeType').addEventListener('change',updateDistPairsPreview);
 if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').addEventListener('change',updateDistPairsPreview);
