@@ -287,7 +287,7 @@
   async function save(){
     if(busy||!draft||!hasChanges())return;
     if(typeof firebaseStateRootRef!=='function'||!firebaseConnected||!firebaseServerLoaded||firebasePendingSave||!firebaseReady)return reject('O FIREBASE AINDA NÃO ESTÁ CONECTADO OU HÁ OUTRA GRAVAÇÃO EM ANDAMENTO. NADA FOI ALTERADO.');
-    if(!confirm(`SALVAR A PROGRAMAÇÃO MANUAL DE ${countryDate(date)}?\n\nOS PAINÉIS CONECTADOS RECEBERÃO AS ALTERAÇÕES PELO FIREBASE. CONFIRA QUANTIDADES E LEITURAS.`))return;
+    // HOTFIX: o botão SALVAR executa imediatamente, sem segundo alerta de confirmação.
     busy=true;paint();
     const targetMonth=date.slice(0,7),baseItems=cloneJSON([...draft.originalsMap.values()]),basePautas=cloneJSON(draft.originalPautas),desiredItems=cloneJSON(draft.items),desiredPautas=cloneJSON(draft.pautas);
     const itemsChanged=JSON.stringify(desiredItems)!==JSON.stringify(baseItems);
@@ -303,7 +303,17 @@
     let failure='';
     try{
       const root=firebaseStateRootRef();if(!root)throw new Error('RAIZ OFICIAL DO FIREBASE INDISPONÍVEL.');
-      const tx=await root.child('months').child(targetMonth).transaction(month=>{
+      const monthRef=root.child('months').child(targetMonth);
+      // Avoid aborting on a cold RTDB transaction cache at month rollover.
+      const first=await monthRef.get();
+      const remoteMonth=first.val();
+      if(!remoteMonth||typeof remoteMonth!=='object'||Array.isArray(remoteMonth)){
+        throw new Error('MÊS '+targetMonth+' INEXISTENTE OU NÃO CARREGADO NO FIREBASE. NADA FOI ALTERADO.');
+      }
+      if(!remoteMonth.distributions){
+        throw new Error('MÊS '+targetMonth+' SEM DISTRIBUIÇÕES. CADASTRE PRÊMIOS ANTES DE SALVAR.');
+      }
+      const tx=await monthRef.transaction(month=>{
         if(!month||typeof month!=='object'||Array.isArray(month)){
           failure='COMPETÊNCIA '+targetMonth+' AINDA NÃO CADASTRADA NO FIREBASE. CADASTRE A DISTRIBUIÇÃO DO MÊS ANTES DE PROGRAMAR.';
           return;
@@ -383,10 +393,44 @@
         return month;
       },undefined,false);
       if(!tx?.committed)throw new Error(failure||'ALTERAÇÃO NÃO CONFIRMADA. O BANCO PERMANECE PRESERVADO.');
-      if(tx.snapshot?.val())state.months[targetMonth]=tx.snapshot.val();
+      // Verify server readback after transaction ACK: a success toast is not enough.
+      const checked=await monthRef.get(),verifiedMonth=checked.val();
+      if(!verifiedMonth||typeof verifiedMonth!=='object')throw new Error('SALVO, MAS SEM CONFERÊNCIA. VERIFIQUE ANTES DE REPETIR.');
+      const verifiedItems=rows(verifiedMonth.items);
+      if(itemsChanged){
+        const wantedIds=new Set(desiredItems.map(i=>i.id));
+        for(const desired of desiredItems){
+          const actual=verifiedItems.filter(i=>i?.id===desired.id);
+          const keys=['date','slot','station','distributionId','qty','status'];
+          if(actual.length!==1||keys.some(k=>String(actual[0][k]??'')!==String(desired[k]??''))){
+            throw new Error('GRAVAÇÃO NÃO CONFERIU PARA UM PRÊMIO. VERIFIQUE NO FIREBASE ANTES DE REPETIR.');
+          }
+        }
+        for(const before of baseItems){
+          if(!wantedIds.has(before.id)&&verifiedItems.some(i=>i?.id===before.id)){
+            throw new Error('EXCLUSÃO NÃO CONFERIU NO FIREBASE. NÃO REPITA SEM CONFERIR.');
+          }
+        }
+      }
+      if(pautasChanged){
+        for(const desired of desiredPautas){
+          const promo=rows(verifiedMonth.promos).find(p=>p.id===desired.promoId);
+          if(!promo||!rows(promo.manualReadAssignments).some(a=>a.date===desired.date&&slot(a.slot)===slot(desired.slot)&&sameStation(a.station||promo.station||'JP1017',desired.station))){
+            throw new Error('PAUTA NÃO CONFERIU NO FIREBASE. VERIFIQUE ANTES DE REPETIR.');
+          }
+        }
+      }
+      state.months[targetMonth]=typeof firebaseNormalizeMonthValue==='function'
+        ?firebaseNormalizeMonthValue(targetMonth,verifiedMonth)
+        :{...verifiedMonth,items:verifiedItems,promos:rows(verifiedMonth.promos),distributions:rows(verifiedMonth.distributions)};
       draft=snapshot();if(typeof renderProgramacao==='function')renderProgramacao();paint();
-      if(typeof toast==='function')toast('PROGRAMAÇÃO MANUAL CONFIRMADA PELO FIREBASE.');
-    }catch(err){console.error('PROG MANUAL · SAVE',err);window.alert('A PROGRAMAÇÃO NÃO FOI SALVA.\n\n'+(failure||err.message||err));}
+      if(typeof toast==='function')toast('PROGRAMAÇÃO SALVA E CONFERIDA NO FIREBASE.');
+    }catch(err){
+      console.error('PROG MANUAL · SAVE',err);
+      const reason=String(failure||err?.message||err||'FALHA NÃO IDENTIFICADA');
+      const access=String(err?.code||'').toUpperCase().includes('PERMISSION_DENIED')?' ACESSO NEGADO NO FIREBASE.':'';
+      window.alert('PROGRAMAÇÃO NÃO CONFIRMADA.\n\nMOTIVO: '+reason+access+'\n\nNÃO ATUALIZE A PÁGINA; O RASCUNHO CONTINUA NA TELA. VERIFIQUE O REGISTRO ANTES DE REPETIR.');
+    }
     finally{busy=false;paint();}
   }
   function enter(){
