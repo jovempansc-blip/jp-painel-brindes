@@ -27,11 +27,14 @@
     return [...set].filter(s=>!!programFromSchedule(dateKey,s,stationKey)).sort((a,b)=>slotOrder(a)-slotOrder(b));
   }
   function promoPool(){
-    const map=new Map();
-    Object.values(state.months||{}).forEach(m=>rows(m?.promos).forEach(p=>{
-      if(!p?.id)return;const old=map.get(p.id);if(!old||String(p.updatedAt||'')>String(old.updatedAt||''))map.set(p.id,p);
+    const map=new Map(),currentMonth=date.slice(0,7);
+    Object.entries(state.months||{}).forEach(([monthKey,m])=>rows(m?.promos).forEach(p=>{
+      if(!p?.id)return;
+      const old=map.get(p.id);
+      if(!old || (monthKey===currentMonth&&old.monthKey!==currentMonth) ||
+        (monthKey!==currentMonth&&old.monthKey!==currentMonth&&String(p.updatedAt||'')>String(old.p.updatedAt||'')))map.set(p.id,{p,monthKey});
     }));
-    return [...map.values()].filter(p=>{
+    return [...map.values()].map(x=>x.p).filter(p=>{
       if(!p||p.opecArchived||p.opecForceEnded||p.opecPaused||p.opecPublicationStatus==='draft')return false;
       const status=String(p.status||'').toUpperCase();if(['CANCELADO','CANCELADA'].includes(status))return false;
       const kind=String(p.kind||p.promoKind||p.type||'').toLowerCase();if(!['pauta','promo','promoção','promocao','merchan','merchandising'].includes(kind))return false;
@@ -268,19 +271,61 @@
       const src=e.target.closest('.jpManualStockRow');if(src){if(src.classList.contains('disabled'))return;const choices=officialSlots(date,station),answer=prompt(`EM QUAL HORÁRIO PROGRAMAR?\n${choices.join(' · ')}`,choices[0]||'');if(answer!==null){const chosen=slot(answer);add(src.dataset.dragType,src.dataset.dragId,chosen);}return;}
     });
   }
+  // HOTFIX 2026-11-03 / AV58.1.42: only edit the promotions whose assignments changed.
+  // A promotion valid across month boundaries may be in the source month but
+  // missing the destination month snapshot; never fabricate one from local cache.
+  function changedManualPromoIds(before,after){
+    const ids=new Set([...before,...after].map(a=>a.promoId).filter(Boolean));
+    return [...ids].filter(id=>
+      JSON.stringify(before.filter(a=>a.promoId===id))!==JSON.stringify(after.filter(a=>a.promoId===id)));
+  }
+  function promoReadLogsForDate(p,field){
+    return rows(p?.[field]).filter(row=>String(row?.date||'')===date);
+  }
+  function manualPromoActiveOnDay(p){
+    if(!p||!p.id||p.opecArchived||p.opecForceEnded||p.opecPaused||
+       p.opecPublicationStatus==='draft'||['CANCELADO','CANCELADA'].includes(String(p.status||'').toUpperCase()))return false;
+    if(!sameStation(p.station||'JP1017',station))return false;
+    const start=p.startDate||p.drawDate||'',end=p.endDate||p.drawDate||start;
+    return (!start||date>=start)&&(!end||date<=end);
+  }
+  function snapshotPromoForManualMonth(source,sourceMonth,monthKey){
+    const next=cloneJSON(source),now=new Date().toISOString();
+    next.originMonth=source.originMonth||sourceMonth;
+    next.snapshotMonth=monthKey;
+    next.monthlySnapshotVersion=2;
+    next.monthlyRevision=1;
+    next.snapshotCreatedAt=now;
+    next.monthlyUpdatedAt=now;
+    // Strictly limit operational state to the destination month; preserve
+    // source-month logs and winners untouched in the source record.
+    for(const field of ['manualReadAssignments','readLog','missedLog']){
+      next[field]=rows(source[field]).filter(x=>String(x?.date||'').slice(0,7)===monthKey);
+    }
+    for(const field of ['readByHour','resultByHour','resultWinnersByHour']){
+      const original=source[field]||{};
+      next[field]=Object.fromEntries(Object.entries(original).filter(([k])=>String(k).slice(0,7)===monthKey));
+    }
+    if(Array.isArray(source.occurrences))next.occurrences=source.occurrences.filter(x=>!x?.date||String(x.date).slice(0,7)===monthKey).map(cloneJSON);
+    for(const field of ['resultWinners','resultName','resultNames','resultAt','resultAtLabel','resultDate','resultSlot','winnerName','winnerNames','deliveredAt','deliveredAtLabel','readAt','readAtLabel']){
+      delete next[field];
+    }
+    delete next.opecHistory;
+    return next;
+  }
   function alertCollision(baseItems,basePautas,remote,desiredPautas,itemsChanged=true,pautasChanged=true){
     const oldItems=rows(remote?.items).filter(i=>i.date===date&&itemStation(i)===station&&liveItem(i));
     if(itemsChanged&&JSON.stringify(oldItems)!==JSON.stringify(baseItems))return 'OUTRA SESSÃO ALTEROU OS PRÊMIOS DESTE DIA. RECARREGUE O RASCUNHO.';
     if(!pautasChanged)return '';
-    const touchedIds=new Set([...basePautas,...desiredPautas].map(a=>a.promoId));
+    const touchedIds=changedManualPromoIds(basePautas,desiredPautas);
     for(const id of touchedIds){
       const p=rows(remote?.promos).find(p=>p.id===id),current=promoPool().find(p=>p.id===id);
-      if(!p||!current)return 'PAUTA ALTERADA OU NÃO ENCONTRADA NA BASE OFICIAL.';
+      if(!p||!current)return 'PAUTA SEM REGISTRO VALIDADO NA COMPETÊNCIA '+date.slice(0,7)+'. NÃO FOI ALTERADA.';
       const wanted=basePautas.filter(a=>a.promoId===id),actual=rows(p.manualReadAssignments).filter(a=>a.date===date&&sameStation(a.station||p.station||'JP1017',station)).map(a=>({key:a.key||`${id}_${date}_${a.slot}_${station}`,promoId:id,slot:slot(a.slot),date,station,program:a.program||programFromSchedule(date,a.slot,station)}));
       if(JSON.stringify(actual)!==JSON.stringify(wanted))return 'OUTRA SESSÃO MODIFICOU AS PAUTAS DESSE DIA.';
       if(date<(p.startDate||date)||date>(p.endDate||date)||['CANCELADO','CANCELADA'].includes(String(p.status||'').toUpperCase())||p.opecArchived||p.opecForceEnded)return 'VIGÊNCIA OU STATUS DA PAUTA ALTERADOS EM OUTRA SESSÃO.';
       const baseline=JSON.parse(draft.promoBaseline.get(id)||'{}');
-      if(JSON.stringify(rows(p.readLog))!==JSON.stringify(rows(baseline.readLog))||JSON.stringify(rows(p.missedLog))!==JSON.stringify(rows(baseline.missedLog)))return 'O HISTÓRICO DE LEITURAS FOI ALTERADO POR OUTRA SESSÃO. ATUALIZE ANTES DE SALVAR.';
+      if(JSON.stringify(promoReadLogsForDate(p,'readLog'))!==JSON.stringify(promoReadLogsForDate(baseline,'readLog'))||JSON.stringify(promoReadLogsForDate(p,'missedLog'))!==JSON.stringify(promoReadLogsForDate(baseline,'missedLog')))return 'AS LEITURAS DESTA DATA FORAM MODIFICADAS EM OUTRA SESSÃO. ATUALIZE ANTES DE SALVAR.';
     }
     return '';
   }
@@ -313,6 +358,25 @@
       if(!remoteMonth.distributions){
         throw new Error('MÊS '+targetMonth+' SEM DISTRIBUIÇÕES. CADASTRE PRÊMIOS ANTES DE SALVAR.');
       }
+      // If a valid promo comes from a prior month but is absent today, obtain
+      // an authenticated, read-only source snapshot before the transaction.
+      const changedPromoIds=pautasChanged?changedManualPromoIds(basePautas,desiredPautas):[];
+      const missingPromoIds=changedPromoIds.filter(id=>!rows(remoteMonth.promos).some(p=>p.id===id));
+      const verifiedCrossMonth=new Map();
+      for(const promoId of missingPromoIds){
+        const sources=Object.entries(state.months||{}).flatMap(([sourceMonth,m])=>
+          rows(m?.promos).filter(p=>p?.id===promoId&&sourceMonth!==targetMonth).map(p=>({sourceMonth,p})));
+        const source=sources.sort((a,b)=>String(b.p?.updatedAt||'').localeCompare(String(a.p?.updatedAt||'')))[0];
+        if(!source)throw new Error('PAUTA '+promoId+' SEM CADASTRO EM NENHUMA COMPETÊNCIA. NADA FOI GRAVADO.');
+        const actualSource=await root.child('months').child(source.sourceMonth).child('promos').get();
+        const trusted=rows(actualSource.val()).find(p=>p?.id===promoId);
+        if(!trusted||!manualPromoActiveOnDay(trusted))throw new Error('PAUTA '+promoId+' NÃO ESTÁ MAIS VIGENTE OU FOI ALTERADA NA ORIGEM. ATUALIZE OS DADOS.');
+        if(String(source.p.updatedAt||'')!==String(trusted.updatedAt||''))throw new Error('PAUTA '+promoId+' MUDOU EM OUTRA SESSÃO. ATUALIZE ANTES DE SALVAR.');
+        if(trusted.distributionId&&!rows(remoteMonth.distributions).some(d=>d?.id===trusted.distributionId)){
+          throw new Error('PAUTA '+promoId+' SEM DISTRIBUIÇÃO CORRESPONDENTE EM '+targetMonth+'. NÃO FOI INSERIDA.');
+        }
+        verifiedCrossMonth.set(promoId,snapshotPromoForManualMonth(trusted,source.sourceMonth,targetMonth));
+      }
       const tx=await monthRef.transaction(month=>{
         if(!month||typeof month!=='object'||Array.isArray(month)){
           failure='COMPETÊNCIA '+targetMonth+' AINDA NÃO CADASTRADA NO FIREBASE. CADASTRE A DISTRIBUIÇÃO DO MÊS ANTES DE PROGRAMAR.';
@@ -322,6 +386,15 @@
         // A ausência de "items" ou "distributions" não significa mês inexistente.
         // rows(undefined) representa [] sem inventar prêmios nem regravar coleções.
         // O loop de touchedPrizeIds segue exigindo distribuição real para cada prêmio.
+        // Prepare missing snapshots solely for promotions being edited. This
+        // staging is discarded if any later quota/conflict check aborts.
+        if(verifiedCrossMonth.size){
+          const already=rows(month.promos);
+          for(const [promoId,copy] of verifiedCrossMonth){
+            if(!already.some(p=>p.id===promoId))already.push(cloneJSON(copy));
+          }
+          month.promos=already;
+        }
         failure=alertCollision(baseItems,basePautas,month,desiredPautas,itemsChanged,pautasChanged);if(failure)return;
         const storedItems=rows(month.items),storedDist=rows(month.distributions),storedPromos=rows(month.promos);
         const currentPrizeSet=new Map(storedDist.map(d=>[d.id,d]));
@@ -383,7 +456,7 @@
         }
         month.manualProgramHistory=[...rows(month.manualProgramHistory),audit].slice(-300);
         if(itemsChanged)month.items=revised;
-        const touched=new Set([...basePautas,...desiredPautas].map(p=>p.promoId));
+        const touched=new Set(changedPromoIds);
         if(pautasChanged)month.promos=storedPromos.map(p=>{
           if(!touched.has(p.id))return p;
           const other=rows(p.manualReadAssignments).filter(a=>a.date!==date||!sameStation(a.station||p.station||'JP1017',station));
@@ -413,11 +486,13 @@
         }
       }
       if(pautasChanged){
-        for(const desired of desiredPautas){
-          const promo=rows(verifiedMonth.promos).find(p=>p.id===desired.promoId);
-          if(!promo||!rows(promo.manualReadAssignments).some(a=>a.date===desired.date&&slot(a.slot)===slot(desired.slot)&&sameStation(a.station||promo.station||'JP1017',desired.station))){
-            throw new Error('PAUTA NÃO CONFERIU NO FIREBASE. VERIFIQUE ANTES DE REPETIR.');
-          }
+        for(const promoId of changedPromoIds){
+          const promo=rows(verifiedMonth.promos).find(p=>p.id===promoId);
+          const expected=desiredPautas.filter(a=>a.promoId===promoId).map(a=>({date:a.date,slot:slot(a.slot),station:a.station,key:a.key}));
+          const saved=rows(promo?.manualReadAssignments).filter(a=>a.date===date&&sameStation(a.station||promo.station||'JP1017',station))
+            .map(a=>({date:a.date,slot:slot(a.slot),station:a.station||promo?.station||'JP1017',key:a.key}));
+          if(!promo||JSON.stringify(expected)!==JSON.stringify(saved))
+            throw new Error('PAUTA '+promoId+' NÃO CONFERIU NO FIREBASE. VERIFIQUE ANTES DE REPETIR.');
         }
       }
       state.months[targetMonth]=typeof firebaseNormalizeMonthValue==='function'
