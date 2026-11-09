@@ -1,23 +1,34 @@
 {
-  "release": "JP_HOTFIX_VIRADA_MES_2026-11-02",
-  "type": "proposta de código, sem publicação",
+  "release": "AV58.1.43.2",
+  "created_at": "2026-11-09",
+  "status": "CANDIDATO; sem publicação, sem alteração Firebase",
   "scope": [
     "index.html",
-    "assets/prog-manual.js"
+    "assets/return-balance.js"
   ],
-  "repo": "jovempansc-blip/jp-painel-brindes",
-  "base_source": "arquivo servido no GitHub Pages e validado por SHA-256",
-  "base_sha256": {
-    "index.html": "524379944469b91dc558a30d7038d42592c5fb857b76edd835fe0e7d3118e677",
-    "assets/prog-manual.js": "ac15d024e877c53005f8035f513af7388dda253bb4b7e6ea2641c0b86a9af698"
+  "current_production_baseline_hashes": {
+    "index.html": "49e3b924d5dbc17dddfa7763dc7ad98afcf88d68daf0730589a5799688e8f90a",
+    "assets/return-balance.js": "8a3e0f0f8256f7a3f3087aff1e92f005216bf02ac68c41af62af347216449314"
   },
-  "candidate_sha256": {
-    "index.html": "1603dd56a455bb67574ccb85bb754407d4398348ff3b0c65edbabd2c5bb429c7",
-    "assets/prog-manual.js": "2f90e26e34ce38e43cae5c42f0d3bde6ea781924011dbb40af186390b9a08fed"
+  "candidate_hashes": {
+    "index.html": "8d630ad9b55293afe8c80d4b4639d7c81f78a733c99793fb85861c8ccec6a401",
+    "assets/return-balance.js": "32d637931209e46f168fabd7bc3b93887a22a7e0009f32d75645b2f102455d25"
   },
-  "backend_write": false,
-  "production_write": false,
-  "firebase_write": false,
-  "QA": "7 cenários de transação simulados aprovados no ambiente de desenvolvimento; validado novamente no pacote local",
-  "limitations": "sem teste real autenticado e integração em duas sessões; não publica automaticamente"
+  "qa": {
+    "legacy_local": 19,
+    "firebase_simulated": 4,
+    "unique_return_count_ui": 13,
+    "redteam_credit": 1,
+    "total_checks": 37,
+    "passed": 37,
+    "syntax": "PASS",
+    "authenticated_hml": "NOT RUN"
+  },
+  "data": {
+    "modified": false,
+    "real_database_writes": 0,
+    "github_commit": false
+  },
+  "risk": "HML 401; no authenticated backup; inter-month transfer still blocked; fully scheduled Radio quota requires separate accounting work",
+  "audit_notes": "Sobra status counted by original distribution ID. Historic same-title registrations shown separately without merging or reassigning funds."
 }

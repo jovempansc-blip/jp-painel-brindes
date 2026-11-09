@@ -54,6 +54,10 @@
         const w=deliveries[idx]||{};
         if(multiple&&!w.reuseStatus){if(i.reuseStatus)issues.push({code:'LEGACY_MULTI_WINNER',sourceId:`item:${i.id}:${idx}`});return;}
         const sourceId=`item:${i.id}:${idx}`;
+        // A return already transferred out of RÁDIO is no longer a
+        // radio reprogramming credit, even if reuseStatus stays 'sobra'
+        // for audit/historical visibility.
+        if(w.returnTransferId||(names.length===1&&i.returnTransferId))return;
         if(creditedThisItem>=amount(i.qty)){if(['sobra','realocado'].includes(status(w.reuseStatus||i.reuseStatus)))issues.push({code:'ITEM_CAP',sourceId});return;}
         const prior=returns.length;
         track(sourceId,multiple?w.reuseStatus:(w.reuseStatus||i.reuseStatus),!!(w.deliveredAt||(names.length===1&&i.deliveredAt)),Number(w.returnUnitsPerWinner)||size,w.reusedItemId||(!multiple?i.reusedItemId:'')||'',datePart(i.date));
@@ -77,6 +81,7 @@
         let creditable=0;
         listWinners.forEach((w,idx)=>{
           if(!w||typeof w!=='object'||!w.name)return;
+          if(w.returnTransferId)return; // physical stock transferred to another segment
           const src=`promo:${p.id}:${hourKey}:${w.id||idx}`;
           if(creditable>=originalCount){if(status(w.reuseStatus)==='sobra')issues.push({code:'RESULT_CAP',sourceId:src});return;}
           const prev=returns.length;

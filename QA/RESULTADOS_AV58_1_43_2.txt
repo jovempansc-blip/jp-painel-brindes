@@ -1,0 +1,8 @@
+AV58.1.43.2 (09/11/2026)
+Testes originais: 19/19 PASS
+Firebase transação simulada: 4/4 PASS
+Novos testes de UI/associação de IDs: 13/13 PASS
+Red Team crédito duplo: PASS
+JS syntax: PASS
+Firebase HML autenticado: não executado, 401
+GitHub produção: intacto

@@ -612,6 +612,47 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 }
 
 
+/* AV58.1.43.2 — COLUNA RETORNO COMPACTA E POR CADASTRO */
+.distReturnHead,.returnCell{
+  box-sizing:border-box;
+  width:64px;
+  min-width:64px;
+  max-width:64px;
+  padding:5px 3px !important;
+  text-align:center;
+  white-space:nowrap;
+  vertical-align:middle;
+}
+.returnCell .returnCountButton{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  min-width:38px;
+  height:30px;
+  padding:0 5px;
+  border:1px solid #e2e7ef;
+  border-radius:10px;
+  background:#f5f7fa;
+  color:#606b7b;
+  font-size:12px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:0;
+  cursor:pointer;
+  box-shadow:none;
+}
+.returnCell .returnCountButton.hasReturn{background:#eaf7ef;border-color:#c4e7d1;color:#176b43;}
+.returnCell .returnCountButton:hover,.returnCell .returnCountButton:focus-visible{background:#e9f0f9;outline:2px solid #8aa8df;outline-offset:1px;}
+.returnHistoricOther{margin-top:10px;}
+.returnHistoricalWarning{font-size:10px;font-weight:750;line-height:1.45;color:#865b22;padding:7px 9px;background:#fff5e6;border-radius:8px;}
+.returnHistoricalRow{padding:10px 9px;border-top:1px solid #e7ecf3;display:grid;gap:3px;}
+.returnHistoricalRow strong{font-size:11px;color:#1b293d;}
+.returnHistoricalRow span{font-size:10px;color:#65748a;}
+@media(max-width:1100px){
+  .distReturnHead,.returnCell{width:54px;min-width:54px;max-width:54px;padding:3px 2px!important;}
+  .returnCell .returnCountButton{width:34px;min-width:34px;height:28px;}
+}
 /* AJUSTE — RETORNO, PRAZO E REAPROVEITAMENTO */
 .returnBellBtn{position:relative}
 .returnBellCount{
@@ -3896,7 +3937,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
           <div class="reservationBoard" id="reservationBoard"></div>
           <div class="distContinuityNotice"><strong>VISÃO DA COMPETÊNCIA</strong><span>A TABELA ABRE SEMPRE EM ATIVOS. CLIQUE EM PRÊMIO PARA ALTERNAR ENTRE ATIVOS, ENCERRADOS E TODOS. CAMPANHAS MULTIMESES SÃO CONSOLIDADAS EM UMA ÚNICA LINHA E OS VALORES ACOMPANHAM O MÊS SELECIONADO.</span></div>
           <div class="distViewPane" id="distCompactView"><div class="tableWrap"><table class="distCompactTable"><colgroup><col class="distCompactPrizeCol"><col class="distCompactMetricCol"><col class="distCompactMetricCol"><col class="distCompactMetricCol"><col class="distCompactBalanceCol"><col class="distCompactProgramCol"><col class="distCompactActionCol"></colgroup><thead><tr><th>PRÊMIO</th><th class="num">DISPONÍVEL</th><th class="num">DISTRIBUÍDO</th><th class="num">REALIZADO</th><th class="num">SALDO</th><th class="num">PROGRAMAÇÃO</th><th>AÇÕES</th></tr></thead><tbody id="distCompactTable"></tbody></table></div></div>
-          <div class="distViewPane" id="distDetailedView" hidden><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th class="distPrizeFilterHead"><button class="distPrizeFilterButton" id="distPrizeFilterButton" type="button" onclick="toggleDistributionLifecycleMenu(event)" aria-haspopup="menu" aria-expanded="false"><span>PRÊMIO</span><em id="distPrizeFilterLabel">ATIVOS</em><b>⌄</b></button><div class="distPrizeFilterMenu" id="distPrizeFilterMenu" role="menu" hidden><button type="button" data-dist-lifecycle="active" onclick="setDistributionLifecycleFilter('active',event)">ATIVOS</button><button type="button" data-dist-lifecycle="ended" onclick="setDistributionLifecycleFilter('ended',event)">ENCERRADOS</button><button type="button" data-dist-lifecycle="all" onclick="setDistributionLifecycleFilter('all',event)">TODOS</button></div></th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div></div>
+          <div class="distViewPane" id="distDetailedView" hidden><div class="tableWrap"><table class="distMainTable"><colgroup><col class="distPrizeCol"><col class="distTinyCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distMidCol"><col class="distMidCol"><col class="distMidCol"><col class="distSmallCol"><col class="distWideCol"><col class="distWideCol"><col class="distTinyCol"><col class="distSmallCol"><col class="distSmallCol"><col class="distGenerateCol"><col class="distActionCol"></colgroup><thead><tr><th class="distPrizeFilterHead"><button class="distPrizeFilterButton" id="distPrizeFilterButton" type="button" onclick="toggleDistributionLifecycleMenu(event)" aria-haspopup="menu" aria-expanded="false"><span>PRÊMIO</span><em id="distPrizeFilterLabel">ATIVOS</em><b>⌄</b></button><div class="distPrizeFilterMenu" id="distPrizeFilterMenu" role="menu" hidden><button type="button" data-dist-lifecycle="active" onclick="setDistributionLifecycleFilter('active',event)">ATIVOS</button><button type="button" data-dist-lifecycle="ended" onclick="setDistributionLifecycleFilter('ended',event)">ENCERRADOS</button><button type="button" data-dist-lifecycle="all" onclick="setDistributionLifecycleFilter('all',event)">TODOS</button></div></th><th class="num">TOTAL</th><th class="num">ENTREGA</th><th class="num">APP</th><th class="num">CAMAROTE</th><th class="num">CAMARIM</th><th class="num">EXTERNA</th><th class="num">RÁDIO</th><th class="num">REDES SOCIAIS</th><th class="num">RESERVAS</th><th class="num">PROG. RÁDIO</th><th class="num">SALDO</th><th class="num distReturnHead">RETORNO</th><th class="num">GERAR</th><th>AÇÕES</th></tr></thead><tbody id="distTable"></tbody></table></div></div>
         </div>
       </div>
     </section>
@@ -4752,7 +4793,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 </dialog>
 
 <script src="assets/distribution-unprogram.js?v=AV58_1_10"></script>
-<script src="assets/return-balance.js?v=AV58_1_37"></script>
+<script src="assets/return-balance.js?v=AV58_1_43_2_RETORNOS_20261109"></script>
 <script>
 // AV57.6.6.24: sem base operacional embutida; dados somente do Firebase RTDB.
 const CHANNELS = [
@@ -9089,34 +9130,43 @@ async function transferReturnToSegment(recordId,target){
   finally{returnTransferInFlight=false;}
 }
 window.transferReturnToSegment=transferReturnToSegment;
+// AV58.1.43.2 — The RETURN column displays a *per-registration* number.
+// It is a count of confirmed return records (sobra / transferred / reallocated),
+// not a balance in tickets, not a universal pool and never an unrelated prize.
 function returnCountsByDistribution(){
-  const counts={};
+  const unique=new Map();
+  const priority={transferido:3,realocado:2,sobra:1};
   returnRecords(true).forEach(r=>{
-    if(!r.distributionId) return;
-    counts[r.distributionId] ||= {pending:0,sobra:0,realocado:0,transferido:0,total:0};
-    counts[r.distributionId].total++;
-    if(r.status==='sobra') counts[r.distributionId].sobra++;
-    else if(r.status==='transferido') counts[r.distributionId].transferido++;
-    else if(r.status==='realocado') counts[r.distributionId].realocado++;
-    else counts[r.distributionId].pending++;
+    const id=String(r?.distributionId||'');
+    const status=String(r?.status||'').toLowerCase();
+    if(!id||!Object.prototype.hasOwnProperty.call(priority,status))return;
+    const recordKey=id+'|'+String(r.kind||'')+'|'+String(r.id||'');
+    // A persisted winner/sorteio can appear in monthly snapshots. It must
+    // contribute once, with the most advanced confirmed state if duplicated.
+    const prev=unique.get(recordKey);
+    if(!prev||(priority[status]||0)>(priority[String(prev.status||'').toLowerCase()]||0))
+      unique.set(recordKey,{distributionId:id,status});
+  });
+  const counts=Object.create(null);
+  unique.forEach(r=>{
+    const id=r.distributionId;
+    counts[id] ||= {sobra:0,transferido:0,realocado:0,total:0};
+    counts[id][r.status]++;
+    counts[id].total++;
   });
   return counts;
 }
 function returnCell(d,counts=null){
-  const result=distributionReprogramStatus(d,state.currentMonth);
-  const values=counts||returnCountsByDistribution();
+  const byId=counts||returnCountsByDistribution();
   const ids=distributionVisualIds(d);
-  const history=ids.reduce((o,id)=>{
-    const row=values[id]||{};
-    o.sobra+=num(row.sobra);o.transferido+=num(row.transferido);o.realocado+=num(row.realocado);
-    return o;
-  },{sobra:0,transferido:0,realocado:0});
-  const total=history.sobra+history.transferido+history.realocado;
-  const invalid=result.issues.length;
-  if(!total&&!result.credits&&!invalid)return '<span class="badge">0</span>';
-  // Historical return records remain visible even after their original month/validity.
-  // Only a verified, unspent current-month return is eligible for new allocation.
-  return `<button class="btn small ghost" type="button" onclick="openReturnInventoryForDist('${esc(d.id)}')" title="VER SOBRAS E REDISTRIBUIÇÃO">${history.sobra} SOBRA${history.sobra===1?'':'S'}</button><small>${history.transferido} TRANSFERIDA(S) · ${history.realocado} REPROGRAMADA(S)</small><small>RÁDIO LIVRE NESTE MÊS: ${result.returnedAvailable}${invalid?' · '+invalid+' A CONFERIR':''}</small>`;
+  const parts=ids.map(id=>byId[id]||{});
+  const registered=parts.reduce((n,row)=>n+num(row.sobra)+num(row.transferido)+num(row.realocado),0);
+  const waiting=parts.reduce((n,row)=>n+num(row.sobra),0);
+  const moved=parts.reduce((n,row)=>n+num(row.transferido),0);
+  const reused=parts.reduce((n,row)=>n+num(row.realocado),0);
+  // The full operational details are on demand; one numeral occupies the cell.
+  const explanation=`${registered} REGISTRO(S) DE RETORNO NESTE CADASTRO (NÃO É UMA SOMA DE INGRESSOS FÍSICOS); ${waiting} SOBRA(S), ${moved} TRANSFERIDO(S), ${reused} REPROGRAMADO(S). CLIQUE PARA VER O HISTÓRICO.`;
+  return `<button class="returnCountButton${registered?' hasReturn':''}" type="button" data-return-count="${registered}" onclick="openReturnInventoryForDist('${esc(d.id)}')" title="${esc(explanation)}" aria-label="${esc(explanation)}">${registered}</button>`;
 }
 function activeBellNotifications(){
   const returns=pendingReturnRecords().map(r=>({type:'return',record:r}));
@@ -9131,7 +9181,7 @@ function updateReturnBell(){
 }
 function updateReturnColumn(distId){
   const cell=document.querySelector(`[data-return-id="${CSS.escape(distId)}"]`);
-  const d=distributionById(distId);
+  const d=distributionVisualRecord(distId)||distributionById(distId);
   if(cell && d) cell.innerHTML=returnCell(d);
 }
 let activeReturnDistributionFilter='';
@@ -9145,13 +9195,40 @@ function returnMatchesDistributionFilter(r){
   const d=distributionVisualRecord(activeReturnDistributionFilter)||distributionById(activeReturnDistributionFilter);
   return !!d&&distributionVisualIds(d).includes(r.distributionId);
 }
+// Other registration with the same named prize: display for historical review
+// only. The ID must NOT be merged, spent or transferred to the opened prize.
+function returnHistoricalOtherRegistrations(current){
+  if(!current?.id)return [];
+  const normalize=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+  const key=x=>`${normalize(x?.prize)}|${normalize(x?.title)}`;
+  const requested=key(current);
+  if(!requested||requested==='|')return [];
+  const ids=new Set(distributionVisualIds(current));
+  const other=new Map();
+  Object.entries(state.months||{}).forEach(([monthKey,month])=>{
+    (month?.distributions||[]).filter(Boolean).forEach(d=>{
+      if(!d.id||ids.has(String(d.id))||key(d)!==requested)return;
+      if(!other.has(d.id))other.set(d.id,{id:String(d.id),monthKey,prize:d.prize||d.title||'',startDate:distStartDate(d)||'',endDate:distEndDate(d)||''});
+    });
+  });
+  const counts=returnCountsByDistribution();
+  return [...other.values()].filter(d=>num(counts[d.id]?.total)>0).map(d=>({...d,confirmed:num(counts[d.id].total)}))
+    .sort((a,b)=>String(b.monthKey).localeCompare(String(a.monthKey)));
+}
+function returnHistoricalOtherHtml(current){
+  const different=returnHistoricalOtherRegistrations(current);
+  if(!different.length)return '';
+  return `<details class="returnHandled returnHistoricOther"><summary>OUTROS CADASTROS DO MESMO PRÊMIO · ${different.length}</summary><div class="returnHistoricalWarning">REGISTROS DE OUTRAS COMPETÊNCIAS COM O MESMO NOME E TÍTULO. NÃO PERTENCEM A ESTE CADASTRO E NÃO FORAM SOMADOS À COLUNA RETORNO NEM AO ESTOQUE DISPONÍVEL.</div>${different.map(d=>`<div class="returnHistoricalRow"><strong>${esc(d.prize)}</strong><span>${esc(d.monthKey)} · ${esc(d.startDate)} A ${esc(d.endDate)} · ${d.confirmed} RETORNO(S) NO CADASTRO ORIGINAL</span></div>`).join('')}</details>`;
+}
 function renderReturnAlerts(){
   updateReturnBell();
   const box=$('returnAlertList');
   if(!box) return;
   const rows=pendingReturnRecords().filter(returnMatchesDistributionFilter);
   const promos=activeReturnDistributionFilter?[]:promoEndingAlerts();
-  if(!rows.length && !promos.length && !returnRecords(true).some(r=>returnMatchesDistributionFilter(r)&&['sobra','realocado','transferido','cancelado'].includes(String(r.status||'').toLowerCase()))){ box.innerHTML='<div class="returnDrawerEmpty">NENHUMA SOBRA OU NOTIFICAÇÃO REGISTRADA PARA ESTE FILTRO.</div>'; return; }
+  const selectedRecord=activeReturnDistributionFilter?(distributionVisualRecord(activeReturnDistributionFilter)||distributionById(activeReturnDistributionFilter)):null;
+  const historicOther=selectedRecord?returnHistoricalOtherHtml(selectedRecord):'';
+  if(!rows.length && !promos.length && !historicOther && !returnRecords(true).some(r=>returnMatchesDistributionFilter(r)&&['sobra','realocado','transferido','cancelado'].includes(String(r.status||'').toLowerCase()))){ box.innerHTML='<div class="returnDrawerEmpty">NENHUM RETORNO CONFIRMADO PARA ESTE CADASTRO.</div>'; return; }
   const returnHtml=rows.map(r=>`<div class="returnAlertCard">
     <div class="returnAlertTop"><strong>${esc(r.prize)}</strong><span>GANHADOR: ${esc(r.winner)}<br>ORIGEM: ${esc(r.source)}<br>REGISTRADO: ${esc(r.registeredLabel)} · PRAZO VENCEU: ${esc(r.deadlineLabel)}</span></div>
     <div class="returnAlertMeta"><em>SEM RETIRADA APÓS ${r.deadlineDays} DIA(S) ÚTEIS</em><em>DISPONÍVEL PARA REAPROVEITAMENTO</em></div>
@@ -9161,7 +9238,7 @@ function renderReturnAlerts(){
   const handledHtml=handled.length?`<details class="returnHandled" open><summary>SOBRAS E RETORNOS · ${handled.length} REGISTRO(S)</summary>${handled.map(r=>`<div class="returnAlertCard"><div class="returnAlertTop"><strong>${esc(r.prize)}</strong><span>COMPETÊNCIA ${esc(r.monthKey)} · ${esc(String(r.status).toUpperCase())} · ORIGEM: ${esc(r.source||'RÁDIO')}</span></div><div class="returnAlertMeta"><em>${r.status==='sobra'?'REGISTRADA, AGUARDANDO REAPROVEITAMENTO':r.status==='transferido'?`TRANSFERIDA PARA ${esc(DESTINATION_LABELS[r.returnTransferSegment]||r.returnTransferSegment)} · ${num(r.returnTransferUnits)} UNID./PACOTE(S)`:'HISTÓRICO PRESERVADO'}</em></div>${r.status==='sobra'?`<div class="returnAlertActions">${r.monthKey===state.currentMonth?`<button class="btn small" type="button" onclick="openReturnSegmentTransfer('${esc(r.id)}')">TRANSFERIR SOBRA PARA SEGMENTO</button>`:'<small>COMPETÊNCIA ANTERIOR: EXIGE TRANSFERÊNCIA CONTROLADA ENTRE MESES.</small>'}<button class="btn ghost small" type="button" onclick="cancelReturnSobra('${esc(r.id)}')">CANCELAR SOBRA</button></div>`:''}</div>`).join('')}</details>`:'';
   const promoHtml=promos.map(a=>`<div class="returnAlertCard"><div class="returnAlertTop"><strong>${esc(a.title)}</strong><span>${esc(a.text)}</span></div><div class="returnAlertMeta"><em>NOTIFICAÇÃO VIGENTE</em><em>PROMO / MERCHAN</em></div><div class="returnAlertActions"><button class="btn small" type="button" onclick="closeDrawer('returnDrawer');setView('digital')">ABRIR PROMO / MERCHAN</button></div></div>`).join('');
   const header=activeReturnDistributionFilter?'<div class="backupInfoBox">HISTÓRICO DO PRÊMIO. SOBRAS ANTIGAS APARECEM AQUI, MAS NÃO SÃO AUTOMATICAMENTE LIBERADAS COMO ESTOQUE DO MÊS. TODA TRANSFERÊNCIA EXIGE SALDO E VIGÊNCIA VÁLIDOS.</div>':'';
-  box.innerHTML=header+returnHtml+promoHtml+handledHtml;
+  box.innerHTML=header+returnHtml+promoHtml+handledHtml+historicOther;
 }
 function findReturnRecordById(idValue){
   return returnRecords(false).find(r=>r.id===idValue) || returnRecords(true).find(r=>r.id===idValue);
@@ -9409,7 +9486,9 @@ function distributionLifecycleStatus(d){return distributionLifecycleStatusForMon
 function distributionVisualGroupKey(d){
   const explicit=norm(d?.masterPrizeId||d?.masterDistributionId||d?.campaignId||d?.campaignKey||'');
   if(explicit)return `MASTER|${explicit}`;
-  return `LEGACY|${norm(distributionLabel(d))}|${norm(d?.title||'')}|${distStartDate(d)||''}`;
+  // Visual grouping must never merge two independent registrations because their
+  // name, title or date happen to be identical. Only explicit master IDs group.
+  return d?.id?`REGISTRATION|${String(d.id)}`:`LEGACY_UNIDENTIFIED|${norm(distributionLabel(d))}|${distStartDate(d)||''}`;
 }
 function distributionVisualIds(d){
   const ids=Array.isArray(d?.__visualGroupIds)?d.__visualGroupIds:[d?.id];
