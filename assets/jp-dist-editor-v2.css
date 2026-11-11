@@ -1,0 +1,66 @@
+/* JP Distribution Editor V2 — visually simplified, no stock/Firebase rules. */
+#distDrawer .drawerCard{width:min(1040px,96vw)!important;max-width:1040px!important;max-height:94vh!important}
+#distDrawer .drawerBody{padding:14px 18px!important}
+#distDrawer .drawerHead{padding:13px 18px!important}
+#distDrawer .drawerHead h3{font-size:16px!important}
+#distDrawer #distEditorLayout{display:grid;gap:12px;min-width:0}
+#distDrawer .distEditorOverview{border:1px solid #e0e7ed;background:#fff;border-radius:14px;padding:13px;display:grid;gap:11px}
+#distDrawer .distEditorTop{display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+#distDrawer .distEditorTop strong{color:#263342;font-size:13px;line-height:1.4}
+#distDrawer .distEditorTop span{display:block;color:#6b7889;font-size:9px;margin-top:4px}
+#distDrawer .distEditorTop .btn{min-height:27px!important;font-size:9px!important;padding:5px 9px!important}
+#distDrawer .distEditorKpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#distDrawer .distEditorKpi{border:1px solid #e4eaf0;background:#f6f8fb;border-radius:11px;padding:10px;display:grid;gap:4px;min-width:0}
+#distDrawer .distEditorKpi small{font-size:9px;font-weight:900;color:#637184}
+#distDrawer .distEditorKpi b{font-size:23px;font-weight:1000;line-height:1.05;color:#253345;font-variant-numeric:tabular-nums}
+#distDrawer .distEditorKpi em{font-size:8px;font-style:normal;color:#637184}
+#distDrawer .distEditorKpi.free{background:#eff9f2;border-color:#ceebd7}
+#distDrawer .distEditorKpi.free b{color:#137b43}
+#distDrawer .distEditorKpi.free.bad{background:#fff4f5;border-color:#f2c3ca}
+#distDrawer .distEditorKpi.free.bad b{color:#b4233b}
+#distDrawer .distEditorSection{border:1px solid #e2e7ee;background:#fff;border-radius:13px;min-width:0;overflow:visible}
+#distDrawer .distEditorPrimary,#distDrawer .distEditorHistory{padding:13px}
+#distDrawer .distEditorSectionTitle{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;font-weight:900;color:#263343;letter-spacing:.04em;margin-bottom:9px}
+#distDrawer .distEditorSectionTitle small{font-size:9px;color:#788595;font-weight:700;letter-spacing:0}
+#distDrawer .distEditorSectionBody{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;min-width:0;align-items:start}
+#distDrawer .distEditorSectionBody>.field{min-width:0}
+#distDrawer .distEditorSectionBody>.field.wide{grid-column:span 2}
+#distDrawer .distEditorSectionBody>.field.full,#distDrawer .distEditorSectionBody>section{grid-column:1/-1}
+#distDrawer .distEditorSectionBody>[hidden]{display:none!important}
+#distDrawer details.distEditorSection>summary{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:12px 14px;font-size:11px;font-weight:900;color:#263343;list-style:none}
+#distDrawer details.distEditorSection>summary::-webkit-details-marker{display:none}
+#distDrawer details.distEditorSection>summary::after{content:"+";font-size:18px;color:#758193;font-weight:500}
+#distDrawer details.distEditorSection[open]>summary::after{content:"−"}
+#distDrawer details.distEditorSection[open]>.distEditorSectionBody{padding:14px;border-top:1px solid #e2e7ee}
+#distDrawer .distEditorHistory #distStockHistory{max-height:260px;overflow:auto;background:#f9fbfd;border-radius:9px;padding:9px;font-size:10px;line-height:1.5}
+#distDrawer .distEditorHistory #distStockHistoryField{display:block}
+#distDrawer .distEditorHistory #distStockHistoryField[hidden]{display:none!important}
+#distDrawer .distEditorHistory .ticketFormHint{display:none!important}
+#distDrawer .distEditorInfo{min-height:18px!important;width:18px!important;min-width:18px!important;padding:0!important;border:1px solid #cad5e1;border-radius:100%;background:#fff;color:#637185;font-size:10px!important;font-weight:900;cursor:pointer;margin:3px 0 0 5px}
+#distDrawer #distEditorLayout .ticketFormHint:not(.distEditorHintOpen){display:none!important}
+#distDrawer #distEditorLayout .ticketFormHint.distEditorHintOpen{display:block!important;font-size:9px!important;line-height:1.45!important;margin-top:5px!important;color:#68788a}
+#distDrawer #distEditorLayout .field label{line-height:1.3!important;font-size:9px!important;margin:0 0 4px!important}
+#distDrawer #distEditorLayout .control{min-height:36px!important}
+#distDrawer .distEditorSaveStatus{flex:1 1 100%;font-size:10px;font-weight:800;color:#64748b;line-height:1.4}
+#distDrawer .distEditorSaveStatus[data-status="saving"]{color:#996411}
+#distDrawer .distEditorSaveStatus[data-status="saved"]{color:#147b43}
+#distDrawer .distEditorSaveStatus[data-status="error"]{color:#b4233b}
+#distDrawer .distEditorSaveStatus[data-status="pending"]{color:#996411}
+#distDrawer .formActions{position:sticky!important;bottom:0!important;z-index:9!important;display:flex!important;flex-wrap:wrap!important;justify-content:flex-end!important;align-items:center!important;padding:12px 15px!important;background:#fff!important;border-top:1px solid #e0e7ed;margin-top:10px!important}
+#distDrawer .formActions button[type="submit"]{font-weight:900!important;background:#bf1031!important;color:#fff!important;padding:9px 16px!important}
+@media(max-width:760px){
+ #distDrawer .drawerCard{width:98vw!important;max-width:98vw!important}
+ #distDrawer .drawerBody{padding:10px!important}
+ #distDrawer .distEditorKpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #distDrawer .distEditorSectionBody{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:470px){
+ #distDrawer .distEditorSectionBody{grid-template-columns:1fr}
+ #distDrawer .distEditorSectionBody>.field.wide{grid-column:1/-1}
+ #distDrawer .formActions .btn{flex:1 1 auto}
+}
+
+
+#view-distribuicao #distEditorTableStatus{font-size:10px;font-weight:900;color:#167347;line-height:1.35;flex-basis:100%;padding-top:5px}
+#view-distribuicao #distEditorTableStatus[data-status="error"]{color:#b4233b}
+#view-distribuicao #distEditorTableStatus[hidden]{display:none!important}

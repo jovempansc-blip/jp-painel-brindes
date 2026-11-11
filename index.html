@@ -3995,6 +3995,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 }
 </style>
 
+<link rel="stylesheet" href="assets/jp-dist-editor-v2.css?v=20261111a">
 </head>
 <body>
 <div class="wrap">
@@ -12493,6 +12494,7 @@ function clearDistForm(){
   setRotationControls('dist',[]);
   setPromoStyleControls('distTitle',defaultPromoTextStyle('title'),'title');
   setPromoStyleControls('distDesc',defaultPromoTextStyle('desc'),'desc');
+  window.JPDistEditor?.configure(null);
 }
 
 function allDistributionsAcrossMonths(){
@@ -13100,6 +13102,7 @@ function editDist(distId){
   $('distDescription').dataset.catalogAutofilled='0';
   $('distDescription').dataset.catalogKey=prizeCatalogKey(d.title||d.prize||'');
   if($('distCatalogHint')) $('distCatalogHint').textContent='DESCRIÇÃO DESTA DISTRIBUIÇÃO. AO SALVAR, ELA TAMBÉM SERÁ A NOVA DESCRIÇÃO PADRÃO DO TÍTULO.';
+  window.JPDistEditor?.configure(d);
 }
 function distributionDependencies(distId){
   const items=[],promos=[],pendingWithdrawals=[];
@@ -13385,6 +13388,7 @@ O REGISTRO ORIGINAL E O ESTORNO FICARÃO NO HISTÓRICO.`;
   if(!confirm(message+'\n\nALTERAÇÕES NÃO SALVAS NO FORMULÁRIO SERÃO DESCARTADAS.'))return;
   if(!firebaseReady||!firebaseRef||!firebaseConnected||!firebaseServerLoaded){alert('FIREBASE OFFLINE. ESTORNO NÃO EXECUTADO.');return;}
   stockReversalSaving=true;
+  window.JPDistEditor?.status('saving','ESTORNANDO ACRÉSCIMO. AGUARDE O FIREBASE.');
   try{
     // Evita estornar sobre uma fotografia antiga de outra estação.
     await hotfixVerifyPrizeWrite(distId);
@@ -13409,9 +13413,11 @@ O REGISTRO ORIGINAL E O ESTORNO FICARÃO NO HISTÓRICO.`;
     await hotfixVerifyPrizeWrite(distId);
     render();
     editDist(distId);
+    window.JPDistEditor?.status('saved','ESTORNO GRAVADO E CONFERIDO NO FIREBASE.');
     toast('ESTORNO GRAVADO E CONFERIDO NO FIREBASE.');
   }catch(error){
     rollbackToFirebaseBaseline('ESTORNO NÃO CONFIRMADO.');
+    window.JPDistEditor?.status('error','ESTORNO NÃO CONFIRMADO: '+String(error?.message||error));
     alert('ESTORNO NÃO CONFIRMADO: '+String(error?.message||error)+'\nCONFIRA O HISTÓRICO ANTES DE TENTAR NOVAMENTE.');
   }finally{stockReversalSaving=false;}
 }
@@ -13447,6 +13453,7 @@ function updateDistStockChangePreview(refreshDestinations=true){
     element.innerHTML=`<strong>ANTES → DEPOIS · ALTERAÇÃO AINDA NÃO SALVA</strong> · ESTOQUE ${proposal.previousMaster} → ${proposal.masterTotal} · COTA ${proposal.oldMonth} → ${proposal.monthTotal} · LIVRE NESTE MÊS ${free} UNID. · GLOBAL NÃO ALOCADO ${physicalBalance} · PARA AUMENTAR O SALDO DE SORTEIOS, DESTINE AS NOVAS UNIDADES AO CANAL RÁDIO ABAIXO${physicalBalance<0?' · ATENÇÃO: COTAS ACIMA DO ESTOQUE':''}`;
     if(refreshDestinations)updateDistPairsPreview();
   }catch(error){element.textContent=error.message;}
+  window.JPDistEditor?.refresh();
 }
 // Firebase may reorder JSON object properties; compare stable ledger fields by ID.
 function distributionStockLedgerFingerprint(rows){
@@ -13471,6 +13478,7 @@ async function hotfixVerifyPrizeWrite(distId){
     if(!found||found.startDate!==d.startDate||found.endDate!==d.endDate||
        num(found.campaignStockTotal??found.masterTotal)!==distributionCampaignMasterTotal(d)||
        num(found.total)!==num(d.total)||
+       ['prize','title','description','date','ticketDefaultUnit'].some(key=>String(found[key]??'')!==String(d[key]??''))||
        ['app','camarote','camarim','rua','ar','rs'].some(key=>num(found[key])!==num(d[key]))||
        allocated(found)!==allocated(d)||
        distributionStockLedgerFingerprint(found.stockLedger)!==distributionStockLedgerFingerprint(distributionStockLedger(distId))){
@@ -13542,6 +13550,11 @@ async function saveDistributionFromForm(generate=false){
     catch(error){alert(error.message);return null;}
     masterTotal=proposal.masterTotal;
     d.total=proposal.monthTotal;
+    // Uma edicao nova nao pode criar estouro fisico ao converter pares em unidades.
+    if(consumedReal>d.total && consumedReal>allocated(existing)){
+      alert('DISTRIBUICAO ACIMA DA COTA DO MES. AUMENTE A COTA OU REDUZA A QUANTIDADE DESTINADA AOS CANAIS.');
+      return null;
+    }
     if(d.total<proposal.oldMonth){alert('A COTA MENSAL NÃO PODE SER REDUZIDA POR ESTA EDIÇÃO. USE DESPROGRAMAÇÃO CONTROLADA PARA AJUSTAR OS COMPROMISSOS.');return null;}
     if(proposal.increase>0){
       stockReceivingOrigin=norm($('distStockReceiveOrigin')?.value||'');
@@ -13565,7 +13578,9 @@ async function saveDistributionFromForm(generate=false){
   }
   const submitButton=$('distForm')?.querySelector('button[type="submit"]');
   distributionFormSaving=true;if(submitButton)submitButton.disabled=true;
+  window.JPDistEditor?.status('saving','SALVANDO... AGUARDANDO CONFIRMAÇÃO DO FIREBASE.');
   try{
+  if(!wasNew)await hotfixVerifyPrizeWrite(d.id);
   storeDistributionAcrossMonths(d,state.currentMonth,wasNew,masterTotal);
   // Never leave monthly copies with diverging ledger versions after metadata edits.
   const ledger=distributionStockLedger(d.id);
@@ -13605,6 +13620,7 @@ async function saveDistributionFromForm(generate=false){
   if(!saveState(true))throw new Error('FIREBASE INDISPONÍVEL. ALTERAÇÃO NÃO CONFIRMADA.');
   await flushFirebaseNow('ALTERAÇÃO DE ESTOQUE E DISTRIBUIÇÃO');
   await hotfixVerifyPrizeWrite(d.id);
+  window.JPDistEditor?.status('saved','ALTERAÇÃO SALVA E CONFERIDA NO FIREBASE.');
   // Atualiza todos os indicadores da distribuição e a fonte usada na programação.
   renderDistribuicao();
   if(typeof JPManualProgram!=='undefined' && typeof JPManualProgram.render==='function')JPManualProgram.render();
@@ -13618,7 +13634,24 @@ async function saveDistributionFromForm(generate=false){
     toast(ms.planningBalance<0||ms.executionBalance<0||gs.balance<0?'DISTRIBUIÇÃO CONFIRMADA COM DÉFICIT ANTERIOR REGISTRADO':'ESTOQUE E DISTRIBUIÇÃO CONFIRMADOS NO FIREBASE.');
   }
   return distributionByIdForMonth(d.id,state.currentMonth)||d;
-  }catch(error){console.warn('DISTRIBUTION SAVE',error);alert(`O FIREBASE NÃO CONFIRMOU A ALTERAÇÃO.\n\n${error?.message||error}\n\nREABRA O CADASTRO E CONFIRA OS VALORES ANTES DE TENTAR DE NOVO.`);return null;}
+  }catch(error){
+    console.warn('DISTRIBUTION SAVE',error);
+    rollbackToFirebaseBaseline('EDIÇÃO DE DISTRIBUIÇÃO NÃO CONFIRMADA.');
+    // Operações distribuídas em mais de um nó podem ter sido confirmadas parcialmente.
+    // Recarregar a fonte oficial evita mostrar saldo local obsoleto após uma falha.
+    let remoteChecked=false;
+    try{
+      const root=firebaseStateRootRef();
+      if(root){
+        const snap=await root.once('value');
+        const remote=snap?.val?.();
+        if(remote?.months){applyRemoteFirebaseState(remote);remoteChecked=true;}
+      }
+    }catch(reloadError){console.warn('DISTRIBUTION RELOAD AFTER SAVE ERROR',reloadError);}
+    window.JPDistEditor?.status('error','GRAVAÇÃO NÃO CONFIRMADA. REABRA A FICHA E CONFIRA OS SALDOS.');
+    alert('ALTERAÇÃO NÃO CONFIRMADA NO FIREBASE.\n\n'+String(error?.message||error)+'\n\n'+(remoteChecked?'A TABELA FOI RECARREGADA DO FIREBASE.':'NÃO FOI POSSÍVEL CONFERIR NOVAMENTE O SERVIDOR.')+'\nREABRA A FICHA E CONFIRA OS SALDOS ANTES DE NOVA TENTATIVA.');
+    return null;
+  }
   finally{distributionFormSaving=false;if(submitButton)submitButton.disabled=false;}
 }
 let pendingRadioGenerationRequest=null;
@@ -15382,5 +15415,6 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 <script src="assets/jp-promo-externa-core.js?v=AV58_1_44_IMPL_HML_20261111"></script>
 <script src="assets/jp-promo-externa-firebase.js?v=AV58_1_44_IMPL_HML_20261111"></script>
 <script src="assets/jp-promo-externa-main.js?v=AV58_1_44_IMPL_HML_20261111"></script>
+<script src="assets/jp-dist-editor-v2.js?v=20261111a"></script>
 </body>
 </html>
