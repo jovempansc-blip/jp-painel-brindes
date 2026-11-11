@@ -70,6 +70,19 @@
       +'</div>';
     shell.append(overview);
     const distribution=mainSection(shell,"DISTRIBUIÇÃO POR CANAL","PAR E INDIVIDUAL CONTINUAM INDEPENDENTES","distEditorPrimary");
+    const radioButton=document.createElement("button");
+    radioButton.type="button";
+    radioButton.id="distEditorAllocateRadio";
+    radioButton.className="btn small";
+    radioButton.textContent="DESTINAR SALDO LIVRE AO RÁDIO";
+    radioButton.title="Transforma as unidades livres em prêmios do canal Rádio. Não cria sorteios e exige Salvar e Conferir.";
+    radioButton.addEventListener("click",allocateFreeToRadio);
+    const actionRow=document.createElement("div");
+    actionRow.className="field full distEditorRadioAction";
+    actionRow.append(radioButton);
+    const actionHelp=document.createElement("small");
+    actionHelp.textContent="A DISPONIBILIDADE PARA GERAÇÃO AUTOMÁTICA OU MANUAL SÓ AUMENTA DEPOIS DE DESTINAR AS UNIDADES AO RÁDIO E SALVAR.";
+    actionRow.append(actionHelp);
     const history=mainSection(shell,"HISTÓRICO DE ACRÉSCIMOS","ESTORNO AUDITÁVEL","distEditorHistory");
     const receiving=makeSection(shell,"RECEBIMENTO E AJUSTES DE ESTOQUE","distReceivingDetails",false);
     const identity=makeSection(shell,"DADOS DO PRÊMIO E PERÍODO","distIdentityDetails",false);
@@ -79,6 +92,7 @@
     const metrics=makeSection(shell,"CONFERÊNCIA DETALHADA DOS SALDOS","distMetricsDetails",false);
     ["distDate","distShow"].forEach(id=>{const el=byId(id);if(el)form.insertBefore(el,original);});
     ["distPrizeType","distTicketDefaultUnit","distPairsPreview","distDestList"].forEach(id=>move(id,distribution));
+    distribution.append(actionRow);
     move("distStockHistoryField",history);
     ["distTotal","distMasterStockField","distStockReceiveField","distStockAdjustmentField"].forEach(id=>move(id,receiving));
     ["distStartDate","distEndDate","distPrize","distTitle","distDescription"].forEach(id=>move(id,identity));
@@ -147,6 +161,7 @@
     ["input","change"].forEach(type=>form.addEventListener(type,event=>{
       if(!event.target.closest("#distEditorLayout"))return;
       status("pending","ALTERAÇÕES AINDA NÃO SALVAS. CLIQUE EM SALVAR E CONFERIR.");
+      if(event.target.id==="distStockReceiveUnits")updateDistStockChangePreview(false);
       queueMicrotask(refresh);
     }));
     const list=byId("distDestList");
@@ -159,6 +174,40 @@
     installed=true;
     status("ready","FICHA PRONTA. NENHUMA ALTERAÇÃO SALVA NESTA SESSÃO.");
     return true;
+  }
+  function allocateFreeToRadio(){
+    if(!install())return;
+    // Inclui as unidades recebidas que ainda estão digitadas no formulário.
+    if(typeof stageDistributionReceiptFromInput==='function'&&!stageDistributionReceiptFromInput())return;
+    const existing=distDestRows().find(row=>row.dataset.key==='ar');
+    const unit=normalizeReservationUnit(existing?.querySelector('.destUnit')?.value||
+      (byId('distTicketDefaultUnit')?.value||'unit'));
+    const factor=unit==='pair'?2:1;
+    const assigned=distDestRows().reduce((sum,row)=>{
+      const qty=Number(row.querySelector('.destQty')?.value)||0;
+      return sum+(qty>0?destinationConsumed(qty,normalizeReservationUnit(row.querySelector('.destUnit')?.value||'unit'),true):0);
+    },0);
+    const available=formTotalUnitario()-assigned;
+    const packages=Math.floor(available/factor);
+    if(packages<1){
+      alert('NÃO HÁ UNIDADES LIVRES SUFICIENTES PARA DESTINAR AO RÁDIO. REVISE A COTA DO MÊS E OS OUTROS CANAIS.');
+      return;
+    }
+    const unitName=unit==='pair'?'PARES':'UNIDADES';
+    if(!confirm('DESTINAR '+packages+' '+unitName+' ('+(packages*factor)+' UNIDADES FÍSICAS) AO RÁDIO?\n\nISSO NÃO GERA SORTEIOS E NÃO É SALVO ATÉ CLICAR EM SALVAR E CONFERIR.'))return;
+    let row=existing;
+    let previous=0;
+    if(!row){
+      addDistributionDestination('ar');
+      row=distDestRows().find(item=>item.dataset.key==='ar');
+    }else previous=Number(row.querySelector('.destQty')?.value)||0;
+    if(!row)throw Error('DESTINO RÁDIO NÃO PÔDE SER LOCALIZADO.');
+    row.querySelector('.destQty').value=String(previous+packages);
+    row.querySelector('.destUnit').value=unit;
+    updateDistDestinationSummary();
+    updateDistStockChangePreview(false);
+    refresh();
+    status('pending','+'+packages+' '+unitName+' DESTINADOS AO RÁDIO. CLIQUE EM SALVAR E CONFERIR.');
   }
   function configure(distribution){
     if(!install())return;
@@ -185,8 +234,13 @@
     let valid=true;
     if(current){
       try{
+        const rawPending=String(byId("distStockReceiveUnits")?.value??"").trim();
+        const pending=rawPending?Number(rawPending):0;
+        if(rawPending&&(!/^\d+$/.test(rawPending)||!Number.isSafeInteger(pending)||pending<1))
+          throw Error("QUANTIDADE INVÁLIDA");
+        const intendedMaster=Number(byId("distMasterTotal")?.value)+pending;
         const proposal=distributionStockUpdateProposal(current,
-          byId("distTotal")?.value,byId("distMasterTotal")?.value,
+          byId("distTotal")?.value,intendedMaster,
           byId("distStockAdjustmentMode")?.value||"current");
         quota=proposal.monthTotal;
         physical=proposal.masterTotal;

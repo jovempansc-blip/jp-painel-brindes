@@ -64,3 +64,7 @@
 #view-distribuicao #distEditorTableStatus{font-size:10px;font-weight:900;color:#167347;line-height:1.35;flex-basis:100%;padding-top:5px}
 #view-distribuicao #distEditorTableStatus[data-status="error"]{color:#b4233b}
 #view-distribuicao #distEditorTableStatus[hidden]{display:none!important}
+
+#distDrawer .distEditorRadioAction{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding-top:6px!important}
+#distDrawer .distEditorRadioAction .btn{min-height:30px!important;border:1px solid #bbd8c8;background:#edf8f1;color:#167447;font-size:10px!important;font-weight:900}
+#distDrawer .distEditorRadioAction small{font-size:9px;color:#64748b;line-height:1.4;flex:1}

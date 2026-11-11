@@ -7,7 +7,7 @@ const blocks=[
  ['function renderDistributionStockLedger(', 'function distributionStockUpdateProposal('],
  ['function distributionStockUpdateProposal(', 'function updateDistStockChangePreview('],
  ['function formTotalUnitario(', 'function formDistributableTotal('],
- ['function distributionStockLedgerFingerprint(', 'let distributionFormSaving=false;']
+ ['function distributionSaveComparable(', 'let distributionFormSaving=false;']
 ];
 const js=blocks.map(([start,end])=>{
  let a=code.indexOf(start),b=code.indexOf(end,a+start.length);
@@ -32,6 +32,7 @@ function context(){
  const fields={distId:{value:id},distTotal:{value:'90'},distMasterTotal:{value:'180'},distStockAdjustmentMode:{value:'current'},distStockHistory:{innerHTML:'',addEventListener(){}}};
  const alerts=[];
  const c={state,num,clone,console,Date,Math,JSON,Set,Map,Promise,
+  window:{JPDistEditor:{status:()=>{}}},
   '$':name=>fields[name],fields,alerts,
   esc:value=>String(value??'').replaceAll('&','&amp;').replaceAll('<','&lt;'),
   id:prefix=>prefix+'_'+Math.random().toString(36).slice(2),

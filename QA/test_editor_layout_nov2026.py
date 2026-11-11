@@ -45,7 +45,7 @@ check('eventos com datas continuam editáveis','move("distEventMode",event)' in 
 check('rodízio inteligente permanece disponível','move("distRotationHours",scheduling)' in js)
 check('estilos de título e descrição foram preservados',all(id in form_ids for id in ['distTitleFont','distTitleSize','distTitleColor','distDescFont','distDescSize','distDescColor']))
 check('salvar continua sendo o submit nativo','<button class="btn red" type="submit">' in form)
-check('há leitura do Firebase antes e depois da gravação',html.count('await hotfixVerifyPrizeWrite(d.id)')>=2)
+check('há leitura do Firebase antes e depois da gravação','await verifyDistributionBeforeSave(d.id)' in html and 'await hotfixVerifyPrizeWrite(d.id)' in html)
 check('há feedback e recuperação após erro','window.JPDistEditor?.status(' in html and 'rollbackToFirebaseBaseline' in html)
 patterns=re.findall(r'([^{}]+)\{[^{}]*\}',re.sub(r'/\*[\s\S]*?\*/','',css))
 check('CSS é restrito à ficha e ao status da Distribuição',all('#distDrawer' in rule or '#view-distribuicao' in rule for rule in patterns if rule.strip() and not rule.strip().startswith('@') and 'from' not in rule))
