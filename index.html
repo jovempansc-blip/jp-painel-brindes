@@ -4322,7 +4322,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
           <div class="field"><label id="distTotalLabel">TOTAL UNITÁRIO DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"><span class="ticketFormHint" id="distTotalHint">NO NOVO CADASTRO, INFORME O ESTOQUE FÍSICO TOTAL. O SISTEMA DIVIDE A COTA ENTRE OS MESES DA VIGÊNCIA.</span></div>
           <div class="field" id="distMasterStockField" hidden><label>ESTOQUE TOTAL DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distMasterTotal" value="0"><span class="ticketFormHint">ESTOQUE FÍSICO GLOBAL DA CAMPANHA. CONFIRA ABAIXO COMO DESTINAR AS NOVAS UNIDADES.</span></div>
           <div class="field full" id="distStockReceiveField" hidden><label>RECEBIMENTO ADICIONAL DE PRÊMIOS / INGRESSOS</label><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input class="control" id="distStockReceiveUnits" type="number" min="1" step="1" placeholder="NOVAS UNIDADES RECEBIDAS" style="max-width:300px"><button class="btn" type="button" id="distStockReceiveBtn">+ ACRESCENTAR AO ESTOQUE</button></div><span class="ticketFormHint">ESTOQUE FÍSICO TOTAL É DIFERENTE DE COTA MENSAL. AS UNIDADES NOVAS NÃO SÃO DISTRIBUÍDAS AUTOMATICAMENTE ENTRE CANAIS.</span><label style="display:block;margin-top:8px">ORIGEM OU LOTE RECEBIDO — OBRIGATÓRIO</label><input class="control" id="distStockReceiveOrigin" type="text" maxlength="180" placeholder="EX.: INGRESSOS EXTRAS DA PRODUÇÃO EM 02/11"></div>
-          <div class="field full" id="distStockAdjustmentField" hidden><label>AO AUMENTAR O ESTOQUE FÍSICO</label><select class="control" id="distStockAdjustmentMode"><option value="global">MANTER COTAS MENSAIS — NOVO SALDO NÃO ALOCADO</option><option value="current">ACRESCENTAR DIFERENÇA À COTA DESTE MÊS</option></select><span class="ticketFormHint">O SEGUNDO MODO ALTERA APENAS A COTA DA COMPETÊNCIA ABERTA. NÃO MODIFICA OUTROS MESES NEM REGISTROS REALIZADOS.</span><div class="serverSourceBox" id="distStockChangePreview" role="status">SEM ALTERAÇÕES NO ESTOQUE.</div></div>
+          <div class="field full" id="distStockAdjustmentField" hidden><label>AO AUMENTAR O ESTOQUE FÍSICO</label><select class="control" id="distStockAdjustmentMode"><option value="current" selected>ACRESCENTAR DIFERENÇA À COTA DESTE MÊS</option><option value="global">MANTER COTAS MENSAIS — NOVO SALDO NÃO ALOCADO</option></select><span class="ticketFormHint">O SEGUNDO MODO ALTERA APENAS A COTA DA COMPETÊNCIA ABERTA. NÃO MODIFICA OUTROS MESES NEM REGISTROS REALIZADOS.</span><div class="serverSourceBox" id="distStockChangePreview" role="status">SEM ALTERAÇÕES NO ESTOQUE.</div></div>
           <div class="field"><label>TIPO</label><select class="control" id="distPrizeType"><option value="brinde">BRINDE</option><option value="ingresso">INGRESSO</option></select><span class="ticketFormHint">USE INGRESSO QUANDO O TOTAL FOR NÚMERO DE ENTRADAS.</span></div>
           <div class="field"><label>PADRÃO DE ENTREGA</label><select class="control" id="distTicketDefaultUnit"><option value="unit">INDIVIDUAL</option><option value="pair">PAR</option></select><span class="ticketFormHint">DEFINE O MODO INICIAL. CADA DESTINO PODE SER ALTERADO ENTRE IND. E PAR.</span></div>
           <div class="field"><label>DISPONÍVEL</label><input class="control" id="distPairsPreview" readonly value="0 PRÊMIOS"></div>
@@ -12292,7 +12292,7 @@ function clearDistForm(){
   if($('distStockReceiveUnits')) $('distStockReceiveUnits').value='';
   if($('distStockReceiveOrigin')) $('distStockReceiveOrigin').value='';
   if($('distStockAdjustmentField')) $('distStockAdjustmentField').hidden=true;
-  if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='global';
+  if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='current';
   $('distDescription').dataset.catalogAutofilled='0';
   $('distDescription').dataset.catalogKey='';
   if($('distCatalogHint')) $('distCatalogHint').textContent='AO ESCOLHER UM TÍTULO JÁ CADASTRADO, A DESCRIÇÃO PADRÃO SERÁ CARREGADA AUTOMATICAMENTE.';
@@ -12895,7 +12895,7 @@ function editDist(distId){
   if($('distStockReceiveOrigin')) $('distStockReceiveOrigin').value='';
   if($('distMasterTotal')) $('distMasterTotal').value=distributionCampaignMasterTotal(d);
   if($('distStockAdjustmentField')) $('distStockAdjustmentField').hidden=false;
-  if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='global';
+  if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='current';
   if($('distMonthlyStockOverview')) $('distMonthlyStockOverview').hidden=false;
   if($('distMonthlyStockOverviewText')){const g=distributionCampaignGlobalBalance(d),m=distributionMonthStockStatus(d,state.currentMonth);$('distMonthlyStockOverviewText').innerHTML=`<strong>CONTROLE DE ESTOQUE:</strong> ESTOQUE FÍSICO ${g.master} · SOMA DAS COTAS ${g.planned} · ${g.balance<0?`DÉFICIT GLOBAL ${Math.abs(g.balance)}`:g.balance>0?`NÃO ALOCADO ${g.balance}`:'GLOBAL FECHADO'} · REALIZADO NESTE MÊS ${m.realized} · ${m.executionBalance<0?`DÉFICIT DO MÊS ${Math.abs(m.executionBalance)}`:`SALDO DO MÊS ${m.executionBalance}`}`;}
   if($('distPrizeType')) $('distPrizeType').value=isTicketDist(d)?'ingresso':'brinde'; if($('distTicketDefaultUnit')) $('distTicketDefaultUnit').value=d.ticketDefaultUnit||'unit'; renderDistDestinations(destinationsFromDistribution(d)); if($('distDailyLimit')) $('distDailyLimit').value=Math.max(1,Math.min(3,num(d.radioDailyLimit)||1)); setRotationControls('dist',d.rotationSlots||[]); updateDistPairsPreview(); openDrawer('distDrawer');
@@ -13187,10 +13187,11 @@ async function saveDistributionFromForm(generate=false){
   let stockReceivingOrigin='';
   if(!wasNew){
     let proposal;
-    try{proposal=distributionStockUpdateProposal(existing,$('distTotal').value,$('distMasterTotal').value,$('distStockAdjustmentMode')?.value||'global');}
+    try{proposal=distributionStockUpdateProposal(existing,$('distTotal').value,$('distMasterTotal').value,$('distStockAdjustmentMode')?.value||'current');}
     catch(error){alert(error.message);return null;}
     masterTotal=proposal.masterTotal;
     d.total=proposal.monthTotal;
+    if(d.total<proposal.oldMonth){alert('A COTA MENSAL NÃO PODE SER REDUZIDA POR ESTA EDIÇÃO. USE DESPROGRAMAÇÃO CONTROLADA PARA AJUSTAR OS COMPROMISSOS.');return null;}
     if(proposal.increase>0){
       stockReceivingOrigin=norm($('distStockReceiveOrigin')?.value||'');
       if(!stockReceivingOrigin){
@@ -13240,6 +13241,9 @@ async function saveDistributionFromForm(generate=false){
   if(!saveState(true))throw new Error('FIREBASE INDISPONÍVEL. ALTERAÇÃO NÃO CONFIRMADA.');
   await flushFirebaseNow('ALTERAÇÃO DE ESTOQUE E DISTRIBUIÇÃO');
   await hotfixVerifyPrizeWrite(d.id);
+  // Atualiza todos os indicadores da distribuição e a fonte usada na programação.
+  renderDistribuicao();
+  if(typeof JPManualProgram!=='undefined' && typeof JPManualProgram.render==='function')JPManualProgram.render();
   closeDrawer('distDrawer');
   render();
   if(generate){
@@ -13341,42 +13345,96 @@ $('distTable').addEventListener('click',e=>{
   editDist(distId);
   const input=$('distMasterTotal');if(input){setTimeout(()=>{input.scrollIntoView({block:'center',behavior:'smooth'});input.focus({preventScroll:true});},50);}
 });
-$('distTable').addEventListener('input',e=>{
-  const input=e.target.closest('.distInlineNum');
-  if(!input) return;
-  const d=distributionById(input.dataset.distId); if(!d) return;
-  const key=input.dataset.key, previous=num(d[key]), next=num(input.value);
-  d[key]=next; d.clientes=0; d.outros=0;
-  d.monthlyAdjusted=true;d.monthlyEdited=true;d.monthlyRevision=Math.max(1,num(d.monthlyRevision)||1)+1;d.monthlyUpdatedAt=new Date().toISOString();d.updatedAt=d.monthlyUpdatedAt;
-  const commitmentIssues=validateDistributionCampaignCommitments(d,state.currentMonth);
-  auditEvent('AJUSTE MENSAL DE DESTINO',distributionLabel(d),{targetId:d.id,before:{[key]:previous},after:{[key]:next},note:`COMPETÊNCIA ${state.currentMonth}${commitmentIssues.length?' · DÉFICIT/COMPROMISSO REGISTRADO':''}`});
-  saveState(true); updateDistributionRow(d.id);
-});
-$('distTable').addEventListener('change',e=>{
+// Commit only when the operator finishes an edit: no re-render per keystroke.
+const distributionInlineSaving=new Set();
+async function commitDistributionInlineNumber(input){
+  const distId=input.dataset.distId,key=input.dataset.key;
+  if(!['app','camarote','camarim','rua','ar','rs'].includes(key))return;
+  const d=distributionById(distId);
+  if(!d){renderDistribuicao();return;}
+  const raw=String(input.value).trim(),next=Number(raw),previous=num(d[key]),monthKey=state.currentMonth;
+  if(!/^\d+$/.test(raw)||!Number.isSafeInteger(next)||next<0){
+    alert('INFORME UMA QUANTIDADE INTEIRA, SEM VALORES NEGATIVOS.');
+    input.value=String(previous);return;
+  }
+  if(next===previous)return;
+  const token=monthKey+':'+distId+':'+key;
+  if(distributionInlineSaving.has(token)){input.value=String(previous);return;}
+  const candidate={...clone(d),[key]:next};
+  const oldDeficit=Math.max(0,allocated(d)-num(d.total));
+  const newDeficit=Math.max(0,allocated(candidate)-num(candidate.total));
+  if(newDeficit>oldDeficit){
+    alert('ALTERAÇÃO BLOQUEADA: O NOVO DESTINO AUMENTARIA O DÉFICIT DE ESTOQUE. ACRESCENTE ESTOQUE/COTA ANTES DE DESTINAR.');
+    input.value=String(previous);return;
+  }
+  if(key==='rua'&&window.JPExternalCore&&Object.keys(d.externalActions||{}).length){
+    const C=window.JPExternalCore;
+    if(C.quotaUnits(candidate)<C.actionReservedUnits(d)){
+      alert('A COTA EXTERNA NÃO PODE FICAR ABAIXO DAS AÇÕES/RESULTADOS JÁ RESERVADOS.');
+      input.value=String(previous);return;
+    }
+  }
+  distributionInlineSaving.add(token);input.disabled=true;
+  try{
+    if(!firebaseReady||!firebaseRef||!firebaseConnected||!firebaseServerLoaded)
+      throw Error('FIREBASE NÃO ESTÁ PRONTO. NENHUMA ALTERAÇÃO FOI REALIZADA.');
+    d[key]=next;d.clientes=0;d.outros=0;
+    d.monthlyAdjusted=true;d.monthlyEdited=true;
+    d.monthlyRevision=Math.max(1,num(d.monthlyRevision)||1)+1;
+    d.monthlyUpdatedAt=new Date().toISOString();d.updatedAt=d.monthlyUpdatedAt;
+    auditEvent('AJUSTE MENSAL DE DESTINO',distributionLabel(d),{
+      targetId:d.id,before:{[key]:previous},after:{[key]:next},note:'COMPETÊNCIA '+monthKey
+    });
+    if(!saveState(true))throw Error('ALTERAÇÃO NÃO ACEITA PARA GRAVAÇÃO NO FIREBASE.');
+    await flushFirebaseNow('AJUSTE DE DESTINO');
+    const root=firebaseStateRootRef();
+    if(!root)throw Error('NÃO FOI POSSÍVEL CONSULTAR O FIREBASE.');
+    const snap=await root.child('months/'+monthKey+'/distributions').once('value');
+    const remote=firebaseList(snap.val()).find(row=>row?.id===distId);
+    if(!remote||num(remote[key])!==next)throw Error('VALOR NÃO CONFERIU NA LEITURA INDEPENDENTE DO FIREBASE.');
+    renderDistribuicao();
+    toast('DESTINO CONFIRMADO NO FIREBASE: '+previous+' → '+next+'.');
+    if(key==='ar'&&next>0){
+      const current=distributionById(distId);
+      if(current){
+        const openedReport=handleRadioScheduleAfterSave(current);
+        if(!openedReport&&radioPlannerNeeded(current)>0)openRadioPlanner(current.id);
+      }
+    }
+  }catch(error){
+    console.warn('DISTRIBUTION INLINE COMMIT',error);
+    rollbackToFirebaseBaseline('ALTERAÇÃO DE DESTINO NÃO CONFIRMADA.');
+    alert('A ALTERAÇÃO NÃO FOI CONFIRMADA.\n\n'+String(error.message||error)+'\n\nCONFIRA O VALOR NO FIREBASE ANTES DE REPETIR.');
+  }finally{
+    distributionInlineSaving.delete(token);
+    input.disabled=false;
+  }
+}
+$('distTable').addEventListener('change',async e=>{
   const unit=e.target.closest('.distUnitSelect');
   if(unit){
     const d=distributionById(unit.dataset.distId);
-    if(!d) return;
-    d.ticketUnits ||= {};
-    const key=unit.dataset.unitKey, previous=d.ticketUnits[key]||distributionDeliveryUnit(d);
+    if(!d)return;
+    const key=unit.dataset.unitKey,previous=d.ticketUnits?.[key]||distributionDeliveryUnit(d);
+    if(unit.value===previous)return;
+    d.ticketUnits||={};
     d.ticketUnits[key]=unit.value;
-    d.monthlyAdjusted=true;d.monthlyEdited=true;d.monthlyRevision=Math.max(1,num(d.monthlyRevision)||1)+1;d.monthlyUpdatedAt=new Date().toISOString();d.updatedAt=d.monthlyUpdatedAt;
-    auditEvent('AJUSTE MENSAL DE ENTREGA',distributionLabel(d),{targetId:d.id,before:{unit:previous},after:{unit:unit.value},note:`COMPETÊNCIA ${state.currentMonth}${allocated(d)>num(d.total)?' · DÉFICIT MENSAL REGISTRADO':''}`});
-    saveState(true);
-    renderDistribuicao();
-    return;
-  }
-  const input=e.target.closest('.distInlineNum');
-  if(!input) return;
-  const d=distributionById(input.dataset.distId);
-  if(!d) return;
-  if(input.dataset.key === 'ar'){
-    if(num(input.value) > 0){
-      const openedReport=handleRadioScheduleAfterSave(d);
-      if(!openedReport && radioPlannerNeeded(d)>0) openRadioPlanner(d.id);
+    d.monthlyAdjusted=true;d.monthlyEdited=true;d.monthlyRevision=Math.max(1,num(d.monthlyRevision)||1)+1;
+    d.monthlyUpdatedAt=new Date().toISOString();d.updatedAt=d.monthlyUpdatedAt;
+    try{
+      auditEvent('AJUSTE MENSAL DE ENTREGA',distributionLabel(d),{targetId:d.id,
+        before:{unit:previous},after:{unit:unit.value},note:'COMPETÊNCIA '+state.currentMonth});
+      if(!saveState(true))throw Error('FIREBASE NÃO ACEITOU A ALTERAÇÃO.');
+      await flushFirebaseNow('MODALIDADE DE ENTREGA');
+      renderDistribuicao();toast('MODALIDADE DE ENTREGA CONFIRMADA NO FIREBASE.');
+    }catch(error){
+      rollbackToFirebaseBaseline('MODALIDADE NÃO CONFIRMADA.');
+      alert('MODALIDADE NÃO SALVA: '+String(error.message||error));
     }
     return;
   }
+  const input=e.target.closest('.distInlineNum');
+  if(input)await commitDistributionInlineNumber(input);
 });
 $('saveReserveNoteBtn').addEventListener('click',saveReserveNote);
 if($('saveRadioPlannerBtn')) $('saveRadioPlannerBtn').addEventListener('click',saveRadioPlanner);
@@ -13415,6 +13473,7 @@ if($('distStockReceiveBtn'))$('distStockReceiveBtn').addEventListener('click',()
   if(!Number.isSafeInteger(extra)||extra<1){alert('INFORME QUANTAS UNIDADES FISICAS FORAM RECEBIDAS.');return;}
   if(!Number.isSafeInteger(current)||current<0||current+extra>Number.MAX_SAFE_INTEGER){alert('ESTOQUE FISICO INVALIDO.');return;}
   $('distMasterTotal').value=String(current+extra);
+  if($('distStockAdjustmentMode')) $('distStockAdjustmentMode').value='current';
   $('distStockReceiveUnits').value='';
   updateDistStockChangePreview();
   toast('ACRESCIMO PREPARADO. INFORME A ORIGEM E SALVE A DISTRIBUICAO PARA GRAVAR NO FIREBASE.');
