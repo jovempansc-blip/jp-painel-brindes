@@ -3827,6 +3827,174 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 </style>
 <link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
 <link rel="stylesheet" href="assets/jp-promo-externa.css?v=AV58_1_44_IMPL_HML_20261111">
+
+<style id="jp-distribution-visual-fit-20261111">
+/* HOTFIX VISUAL — Distribuição Geral / detalhada.
+   Escopo CSS isolado: nenhuma regra de estoque, Firebase ou evento alterada. */
+
+/* A visão detalhada pode aproveitar toda a tela em monitores grandes. */
+@media (min-width: 1450px){
+  body:has(#view-distribuicao.active #distDetailedView:not([hidden])) .wrap{
+    width:min(1850px,100%)!important;
+  }
+}
+
+/* Tabela única: o colgroup define exatamente o mesmo grid para TH e TD. */
+#view-distribuicao #distDetailedView{
+  min-width:0;
+  max-width:100%;
+}
+#view-distribuicao #distDetailedView > .tableWrap{
+  display:block;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow-x:auto!important;
+  overflow-y:auto!important;
+  overscroll-behavior-x:contain;
+  scrollbar-gutter:stable;
+  -webkit-overflow-scrolling:touch;
+}
+#view-distribuicao #distDetailedView .distMainTable{
+  contain:none!important;
+  table-layout:fixed!important;
+  border-spacing:0!important;
+  border-collapse:separate!important;
+  min-width:1684px!important;
+  width:100%!important;
+  max-width:none!important;
+}
+
+/* 15 colunas na mesma ordem do colgroup do HTML. Soma: 1684 px. */
+#distDetailedView .distMainTable col:nth-child(1){width:302px!important}
+#distDetailedView .distMainTable col:nth-child(2){width:76px!important}
+#distDetailedView .distMainTable col:nth-child(3){width:80px!important}
+#distDetailedView .distMainTable col:nth-child(4){width:74px!important}
+#distDetailedView .distMainTable col:nth-child(5){width:86px!important}
+#distDetailedView .distMainTable col:nth-child(6){width:86px!important}
+#distDetailedView .distMainTable col:nth-child(7){width:84px!important}
+#distDetailedView .distMainTable col:nth-child(8){width:80px!important}
+#distDetailedView .distMainTable col:nth-child(9){width:100px!important}
+#distDetailedView .distMainTable col:nth-child(10){width:84px!important}
+#distDetailedView .distMainTable col:nth-child(11){width:92px!important}
+#distDetailedView .distMainTable col:nth-child(12){width:112px!important}
+#distDetailedView .distMainTable col:nth-child(13){width:88px!important}
+#distDetailedView .distMainTable col:nth-child(14){width:96px!important}
+#distDetailedView .distMainTable col:nth-child(15){width:244px!important}
+
+#view-distribuicao #distDetailedView .distMainTable th,
+#view-distribuicao #distDetailedView .distMainTable td{
+  box-sizing:border-box;
+  padding:10px 7px!important;
+  vertical-align:middle!important;
+  text-align:center;
+}
+#view-distribuicao #distDetailedView .distMainTable th{
+  height:54px!important;
+  line-height:1.2!important;
+  font-size:10px!important;
+  white-space:normal!important;
+  overflow-wrap:normal;
+  text-wrap:balance;
+  vertical-align:middle!important;
+}
+#view-distribuicao #distDetailedView .distMainTable tbody tr{
+  height:92px!important;
+}
+#view-distribuicao #distDetailedView .distMainTable td.distPrizeCell{
+  text-align:left!important;
+  padding-left:11px!important;
+  padding-right:11px!important;
+}
+#view-distribuicao #distDetailedView .distMainTable th:first-child{
+  overflow:visible!important;
+}
+#view-distribuicao #distDetailedView .distMainTable .distPrizeWrap{
+  max-height:none!important;
+  overflow:visible!important;
+}
+#view-distribuicao #distDetailedView .distMainTable .distInlineNum{
+  width:50px!important;
+  min-width:50px;
+  max-width:100%;
+}
+
+/* Cabeçalhos e saldos não podem dividir palavras entre letras. */
+#view-distribuicao #distDetailedView .distMainTable td.num > small{
+  display:block;
+  padding-top:2px;
+  font-size:9px!important;
+  line-height:1.2!important;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+}
+#view-distribuicao #distDetailedView .distMainTable td.distSaldoCell{
+  overflow:visible!important;
+}
+#view-distribuicao #distDetailedView .distMainTable .distSaldoStack{
+  width:100%;
+  min-width:0;
+  gap:4px!important;
+  justify-items:center;
+}
+#view-distribuicao #distDetailedView .distMainTable .distSaldoStack small{
+  max-width:100%;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+  word-break:normal!important;
+  font-size:8px!important;
+  line-height:1.25!important;
+}
+#view-distribuicao #distDetailedView .distMainTable td.returnCell,
+#view-distribuicao #distDetailedView .distMainTable td.distGenerateCell{
+  overflow:visible!important;
+}
+#view-distribuicao #distDetailedView .distGenerateBtn{
+  width:76px!important;
+  max-width:100%!important;
+  min-height:30px!important;
+}
+
+/* Até 7 ações com 27px + 6 intervalos de 5px = 219px;
+   cabem nos 244px da coluna inclusive o padding das células. */
+#view-distribuicao #distDetailedView .distMainTable td.distActionsCell{
+  width:244px!important;
+  min-width:244px!important;
+  overflow:visible!important;
+  padding-left:7px!important;
+  padding-right:7px!important;
+  white-space:nowrap!important;
+}
+#view-distribuicao #distDetailedView .distMainTable .distActions{
+  display:flex!important;
+  flex-wrap:nowrap!important;
+  width:100%;
+  min-width:0;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:5px!important;
+}
+#view-distribuicao #distDetailedView .distMainTable .distActions .actionIcon{
+  flex:0 0 27px!important;
+  width:27px!important;
+  min-width:27px!important;
+  height:27px!important;
+  min-height:27px!important;
+  padding:0!important;
+  border-radius:8px!important;
+}
+
+@media (max-width:900px){
+  #view-distribuicao #distDetailedView .distMainTable{
+    min-width:1684px!important;
+  }
+  #view-distribuicao #distDetailedView > .tableWrap{
+    max-height:none!important;
+    overflow-x:auto!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <div class="wrap">
