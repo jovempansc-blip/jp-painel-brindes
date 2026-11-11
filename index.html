@@ -3826,6 +3826,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 .promoRotationVariant textarea{min-height:90px!important;resize:vertical}.promoRotationAdd{width:100%;padding:12px;border:1px dashed #c8d5e3;background:#f8fafc;border-radius:11px;color:#526c89;font-size:10px;font-weight:800;cursor:pointer;margin-top:10px}
 </style>
 <link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
+<link rel="stylesheet" href="assets/jp-promo-externa.css?v=AV58_1_44_IMPL_HML_20261111">
 </head>
 <body>
 <div class="wrap">
@@ -3856,6 +3857,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
   <nav class="tabs" aria-label="NAVEGAÇÃO DO PAINEL">
     <button class="tabBtn active" data-view="central">CENTRAL</button>
     <button class="tabBtn" data-view="distribuicao">DISTRIBUIÇÃO GERAL</button>
+    <button class="tabBtn" data-view="externa">EXTERNA</button>
     <button class="tabBtn" data-view="premios">PRÊMIOS</button>
     <button class="tabBtn" data-view="programacao">PROGRAMAÇÃO</button>
     <button class="tabBtn" data-view="digital">PROMO / MERCHAN</button>
@@ -4073,6 +4075,23 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
       </div>
     </section>
 
+    <section class="view" id="view-externa">
+      <div class="panel"><div class="panelHead"><div><h2>EXTERNA · PROMOÇÕES E AÇÕES</h2><p>VINCULE UMA AÇÃO À COTA EXTERNA DE UM PRÊMIO JÁ CADASTRADO. O ESTOQUE NÃO É DUPLICADO.</p></div>
+      <div class="panelActions"><button type="button" class="btn" id="jpExtOpenStudio">ABRIR PAINEL DO LOCUTOR</button><button type="button" class="btn" id="jpExtOpenReception">RECEPÇÃO EXTERNA</button></div></div>
+      <div class="panelBody">
+       <form class="jpExtFormGrid" id="jpExtForm">
+        <label>NOME DA AÇÃO / PROMOÇÃO<input required id="jpExtTitle" maxlength="150" placeholder="EX.: AÇÃO P12 NO VERÃO"></label>
+        <label>PRÊMIO VINCULADO<select id="jpExtDistribution" required><option>CARREGANDO...</option></select></label>
+        <label>INÍCIO<input type="date" id="jpExtStart" required></label>
+        <label>TÉRMINO<input type="date" id="jpExtEnd" required></label>
+        <label>QTD. DA COTA EXTERNA<input type="number" min="1" step="1" id="jpExtQuantity" required></label>
+        <button type="submit">SALVAR AÇÃO EXTERNA</button>
+       </form>
+       <div class="jpExtViewNote">A quantidade é expressa na unidade de entrega configurada em EXTERNA para o prêmio (PAR ou INDIVIDUAL). O registro reserva a quantidade dentro dessa cota. A ação pode ser cadastrada somente dentro da vigência do prêmio.</div>
+       <div class="jpExtTableWrap"><table class="jpExtTable"><thead><tr><th>AÇÃO</th><th>PRÊMIO VINCULADO</th><th>ALOCADO</th><th>GANHADORES/UTILIZADO</th><th>SALDO</th><th>REGISTROS</th></tr></thead><tbody id="jpExtTable"><tr><td colspan="6">AGUARDANDO FIREBASE...</td></tr></tbody></table></div>
+       <div class="jpExtHistory" id="jpExtHistory" hidden></div>
+      </div></div>
+    </section>
     <section class="view" id="view-ganhadores">
       <div class="panel">
         <div class="panelHead">
@@ -8699,6 +8718,7 @@ function render(){
   if(activeView==='central')renderCentralOperacao();
   else if(activeView==='programacao')renderProgramacao();
   else if(activeView==='distribuicao')renderDistribuicao();
+  else if(activeView==='externa')window.JPExternalMain?.render();
   else if(activeView==='premios')renderPrizeCatalog();
   else if(activeView==='digital')renderPromos();
   else if(activeView==='horarios')renderProgramSchedules();
@@ -12620,6 +12640,9 @@ function distributionMonthlySnapshot(source,monthKey,originMonth=''){
   copy.snapshotCreatedAt=copy.snapshotCreatedAt||now;
   copy.monthlyUpdatedAt=now;
   copy.updatedAt=now;
+  // Ações Externas e ganhadores pertencem à competência de origem do registro.
+  // Nunca duplicar esses dados ao gerar outra fotografia mensal.
+  if(source?.snapshotMonth && source.snapshotMonth!==monthKey) copy.externalActions={};
   return copy;
 }
 function distributionOperationallyEmpty(d){
@@ -13125,6 +13148,22 @@ async function saveDistributionFromForm(generate=false){
   const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:textNorm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoReal:destValues.reservadoReal||0,reservas:destValues.reservas||[],reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:textNorm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   // Preserva o vínculo entre as versões ao editar apenas uma delas.
   if(existing.eventGroupId){['eventGroupId','eventGroupName','eventDate','eventVersionTitle','eventVersionIndex','eventMode','eventStockScope'].forEach(key=>d[key]=existing[key]);}
+  // PROMO EXTERNA: preserve action/winner history across edits of the parent prize.
+  d.externalActions=clone(existing.externalActions||{});
+  if(Object.keys(d.externalActions).length){
+    const C=window.JPExternalCore;
+    if(!C){alert('MÓDULO EXTERNA INDISPONÍVEL. ALTERAÇÃO BLOQUEADA PARA PRESERVAR GANHADORES.');return null;}
+    const reserved=C.actionReservedUnits(existing);
+    if(C.quotaUnits(d)<reserved){
+      alert('A COTA EXTERNA NÃO PODE SER REDUZIDA ABAIXO DAS QUANTIDADES RESERVADAS NAS AÇÕES: '+reserved+' UNIDADE(S) FÍSICAS.');return null;
+    }
+    const changedUnit=C.externalUnit(d)!==C.externalUnit(existing);
+    if(changedUnit){alert('MODO DE ENTREGA EXTERNA VINCULADO A AÇÕES. PARA ALTERAR IND./PAR, É NECESSÁRIA MIGRAÇÃO AUDITADA.');return null;}
+    const offsite=Object.values(d.externalActions);
+    if(offsite.some(a=>(startDate&&a.startsOn<startDate)||(endDate&&a.endsOn>endDate))){
+      alert('A VIGÊNCIA DO PRÊMIO NÃO PODE EXCLUIR AÇÕES EXTERNAS JÁ CADASTRADAS.');return null;
+    }
+  }
   d.reservas=normalizeReservationEntries(d);
   d.reservado=reservationPackageTotal(d);
   d.reservadoReal=reservationConsumed(d);
@@ -14911,5 +14950,8 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 <script src="assets/distribution-unprogram-ui.js?v=AV58_1_10"></script>
 <div class="jpManualDialog" id="jpManualQtyDialog" hidden><section class="jpManualDialogCard" role="dialog" aria-modal="true" aria-labelledby="jpManualQtyTitle"><h3 id="jpManualQtyTitle">PROGRAMAR PRÊMIO</h3><p id="jpManualQtyHint">DEFINA A QUANTIDADE.</p><label for="jpManualQtyInput">QUANTIDADE A PROGRAMAR</label><input type="number" id="jpManualQtyInput" min="1" step="1" value="1"><div class="jpManualDialogActions"><button type="button" id="jpManualQtyCancel" class="jpManualBtn">CANCELAR</button><button type="button" id="jpManualQtyConfirm" class="jpManualBtn primary">ADICIONAR</button></div></section></div>
 <script src="assets/prog-manual.js?v=AV58_1_42_PAUTA_MENSAL_20261103"></script>
+<script src="assets/jp-promo-externa-core.js?v=AV58_1_44_IMPL_HML_20261111"></script>
+<script src="assets/jp-promo-externa-firebase.js?v=AV58_1_44_IMPL_HML_20261111"></script>
+<script src="assets/jp-promo-externa-main.js?v=AV58_1_44_IMPL_HML_20261111"></script>
 </body>
 </html>

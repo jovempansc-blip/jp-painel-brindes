@@ -4,8 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Recepção — Conferência de Sorteios</title>
-<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 <style>
 :root{--ink:#171c26;--muted:#697386;--line:#dfe5ec;--green:#137947;--red:#d7324e;--bg:#f4f6fa;--studioBg:url("assets/bg-estudio.jpg")}
 *{box-sizing:border-box}
@@ -821,6 +819,10 @@ tbody tr:focus-within td{background:#fff8fa}
     <div class="receptionCampaignLabels" aria-hidden="true"><span>PROMOÇÃO / STATUS</span><span>PRÊMIO</span><span>GANHADOR / ACOMPANHANTES</span><span>RETIRADA</span></div>
     <div id="receptionCampaignList"></div>
   </section>
+  <section class="receptionCampaignSection" id="jpExternalReceptionSection" aria-label="Ganhadores de Promo Externa">
+    <div class="receptionCampaignHeading"><h2>PROMO EXTERNA · GANHADORES E RETIRADAS</h2><span id="jpExternalReceptionCount">0 A RETIRAR</span></div>
+    <div id="jpExternalReceptionRows" role="region" aria-live="polite">AGUARDANDO CONEXÃO COM FIREBASE...</div>
+  </section>
   <main class="list" id="resultList"></main>
 </div>
 <div class="receptionModal" id="receptionModal" hidden>
@@ -830,18 +832,12 @@ tbody tr:focus-within td{background:#fff8fa}
   </div>
 </div>
 <div class="receptionToast" id="receptionToast" hidden></div>
-<script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script id="av60-original" type="application/x-av60-hml">
 
-const FIREBASE_CONFIG = {
-  "apiKey": "AIzaSyAgGd6f0xQS2F7L8rKhB4Qhcz1eAlKgaPE",
-  "authDomain": "jp-painel-brindes.firebaseapp.com",
-  "databaseURL": "https://jp-painel-brindes-default-rtdb.firebaseio.com",
-  "projectId": "jp-painel-brindes",
-  "storageBucket": "jp-painel-brindes.firebasestorage.app",
-  "messagingSenderId": "843544648278",
-  "appId": "1:843544648278:web:066c8e64e17da046cf79f7",
-  "measurementId": "G-VB6Y2TS796"
-};
+const FIREBASE_CONFIG = window.JP_AV60_HML_CONFIG;
 const FIREBASE_ROOT_PATH='jp-painel-brindes/state';
 const RECEPTION_OPERATOR_SESSION_KEY='jp_workspace_operator_v56_recepcao';
 const $=id=>document.getElementById(id);
@@ -983,7 +979,7 @@ function receptionGenericProgram(value){const p=upper(value||'');return !p||['PR
 function receptionProgramFromSchedule(date,slot,station='JP1017'){const minute=receptionMinutes(slot),day=new Date(`${date}T12:00:00`).getDay(),wanted=receptionStationCode(station);const rows=(state.programSchedules||[]).filter(row=>{const st=receptionStationCode(row?.station||'JP1017'),days=receptionDayValues(row?.days??row?.dias??row?.weekdays??row?.dayRule??'');const start=receptionMinutes(row?.startTime||row?.start||row?.inicio||row?.horaInicio||''),end=Math.max(receptionMinutes(row?.endTime||row?.end||row?.fim||row?.horaFim||''),start+60);return (st==='ALL'||st===wanted)&&days.includes(day)&&minute>=start&&minute<end;});if(!rows.length)return'';rows.sort((a,b)=>Number(receptionGenericProgram(receptionScheduleName(a)))-Number(receptionGenericProgram(receptionScheduleName(b)))||(receptionMinutes(a?.endTime||a?.end||'')-receptionMinutes(a?.startTime||a?.start||''))-(receptionMinutes(b?.endTime||b?.end||'')-receptionMinutes(b?.startTime||b?.start||'')));return receptionScheduleName(rows[0]);}
 function promoTitle(p){return upper(p.name||p.title||'PROMOÇÃO');}
 function promoPrizeTitle(p){const d=distributionById(p?.distributionId);return upper(p?.prizeTitle||d.title||d.show||d.prize||p?.prize||p?.title||p?.name||'PROMOÇÃO');}
-firebase.initializeApp(FIREBASE_CONFIG);
+if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
 const receptionDatabase=firebase.database();
 if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();
 const firebaseRef=receptionDatabase.ref(FIREBASE_ROOT_PATH);
@@ -1620,5 +1616,9 @@ firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();s
 window.addEventListener('online',()=>{try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){}receptionScheduleReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!receptionConnected)receptionScheduleReconnect(250);});
 </script>
+<script src="assets/av60-hml-auth.js"></script>
+<script src="assets/jp-promo-externa-core.js"></script>
+<script src="assets/jp-promo-externa-firebase.js"></script>
+<script src="assets/jp-promo-externa-reception-bridge.js"></script>
 </body>
 </html>

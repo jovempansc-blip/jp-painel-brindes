@@ -1,0 +1,53 @@
+/* Promo Externa — respeita cores e densidade operacional do JP Workspace */
+.jpExtFormGrid{display:grid;grid-template-columns:1.2fr .9fr .8fr .8fr .55fr;gap:10px;align-items:end;padding:14px 16px;border:1px solid #dce4ed;background:#f9fbfd;border-radius:12px}
+.jpExtFormGrid label{display:flex;flex-direction:column;gap:5px;min-width:0;color:#5c6c83;font-weight:800;font-size:10px;letter-spacing:.035em}
+.jpExtFormGrid input,.jpExtFormGrid select,.jpExtFormGrid button{height:38px;border:1px solid #d9e0e9;border-radius:9px;padding:0 10px;background:white;color:#252d3d;font-family:inherit;font-size:12px}
+.jpExtFormGrid button{background:#bb1432;color:white;border-color:#bb1432;cursor:pointer;font-weight:800}
+.jpExtFormGrid button:disabled{opacity:.5;cursor:not-allowed}
+.jpExtViewNote{font-size:11px;color:#62728a;padding:10px 16px;line-height:1.5}
+.jpExtTableWrap{max-height:520px;overflow:auto}
+.jpExtTable{width:100%;border-collapse:collapse;font-size:11px}
+.jpExtTable th{font-size:10px;letter-spacing:.03em;color:#60718a;background:#f3f5f8;text-transform:uppercase;text-align:left;padding:12px 10px;white-space:nowrap}
+.jpExtTable td{padding:12px 10px;border-top:1px solid #e9edf2;vertical-align:middle}
+.jpExtTable td strong{display:block;color:#202937;font-size:12px}
+.jpExtTable td small{color:#7b8899}
+.jpExtCount{display:inline-flex;justify-content:center;align-items:center;border-radius:15px;background:#e1f6e8;padding:4px 9px;font-weight:800;color:#227449;min-width:40px}
+.jpExtFootnote{color:#677b8e;font-size:10px;padding:8px 14px}
+.jpExtButton{background:#fff;border:1px solid #d2dae4;border-radius:8px;padding:7px 12px;color:#a01833;font-size:11px;font-weight:800;cursor:pointer}
+.jpExtStatus{color:#26814a;font-weight:800}
+.jpExtErr{color:#b02242;padding:10px;font-size:12px}
+.jpExtActions{display:flex;gap:7px;flex-wrap:wrap}
+.jpExtHistory{background:#fbfcfe;border:1px solid #dfe5ec;border-radius:12px;margin:14px 0;padding:14px}
+.jpExtHistory h3{font-size:13px;margin:0 0 10px;color:#26354b}
+.jpExtHistory table{width:100%;border-collapse:collapse;font-size:11px}
+.jpExtHistory th,.jpExtHistory td{border-bottom:1px solid #ebeff5;text-align:left;padding:8px}
+.jpExtStudio body{background:#f4f6fa}
+.jpExtStudioShell{width:min(1490px,99%);margin:8px auto;color:#171c26;font-family:'Segoe UI Variable Text','Segoe UI',Arial,sans-serif}
+.jpExtStudioHeader{background:rgba(255,255,255,.92);border:1px solid #e3e8f0;border-radius:16px;padding:16px 25px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 18px #2c3d5412}
+.jpExtStudioLogo{width:min(360px,50vw);height:auto;max-height:52px;object-fit:contain}
+.jpExtStudioHeader .jpExtTopLabel{font-size:10px;letter-spacing:.12em;color:#74829a;font-weight:800}
+.jpExtRibbon{margin-top:9px;display:flex;align-items:center;justify-content:space-between;background:#edf0f5;border-radius:10px;border:1px solid #dfe5ef;min-height:64px;padding:6px 20px;gap:16px}
+.jpExtRibbon strong{font-size:23px;color:#bb1230}
+.jpExtRibbon span{font-size:12px;font-weight:700;color:#59687f}
+.jpExtStudioMain{display:grid;grid-template-columns:250px minmax(380px,1fr) 275px;gap:15px;margin-top:12px}
+.jpExtStudioPanel{background:#ffffffea;border:1px solid #e1e7ef;border-radius:14px;padding:16px;box-shadow:0 3px 15px #243b5c0b}
+.jpExtStudioPanel h2{font-size:12px;font-weight:900;letter-spacing:.025em;color:#394253;margin:0 0 12px}
+.jpExtActionTile{width:100%;background:#f8fafc;border:1px solid #e1e7f0;border-radius:11px;padding:14px 10px;margin-bottom:9px;text-align:left;cursor:pointer;color:#2d3543}
+.jpExtActionTile.active{border-color:#b71b3a;background:#fff1f4}
+.jpExtActionTile strong{display:block;font-size:11px;margin-bottom:5px}
+.jpExtActionTile small{font-size:10px;color:#758195}
+.jpExtStudioKpi{background:#f6faf6;border:1px solid #dbeee4;padding:15px;margin:10px 0;border-radius:12px}
+.jpExtStudioKpi strong{font-size:28px;color:#277c4d}
+.jpExtStudioKpi small{display:block;color:#596b80;margin-top:3px;font-size:10px}
+.jpExtFields{display:grid;gap:10px}
+.jpExtFields label{font-size:10px;color:#6a7586;font-weight:800;display:grid;gap:6px}
+.jpExtFields input,.jpExtFields textarea{font:inherit;padding:11px;border:1px solid #d9e0e9;border-radius:9px;background:#fff;color:#1b2433;font-size:12px;width:100%}
+.jpExtSave{border:0;background:#c21135;color:white;font-weight:800;border-radius:9px;padding:12px;cursor:pointer;width:100%}
+.jpExtSave[disabled]{opacity:.55;cursor:not-allowed}
+.jpExtSmallNote{font-size:10px;color:#66758b;line-height:1.45}
+.jpExtWinnerTable{width:100%;border-collapse:collapse;font-size:10px}
+.jpExtWinnerTable th,.jpExtWinnerTable td{padding:9px 5px;text-align:left;border-bottom:1px solid #edf0f5}
+.jpExtEmpty{color:#8a96a7;font-size:11px;padding:12px}
+.jpExtFeedback{border:1px solid #cdd8e6;border-radius:9px;padding:8px 10px;background:#fff;font-size:11px;margin-top:10px;color:#48566a}
+@media(max-width:1080px){.jpExtFormGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.jpExtStudioMain{grid-template-columns:1fr 1.5fr}.jpExtStudioMain>.jpExtStudioPanel:last-child{grid-column:1/-1}}
+@media(max-width:650px){.jpExtStudioMain{grid-template-columns:1fr}.jpExtStudioMain>.jpExtStudioPanel:last-child{grid-column:auto}.jpExtFormGrid{grid-template-columns:1fr}.jpExtRibbon{flex-wrap:wrap}.jpExtStudioHeader{padding:10px}.jpExtStudioLogo{width:240px}}

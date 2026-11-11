@@ -1,34 +1,92 @@
 {
-  "release": "AV58.1.43.2",
-  "created_at": "2026-11-09",
-  "status": "CANDIDATO; sem publicação, sem alteração Firebase",
-  "scope": [
-    "index.html",
-    "assets/return-balance.js"
-  ],
-  "current_production_baseline_hashes": {
-    "index.html": "49e3b924d5dbc17dddfa7763dc7ad98afcf88d68daf0730589a5799688e8f90a",
-    "assets/return-balance.js": "8a3e0f0f8256f7a3f3087aff1e92f005216bf02ac68c41af62af347216449314"
+  "release": "JP_PROMO_EXTERNA_AV58_1_44_IMPL_HML",
+  "date": "2026-11-11",
+  "scope": "code implementation only; no real production or Firebase changes",
+  "status": "BLOCKED_FOR_RELEASE_BY_A09",
+  "base_sha256": "8d630ad9b55293afe8c80d4b4639d7c81f78a733c99793fb85861c8ccec6a401",
+  "tests": {
+    "functional": 14,
+    "security": 10,
+    "syntax": "pass",
+    "realtime_HML": "blocked (401)",
+    "production_write": "not performed"
   },
-  "candidate_hashes": {
-    "index.html": "8d630ad9b55293afe8c80d4b4639d7c81f78a733c99793fb85861c8ccec6a401",
-    "assets/return-balance.js": "32d637931209e46f168fabd7bc3b93887a22a7e0009f32d75645b2f102455d25"
-  },
-  "qa": {
-    "legacy_local": 19,
-    "firebase_simulated": 4,
-    "unique_return_count_ui": 13,
-    "redteam_credit": 1,
-    "total_checks": 37,
-    "passed": 37,
-    "syntax": "PASS",
-    "authenticated_hml": "NOT RUN"
-  },
-  "data": {
-    "modified": false,
-    "real_database_writes": 0,
-    "github_commit": false
-  },
-  "risk": "HML 401; no authenticated backup; inter-month transfer still blocked; fully scheduled Radio quota requires separate accounting work",
-  "audit_notes": "Sobra status counted by original distribution ID. Historic same-title registrations shown separately without merging or reassigning funds."
+  "files": {
+    "preview_recepcao.html": {
+      "bytes": 117046,
+      "sha256": "465c28812a25226cc998914a59ca3ceb63305a40a8da94bf69e09b7e484c4de3"
+    },
+    "recepcao_externa.html": {
+      "bytes": 3829,
+      "sha256": "190beee2d9b7cb148544548e325904fc410a93770d8998179c2dc421c8f2a6bf"
+    },
+    "promo_externa.html": {
+      "bytes": 4457,
+      "sha256": "c0c6b29bbf0b07703ee8628d76e92565c2875e0a7e30f2c3a0b86731e7b41768"
+    },
+    "index.html": {
+      "bytes": 948868,
+      "sha256": "d7c394e570e6f505dfa7e9f6a595d81162f5693bb58d86992fcd24adc6b55b31"
+    },
+    "LEIA_PRIMEIRO.md": {
+      "bytes": 5708,
+      "sha256": "ae1a9fadb2f3854f0d228cfed86c9d5c5b3107522c3c682fbe7b48e91a99a42b"
+    },
+    "assets/return-balance.js": {
+      "bytes": 7613,
+      "sha256": "32d637931209e46f168fabd7bc3b93887a22a7e0009f32d75645b2f102455d25"
+    },
+    "assets/jp-promo-externa-reception-bridge.js": {
+      "bytes": 4113,
+      "sha256": "fba76aeb2886923af9c4dbca6b72063afa2dd3bba63dca8ea7934331fee5a508"
+    },
+    "assets/jp-promo-externa-firebase.js": {
+      "bytes": 7782,
+      "sha256": "fd6ba512d806036faaf5f8a0969eb0ecf96ce6edea70dc41aab318db888c3ae2"
+    },
+    "assets/jp-promo-externa-main.js": {
+      "bytes": 4522,
+      "sha256": "99139f0ac339ac3bbbd521131be4242c00bbff3bb29abf01bf3af69f622d3dbc"
+    },
+    "assets/jp-promo-externa-pages.js": {
+      "bytes": 9360,
+      "sha256": "14b23ba344ea3c21193332637cb9843bfb4a9890c92d9422866165f29f24b7dd"
+    },
+    "assets/jp-promo-externa.css": {
+      "bytes": 5375,
+      "sha256": "7c83ff10e010ccf85b4e76af45274c494feb90b57647ce7aa74060e1bd7af6f2"
+    },
+    "assets/jp-promo-externa-core.js": {
+      "bytes": 10206,
+      "sha256": "d4c9f16c94ddb9150f91eee949c1c2d10c6cacf1e20fb704fdcd55e5786dcdcf"
+    },
+    "assets/logo-workspace-jp-transparent.png": {
+      "bytes": 257947,
+      "sha256": "2c7b54e8f22446f070f34de405e7455f5064fb079baa7d255c8160fd7e6823d9"
+    },
+    "assets/jp-promo-externa-env.js": {
+      "bytes": 462,
+      "sha256": "6426dc7a22698b36a8d0f609d6f517a540f36dc3741b83bcbe4f5a886a81c670"
+    },
+    "QA/test_security_contract.cjs": {
+      "bytes": 3194,
+      "sha256": "82fe4d7f4ed3a44c1c088c4a2c3c443eb5ae3eaf971ed871d8baceb7326b898d"
+    },
+    "QA/test_promo_externa.cjs": {
+      "bytes": 9331,
+      "sha256": "484937a746a3b7105e5d5802bd8d2ae4202173603ba3ee81bc1ab19a25131549"
+    },
+    "QA/RESULTADO_QA.md": {
+      "bytes": 1710,
+      "sha256": "84b3f52028100aba1431cfe41de1fc5a278da3a226520b82768888f39e9936d3"
+    },
+    "ROLLBACK/preview_recepcao.html": {
+      "bytes": 116467,
+      "sha256": "b19c28f8d7bc7bf0399b2a86e1f0e114f0550591839a10966dddab641b8ca39e"
+    },
+    "ROLLBACK/index.html": {
+      "bytes": 945301,
+      "sha256": "8d630ad9b55293afe8c80d4b4639d7c81f78a733c99793fb85861c8ccec6a401"
+    }
+  }
 }
