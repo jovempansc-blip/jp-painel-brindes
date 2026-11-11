@@ -4,7 +4,10 @@ const src=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const begin=src.indexOf('function firebaseList(value){');
 const end=src.indexOf('function hasLocalPersistedState(){',begin);
 assert(begin>=0&&end>begin);
-const code=src.slice(begin,end);
+const normalizeStart=src.indexOf('function normalizePanelState(');
+const normalizeEnd=src.indexOf('function monthData(){',normalizeStart);
+assert(normalizeStart>0&&normalizeEnd>normalizeStart);
+const code=src.slice(begin,end)+'\n'+src.slice(normalizeStart,normalizeEnd);
 const copy=x=>x===undefined?undefined:JSON.parse(JSON.stringify(x));
 function fixture(){
  const rec=(month)=>({id:'D1',prize:'RÁDIO CELEBRATE',title:'PAR DE INGRESSOS',
@@ -56,6 +59,13 @@ function build(original){
   firebaseBaselineState:baseline,
   firebaseStateRootRef:()=>new Ref(''),window:{firebase:{database:{ServerValue:{TIMESTAMP:1773241234}}}},
   emptyWorkspaceState:()=>fixture(),clone:copy,Math,Number,JSON,Date,Map,Set,Object,String,
+  num:x=>Math.max(0,Number(x)||0),norm:x=>String(x||'').trim(),textNorm:x=>String(x||'').trim(),
+  normalizeReservationEntries:d=>Array.isArray(d.reservas)?d.reservas:[],
+  reservationPackageTotal:d=>Array.isArray(d.reservas)?d.reservas.reduce((n,r)=>n+(Number(r.qty)||0),0):0,
+  reservationConsumed:d=>Array.isArray(d.reservas)?d.reservas.reduce((n,r)=>n+(Number(r.qty)||0)*(r.unit==='pair'?2:1),0):0,
+  WINNER_TRASH_RETENTION_DAYS:120,WINNER_PROGRAM_VERSION_LIMIT:10,
+  hydrateLegacyDistributionSnapshots:()=>0,
+  normalizeStatus:x=>x,normalizeChannel:x=>x,
  };
  vm.createContext(context);vm.runInContext(code,context);
  return {context,server,get,stats:()=>({transactions,multiUpdates})};
@@ -111,6 +121,43 @@ test('concurrent remote change to the same distribution rejects stale write',asy
  await assert.rejects(f.context.persistGranularState(snap),/CONFLITO DE EDIÇÃO/);
  assert.equal(f.server.months['2026-11'].distributions[0].ar,35);
  assert.equal(f.server.months['2026-11'].distributions[0].title,'OUTRO OPERADOR ALTEROU');
+});
+test('legacy RTDB record without optional reservations persists an increase from 20 to 40',async()=>{
+ const original=fixture();
+ const raw=original.months['2026-11'].distributions[0];
+ raw.total=20;raw.campaignStockTotal=20;raw.masterTotal=20;raw.ar=10;raw.rs=0;raw.rua=0;
+ delete raw.reservas;delete raw.reservadoReal;delete raw.originMonth;delete raw.snapshotMonth;
+ raw.ticketDefaultUnit='pair';raw.ticketUnits={ar:'pair',reservado:'mixed'};
+ const f=build(original);
+ // The client normalizes Firebase's raw record on bootstrap, just like production.
+ const baseline=f.context.normalizePanelState(copy(f.server),{hydrateSnapshots:false});
+ f.context.firebaseBaselineState=baseline;
+ const saved=copy(baseline);
+ const target=saved.months['2026-11'].distributions[0];
+ target.total=40;target.campaignStockTotal=40;target.masterTotal=40;target.ar=20;
+ target.stockLedger=[{id:'STK_1',kind:'ADDITION',physicalDelta:20,monthDelta:20,origin:'LOTE TESTE'}];
+ await f.context.persistGranularState(saved);
+ const persisted=f.server.months['2026-11'].distributions[0];
+ assert.equal(persisted.total,40);
+ assert.equal(persisted.campaignStockTotal,40);
+ assert.equal(persisted.ar,20);
+ assert.equal(persisted.stockLedger.length,1);
+ // Raw legacy data should not be erased just to normalize optional properties.
+ assert.equal(f.server.months['2026-10'].items[0].status,'REALIZADO');
+ assert.equal(f.stats().transactions>=1,true);
+});
+test('legacy record conflict still rejects real concurrent modification of title',async()=>{
+ const original=fixture();
+ delete original.months['2026-11'].distributions[0].reservas;
+ const f=build(original);
+ const baseline=f.context.normalizePanelState(copy(f.server),{hydrateSnapshots:false});
+ f.context.firebaseBaselineState=baseline;
+ const saved=copy(baseline);
+ saved.months['2026-11'].distributions[0].ar=36;
+ f.server.months['2026-11'].distributions[0].title='ALTERAÇÃO DE OUTRA ESTAÇÃO';
+ await assert.rejects(f.context.persistGranularState(saved),/CONFLITO DE EDIÇÃO/);
+ assert.equal(f.server.months['2026-11'].distributions[0].ar,35);
+ assert.equal(f.server.months['2026-11'].distributions[0].title,'ALTERAÇÃO DE OUTRA ESTAÇÃO');
 });
 test('repeating same snapshot does not duplicate history',async()=>{
  const f=build(fixture()),snap=copy(f.server);

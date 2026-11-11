@@ -5243,6 +5243,36 @@ async function persistCollectionDiff(relativePath,baseRows,localRows){
   await writeRoot.child(relativePath).transaction(current=>
     applyCollectionPlanToRows(current,baseRows,localRows,relativePath),undefined,false);
 }
+// HOTFIX: registros legados podem omitir campos adicionados por normalizePanelState.
+// Duas leituras só diferem semanticamente se diferirem APÓS a mesma normalização.
+function distributionConflictCanonical(record,monthKey){
+  if(!record||typeof record!=='object')return record;
+  const shadow={
+    currentMonth:monthKey,months:{[monthKey]:{
+      label:monthKey,items:[],promos:[],distributions:[clone(record)]
+    }},
+    schedules:[],programSchedules:[],auditLog:[],trash:[],pendingOps:[],
+    publishedPrograms:{},programVersions:{},systemMeta:{},prizeCatalog:{}
+  };
+  normalizePanelState(shadow,{hydrateSnapshots:false});
+  return shadow.months[monthKey].distributions[0];
+}
+function distributionConflictStableValue(value){
+  if(Array.isArray(value))return value.map(distributionConflictStableValue);
+  if(value&&typeof value==='object'){
+    const sorted={};
+    Object.keys(value).sort().forEach(key=>sorted[key]=distributionConflictStableValue(value[key]));
+    return sorted;
+  }
+  return value;
+}
+function distributionConflictSame(left,right,context){
+  const match=/months\/(\d{4}-\d{2})\/distributions$/.exec(context);
+  if(!match)return sameValue(left,right);
+  const monthKey=match[1];
+  return JSON.stringify(distributionConflictStableValue(distributionConflictCanonical(left,monthKey)))===
+         JSON.stringify(distributionConflictStableValue(distributionConflictCanonical(right,monthKey)));
+}
 function applyCollectionPlanToRows(currentRows,baseRows,localRows,context='REGISTRO'){
   const plan=collectionPlan(baseRows,localRows);
   if(!plan.replace && !plan.changes.length && !plan.deleted.length) return firebaseList(currentRows);
@@ -5268,7 +5298,11 @@ function applyCollectionPlanToRows(currentRows,baseRows,localRows,context='REGIS
       if(mode!=='excluir') throw new Error(`REGISTRO REMOVIDO EM OUTRO COMPUTADOR (${context}: ${idValue}).`);
       return;
     }
-    if(!sameValue(currentValue,baseValue) && !sameValue(currentValue,localValue)){
+    const conflict=context.endsWith('/distributions')
+      ? (!distributionConflictSame(currentValue,baseValue,context) &&
+         !distributionConflictSame(currentValue,localValue,context))
+      : (!sameValue(currentValue,baseValue) && !sameValue(currentValue,localValue));
+    if(conflict){
       throw new Error(`CONFLITO DE EDIÇÃO EM ${context}: ${idValue}. ATUALIZE OS DADOS ANTES DE SALVAR.`);
     }
   };
