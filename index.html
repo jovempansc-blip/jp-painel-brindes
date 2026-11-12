@@ -5394,7 +5394,7 @@ async function persistGranularState(savedSnapshot){
         const remoteSnapshot=await writeRoot.child(`months/${key}/${collection}`).once('value');
         const remoteRows=firebaseList(remoteSnapshot.val());
         // Checks for stale changes to the same prize before the atomic update.
-        const merged=applyCollectionPlanToRows(remoteRows,previous,desired,`MÊS ${key} / ${collection}`);
+        const merged=applyCollectionPlanToRows(remoteRows,previous,desired,`months/${key}/${collection}`);
         if(plan.replace||plan.deleted.length||plan.changes.some(change=>change.isNew)){
           patch[`${key}/${collection}`]=merged;
         }else{
