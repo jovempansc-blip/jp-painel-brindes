@@ -7,12 +7,14 @@
   const C=global.JPExternalCore,DB=global.JPExternalRTDB;
   const host=document.getElementById('jpExternalReceptionRows');
   const count=document.getElementById('jpExternalReceptionCount');
+  const section=document.getElementById('jpExternalReceptionSection');
   if(!host||!C||!DB)return;
+  const setVisible=visible=>{if(section)section.hidden=!visible;};
   const safe=x=>String(x??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const stamp=x=>Number(x)?new Date(Number(x)).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'AGUARDANDO SERVIDOR';
   let months={},people={},engine=null,auth=null,busy=false,unsubMonths=null,bankRef=null;
   const secure=global.JP_EXT_SECURE_BANK_VERIFIED===true;
-  function message(msg){host.textContent=msg;if(count)count.textContent='0 A RETIRAR';}
+  function message(msg){host.textContent=msg;if(count)count.textContent='0 A RETIRAR';setVisible(false);}
   function cleanup(){
     if(unsubMonths){unsubMonths();unsubMonths=null;}
     if(bankRef){bankRef.off('value');bankRef=null;}
@@ -35,7 +37,9 @@
       const person=people['EXTERNA_'+w.id];
       return !query||[w.action,w.prize,person?.name,w.id].join(' ').toUpperCase().includes(query);
     });
-    host.innerHTML=selected.length?selected.map(w=>{
+    setVisible(selected.length>0);
+    if(!selected.length){host.textContent='';return;}
+    host.innerHTML=selected.map(w=>{
       const record=people['EXTERNA_'+w.id],verified=w.bankStatus==='CONFIRMADO'&&!!record;
       const text=verified?'AGUARDANDO RETIRADA':'PENDENTE DE CONCILIAÇÃO';
       return '<div class="receptionCampaign" data-ext-winner="'+safe(w.id)+'" style="padding:12px;margin:8px 0;display:grid;grid-template-columns:minmax(130px,1fr) minmax(130px,1fr) minmax(145px,1fr) auto;gap:12px;align-items:center">'
@@ -45,7 +49,7 @@
        +(verified?'<button type="button" class="pickupBtn" data-ext-pickup="'+safe(w.id)+'"'+(busy?' disabled':'')+'>CONFIRMAR RETIRADA</button>'
           :'<button type="button" class="pickupBtn" data-ext-sync="'+safe(w.id)+'"'+(busy?' disabled':'')+'>CONCILIAR BANCO</button>')
        +'</div>';
-    }).join(''):'<div class="receptionCampaignEmpty">NENHUMA PROMOÇÃO EXTERNA PENDENTE PARA ESTA BUSCA.</div>';
+    }).join('');
   }
   async function operation(ev){
     const login=ev.target.closest('[data-ext-login]');
@@ -80,7 +84,8 @@
   host.addEventListener('click',operation);
   document.getElementById('searchFilter')?.addEventListener('input',render);
   if(!secure){
-    message('PROMOÇÃO EXTERNA BLOQUEADA PARA PROTEÇÃO DOS DADOS PESSOAIS. A09 DEVE HOMOLOGAR AS REGRAS DO BANCO CENTRAL NO FIREBASE ANTES DA LIBERAÇÃO.');
+    // Segurança continua bloqueada; comunicação interna não aparece na Recepção.
+    message('');
     return;
   }
   if(!global.firebase?.apps?.length){
