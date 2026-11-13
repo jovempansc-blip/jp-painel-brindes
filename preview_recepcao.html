@@ -792,6 +792,7 @@ tbody tr:focus-within td{background:#fff8fa}
 .winnerCenter{flex-direction:column;gap:4px}.receptionProfileBadge{font-size:8px!important;font-weight:700;color:#9a815e;line-height:1.35}.receptionProfileBadge.ready{color:#6a987e}.pickupBtn.profilePending{background:#faf5ec!important;border:1px solid #e5d7bd!important;color:#a08762!important}.receptionProfileFields{margin:12px 0;padding:12px;border:1px solid #e2e8ef;border-radius:14px;background:#fafcfe}.pickupSheetAction.secondary{margin-top:10px;background:#eef4f8!important;color:#778ba0!important;border:1px solid #dce5ee!important}.pickupSheetAction:disabled{background:#f3f5f7;color:#9ba6b3;cursor:default;opacity:1}
 </style>
 <link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
+<link rel="stylesheet" href="assets/jp-reception-passport.css?v=PASS_CANDIDATE_20261113">
 </head>
 <body>
 <div class="wrap">
@@ -950,18 +951,21 @@ function renderReceptionCampaigns(allRows=[]){
   const list=$('receptionCampaignList'),count=$('receptionCampaignCount');if(!list||!count)return;
   const expanded=new Set(Array.from(document.querySelectorAll('details[data-reception-campaign]')).filter(el=>el.open).map(el=>el.dataset.receptionCampaign));
   const query=searchKey($('searchFilter')?.value||'');
-  const all=receptionActiveCampaigns(todayISO(),allRows),campaigns=all.filter(g=>!query||searchKey([promoTitle(g.p),promoPrizeTitle(g.p),receptionCampaignSegment(g.p),g.p.local,...g.pending.flatMap(r=>[r.result,receptionCampaignCompanions(r)])].join(' ')).includes(query));
+  if(window.JPReceptionPassport?.alternative?.())return;
+  const all=(window.JPReceptionPassport?.active?.(allRows)||receptionActiveCampaigns(todayISO(),allRows)),campaigns=all.filter(g=>!query||searchKey([promoTitle(g.p),promoPrizeTitle(g.p),receptionCampaignSegment(g.p),g.p.local,...(window.JPReceptionPassport?.isPinned?.(g.p.id)?g.winners:g.pending).flatMap(r=>[r.result,receptionCampaignCompanions(r)])].join(' ')).includes(query));
   const pendingCount=all.reduce((sum,g)=>sum+g.pending.length,0);
   count.textContent=`${pendingCount} RETIRADA${pendingCount===1?'':'S'} PENDENTE${pendingCount===1?'':'S'}`;
   list.innerHTML=campaigns.length?campaigns.map(g=>{
-    const p=g.p,next=g.occurrences.find(o=>o.pending)||g.occurrences.find(o=>!o.done),first=g.pending[0];
+    const p=g.p,next=g.occurrences.find(o=>o.pending)||g.occurrences.find(o=>!o.done),first=g.pending[0]||(window.JPReceptionPassport?.isPinned?.(g.p.id)?g.winners[0]:null);
     const status=g.allDone?'RESULTADOS CONFIRMADOS':next?.pending?'RESULTADO PENDENTE':next?'PRÓXIMO SORTEIO':'EM ANDAMENTO';
-    const sub=g.ended?'ENCERRADA · RETIRADA PENDENTE':next?`${formatBR(next.date)} · ${formatTime(next.time)}`:'AGUARDANDO RETIRADA';
+    const sub=g.ended?(g.pending.length?'ENCERRADA · RETIRADA PENDENTE':'ENCERRADA · HISTÓRICO DISPONÍVEL'):next?`${formatBR(next.date)} · ${formatTime(next.time)}`:'AGUARDANDO RETIRADA';
     const preview=first?first.result||'GANHADOR NÃO IDENTIFICADO':next?'AGUARDANDO RESULTADO':'SEM GANHADOR REGISTRADO';
     const companion=first?receptionCampaignCompanions(first):'';
     const deadline=g.expired?'FORA DO PRAZO DE RETIRADA':g.pending.length?`${g.pending.length} AGUARDANDO RETIRADA`:status;
+    const pinned=!!window.JPReceptionPassport?.isPinned?.(p.id);
+    const displayWinners=pinned?g.winners:g.pending;
     const noResult=g.occurrences.filter(o=>o.pending).map(o=>`<div class="campaignWinnerEmpty">RESULTADO PENDENTE · ${esc(formatBR(o.date))} · ${esc(formatTime(o.time))}</div>`).join('');
-    return `<details class="receptionCampaign${g.expired?' hasExpired':''}" data-reception-campaign="${esc(p.id)}" ${expanded.has(p.id)?'open':''}><summary><span class="campaignName"><strong>${esc(promoTitle(p))}</strong><small class="${g.expired?'overdue':next?.pending?'pending':''}">${esc(status)} · ${esc(sub)}</small></span><span class="campaignPrize">${esc(promoPrizeTitle(p))}</span><span class="campaignSegment">${esc(preview)}${companion?`<small>${esc(companion)}</small>`:''}${g.pending.length>1?`<small>+ ${g.pending.length-1} OUTRO${g.pending.length===2?'':'S'} GANHADOR${g.pending.length===2?'':'ES'}</small>`:''}</span><span class="campaignNext${g.expired?' overdue':''}">${esc(deadline)}<small>${g.pending.length?'CLIQUE PARA VER OS GANHADORES':next?'SORTEIO A REALIZAR':'AGUARDANDO RESULTADO'}</small></span></summary><div class="campaignWinnerList">${g.pending.map(receptionCampaignWinnerHtml).join('')}${noResult||(!g.pending.length?'<div class="campaignWinnerEmpty">AGUARDANDO RESULTADO DO SORTEIO.</div>':'')}</div></details>`;
+    return `<details class="receptionCampaign${g.expired?' hasExpired':''}" data-reception-campaign="${esc(p.id)}" ${expanded.has(p.id)?'open':''}><summary><span class="campaignName"><strong>${esc(promoTitle(p))}</strong><small class="${g.expired?'overdue':next?.pending?'pending':''}">${esc(status)} · ${esc(sub)}</small></span><span class="campaignPrize">${esc(promoPrizeTitle(p))}</span><span class="campaignSegment">${esc(preview)}${companion?`<small>${esc(companion)}</small>`:''}${g.pending.length>1?`<small>+ ${g.pending.length-1} OUTRO${g.pending.length===2?'':'S'} GANHADOR${g.pending.length===2?'':'ES'}</small>`:''}</span><span class="campaignNext${g.expired?' overdue':''}">${esc(deadline)}<small>${g.pending.length?'CLIQUE PARA VER OS GANHADORES':next?'SORTEIO A REALIZAR':'AGUARDANDO RESULTADO'}</small></span><button type="button" class="jpRcpBtn jpRcpMenuButton" aria-label="Mais opções da promoção" data-jp-menu="${esc(p.id)}">⋮</button></summary><div class="campaignWinnerList">${displayWinners.map(receptionCampaignWinnerHtml).join('')}${noResult||(!displayWinners.length?'<div class="campaignWinnerEmpty">AGUARDANDO RESULTADO DO SORTEIO.</div>':'')}</div></details>`;
   }).join(''):`<div class="receptionCampaignEmpty">${all.length?'NENHUMA PROMOÇÃO ENCONTRADA NESTA BUSCA.':'NENHUMA PROMOÇÃO COM RESULTADO OU RETIRADA PENDENTE.'}</div>`;
 }
 /* RECEPTION_CAMPAIGNS_END */
@@ -1617,6 +1621,8 @@ firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();s
 window.addEventListener('online',()=>{try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){}receptionScheduleReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!receptionConnected)receptionScheduleReconnect(250);});
 </script>
+<script src="assets/jp-passport-core.js?v=PASS_CANDIDATE_20261113"></script>
+<script src="assets/jp-reception-passport.js?v=PASS_CANDIDATE_20261113"></script>
 <script src="assets/jp-promo-externa-env.js"></script>
 <script src="assets/jp-promo-externa-core.js"></script>
 <script src="assets/jp-promo-externa-firebase.js"></script>

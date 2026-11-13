@@ -1,0 +1,82 @@
+{
+  "name": "JP_RECEPCAO_CENTRO_CAMPANHAS_PASSAPORTES_CANDIDATO_20261113",
+  "state": "ISOLATED_NOT_PUBLISHED",
+  "source_commit": "abe1ea52f93ecc9a7fbe99d35137c3cb100e601a",
+  "qa": {
+    "targeted_passed": 95,
+    "cross_suite_passed": 66,
+    "pre_existing_failures": 1,
+    "production_firebase_homologated": false
+  },
+  "release_locks": [
+    "JP_PASSPORT_METADATA_RULES_HOMOLOGATED",
+    "JP_PASSPORT_PRIVATE_RULES_HOMOLOGATED"
+  ],
+  "files": [
+    {
+      "path": "index.html",
+      "bytes": 979825,
+      "sha256": "59aa48f83e398f8ef5bf602d2412e6a502e0fa2bf7907a685e43ef3d847a7882"
+    },
+    {
+      "path": "preview_recepcao.html",
+      "bytes": 117981,
+      "sha256": "0250e058f7ebf0f6524dc3db1926efcef796d533c97b080fa7363b97e905b9cf"
+    },
+    {
+      "path": "assets/jp-passport-core.js",
+      "bytes": 8241,
+      "sha256": "57f6c2ab32e1dcbddff0739597b7b16d51a8a3517a3c3cf8d50343b7c4d8a9ca"
+    },
+    {
+      "path": "assets/jp-passport-distribution-guard.js",
+      "bytes": 1153,
+      "sha256": "bb1f28a70042b1da8b6b7b2d669ccc85ca98a9fd8e26a72b2c0951d831634c10"
+    },
+    {
+      "path": "assets/jp-reception-passport.js",
+      "bytes": 26789,
+      "sha256": "44b45ae47bb48b5b160532acd351d2009ceea649e100ec4181673be3bf35255b"
+    },
+    {
+      "path": "assets/jp-reception-passport.css",
+      "bytes": 4702,
+      "sha256": "af38638f22b33136d5c962d1ea5aa1ab0a617e7e71cf9fc863ca897d63a5f85e"
+    },
+    {
+      "path": "QA/test_passport_core.cjs",
+      "bytes": 6755,
+      "sha256": "391b961f2ab240c9be545a7c3793626ea465a91c34f47076e460ebb9adf623be"
+    },
+    {
+      "path": "QA/test_distribution_guard.cjs",
+      "bytes": 1938,
+      "sha256": "ef3b04e7b5d37409f0885bf74a51bc2f8aee8a649768e05e1b286939825656e2"
+    },
+    {
+      "path": "QA/test_reception_integration.cjs",
+      "bytes": 4920,
+      "sha256": "34c8ae71577c3fba7adc3172578863ba4128b13e39397c8b67386e890ed1e6cc"
+    },
+    {
+      "path": "QA/test_reception_runtime.cjs",
+      "bytes": 3516,
+      "sha256": "0089c2965b85ec26f415c31361fc9a8e5d2d46af7d8ca2e8b1009b15ffc3af4f"
+    },
+    {
+      "path": "QA/test_distribution_editor_passport_compat.cjs",
+      "bytes": 15426,
+      "sha256": "839cf527af85abcde076e5f75d95b549c2bf46465e6af213895931e5403e1d02"
+    },
+    {
+      "path": "QA/FIREBASE_SECURITY_ACCEPTANCE.md",
+      "bytes": 3871,
+      "sha256": "e525196d347259a0a7ad8a60ee9472bd6e900520529fccceafdbdfeaaa7ec074"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_CENTRO_CAMPANHAS_PASSAPORTES.md",
+      "bytes": 7501,
+      "sha256": "3cce1eacb7b4608903a8ee38d2681052916f2fd9847d81ea4e728d0a1635c737"
+    }
+  ]
+}

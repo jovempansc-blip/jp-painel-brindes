@@ -4823,6 +4823,13 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
                 <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
                 <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SELECIONE O PRÊMIO"></div>
                 <div class="promoDistributionGuide"><strong>REGRA:</strong> A PROMOÇÃO RESERVA O PRÊMIO DIRETAMENTE DA DISTRIBUIÇÃO. O SALDO NÃO É DUPLICADO E O SISTEMA BLOQUEIA QUANDO A QUANTIDADE NECESSÁRIA FOR MAIOR QUE A DISPONÍVEL.</div>
+                <div class="field full" style="border:1px solid #e2e7ee;border-radius:12px;background:#fbfcfe;padding:10px">
+                  <label>PASSAPORTE MULTIEVENTOS · MODALIDADE ESPECIAL</label>
+                  <div style="display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+                    <span class="uploadHint" style="margin:0">Após salvar a promoção, vincule os eventos da Distribuição Geral.</span>
+                    <button type="button" id="jpPromoPassportShortcut" class="btn small">VINCULAR SHOWS</button>
+                  </div>
+                </div>
 
                 <div class="field"><label>NÚMERO DE GANHADORES</label><input class="control" type="number" min="1" step="1" id="promoQtyPerDraw" value="1"></div>
                 <div class="field"><label>BRINDES / INGRESSOS POR GANHADOR</label><input class="control" type="number" min="1" step="1" id="promoUnitsPerWinner" value="1"></div>
@@ -13699,6 +13706,11 @@ async function saveDistributionFromForm(generate=false){
   window.JPDistEditor?.status('saving','SALVANDO... AGUARDANDO CONFIRMAÇÃO DO FIREBASE.');
   try{
   if(!wasNew)await verifyDistributionBeforeSave(d.id);
+  // O passaporte vincula uma parte da cota já reservada: não permita reduzir
+  // a origem enquanto houver ingressos comprometidos com ganhadores futuros.
+  if(!window.JPPassportDistributionGuard?.verify)
+    throw new Error('MÓDULO DE PROTEÇÃO DAS RESERVAS DO PASSAPORTE INDISPONÍVEL.');
+  await window.JPPassportDistributionGuard.verify(firebaseStateRootRef(),d,state.currentMonth);
   storeDistributionAcrossMonths(d,state.currentMonth,wasNew,masterTotal);
   // Never leave monthly copies with diverging ledger versions after metadata edits.
   const ledger=distributionStockLedger(d.id);
@@ -15526,5 +15538,16 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 <script src="assets/jp-promo-externa-firebase.js?v=AV58_1_44_IMPL_HML_20261111"></script>
 <script src="assets/jp-promo-externa-main.js?v=AV58_1_44_IMPL_HML_20261111"></script>
 <script src="assets/jp-dist-editor-v2.js?v=20261111b_PERSIST"></script>
+<script src="assets/jp-passport-core.js?v=PASS_CANDIDATE_20261113"></script>
+<script src="assets/jp-passport-distribution-guard.js?v=PASS_CANDIDATE_20261113"></script>
+<script id="jpPromoPassportShortcutHandler">
+document.addEventListener('click',function(e){
+ const btn=e.target.closest('#jpPromoPassportShortcut');if(!btn)return;
+ e.preventDefault();
+ const promoId=document.getElementById('promoId')?.value?.trim();
+ if(!promoId){window.alert('SALVE PRIMEIRO A PROMOÇÃO PARA VINCULAR OS EVENTOS.');return;}
+ window.open('preview_recepcao.html?passaporte='+encodeURIComponent(promoId),'_blank','noopener,noreferrer');
+});
+</script>
 </body>
 </html>
