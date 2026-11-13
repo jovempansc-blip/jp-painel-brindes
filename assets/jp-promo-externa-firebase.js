@@ -9,6 +9,9 @@
      assert(db&&typeof db.ref==='function','FIREBASE DATABASE INDISPONÍVEL.');
      this.db=db;this.statePath=options.statePath||'jp-painel-brindes/state';this.bankPath=options.bankPath||'jp-painel-brindes/winnerBank';
      this.auth=options.auth||null;this.requireAuth=options.requireAuth!==false;this.secureBankVerified=options.secureBankVerified===true;
+     // Allows ONLY an action without winners/PII from the already operating main panel.
+     // All winner registration, pickup, cancellation and private bank actions retain checkAuth().
+     this.allowNonPersonalActions=options.allowNonPersonalActions===true;
    }
    checkAuth(){
      if(this.requireAuth)assert(this.auth?.currentUser?.uid,'AUTENTICAÇÃO FIREBASE OBRIGATÓRIA PARA GRAVAÇÃO.');
@@ -18,8 +21,9 @@
    distRef(m){return this.monthRef(m).child('distributions');}
    async allMonths(){const snap=await this.db.ref(this.statePath+'/months').get();return snap.val()||{};}
    async month(m){const s=await this.monthRef(m).get();return s.val()||{};}
-   async tx(month,distributionId,fn){
-     this.checkAuth();const ref=this.distRef(month);
+   async tx(month,distributionId,fn,options={}){
+     if(!(options.nonPersonalAction===true&&this.allowNonPersonalActions))this.checkAuth();
+     const ref=this.distRef(month);
      let error=null,changed=null;
      const result=await ref.transaction(current=>{
        try{const outcome=fn(current);changed=outcome;error=null;return outcome.rows||outcome;}
@@ -35,7 +39,11 @@
    serverTimestamp(){return global.firebase?.database?.ServerValue?.TIMESTAMP||Date.now();}
    async createAction(payload,operator){
      const actionId=payload.id||C.newId('EXTA');
-     const x=await this.tx(payload.month,payload.distributionId,rows=>C.createAction(rows,{...payload,id:actionId},{operator,serverTimestamp:this.serverTimestamp()}));
+     // The action contains scheduling/quota metadata only. No operator name is
+     // published in the public RTDB tree; winner/phone/CPF operations remain locked.
+     const safeOperator=this.allowNonPersonalActions?'PAINEL PRINCIPAL · EXTERNA':operator;
+     const x=await this.tx(payload.month,payload.distributionId,rows=>C.createAction(rows,{...payload,id:actionId},{operator:safeOperator,serverTimestamp:this.serverTimestamp()}),
+       {nonPersonalAction:true});
      assert(x.dist.externalActions?.[actionId],'AÇÃO NÃO CONFERIU APÓS SALVAR.');
      return x.dist.externalActions[actionId];
    }
