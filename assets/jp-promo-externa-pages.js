@@ -3,24 +3,46 @@
  const C=window.JPExternalCore,DB=window.JPExternalRTDB,element=id=>document.getElementById(id);
  const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
  const role=document.body.dataset.jpExtRole;
+ function connection(state){
+  const dot=element('jpExtLogin');if(!dot||role!=='studio')return;
+  dot.dataset.connection=state;
+  const label={'connecting':'CONECTANDO AO FIREBASE','connected':'FIREBASE CONECTADO. CLIQUE PARA AUTENTICAR','offline':'FIREBASE DESCONECTADO. CLIQUE PARA AUTENTICAR'}[state]||'FIREBASE';
+  dot.title=label;dot.setAttribute('aria-label',label);
+ }
  const config=window.JP_EXT_FIREBASE_CONFIG;
  let store,months={},bankRecords={},bankListener=null,selected='',busy=false;
  const asBR=n=>Number(n)?new Date(Number(n)).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'AGUARDANDO CONFIRMAÇÃO';
- const show=(text,error=false)=>{const x=element('jpExtMessage');if(x){x.textContent=text;x.style.color=error?'#bb1937':'#227849';}};
- function operatorName(){return (element('jpExtOperator')?.value||'').trim().slice(0,100);}
+ const show=(text,error=false)=>{const x=element('jpExtMessage');if(x){x.textContent=text;x.dataset.error=error?'true':'false';}};
+ function operatorName(){
+  const value=(element('jpExtOperator')?.value||'').trim();
+  const person=window.firebase?.auth?.()?.currentUser;
+  return (value||person?.displayName||person?.email||'').slice(0,100);
+ }
  function active(){return C.flatten(months,true,C.nowDay()).sort((a,b)=>a.title.localeCompare(b.title,'pt-BR'));}
  function allWinners(){const list=[];C.flatten(months).forEach(a=>a.winners.forEach(w=>list.push({...w,name:bankRecords['EXTERNA_'+w.id]?.name||'IDENTIFICAÇÃO PENDENTE',phone:bankRecords['EXTERNA_'+w.id]?.phone||'',action:a.title,prize:a.prize,month:a.distributionMonth,deliveryUnit:a.deliveryUnit})));
   return list.sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0));}
  function renderStudio(){const actions=active();const selectedAction=actions.find(a=>a.id===selected)||actions[0];selected=selectedAction?.id||'';
-   const list=element('jpExtActions');if(list)list.innerHTML=actions.map(a=>`<button class="jpExtActionTile ${a.id===selected?'active':''}" type="button" data-action="${esc(a.id)}"><strong>${esc(a.title)}</strong><small>${esc(a.prize)} · ${a.remaining/C.multiplier(a.deliveryUnit)} ${a.deliveryUnit==='pair'?'PARES':'UNIDADES'} LIVRES</small></button>`).join('')||'<div class="jpExtEmpty">NENHUMA PROMOÇÃO EXTERNA ATIVA.</div>';
+   const actionSearch=(element('jpExtActionSearch')?.value||'').toUpperCase();
+   const list=element('jpExtActions');
+   if(list)list.innerHTML=actions.filter(a=>(a.title+' '+a.prize).toUpperCase().includes(actionSearch)).map(a=>
+    '<button class="jpExtActionTile '+(a.id===selected?'active':'')+'" type="button" data-action="'+esc(a.id)+'"><strong>'+esc(a.title)+'</strong><small>'+esc(a.prize)+'</small><small>'+esc(a.startsOn||'')+' — '+esc(a.endsOn||'')+'</small><span class="jpExtActionBalance">SALDO '+a.remaining/C.multiplier(a.deliveryUnit)+'</span></button>'
+   ).join('')||'<div class="jpExtEmpty">NENHUMA AÇÃO ENCONTRADA.</div>';
    element('jpExtSelected').textContent=selectedAction?.title||'NENHUMA AÇÃO ATIVA';
    element('jpExtPrize').textContent=selectedAction?.prize||'—';
+   if(element('jpExtPeriod'))element('jpExtPeriod').textContent=selectedAction?[selectedAction.startsOn,selectedAction.endsOn].filter(Boolean).join(' — '):'—';
+   if(element('jpExtActionStatus'))element('jpExtActionStatus').textContent=selectedAction?'ATIVA':'AGUARDANDO';
    element('jpExtBalance').textContent=selectedAction?String(selectedAction.remaining/C.multiplier(selectedAction.deliveryUnit)):'0';
    element('jpExtUnit').textContent=selectedAction?.deliveryUnit==='pair'?'PARES':'UNIDADES';
    element('jpExtUsed').textContent=selectedAction?String(selectedAction.consumed/C.multiplier(selectedAction.deliveryUnit)):'0';
    element('jpExtAllocated').textContent=selectedAction?String(selectedAction.quantity):'0';
    element('jpExtSubmit').disabled=!selectedAction||!store||busy;
-   const tb=element('jpExtWinners');if(tb)tb.innerHTML=(selectedAction?.winners||[]).sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0)).map(w=>`<tr><td><strong>${esc(bankRecords['EXTERNA_'+w.id]?.name||'IDENTIFICAÇÃO PENDENTE')}</strong></td><td>${w.quantity} ${w.deliveryUnit==='pair'?'PAR':'IND.'}</td><td>${esc(asBR(w.registeredAtMs))}</td><td>${w.bankStatus==='CONFIRMADO'?esc(w.status):'BANCO PENDENTE'}</td></tr>`).join('')||'<tr><td colspan="4" class="jpExtEmpty">NENHUM GANHADOR REGISTRADO NESTA AÇÃO.</td></tr>';
+   const winnerSearch=(element('jpExtWinnerSearch')?.value||'').toUpperCase();
+   const rows=(selectedAction?.winners||[]).filter(w=>(bankRecords['EXTERNA_'+w.id]?.name||'').toUpperCase().includes(winnerSearch))
+      .sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0));
+   const tb=element('jpExtWinners');
+   if(tb)tb.innerHTML=rows.map(w=>
+      '<tr><td><strong>'+esc(bankRecords['EXTERNA_'+w.id]?.name||'IDENTIFICAÇÃO PENDENTE')+'</strong></td><td>'+w.quantity+' '+(w.deliveryUnit==='pair'?'PAR':'IND.')+'</td><td>'+esc(asBR(w.registeredAtMs))+'</td><td>'+(w.bankStatus==='CONFIRMADO'?esc(w.status):'BANCO PENDENTE')+'</td></tr>'
+   ).join('')||'<tr><td colspan="4" class="jpExtEmpty">NENHUM GANHADOR PARA ESTA BUSCA.</td></tr>';
  }
  function renderReception(){let winners=allWinners();const query=(element('jpExtSearch')?.value||'').toUpperCase();const status=element('jpExtStatusFilter')?.value||'PENDENTE';
    winners=winners.filter(w=>status==='TODOS'||(status==='PENDENTE'?w.status==='AGUARDANDO_RETIRADA':w.status===status));
@@ -63,6 +85,8 @@
  function attachUI(){if(role==='studio'){
      element('jpExtActions').addEventListener('click',ev=>{const x=ev.target.closest('[data-action]');if(x){selected=x.dataset.action;renderStudio();}});
      element('jpExtWinnerForm').addEventListener('submit',handleRegistration);
+     element('jpExtActionSearch')?.addEventListener('input',renderStudio);
+     element('jpExtWinnerSearch')?.addEventListener('input',renderStudio);
    }else{
      element('jpExtSearch').addEventListener('input',renderReception);
      element('jpExtStatusFilter').addEventListener('change',renderReception);
@@ -72,13 +96,16 @@
      try{const provider=new window.firebase.auth.GoogleAuthProvider();await window.firebase.auth().signInWithPopup(provider);show('SESSÃO AUTENTICADA.');}
      catch(error){show('FALHA NA AUTENTICAÇÃO: '+error.message,true);}
    });
-   const saved=sessionStorage.getItem('jpExtOperator')||'';element('jpExtOperator').value=saved;
-   element('jpExtOperator').addEventListener('input',e=>sessionStorage.setItem('jpExtOperator',e.target.value.slice(0,100)));
+   const field=element('jpExtOperator');
+   if(field){const saved=sessionStorage.getItem('jpExtOperator')||'';field.value=saved;
+    field.addEventListener('input',e=>sessionStorage.setItem('jpExtOperator',e.target.value.slice(0,100)));}
  }
- function init(){attachUI();if(!config){show('CONFIGURAÇÃO DO FIREBASE NÃO DISPONÍVEL.',true);return;}
+ function init(){attachUI();connection('connecting');if(!config){connection('offline');show('CONFIGURAÇÃO DO FIREBASE NÃO DISPONÍVEL.',true);return;}
    try{
      if(!window.firebase.apps.length)window.firebase.initializeApp(config);
      const app=window.firebase.app();
+     window.firebase.database(app).ref('.info/connected').on('value',snap=>connection(snap.val()===true?'connected':'offline'),
+      error=>{connection('offline');show('FALHA DE CONEXÃO: '+error.message,true);});
      store=new DB(window.firebase.database(app),{auth:window.firebase.auth(app),secureBankVerified:window.JP_EXT_SECURE_BANK_VERIFIED===true});
      store.onMonths(value=>{months=value;role==='studio'?renderStudio():renderReception();},e=>show('FALHA DE LEITURA NO FIREBASE: '+e.message,true));
      window.firebase.auth().onAuthStateChanged(user=>{
@@ -95,7 +122,7 @@
        role==='studio'?renderStudio():renderReception();
      });
      role==='studio'?renderStudio():renderReception();
-   }catch(err){show('FIREBASE INDISPONÍVEL: '+err.message,true);}
+   }catch(err){connection('offline');show('FIREBASE INDISPONÍVEL: '+err.message,true);}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();

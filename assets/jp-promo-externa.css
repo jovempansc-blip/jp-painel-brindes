@@ -51,3 +51,80 @@
 .jpExtFeedback{border:1px solid #cdd8e6;border-radius:9px;padding:8px 10px;background:#fff;font-size:11px;margin-top:10px;color:#48566a}
 @media(max-width:1080px){.jpExtFormGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.jpExtStudioMain{grid-template-columns:1fr 1.5fr}.jpExtStudioMain>.jpExtStudioPanel:last-child{grid-column:1/-1}}
 @media(max-width:650px){.jpExtStudioMain{grid-template-columns:1fr}.jpExtStudioMain>.jpExtStudioPanel:last-child{grid-column:auto}.jpExtFormGrid{grid-template-columns:1fr}.jpExtRibbon{flex-wrap:wrap}.jpExtStudioHeader{padding:10px}.jpExtStudioLogo{width:240px}}
+
+/* JP A02 | Identidade oficial com saturação contida · 2026-11-13 */
+:root{
+ --jp-ext-ink:#34465a;--jp-ext-muted:#778494;--jp-ext-red:#946674;
+ --jp-ext-line:#dfe5eb;--jp-ext-canvas:#f5f7f9;--jp-ext-surface:#fff;
+}
+.jpExtStudio{background:#f5f7f9!important;color:var(--jp-ext-ink)}
+.jpExtStudioShell{width:min(1570px,calc(100% - 24px));margin:10px auto}
+.jpExtStudioHeader{
+ display:grid;grid-template-columns:minmax(170px,1fr) minmax(220px,1fr) minmax(170px,1fr);
+ gap:12px;align-items:center;justify-content:initial;min-height:79px;
+ padding:10px 24px;background:#fffffff2;box-shadow:0 2px 13px #263b4f0b;
+ border-radius:14px;border-color:var(--jp-ext-line)
+}
+.jpExtStudioLogo{max-width:270px;width:100%;height:auto;max-height:51px;object-position:left center}
+.jpExtStudioHeader h1{font-size:clamp(19px,2vw,28px);font-weight:850;letter-spacing:.075em;color:#936475;text-align:center;margin:0;white-space:nowrap}
+.jpExtConnectionDot{
+ justify-self:end;width:15px;height:15px;min-height:15px;padding:0;border:0;
+ border-radius:999px;cursor:pointer;background:#b3beca;box-shadow:0 0 0 4px #eef1f5;
+ transition:background .18s ease
+}
+.jpExtConnectionDot[data-connection="connected"]{background:#72998a;box-shadow:0 0 0 4px #e9f2ed}
+.jpExtConnectionDot[data-connection="connecting"]{background:#c7a076;box-shadow:0 0 0 4px #f6efe3}
+.jpExtConnectionDot[data-connection="offline"]{background:#b77d85;box-shadow:0 0 0 4px #f6e9eb}
+.jpExtConnectionDot:focus-visible{outline:2px solid #647e9b;outline-offset:6px}
+.jpExtSrOnly{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.jpExtRibbon{min-height:38px;margin-top:8px;padding:5px 18px;background:#eef2f5;border:1px solid #e5e9ef;border-radius:10px}
+.jpExtRibbon span{font-size:10px;color:#708198;font-weight:700}
+.jpExtStudioMain{grid-template-columns:minmax(235px,24fr) minmax(400px,45fr) minmax(315px,31fr);gap:11px;margin-top:11px}
+.jpExtStudioPanel{padding:17px 15px;border-radius:13px;box-shadow:0 3px 16px #253c5708;border-color:#e0e5ed;background:#fffffff5;min-height:520px}
+.jpExtStudioPanel h2{font-size:12px;color:#35475f;letter-spacing:.015em;margin-bottom:9px}
+.jpExtSmallNote{font-size:10px;color:#7a899a;line-height:1.5}
+.jpExtSearchField{width:100%;height:35px;padding:8px 10px!important;border:1px solid #dce4ec;border-radius:8px;background:#fafbfd;color:#35475f;box-sizing:border-box;font-size:10px;margin:11px 0 12px}
+.jpExtSearchField::placeholder{color:#99a5b1}
+.jpExtActionTile{background:#f9fafb;padding:12px 11px;border-radius:9px;margin-bottom:7px;border:1px solid #e2e8ee}
+.jpExtActionTile.active{border-color:#cbb5bf;background:#f7f3f5;box-shadow:inset 3px 0 0 #a17c8a}
+.jpExtActionTile strong{font-size:11px;color:#34465e}
+.jpExtActionTile small{font-size:9px;color:#8793a3}
+.jpExtPanelHeader{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px;padding-bottom:9px;border-bottom:1px solid #e7ebef}
+.jpExtPanelHeader h2{font-size:16px;margin:2px 0 0;line-height:1.25;color:#35465b}
+.jpExtEyebrow{color:#7e8c9c;font-size:9px;letter-spacing:.08em;font-weight:850}
+.jpExtStatusPill{border:1px solid #dbe8df;background:#eff5f0;border-radius:30px;color:#668875;font-size:9px;padding:6px 8px;font-weight:850;white-space:nowrap}
+.jpExtActionInfo{display:grid;grid-template-columns:1.3fr 1fr .9fr;gap:8px;padding:12px 1px;border-bottom:1px solid #e6eaf0}
+.jpExtActionInfo>div{border-right:1px solid #e2e6ea;padding-right:5px;min-width:0}
+.jpExtActionInfo>div:last-child{border:0}
+.jpExtActionInfo small{display:block;font-size:9px;font-weight:800;color:#7c8a99}
+.jpExtActionInfo strong{display:block;font-size:10px;font-weight:780;color:#384d61;line-height:1.35;margin-top:4px;overflow-wrap:anywhere}
+.jpExtKpiGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:13px 0 17px}
+.jpExtStudioKpi{margin:0;padding:10px 12px;border-radius:9px;border-color:#e1e7ed;background:#f5f7f9}
+.jpExtStudioKpi:last-child{background:#f0f5f1;border-color:#dfe9e1}
+.jpExtStudioKpi strong{font-size:23px;color:#41556b;display:block;margin:1px 0 0}
+.jpExtStudioKpi:last-child strong{color:#648c75}
+.jpExtStudioKpi small{margin:0;color:#8290a0;font-size:9px;font-weight:750}
+.jpExtFormTitle{border-top:1px solid #e8ecf0;padding-top:16px;margin:0 0 13px!important;font-size:12px!important}
+.jpExtFields{gap:11px}
+.jpExtFields label{font-size:10px;color:#75869b;font-weight:800}
+.jpExtFields input{height:38px;box-sizing:border-box;font-size:11px!important;padding:8px 10px!important;border-color:#dce3ea}
+.jpExtFields input:disabled{background:#f4f6f8;color:#9ba7b4}
+.jpExtTwoFields{display:grid;grid-template-columns:1.3fr .85fr;gap:10px}
+.jpExtSave{min-height:38px;background:#9e6475;border:1px solid #9e6475;color:#fff;font-size:11px;letter-spacing:.02em;border-radius:9px}
+.jpExtSave:hover{background:#895867}
+.jpExtInfoNote{margin:0;border:1px solid #dee8ef;background:#f2f6fa;border-radius:9px;padding:9px 11px}
+.jpExtWinnerTable{font-size:10px}
+.jpExtWinnerTable th{background:#f6f8fa;color:#718195;font-size:9px;letter-spacing:.02em;white-space:nowrap}
+.jpExtWinnerTable th,.jpExtWinnerTable td{padding:10px 5px;border-bottom-color:#e9edf0}
+.jpExtWinnerTable td{color:#52647b}
+.jpExtWinnerTable td strong{color:#3e5068}
+@media(max-width:1160px){.jpExtStudioMain{grid-template-columns:minmax(205px,1fr) minmax(340px,1.55fr)}.jpExtStudioMain>.jpExtStudioPanel:last-child{grid-column:1/-1;min-height:auto}}
+@media(max-width:700px){.jpExtStudioHeader{grid-template-columns:1fr 1.1fr 22px;padding:12px 13px;gap:7px;min-height:62px}.jpExtStudioLogo{max-width:170px}.jpExtStudioHeader h1{font-size:14px;letter-spacing:.015em}.jpExtStudioMain{grid-template-columns:minmax(0,1fr)}.jpExtStudioMain>.jpExtStudioPanel:last-child{grid-column:auto}.jpExtActionInfo{grid-template-columns:1fr 1fr}.jpExtActionInfo>div:last-child{grid-column:1/-1}.jpExtStudioPanel{min-height:auto}.jpExtTwoFields{grid-template-columns:1fr 1fr}.jpExtRibbon span{font-size:9px}}
+@media(max-width:420px){.jpExtStudioHeader h1{font-size:12px}.jpExtStudioLogo{max-width:135px}.jpExtTwoFields{grid-template-columns:1fr}}
+
+
+.jpExtActionBalance{display:inline-block;float:right;margin:5px 0 0;padding:4px 8px;border-radius:7px;background:#edf3ee;color:#6b9379;font-weight:850;font-size:9px}
+.jpExtActionTile{display:flow-root}
+.jpExtFormFeedback{min-height:0;border-radius:7px;color:#627d8b;font-size:10px;line-height:1.4}
+.jpExtFormFeedback:not(:empty){padding:8px 10px;background:#f0f5f8;border:1px solid #e0e9ef}
+.jpExtFormFeedback[data-error="true"]{background:#f7eff1;color:#955d6b;border-color:#e9d9de}

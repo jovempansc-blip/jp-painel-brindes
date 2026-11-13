@@ -3827,6 +3827,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 </style>
 <link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
 <link rel="stylesheet" href="assets/jp-promo-externa.css?v=AV58_1_44_IMPL_HML_20261111">
+<link rel="stylesheet" href="assets/jp-promo-passport-links.css?v=JP_LINKS_20261113">
 
 <style id="jp-distribution-visual-fit-20261111">
 /* HOTFIX VISUAL — Distribuição Geral / detalhada.
@@ -4823,6 +4824,11 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
                 <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
                 <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SELECIONE O PRÊMIO"></div>
                 <div class="promoDistributionGuide"><strong>REGRA:</strong> A PROMOÇÃO RESERVA O PRÊMIO DIRETAMENTE DA DISTRIBUIÇÃO. O SALDO NÃO É DUPLICADO E O SISTEMA BLOQUEIA QUANDO A QUANTIDADE NECESSÁRIA FOR MAIOR QUE A DISPONÍVEL.</div>
+                <div class="field full jpPromoLinkEntry" data-promo-only="1">
+                  <div><strong>PASSAPORTE MULTIEVENTOS · VÍNCULOS DE SHOWS</strong>
+                    <span id="jpPromoPassportSummary">VINCULE SHOWS EXISTENTES NA DISTRIBUIÇÃO GERAL, COM SEGMENTO E RESERVA ESPECÍFICOS.</span></div>
+                  <button type="button" id="jpPromoLinkEventsBtn">VINCULAR / EDITAR EVENTOS</button>
+                </div>
 
                 <div class="field"><label>NÚMERO DE GANHADORES</label><input class="control" type="number" min="1" step="1" id="promoQtyPerDraw" value="1"></div>
                 <div class="field"><label>BRINDES / INGRESSOS POR GANHADOR</label><input class="control" type="number" min="1" step="1" id="promoUnitsPerWinner" value="1"></div>
@@ -10114,7 +10120,7 @@ function promoFrequencyDisplay(p){
 }
 function promoRowActionsMarkup(p){
   if(promoTypeKey(p)==='merchan')return `<div class="promoActions merchanActions"><button class="actionIcon promoActionText" title="ABRIR NO OMR" aria-label="ABRIR NO OMR" onclick="openMerchanFromMain('${esc(p.id)}','edit')"><span class="iconGlyph">↗</span>OMR</button><button class="actionIcon" title="HISTÓRICO" aria-label="HISTÓRICO" onclick="openMerchanFromMain('${esc(p.id)}','history')"><span class="iconGlyph">↶</span></button></div>`;
-  return `<div class="promoActions"><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${esc(p.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon" title="DUPLICAR" aria-label="DUPLICAR" onclick="duplicatePromo('${esc(p.id)}')"><span class="iconGlyph">⧉</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${esc(p.id)}')"><span class="iconGlyph">🗑</span></button></div>`;
+  return `<div class="promoActions"><button type="button" class="actionIcon promoActionText" title="VINCULAR EVENTOS DO PASSAPORTE" aria-label="VINCULAR EVENTOS" data-jp-passport-promo="${esc(p.id)}">SHOWS</button><button class="actionIcon" title="EDITAR" aria-label="EDITAR" onclick="editPromo('${esc(p.id)}')"><span class="iconGlyph">✎</span></button><button class="actionIcon" title="DUPLICAR" aria-label="DUPLICAR" onclick="duplicatePromo('${esc(p.id)}')"><span class="iconGlyph">⧉</span></button><button class="actionIcon danger" title="EXCLUIR" aria-label="EXCLUIR" onclick="deletePromo('${esc(p.id)}')"><span class="iconGlyph">🗑</span></button></div>`;
 }
 function duplicatePromo(idValue){
   const source=promoByIdForMonth(idValue,state.currentMonth)||consolidatedPromoById(idValue);if(!source)return;
@@ -13155,6 +13161,11 @@ async function deleteDist(distId){
     alert('EXCLUSAO BLOQUEADA: ESTE PREMIO POSSUI SORTEIOS, PROMOCOES OU OUTROS VINCULOS EM ALGUM MES. HISTORICO PRESERVADO.');
     return;
   }
+  // Também protege o prêmio quando usado como evento adicional de um Passaporte.
+  try{
+    if(!window.JPPassportDistributionGuard?.verifyDeletion)throw new Error('VERIFICAÇÃO DOS PASSAPORTES INDISPONÍVEL.');
+    await window.JPPassportDistributionGuard.verifyDeletion(firebaseStateRootRef(),distId);
+  }catch(e){alert('EXCLUSÃO BLOQUEADA: '+e.message);return;}
   const label=distributionLabel(copies[0].d);
   const months=copies.map(row=>row.monthKey);
   if(!confirm('EXCLUIR '+label+' DE TODOS OS MESES ('+months.join(', ')+')?\n\nUMA COPIA PARA RESTAURACAO SERA MANTIDA NA LIXEIRA.'))return;
@@ -13699,6 +13710,9 @@ async function saveDistributionFromForm(generate=false){
   window.JPDistEditor?.status('saving','SALVANDO... AGUARDANDO CONFIRMAÇÃO DO FIREBASE.');
   try{
   if(!wasNew)await verifyDistributionBeforeSave(d.id);
+  // Compromissos Passaporte não podem ser reduzidos nem movidos silenciosamente.
+  if(!window.JPPassportDistributionGuard?.verify)throw new Error('PROTEÇÃO DOS VÍNCULOS DE PASSAPORTE INDISPONÍVEL.');
+  await window.JPPassportDistributionGuard.verify(firebaseStateRootRef(),d,state.currentMonth);
   storeDistributionAcrossMonths(d,state.currentMonth,wasNew,masterTotal);
   // Never leave monthly copies with diverging ledger versions after metadata edits.
   const ledger=distributionStockLedger(d.id);
@@ -15525,6 +15539,9 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 <script src="assets/jp-promo-externa-core.js?v=AV58_1_44_IMPL_HML_20261111"></script>
 <script src="assets/jp-promo-externa-firebase.js?v=AV58_HOTFIX_EXT_ACTIONS_20261113"></script>
 <script src="assets/jp-promo-externa-main.js?v=AV58_HOTFIX_EXT_ACTIONS_20261113"></script>
+<script src="assets/jp-passport-core.js?v=JP_LINKS_20261113"></script>
+<script src="assets/jp-passport-distribution-guard.js?v=JP_LINKS_20261113"></script>
+<script src="assets/jp-promo-passport-links.js?v=JP_LINKS_20261113"></script>
 <script src="assets/jp-dist-editor-v2.js?v=20261111b_PERSIST"></script>
 </body>
 </html>
