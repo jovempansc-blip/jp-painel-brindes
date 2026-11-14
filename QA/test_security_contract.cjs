@@ -14,8 +14,8 @@ test('no production configuration embedded in independent studio/reception',()=>
   const s=read(p);assert(s.includes('jp-promo-externa-env.js'));assert(!s.includes('AIzaSy'));assert(!s.includes('jp-painel-brindes-default-rtdb'));
  }
 });
-test('production fail-closed environment',()=>{
- const env=read('assets/jp-promo-externa-env.js');assert(env.includes('JP_EXT_FIREBASE_CONFIG = null'));assert(env.includes('JP_EXT_SECURE_BANK_VERIFIED = false'));
+test('official Firebase configuration with private bank fail-closed',()=>{
+ const env=read('assets/jp-promo-externa-env.js');assert(env.includes('JP_EXT_FIREBASE_CONFIG = Object.freeze('));assert(env.includes('"projectId": "jp-painel-brindes"'));assert(env.includes('JP_EXT_SECURE_BANK_VERIFIED = false'));
 });
 test('PII must not be stored on distribution branch',()=>{
  const core=read('assets/jp-promo-externa-core.js');assert(core.includes('const winner={id:winnerId'));const line=core.split('const winner={id:winnerId')[1].split(';')[0];assert(!line.includes('phone'));assert(!line.includes('name'));

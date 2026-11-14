@@ -14,6 +14,14 @@
   const multiplier=x=>unit(x)==='pair'?2:1;
   const fullName=x=>String(x||'').trim().replace(/\s+/g,' ').toUpperCase().slice(0,160);
   const digits=x=>String(x||'').replace(/\D/g,'').slice(0,15);
+  const cpfDigits=x=>String(x||'').replace(/\D/g,'').slice(0,11);
+  function cpfValid(value){const raw=String(value||'');if(!raw.trim())return true;
+   const d=raw.replace(/\D/g,'');
+   if(d.length!==11||/^(\d)\1+$/.test(d))return false;
+   for(let n=9;n<=10;n++){let sum=0;for(let i=0;i<n;i++)sum+=Number(d[i])*(n+1-i);
+    if((sum*10)%11%10!==Number(d[n]))return false;}
+   return true;
+  }
   const nowDay=(clock=Date.now())=>new Intl.DateTimeFormat('en-CA',{timeZone:ZONE,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(clock));
   const newId=(prefix='EXT')=>prefix+'_'+(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID().replace(/-/g,''):Math.random().toString(36).slice(2)+Date.now().toString(36));
   function fail(code,message){const e=new Error(message);e.code=code;throw e;}
@@ -132,7 +140,7 @@
       source:'PROMO_EXTERNA',sourceRef:winner.sourceRef,sourceId:winner.id,phone:digits(winner.phone),quantity:winner.quantity,
       createdAtMs:winner.registeredAtMs,createdAt:new Date(Number(winner.registeredAtMs)||Date.now()).toISOString()};
   }
-  return{clone,entries,integer,unit,multiplier,fullName,digits,nowDay,newId,dayValid,externalUnit,quotaUnits,actions,
+  return{clone,entries,integer,unit,multiplier,fullName,digits,cpfDigits,cpfValid,nowDay,newId,dayValid,externalUnit,quotaUnits,actions,
     actionReservedUnits,remainingUnallocated,consumedUnits,balanceUnits,visible,createAction,registerWinner,
     setBankStatus,registerPickup,cancelWinner,flatten,bankRecord,withDistribution};
 });

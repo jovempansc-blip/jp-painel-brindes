@@ -55,15 +55,16 @@
    }).join('')||'<tr><td colspan="6" class="jpExtEmpty">NENHUM REGISTRO PARA ESTE FILTRO.</td></tr>';
  }
  async function handleRegistration(ev){ev.preventDefault();if(busy)return;
-   const action=active().find(a=>a.id===selected),name=element('jpExtWinnerName').value,phone=element('jpExtPhone').value;
+   const action=active().find(a=>a.id===selected),name=element('jpExtWinnerName').value,phone=element('jpExtPhone').value,cpf=C.cpfDigits(element('jpExtCpf')?.value||'');
    if(!action)return show('SELECIONE UMA AÇÃO ATIVA.',true);
+   if(!C.cpfValid(element('jpExtCpf')?.value||''))return show('CPF INVÁLIDO. CORRIJA OS DÍGITOS OU DEIXE O CAMPO EM BRANCO.',true);
    const operator=operatorName();if(!operator)return show('INFORME A IDENTIFICAÇÃO DO LOCUTOR.',true);
    busy=true;renderStudio();show('SALVANDO E VALIDANDO O GANHADOR NO FIREBASE...');
    try{
-     const result=await store.registerWinner({month:action.distributionMonth,distributionId:action.distributionId,actionId:action.id,name,phone,quantity:1},operator);
+     const result=await store.registerWinner({month:action.distributionMonth,distributionId:action.distributionId,actionId:action.id,name,phone,quantity:1,cpf},operator);
      if(result.bankSynced){show('GANHADOR GRAVADO EM '+asBR(result.registeredAtMs)+' E ENVIADO À RECEPÇÃO.');}
      else{show('CADASTRO SALVO NO PRÊMIO, MAS O BANCO CENTRAL NÃO CONFIRMOU. A RECEPÇÃO BLOQUEARÁ A ENTREGA ATÉ A CONCILIAÇÃO. '+result.bankError,true);}
-     element('jpExtWinnerName').value='';element('jpExtPhone').value='';
+     element('jpExtWinnerName').value='';element('jpExtPhone').value='';if(element('jpExtCpf'))element('jpExtCpf').value='';
    }catch(error){show('CADASTRO NÃO CONFIRMADO: '+error.message,true);}
    finally{busy=false;renderStudio();}
  }
@@ -85,6 +86,10 @@
  function attachUI(){if(role==='studio'){
      element('jpExtActions').addEventListener('click',ev=>{const x=ev.target.closest('[data-action]');if(x){selected=x.dataset.action;renderStudio();}});
      element('jpExtWinnerForm').addEventListener('submit',handleRegistration);
+     element('jpExtCpf')?.addEventListener('input',e=>{
+      const d=C.cpfDigits(e.target.value);
+      e.target.value=d.slice(0,3)+(d.length>3?'.'+d.slice(3,6):'')+(d.length>6?'.'+d.slice(6,9):'')+(d.length>9?'-'+d.slice(9,11):'');
+     });
      element('jpExtActionSearch')?.addEventListener('input',renderStudio);
      element('jpExtWinnerSearch')?.addEventListener('input',renderStudio);
    }else{

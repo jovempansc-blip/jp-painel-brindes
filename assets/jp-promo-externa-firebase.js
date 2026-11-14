@@ -52,7 +52,8 @@
      const winnerId=payload.id||C.newId('EXTW');
      const bankRoot=this.db.ref(this.bankPath);
      const pendingRef=bankRoot.child('pendingExternal/EXTERNA_'+winnerId);
-     const name=C.fullName(payload.name),phone=C.digits(payload.phone);
+     const name=C.fullName(payload.name),phone=C.digits(payload.phone),cpf=C.cpfDigits(payload.cpf);
+     assert(C.cpfValid(payload.cpf),'CPF INFORMADO É INVÁLIDO. CONFIRA OS DÍGITOS.');
      assert(name.length>=5&&phone.length>=10,'NOME COMPLETO E TELEFONE COM DDD SÃO OBRIGATÓRIOS.');
      // Read protected winnerBank records to avoid repeated names/phones in same action.
      const all=await Promise.all([bankRoot.child('records').get(),bankRoot.child('pendingExternal').get()]);
@@ -61,9 +62,9 @@
      assert(!already,'OUVINTE JÁ CONSTA COMO GANHADOR DESTA AÇÃO.');
      // Secure bank subtree is the ONLY place where name/phone are stored.
      await pendingRef.set({id:winnerId,actionId:payload.actionId,distributionId:payload.distributionId,
-       month:payload.month,name,phone,status:'PENDENTE',registeredAtMs:this.serverTimestamp(),operator});
+       month:payload.month,name,phone,...(cpf?{cpf}:{}),status:'PENDENTE',registeredAtMs:this.serverTimestamp(),operator});
      let x;
-     try{x=await this.tx(payload.month,payload.distributionId,rows=>C.registerWinner(rows,{...payload,id:winnerId},
+     try{x=await this.tx(payload.month,payload.distributionId,rows=>C.registerWinner(rows,{...payload,cpf:undefined,id:winnerId},
        {operator,serverTimestamp:this.serverTimestamp(),day:C.nowDay()}));}
      catch(err){try{await pendingRef.remove();}catch(_){/* QA reconciliation log required */}throw err;}
      const action=x.dist.externalActions?.[payload.actionId];const winner=action?.winners?.[winnerId];
@@ -73,6 +74,7 @@
        const record=C.bankRecord({...winner,name,phone},{...action,prize:x.dist.prize||x.dist.title},
          C.nowDay(Number(winner.registeredAtMs)||Date.now()));
        record.actionId=payload.actionId;
+       if(cpf)record.cpf=cpf; // private winnerBank/records only; not public distributions
        const recordKey='EXTERNA_'+winnerId;
        const bankTx=await bankRoot.child('records/'+recordKey).transaction(v=>v||record,undefined,false);
        assert(bankTx.committed||bankTx.snapshot?.val(),'BANCO DE GANHADORES NÃO CONFIRMOU O REGISTRO.');
@@ -92,6 +94,7 @@
      assert(existing||(pending&&pending.name&&pending.phone),'REGISTRO PENDENTE SEM IDENTIFICAÇÃO NO BANCO PROTEGIDO. ESCALAR AO SUPERVISOR.');
      const record=existing||{...C.bankRecord({...w,name:pending.name,phone:pending.phone},{...a,prize:d.prize||d.title},
        C.nowDay(Number(w.registeredAtMs)||Date.now())),actionId:a.id};
+     if(pending?.cpf&&C.cpfValid(pending.cpf)&&!record.cpf)record.cpf=C.cpfDigits(pending.cpf);
      const t=await bank.child('records/'+id).transaction(prev=>prev||record,undefined,false);
      assert(t.committed||t.snapshot?.val(),'BANCO CENTRAL NÃO CONFIRMOU A CONCILIAÇÃO.');
      await this.tx(payload.month,payload.distributionId,rows=>C.setBankStatus(rows,{...payload,status:'CONFIRMADO'}));

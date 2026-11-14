@@ -1,0 +1,54 @@
+{
+  "base_commit": "97c239591e7db87c4c21c22c3dbf9d3a0a171fc9",
+  "paths": [
+    {
+      "path": "preview_recepcao.html",
+      "sha256": "367268a90bd55b9e465a65e146221ccc48ea862091e7e774de0e0fc57511b85e"
+    },
+    {
+      "path": "promo_externa.html",
+      "sha256": "f78c55135a548834ef4d811f07fe5dd2cb46260f14a2dff0246786b17d7c18e2"
+    },
+    {
+      "path": "assets/jp-promo-externa-env.js",
+      "sha256": "e21c86bcda4866c9962c0faa97de4db41530ad3005ab617f829095317271114f"
+    },
+    {
+      "path": "assets/jp-promo-externa-core.js",
+      "sha256": "1b24408f32005c6c77f5d680f238c0b596c9b445632b63731cb06384f2e7145f"
+    },
+    {
+      "path": "assets/jp-promo-externa-firebase.js",
+      "sha256": "a87c5412521baa51c654f103e223bf8af80a40c8509c1ee5cf147c74795665d3"
+    },
+    {
+      "path": "assets/jp-promo-externa-pages.js",
+      "sha256": "63b2d6bc4087419574d3692f26a37912def1f75a08ce62e748a7cf8aec9cefca"
+    },
+    {
+      "path": "assets/jp-reception-passport.js",
+      "sha256": "391dd10eee828106310386b917da74fc2e06dcd80fc74190b31fa85a535627cf"
+    },
+    {
+      "path": "assets/jp-reception-passport.css",
+      "sha256": "8e2044b87d13018c915f94c92f81afcef5c897441680edd47ab357188b0cce35"
+    },
+    {
+      "path": "QA/test_security_contract.cjs",
+      "sha256": "a3f8081080a917dbd72d3ef534b523c41ac1092af9f618ffb3a9d7816b312db5"
+    },
+    {
+      "path": "QA/test_fixadas_cpf_20261114.cjs",
+      "sha256": "c29e6f521d895368012f8961fa3bc18d0eda49bc86fc2af98e77b7b6ad81f04b"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_FIXADAS_CPF_FIREBASE_20261114.md",
+      "sha256": "8338a79d256c17eb042d99e3e65da8b7c00140a1475e7d6ab35577b1b224ec89"
+    }
+  ],
+  "security": {
+    "nominal_writes_enabled": false,
+    "firebase_rules_modified": false
+  },
+  "qa_pass": 62
+}
