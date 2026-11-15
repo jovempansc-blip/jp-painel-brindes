@@ -1,0 +1,33 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const source=fs.readFileSync(path.resolve(__dirname,'../assets/jp-reception-passport.js'),'utf8');
+const html=fs.readFileSync(path.resolve(__dirname,'../preview_recepcao.html'),'utf8');
+const ex=fs.readFileSync(path.resolve(__dirname,'../assets/jp-promo-externa-pages.js'),'utf8');
+const env=fs.readFileSync(path.resolve(__dirname,'../assets/jp-promo-externa-env.js'),'utf8');
+const store=fs.readFileSync(path.resolve(__dirname,'../assets/jp-promo-externa-firebase.js'),'utf8');
+let count=0;const test=(label,fn)=>{fn();console.log('PASS',++count,label)};
+const attr=source.slice(source.indexOf('const enabledMeta='),source.indexOf('const note='));
+const auth=source.slice(source.indexOf('async function identity(){'),source.indexOf('const promos='));
+const f=new Function('window','user','receptionOperatorIdentity',attr+auth+';return {identity,enabledMeta,enabledPrivate}');
+const pilot=f({JP_BOARD_PILOT_SYNTHETIC:true},()=>null,()=>({sector:'RECEPÇÃO',name:'OPERADOR SINTETICO'}));
+const locked=f({JP_BOARD_PILOT_SYNTHETIC:false},()=>null,()=>({sector:'RECEPÇÃO'}));
+(async()=>{
+ test('Recepção usa marca explícita de piloto apenas na versão do Board',()=>assert(html.includes('window.JP_BOARD_PILOT_SYNTHETIC=true')));
+ test('vínculos de shows habilitados no piloto',()=>assert(pilot.enabledMeta()));
+ test('baixas por evento habilitadas no piloto',()=>assert(pilot.enabledPrivate()));
+ test('em produção sem piloto, vínculos permanecem protegidos',()=>assert(!locked.enabledMeta()));
+ test('em produção sem piloto, baixa nominal permanece protegida',()=>assert(!locked.enabledPrivate()));
+ const identity=await pilot.identity();
+ test('sem login Google a Recepção utiliza setor identificado',()=>assert.equal(identity.sector,'RECEPÇÃO'));
+ test('operador de piloto não finge autenticação Google',()=>assert(identity.pilot===true&&identity.uid.startsWith('PILOTO_')));
+ let rejected=false;try{await locked.identity();}catch(err){rejected=/LOGIN AUTENTICADO/.test(err.message)}
+ test('sem piloto o contrato anterior exige login',()=>assert(rejected));
+ test('baixas por evento mantêm transação com controle de revisão',()=>assert(source.includes('if(Number(latest.revision||0)!==rev||latest.status===\'UTILIZADO\')')));
+ test('ledger de ticket fica no mesmo commit transacional',()=>assert(source.includes('current.ticketLedger={')));
+ test('ação sem login usa configuração oficial atual',()=>assert(env.includes('JP_EXT_PILOT_MODE = true;')&&env.includes('"projectId": "jp-painel-brindes"')));
+ test('link Externa não abre Google Auth durante piloto',()=>assert(ex.includes("const onLogin=callback=>window.JP_EXT_PILOT_MODE===true?callback(null)")));
+ test('Banco de Ganhadores é lido mesmo sem login durante piloto',()=>assert(ex.includes("if(user||window.JP_EXT_PILOT_MODE===true)")));
+ test('salvamento da Externa permite piloto e conserva validação de saldo',()=>assert(store.includes('if(this.pilotMode)return;')&&store.includes('await this.tx(')));
+ test('a autorização do piloto não altera as regras do servidor',()=>assert(!source.includes('updateRules(')&&!env.includes('SERVICE_ACCOUNT')));
+ console.log('PILOT_PASSPORT_ACCESS',count,'PASS 0 FAIL');
+})().catch(e=>{console.error(e);process.exitCode=1});

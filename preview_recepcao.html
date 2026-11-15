@@ -1393,6 +1393,9 @@ const receptionWinnerBankRef=receptionDatabase.ref('jp-painel-brindes/winnerBank
 function receptionPromoProfile(row){if(row.source!=='promo')return null;const p=receptionPromosForDate(row.date).find(p=>p.id===row.id)||receptionAllPromos().find(p=>p.id===row.id);if(!p||p.kind!=='promo')return null;const list=p.resultWinnersByHour?.[row.occurrenceKey]||p.resultWinners||[],w=row.winnerId?list.find(w=>w.id===row.winnerId):list[Number(row.winnerIndex)];return w&&promoWinnerRules(p,w)?{p,w}:null;}
 function receptionProfileFieldsHtml(row){const profile=receptionPromoProfile(row);receptionProfileBaseline=profile?JSON.parse(JSON.stringify(profile)):null;if(!profile)return '';const{p,w}=profile,status=promoWinnerProfileStatus(w,p),extra=promoWinnerExtraFieldsHtml(w,p).replace('<details class="promoWinnerDetails">','<details class="promoWinnerDetails" open>');const content=`<section class="receptionProfileFields promoWinnerCandidate" id="receptionProfileFields" data-winner-id="${esc(w.id||'')}"><label class="promoProfileField"><span>NOME COMPLETO DO GANHADOR</span><input class="promoResultWinnerInput promoProfileInput" type="text" maxlength="140" value="${esc(w.name||'')}" autocomplete="off"></label>${extra}<div class="promoProfileStatus ${status.ready?'ready':'waiting'}">${esc(status.label)}</div>${!row.deliveredAt?'<button class="pickupSheetAction secondary" id="sheetSaveWinnerFields" type="button">SALVAR DADOS DO GANHADOR</button>':''}</section>`;return row.deliveredAt?content.replace(/<input /g,'<input disabled '):content;}
 async function receptionCommitPromoProfile(row,data=null,{pickup=false,undo=false}={}){
+  const currentRow=typeof findReceptionRow==='function'?(findReceptionRow(row)||row):row;
+  if(pickup&&!undo&&currentRow.expired&&!currentRow.deliveredAt)
+   throw Error('RETIRADA BLOQUEADA: PRAZO ENCERRADO E COTA PROMOCIONAL LIBERADA.');
   const profile=receptionPromoProfile(row);if(!profile)throw new Error('CADASTRO DO GANHADOR NÃO LOCALIZADO.');
   await ensureReceptionOnline();const{p,w}=profile,displayTime=String(row.time||'00:00'),sourceRef=promoWinnerSourceRef(p,row.date,displayTime),distribution=distributionById(p.distributionId)||{},prize=upper(p.prizeTitle||distribution.title||distribution.show||distribution.prize||p.prize||'PRÊMIO DA PROMOÇÃO');
   const context={sourceRef,date:row.date,time:displayTime,slot:displayTime.replace(':','H').replace(/H00$/,'H'),program:upper(p.resultProgram||receptionProgramFromSchedule(row.date,displayTime,p.station||'JP1017')||'RESULTADO PROMOÇÃO'),prize};
@@ -1413,6 +1416,8 @@ async function saveReceptionWinnerFields(){
   finally{receptionProfileSaving=false;if(button){button.disabled=false;button.textContent='SALVAR DADOS DO GANHADOR';}}
 }
 function pickupButton(row){
+  if((row.source==='promo'||row.promoResultId)&&row.expired&&!row.deliveredAt)
+    return '<div class="pickupWrap"><div class="expiredStamp">PRAZO ENCERRADO<br>COTA DISPONÍVEL PARA NOVOS SORTEIOS</div></div>';
   if(row.profileManaged&&!row.profileReady&&!row.deliveredAt)return `<div class="pickupWrap"><button class="pickupBtn profilePending" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date)}">COMPLETAR DADOS</button></div>`;
   if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">FORA DO PRAZO DE RETIRADA<br>AINDA NÃO RETIRADO</div><button class="pickupBtn expiredPickup" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
   const done=!!row.deliveredAt;
@@ -1423,6 +1428,11 @@ function pickupButton(row){
   return `<div class="pickupWrap"><button class="pickupBtn${statusClass}" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
 }
 function setPickup(row,undo=false){
+  const liveRow=typeof findReceptionRow==='function'?(findReceptionRow(row)||row):row;
+  if(!undo&&(liveRow?.source==='promo'||liveRow?.promoResultId)&&liveRow.expired&&!liveRow.deliveredAt){
+    showReceptionToast('PRAZO ENCERRADO. O INGRESSO VOLTOU AO SALDO PROMOCIONAL.',true);
+    return Promise.resolve(false);
+  }
   const actual=row.source==='promo'?findReceptionRow(row):row;if(actual?.profileManaged){if(!undo&&!actual.profileReady){showReceptionToast('COMPLETE OS DADOS OBRIGATÓRIOS ANTES DA RETIRADA.',true);return Promise.resolve(false);}return receptionCommitPromoProfile(actual,null,{pickup:true,undo}).then(()=>{render();refreshOpenReceptionSheet();return true;}).catch(error=>{showReceptionToast(error.message,true);throw error;});}
   selectMonthForDate(row.date||$('dateFilter').value||todayISO());
   const now=new Date();
@@ -1628,11 +1638,12 @@ firebaseRef.child('programSchedules').on('value',snap=>{const value=snap.val();s
 window.addEventListener('online',()=>{try{if(typeof receptionDatabase.goOnline==='function')receptionDatabase.goOnline();}catch(error){}receptionScheduleReconnect(250);});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!receptionConnected)receptionScheduleReconnect(250);});
 </script>
+<script>window.JP_BOARD_PILOT_SYNTHETIC=true;</script>
 <script src="assets/jp-passport-core.js?v=JP_TICKET_LEDGER_20261114"></script>
-<script src="assets/jp-reception-passport.js?v=JP_TICKET_LEDGER_20261114"></script>
+<script src="assets/jp-reception-passport.js?v=JP_PILOT_FULL_20261115"></script>
 <script src="assets/jp-promo-externa-env.js"></script>
 <script src="assets/jp-promo-externa-core.js"></script>
 <script src="assets/jp-promo-externa-firebase.js"></script>
-<script src="assets/jp-promo-externa-reception-bridge.js"></script>
+<script src="assets/jp-promo-externa-reception-bridge.js?v=JP_PILOT_FULL_20261115"></script>
 </body>
 </html>

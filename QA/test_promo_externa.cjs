@@ -51,5 +51,26 @@ const test=(title,fn)=>Promise.resolve().then(fn).then(()=>{cases++;console.log(
  await test('RTDB: ganhador aparece na mesma origem da Recepção com hora do servidor',async()=>{const db=mockDB();const a=new Store(db,{auth:{currentUser:{uid:'ONE'}},secureBankVerified:true});global.firebase={database:Object.assign(function(){},{ServerValue:{TIMESTAMP:1794410000000}})};await a.createAction({month:'2026-11',distributionId:'D_P12',id:'AA',title:'Promo P12',startsOn:DAY,endsOn:'2026-11-20',quantity:3},'DIREÇÃO');await a.registerWinner({month:'2026-11',distributionId:'D_P12',actionId:'AA',id:'W1',name:'Pessoa Número Um',phone:'48999999999'},'LOCUTOR');const month=await a.allMonths();const rows=C.flatten(month);assert.equal(rows[0].winners[0].registeredAtMs,1794410000000);assert.equal(rows[0].winners[0].bankStatus,'CONFIRMADO');});
  await test('RTDB: autenticação é obrigatória para criar ação e registrar',async()=>{const db=mockDB();let err='';try{await new Store(db,{auth:{currentUser:null},secureBankVerified:true}).createAction({month:'2026-11',distributionId:'D_P12',title:'Promo P12',startsOn:DAY,endsOn:'2026-11-20',quantity:2},'DIREÇÃO')}catch(e){err=e.message;}assert.match(err,/AUTENTICAÇÃO/);assert.equal(db.trace.filter(x=>x[0]==='tx').length,0);});
  await test('integração no Principal preserva objeto externalActions ao editar prêmio',()=>{const fs=require('node:fs');const html=fs.readFileSync(require('node:path').resolve(__dirname,'../index.html'),'utf8');assert(html.includes('d.externalActions=clone(existing.externalActions||{})'));assert(html.includes('C.actionReservedUnits(existing)'));assert(html.includes('if(source?.snapshotMonth && source.snapshotMonth!==monthKey) copy.externalActions={}'));});
- console.log('SUMMARY',cases,'/',14,'PASS');
+ await test('PILOTO: cadastro nominal fictício sem login grava no Banco de Ganhadores',async()=>{
+  const db=mockDB(),store=new Store(db,{pilotMode:true,auth:null,secureBankVerified:false});
+  global.firebase={database:Object.assign(function(){},{ServerValue:{TIMESTAMP:1794410000000}})};
+  const act=await store.createAction({month:'2026-11',distributionId:'D_P12',id:'PILOT_A',title:'AÇÃO PILOTO TESTE',startsOn:DAY,endsOn:'2026-11-20',quantity:2},'LOCUTOR PILOTO');
+  assert.equal(act.allocatedUnits,4);
+  const w=await store.registerWinner({month:'2026-11',distributionId:'D_P12',actionId:'PILOT_A',id:'PILOT_W',name:'Pessoa Fictícia Teste',phone:'48999999999',cpf:'52998224725'},'OPERADOR PILOTO');
+  assert.equal(w.bankSynced,true);
+  assert.equal(db.data['jp-painel-brindes'].winnerBank.records.EXTERNA_PILOT_W.name,'PESSOA FICTÍCIA TESTE');
+  assert.equal(db.data['jp-painel-brindes'].winnerBank.records.EXTERNA_PILOT_W.cpf,'52998224725');
+  const d=db.data['jp-painel-brindes'].state.months['2026-11'].distributions[0];
+  assert(!JSON.stringify(d).includes('52998224725'),'CPF should not be written to distribution allocation');
+  const done=await store.pickup({month:'2026-11',distributionId:'D_P12',actionId:'PILOT_A',winnerId:'PILOT_W'},'RECEPÇÃO PILOTO');
+  assert.equal(done.status,'RETIRADO');
+  assert.equal(db.data['jp-painel-brindes'].winnerBank.records.EXTERNA_PILOT_W.deliveryStatus,'RETIRADO');
+ });
+ await test('PILOTO: saldo continua transacional e não duplica premiação sem login',async()=>{
+  const db=mockDB(),a=new Store(db,{pilotMode:true}),b=new Store(db,{pilotMode:true});
+  await a.createAction({month:'2026-11',distributionId:'D_P12',id:'ACTION_1',title:'TESTE SINTÉTICO',startsOn:DAY,endsOn:'2026-11-20',quantity:1},'PILOTO');
+  await a.registerWinner({month:'2026-11',distributionId:'D_P12',actionId:'ACTION_1',id:'W_1',name:'Pessoa Fictícia Um',phone:'48999999999'},'PILOTO');
+  await assert.rejects(b.registerWinner({month:'2026-11',distributionId:'D_P12',actionId:'ACTION_1',id:'W_2',name:'Pessoa Fictícia Dois',phone:'48988888888'},'PILOTO'),/SALDO DA AÇÃO INSUFICIENTE/);
+ });
+ console.log('SUMMARY',cases,'/',16,'PASS');
 })().catch(e=>{console.error('FAIL',e.stack||e);process.exit(1)});

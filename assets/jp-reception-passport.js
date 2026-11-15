@@ -10,11 +10,17 @@ const promoTitle=p=>String(p?.name||p?.title||p?.prizeTitle||'PROMOÇÃO');
 const dateText=x=>typeof formatBR==='function'?formatBR(x):x;
 const encode=x=>Array.from(String(x||'')).map(ch=>ch.codePointAt(0).toString(16)).join('-');
 const privatePath='jp-painel-brindes/passportPrivate';
-const enabledMeta=()=>window.JP_PASSPORT_METADATA_RULES_HOMOLOGATED===true;
-const enabledPrivate=()=>window.JP_PASSPORT_PRIVATE_RULES_HOMOLOGATED===true;
+const enabledMeta=()=>window.JP_BOARD_PILOT_SYNTHETIC===true||window.JP_PASSPORT_METADATA_RULES_HOMOLOGATED===true;
+const enabledPrivate=()=>window.JP_BOARD_PILOT_SYNTHETIC===true||window.JP_PASSPORT_PRIVATE_RULES_HOMOLOGATED===true;
 const note=(s,bad=false)=>typeof showReceptionToast==='function'?showReceptionToast(s,bad):window.alert(s);
 let pins={},passports={},tab='ativas',historyMonth=todayISO().slice(0,7),selected='',menuId='',busy=false,privateAllowed=false,privateData={},privateId='',privateListener=null;
 async function identity(){
+ // Piloto expressamente autorizado com registros fictícios e sem login no link.
+ // Persistir o setor/operador do painel para auditoria, sem reivindicar identidade Google.
+ if(window.JP_BOARD_PILOT_SYNTHETIC===true){
+  const operator=typeof receptionOperatorIdentity==='function'?receptionOperatorIdentity():{name:'RECEPÇÃO'};
+  return {uid:'PILOTO_'+String(operator?.sector||'RECEPCAO').replace(/[^A-Za-z0-9_-]/g,'').slice(0,40),sector:'RECEPÇÃO',pilot:true};
+ }
  const u=user();if(!u)throw Error('LOGIN AUTENTICADO É OBRIGATÓRIO.');
  const token=await u.getIdTokenResult(true),claims=token?.claims||{};
  if(claims.jpReception!==true&&claims.jpAdmin!==true)throw Error('PERMISSÃO DA RECEPÇÃO NÃO HOMOLOGADA PARA ESTA OPERAÇÃO.');

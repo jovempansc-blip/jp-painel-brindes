@@ -3997,6 +3997,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 </style>
 
 <link rel="stylesheet" href="assets/jp-dist-editor-v2.css?v=20261111b_PERSIST">
+<script src="assets/jp-promo-expiry.js?v=JP_PILOT_FULL_20261115"></script>
 </head>
 <body>
 <div class="wrap">
@@ -14999,7 +15000,7 @@ function promoCommitmentQty(p,referenceDate=todayISO()){
  // O Passaporte não reserva o prêmio-base de novo; os shows vinculados comprometem suas próprias cotas.
  if(promoHasPassportLinks(p))return 0;
  const ended=!!(p?.endDate||p?.drawDate) && String(p.endDate||p.drawDate)<String(referenceDate);
-  return (p?.occurrences||[]).reduce((sum,o)=>{const status=normalizeStatus(o.status);if(status==='CANCELADO')return sum;if(status==='REALIZADO')return sum+promoOccurrenceStockUnits(o,p);return ended?sum:sum+promoOccurrenceStockUnits(o,p);},0);
+  return (p?.occurrences||[]).reduce((sum,o)=>{const status=normalizeStatus(o.status);if(status==='CANCELADO')return sum;if(status==='REALIZADO'){const committed=promoOccurrenceStockUnits(o,p);const returned=window.JPPromoExpiry?.releasedUnits?.(p,o,referenceDate)||0;return sum+Math.max(0,committed-returned);}return ended?sum:sum+promoOccurrenceStockUnits(o,p);},0);
 }
 function uniqueConsolidatedPromos(){
   const ids=new Set(); Object.values(state.months||{}).forEach(m=>(m.promos||[]).forEach(p=>p?.id&&ids.add(p.id)));

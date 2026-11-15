@@ -13,7 +13,8 @@
   const safe=x=>String(x??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   const stamp=x=>Number(x)?new Date(Number(x)).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'AGUARDANDO SERVIDOR';
   let months={},people={},engine=null,auth=null,busy=false,unsubMonths=null,bankRef=null;
-  const secure=global.JP_EXT_SECURE_BANK_VERIFIED===true;
+  const pilot=global.JP_BOARD_PILOT_SYNTHETIC===true||global.JP_EXT_PILOT_MODE===true;
+  const secure=pilot||global.JP_EXT_SECURE_BANK_VERIFIED===true;
   function message(msg){host.textContent=msg;if(count)count.textContent='0 A RETIRAR';setVisible(false);}
   function cleanup(){
     if(unsubMonths){unsubMonths();unsubMonths=null;}
@@ -94,20 +95,22 @@
   }
   try{
     const app=global.firebase.app();
-    auth=global.firebase.auth(app);
+    auth=pilot?null:global.firebase.auth(app);
     const db=global.firebase.database(app);
-    auth.onAuthStateChanged(user=>{
+    const activate=user=>{
       cleanup();
-      if(!user){
+      if(!user&&!pilot){
         host.innerHTML='<div class="receptionCampaignEmpty">AUTENTICAÇÃO OBRIGATÓRIA PARA VER GANHADORES EXTERNOS. <button class="pickupBtn" type="button" data-ext-login>ENTRAR COM GOOGLE</button></div>';
         return;
       }
-      engine=new DB(db,{auth,secureBankVerified:true});
+      engine=new DB(db,{auth,secureBankVerified:!pilot,pilotMode:pilot});
       unsubMonths=engine.onMonths(data=>{months=data||{};render();},
         err=>message('NÃO FOI POSSÍVEL LER AS PROMOÇÕES EXTERNAS: '+err.message));
       bankRef=db.ref('jp-painel-brindes/winnerBank/records');
       bankRef.on('value',snapshot=>{people=snapshot.val()||{};render();},
         err=>{cleanup();message('BANCO DE GANHADORES NÃO AUTORIZADO: '+err.message);});
-    },err=>message('FALHA DE AUTENTICAÇÃO: '+err.message));
+    };
+    if(pilot)activate(null);
+    else auth.onAuthStateChanged(activate,err=>message('FALHA DE AUTENTICAÇÃO: '+err.message));
   }catch(error){message('INTEGRAÇÃO DA RECEPÇÃO INDISPONÍVEL: '+error.message);}
 })(window);

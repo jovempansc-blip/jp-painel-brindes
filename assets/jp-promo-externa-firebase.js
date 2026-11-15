@@ -8,12 +8,13 @@
    constructor(db,options={}){
      assert(db&&typeof db.ref==='function','FIREBASE DATABASE INDISPONÍVEL.');
      this.db=db;this.statePath=options.statePath||'jp-painel-brindes/state';this.bankPath=options.bankPath||'jp-painel-brindes/winnerBank';
-     this.auth=options.auth||null;this.requireAuth=options.requireAuth!==false;this.secureBankVerified=options.secureBankVerified===true;
+     this.auth=options.auth||null;this.pilotMode=options.pilotMode===true;this.requireAuth=options.requireAuth!==false;this.secureBankVerified=options.secureBankVerified===true;
      // Allows ONLY an action without winners/PII from the already operating main panel.
      // All winner registration, pickup, cancellation and private bank actions retain checkAuth().
      this.allowNonPersonalActions=options.allowNonPersonalActions===true;
    }
    checkAuth(){
+     if(this.pilotMode)return; // BOARD: synthetic-only pilot; never describe as a verified private bank.
      if(this.requireAuth)assert(this.auth?.currentUser?.uid,'AUTENTICAÇÃO FIREBASE OBRIGATÓRIA PARA GRAVAÇÃO.');
      assert(this.secureBankVerified,'ESCRITA BLOQUEADA: BANCO DE GANHADORES AINDA É LEGÍVEL SEM AUTENTICAÇÃO. A09 DEVE VALIDAR REGRAS SEGURAS NA HML ANTES DE ATIVAR ESTE MÓDULO.');
    }

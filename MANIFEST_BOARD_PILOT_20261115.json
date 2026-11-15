@@ -1,0 +1,69 @@
+{
+  "baseline": "b96d9f674a05096c4fd7c99b1616ad6f91f7416b",
+  "explicit_board_pilot_synthetic": true,
+  "firebase_rules_changed": false,
+  "firebase_writes_executed": false,
+  "test_count": 129,
+  "files": [
+    {
+      "path": "index.html",
+      "sha256": "13a13732bbc74c6315c8dee670acbec5316b33789db0dc8ae3f2f725cb843f6d"
+    },
+    {
+      "path": "promo_externa.html",
+      "sha256": "76622e801bb3c97f6fda2fde1af26ca776bb473fd00114d1ac42f05d68bcff6b"
+    },
+    {
+      "path": "recepcao_externa.html",
+      "sha256": "a852d238a9a458d01cda26304b30f99c319c933809cdda517995f03170b46f74"
+    },
+    {
+      "path": "preview_recepcao.html",
+      "sha256": "0e34f7f2a31bab1fb33b0d21c023401901562236c4954fa92a0b6cbdeba00293"
+    },
+    {
+      "path": "assets/jp-promo-externa-env.js",
+      "sha256": "164d9fcb49992d97616ea202ba7a9367af821065e49465cfddf20b51de7a5b17"
+    },
+    {
+      "path": "assets/jp-promo-externa-firebase.js",
+      "sha256": "7d3663adc0ba37decb53285b43c4dfa9249c6d97ab36c32561c4d4e6bf3c18f5"
+    },
+    {
+      "path": "assets/jp-promo-externa-pages.js",
+      "sha256": "2d387ef50102e1186a279914f773ac7639ab6eb737719e57acded721b06f01d1"
+    },
+    {
+      "path": "assets/jp-reception-passport.js",
+      "sha256": "0a38ed6d68c9c4e2242f567ab0cfd89224687d63e112b962c8a1a7336075c7a1"
+    },
+    {
+      "path": "assets/jp-promo-expiry.js",
+      "sha256": "d1dc6e52594bbfd946639d494e5acfba4554edab772228c54921aa610c0d1209"
+    },
+    {
+      "path": "assets/jp-promo-externa-reception-bridge.js",
+      "sha256": "f01d81a1ab2a884d66c51afc4262fb58be26618f1c5ca128691c6121f8d3e976"
+    },
+    {
+      "path": "QA/test_promo_externa.cjs",
+      "sha256": "7d33fcf1ecc87a52b418f6439d387c8f7e43d842df6dc14c7828bf25d92ff08a"
+    },
+    {
+      "path": "QA/test_pilot_promo_expiry_20261115.cjs",
+      "sha256": "cea0d56ba89baa004af9aee795e0ff2adccb4350cf2b80f50d5e3aa02f967e2c"
+    },
+    {
+      "path": "QA/test_pilot_passport_access_20261115.cjs",
+      "sha256": "13919773e5f46b4bb5348ae69353b4e8b4c6b8aa932e1160c6618dd0d35d8f4a"
+    },
+    {
+      "path": "QA/test_pilot_reception_bridge_20261115.cjs",
+      "sha256": "321b65b9646eb935bd953d3da9c890c380a358433955415dba3cc8f3ea099207"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_BOARD_PILOT_20261115.md",
+      "sha256": "52a137ea3b0d372ef7ed184b694b6305cc196f37e2faa2d70802ddf4cd3482ba"
+    }
+  ]
+}

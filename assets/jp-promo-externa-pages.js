@@ -15,7 +15,7 @@
  const show=(text,error=false)=>{const x=element('jpExtMessage');if(x){x.textContent=text;x.dataset.error=error?'true':'false';}};
  function operatorName(){
   const value=(element('jpExtOperator')?.value||'').trim();
-  const person=window.firebase?.auth?.()?.currentUser;
+  const person=window.JP_EXT_PILOT_MODE===true?null:window.firebase?.auth?.()?.currentUser;
   return (value||person?.displayName||person?.email||'').slice(0,100);
  }
  function active(){return C.flatten(months,true,C.nowDay()).sort((a,b)=>a.title.localeCompare(b.title,'pt-BR'));}
@@ -35,9 +35,9 @@
    element('jpExtUnit').textContent=selectedAction?.deliveryUnit==='pair'?'PARES':'UNIDADES';
    element('jpExtUsed').textContent=selectedAction?String(selectedAction.consumed/C.multiplier(selectedAction.deliveryUnit)):'0';
    element('jpExtAllocated').textContent=selectedAction?String(selectedAction.quantity):'0';
-   const protectedWritesAvailable=window.JP_EXT_SECURE_BANK_VERIFIED===true&&!!window.firebase?.auth?.()?.currentUser?.uid;
+   const protectedWritesAvailable=window.JP_EXT_PILOT_MODE===true||(window.JP_EXT_SECURE_BANK_VERIFIED===true&&!!window.firebase?.auth?.()?.currentUser?.uid);
    element('jpExtSubmit').disabled=!selectedAction||!store||busy||!protectedWritesAvailable;
-   element('jpExtSubmit').title=protectedWritesAvailable?'CADASTRAR GANHADOR':'GRAVAÇÃO NOMINAL AGUARDANDO REGRAS PRIVADAS HOMOLOGADAS DO FIREBASE';
+   element('jpExtSubmit').title=protectedWritesAvailable?'CADASTRAR GANHADOR · AMBIENTE PILOTO':'CADASTRO INDISPONÍVEL';
    const winnerSearch=(element('jpExtWinnerSearch')?.value||'').toUpperCase();
    const rows=(selectedAction?.winners||[]).filter(w=>(bankRecords['EXTERNA_'+w.id]?.name||'').toUpperCase().includes(winnerSearch))
       .sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0));
@@ -101,7 +101,7 @@
    }
    // A Promo Externa é de acesso direto, sem botão/diálogo de login.
    // O painel separado da Recepção Externa mantém o fluxo original.
-   if(role!=='studio')element('jpExtLogin')?.addEventListener('click',async()=>{
+   if(role!=='studio'&&window.JP_EXT_PILOT_MODE!==true)element('jpExtLogin')?.addEventListener('click',async()=>{
      try{const provider=new window.firebase.auth.GoogleAuthProvider();await window.firebase.auth().signInWithPopup(provider);show('SESSÃO AUTENTICADA.');}
      catch(error){show('FALHA NA AUTENTICAÇÃO: '+error.message,true);}
    });
@@ -115,13 +115,14 @@
      const app=window.firebase.app();
      window.firebase.database(app).ref('.info/connected').on('value',snap=>connection(snap.val()===true?'connected':'offline'),
       error=>{connection('offline');show('FALHA DE CONEXÃO: '+error.message,true);});
-     store=new DB(window.firebase.database(app),{auth:window.firebase.auth(app),secureBankVerified:window.JP_EXT_SECURE_BANK_VERIFIED===true});
+     store=new DB(window.firebase.database(app),{auth:window.JP_EXT_PILOT_MODE===true?null:window.firebase.auth(app),secureBankVerified:window.JP_EXT_SECURE_BANK_VERIFIED===true,pilotMode:window.JP_EXT_PILOT_MODE===true});
      store.onMonths(value=>{months=value;role==='studio'?renderStudio():renderReception();},e=>show('FALHA DE LEITURA NO FIREBASE: '+e.message,true));
-     window.firebase.auth().onAuthStateChanged(user=>{
-       if(element('jpExtAuthState'))element('jpExtAuthState').textContent=role==='studio'?(user?'FIREBASE CONECTADO; SESSÃO PREEXISTENTE':'FIREBASE CONECTADO; CADASTRO NOMINAL PROTEGIDO'):(user?'CONECTADO: '+(user.email||user.uid):'NÃO AUTENTICADO — ENTRE COM CONTA AUTORIZADA');
+     const onLogin=callback=>window.JP_EXT_PILOT_MODE===true?callback(null):window.firebase.auth(app).onAuthStateChanged(callback);
+     onLogin(user=>{
+       if(element('jpExtAuthState'))element('jpExtAuthState').textContent=window.JP_EXT_PILOT_MODE===true?'AMBIENTE PILOTO · DADOS FICTÍCIOS':(role==='studio'?(user?'FIREBASE CONECTADO; SESSÃO PREEXISTENTE':'CADASTRO NOMINAL PROTEGIDO'):(user?'CONECTADO: '+(user.email||user.uid):'NÃO AUTENTICADO'));
        if(bankListener){bankListener.off('value');bankListener=null;}
        bankRecords={};
-       if(user){
+       if(user||window.JP_EXT_PILOT_MODE===true){
          bankListener=window.firebase.database().ref('jp-painel-brindes/winnerBank/records');
          bankListener.on('value',snap=>{
            bankRecords=snap.val()||{};

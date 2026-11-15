@@ -14,3 +14,6 @@ window.JP_EXT_FIREBASE_CONFIG = Object.freeze({
   "measurementId": "G-VB6Y2TS796"
 }); // same Firebase project as main Workspace; personal-data writes remain blocked until rules are secured.
 window.JP_EXT_SECURE_BANK_VERIFIED = false; // access/security audit required.
+
+// BOARD PILOT: synthetic data, public RTDB rules retained until migration.
+window.JP_EXT_PILOT_MODE = true;
