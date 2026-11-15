@@ -31,8 +31,8 @@ test('vários vencedores não liberam mais do que quantidade planejada',()=>{
 });
 test('registro por timestamp numérico funciona',()=>assert.equal(P.deadline(Date.UTC(2026,10,2,15,0),5),'2026-11-09'));
 test('registro nominal tardio muda a data de prazo',()=>assert.equal(P.releasedUnits({...base,resultWinnersByHour:{'2026-11-02-1000':[{...winner[0],registeredAt:'2026-11-13T10:00:00'}]}},base.occurrences[0],'2026-11-15'),0));
-test('retirada tardia não pode ocorrer na promoção já devolvida',()=>assert(rec.includes("(row.source==='promo'||row.promoResultId)&&row.expired&&!row.deliveredAt")));
-test('retirada no fluxo de perfil também bloqueia vencidos',()=>assert(rec.includes('RETIRADA BLOQUEADA: PRAZO ENCERRADO E COTA PROMOCIONAL LIBERADA')));
-test('tela da Recepção conserva histórico da promoção vencida',()=>assert(rec.includes('PRAZO ENCERRADO<br>COTA DISPONÍVEL')));
+test('retirada tardia continua disponível nos resultados expirados',()=>assert(!rec.includes("if((row.source==='promo'||row.promoResultId)&&row.expired&&!row.deliveredAt)")));
+test('fluxo de perfil não bloqueia retirada por vencimento',()=>assert(!rec.includes('RETIRADA BLOQUEADA: PRAZO ENCERRADO E COTA PROMOCIONAL LIBERADA')));
+test('vencidos mantêm a opção explícita de confirmar retirada tardia',()=>assert(rec.includes('CONFIRMAR RETIRADA TARDIA')));
 test('o código principal não escreve uma segunda entrada física no estoque',()=>assert(!fs.readFileSync(path.join(root,'assets/jp-promo-expiry.js'),'utf8').includes('firebase')));
 console.log('PROMO_PILOT_EXPIRY',n,'PASS 0 FAIL');

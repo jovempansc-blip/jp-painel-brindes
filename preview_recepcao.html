@@ -709,7 +709,8 @@ input{height:44px;border:1px solid #dfe5ec;border-radius:14px;background:#fff;pa
   }
 }
 
-#jpExternalReceptionSection[hidden]{display:none!important}\n</style>
+#jpExternalReceptionSection[hidden]{display:none!important}\n.receptionLateWarning{margin:10px 0;padding:10px 12px;border:1px solid #dfbe7b;border-radius:8px;background:#fff9ed;color:#6d511b;font-size:11px;font-weight:700;line-height:1.5}
+</style>
 <style>
 
 /* =========================================================
@@ -1234,9 +1235,22 @@ async function promoWinnerStore({stateRef,bankRef,promo,occurrenceKey,winners=[]
         if(!previous.length&&JSON.stringify(promoWinnerRules(current))!==JSON.stringify(promoWinnerRules(found)))throw new Error('OS DADOS EXIGIDOS DA PROMOÇÃO FORAM ALTERADOS. REABRA O CADASTRO.');
       }catch(e){conflict=e.message;return;}
       const live=current.resultWinnersByHour?.[occurrenceKey]||[];
+      if(pickupWinnerId&&!undoPickup&&live.some((w,i)=>(w.id||previousWithIds[i]?.id)===pickupWinnerId&&w.deliveredAt)){
+        conflict='RETIRADA JÁ CONFIRMADA POR OUTRO OPERADOR. ATUALIZE A FICHA.';return;
+      }
       if(JSON.stringify(live.map(w=>[w.id||'',Number(w.profileVersion||0),promoWinnerProfileSignature(w)]))!==JSON.stringify(previous.map(w=>[w.id||'',Number(w.profileVersion||0),promoWinnerProfileSignature(w)]))){conflict='OS DADOS DESTE GANHADOR MUDARAM EM OUTRO COMPUTADOR. REABRA O CADASTRO.';return;}
       const next=desired.map((w,i)=>{const original=live.find(r=>r.id===w.id)||(!live[i]?.id?live[i]:null);return {...w,deliveredAt:original?.deliveredAt||'',deliveredAtLabel:original?.deliveredAtLabel||'',deliveredBy:original?.deliveredBy||'',deliveredLate:original?.deliveredLate||false,reuseStatus:original?.reuseStatus||'',reuseAt:original?.reuseAt||'',reusedItemId:original?.reusedItemId||''};});
-      if(pickupWinnerId){const w=next.find(w=>w.id===pickupWinnerId);w.deliveredAt=undoPickup?'':now.toISOString();w.deliveredAtLabel=undoPickup?'':now.toLocaleString('pt-BR');w.deliveredBy=undoPickup?'':operator.name;}
+      if(pickupWinnerId){
+        const w=next.find(w=>w.id===pickupWinnerId);
+        const registered=w.registeredAt||current.resultAt||context.date;
+        const limit=addBusinessDaysFrom(registered,Math.max(1,Math.min(5,Number(current.pickupBusinessDays)||5)));
+        const late=!undoPickup&&!!limit&&startOfDay(now)>startOfDay(limit);
+        w.deliveredAt=undoPickup?'':now.toISOString();
+        w.deliveredAtLabel=undoPickup?'':now.toLocaleString('pt-BR');
+        w.deliveredBy=undoPickup?'':operator.name;
+        w.deliveredLate=undoPickup?false:late;
+        w.deliveryDeadline=undoPickup?'':(limit?limit.toISOString():'');
+      }
       const joined=next.map(w=>w.name).join(', '),resultByHour={...(current.resultByHour||{}),[occurrenceKey]:joined},resultWinnersByHour={...(current.resultWinnersByHour||{}),[occurrenceKey]:next};
       const summaryKey=promoWinnerSourceRef(current,current.resultDate||context.date,current.resultSlot||context.time||'');
       const latest=!current.resultDate||context.sourceRef>=summaryKey;
@@ -1344,6 +1358,7 @@ function resultRowsForDate(date){
           result:name,
           deliveredAt,
           deliveredAtLabel,
+          deliveredLate:!!delivery.deliveredLate,
           deadlineLabel:deadline.label,
           deadlineAt:deadline.deadline?deadline.deadline.getTime():0,deadlineClass:deadline.className,
           expired:!deliveredAt && deadline.expired
@@ -1355,7 +1370,7 @@ function resultRowsForDate(date){
     const days=Math.max(1,Math.min(5,Number(p.pickupBusinessDays)||5));
     promoWinnerOccurrences(p).filter(w=>w.occurrenceDate===date).forEach(w=>{
       const reg=registeredDateForPromo({...p,resultDate:w.occurrenceDate,drawDate:w.occurrenceDate,drawTime:w.occurrenceTime},w),deadline=deadlineInfo(reg,w.deliveredAt||'',days);
-      promos.push({source:'promo',id:p.id,winnerIndex:w.winnerIndex,occurrenceKey:w.occurrenceKey||'',date,time:w.occurrenceTime||p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${w.occurrenceTime||(p.drawTime||'23:59').slice(0,5)}`,title:promoPrizeTitle(p),sub:`PROMOÇÃO · ${receptionCampaignSegment(p)} · ${promoTitle(p)}`,quantity:Math.max(1,Number((p.occurrences||[]).find(o=>o.date===date&&timeToHHMM(o.time||p.drawTime)===timeToHHMM(w.occurrenceTime))?.unitsPerWinner||p.unitsPerWinner)||1),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',deadlineLabel:deadline.label,deadlineAt:deadline.deadline?deadline.deadline.getTime():0,deadlineClass:deadline.className,expired:!w.deliveredAt&&deadline.expired,deadlineDays:days});
+      promos.push({source:'promo',id:p.id,winnerIndex:w.winnerIndex,occurrenceKey:w.occurrenceKey||'',date,time:w.occurrenceTime||p.resultSlot||((p.drawTime||'').slice(0,5)||'--:--'),sort:`${date}T${w.occurrenceTime||(p.drawTime||'23:59').slice(0,5)}`,title:promoPrizeTitle(p),sub:`PROMOÇÃO · ${receptionCampaignSegment(p)} · ${promoTitle(p)}`,quantity:Math.max(1,Number((p.occurrences||[]).find(o=>o.date===date&&timeToHHMM(o.time||p.drawTime)===timeToHHMM(w.occurrenceTime))?.unitsPerWinner||p.unitsPerWinner)||1),result:upper(w.name),deliveredAt:w.deliveredAt||'',deliveredAtLabel:w.deliveredAtLabel||'',deliveredLate:!!w.deliveredLate,deadlineLabel:deadline.label,deadlineAt:deadline.deadline?deadline.deadline.getTime():0,deadlineClass:deadline.className,expired:!w.deliveredAt&&deadline.expired,deadlineDays:days});
     });
   });
   const hiddenPromos=new Set();
@@ -1394,15 +1409,13 @@ function receptionPromoProfile(row){if(row.source!=='promo')return null;const p=
 function receptionProfileFieldsHtml(row){const profile=receptionPromoProfile(row);receptionProfileBaseline=profile?JSON.parse(JSON.stringify(profile)):null;if(!profile)return '';const{p,w}=profile,status=promoWinnerProfileStatus(w,p),extra=promoWinnerExtraFieldsHtml(w,p).replace('<details class="promoWinnerDetails">','<details class="promoWinnerDetails" open>');const content=`<section class="receptionProfileFields promoWinnerCandidate" id="receptionProfileFields" data-winner-id="${esc(w.id||'')}"><label class="promoProfileField"><span>NOME COMPLETO DO GANHADOR</span><input class="promoResultWinnerInput promoProfileInput" type="text" maxlength="140" value="${esc(w.name||'')}" autocomplete="off"></label>${extra}<div class="promoProfileStatus ${status.ready?'ready':'waiting'}">${esc(status.label)}</div>${!row.deliveredAt?'<button class="pickupSheetAction secondary" id="sheetSaveWinnerFields" type="button">SALVAR DADOS DO GANHADOR</button>':''}</section>`;return row.deliveredAt?content.replace(/<input /g,'<input disabled '):content;}
 async function receptionCommitPromoProfile(row,data=null,{pickup=false,undo=false}={}){
   const currentRow=typeof findReceptionRow==='function'?(findReceptionRow(row)||row):row;
-  if(pickup&&!undo&&currentRow.expired&&!currentRow.deliveredAt)
-   throw Error('RETIRADA BLOQUEADA: PRAZO ENCERRADO E COTA PROMOCIONAL LIBERADA.');
   const profile=receptionPromoProfile(row);if(!profile)throw new Error('CADASTRO DO GANHADOR NÃO LOCALIZADO.');
   await ensureReceptionOnline();const{p,w}=profile,displayTime=String(row.time||'00:00'),sourceRef=promoWinnerSourceRef(p,row.date,displayTime),distribution=distributionById(p.distributionId)||{},prize=upper(p.prizeTitle||distribution.title||distribution.show||distribution.prize||p.prize||'PRÊMIO DA PROMOÇÃO');
   const context={sourceRef,date:row.date,time:displayTime,slot:displayTime.replace(':','H').replace(/H00$/,'H'),program:upper(p.resultProgram||receptionProgramFromSchedule(row.date,displayTime,p.station||'JP1017')||'RESULTADO PROMOÇÃO'),prize};
   const next=data?promoWinnerNormalize({...w,...data},p,w.id):w;
   const result=await promoWinnerStore({stateRef:firebaseRef,bankRef:receptionWinnerBankRef,promo:p,occurrenceKey:row.occurrenceKey,winners:[next],context,operator:receptionOperatorIdentity(),monthKeys:receptionRecordMonths('promos',p.id,row.date),months:state.months,profilesOnly:true,changedWinnerIds:[w.id],pickupWinnerId:pickup?w.id:'',undoPickup:undo,validateRemote:remote=>{if(remote.kind!=='promo')throw new Error('ESTE REGISTRO NÃO É UMA PROMOÇÃO CADASTRADA.');}});
   state.months[result.monthKey].promos=Array.isArray(result.rows)?result.rows:Object.values(result.rows||{}).filter(Boolean);
-  await Promise.allSettled([firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'RECEPCAO'}),firebaseRef.child('auditLog').transaction(value=>{const rows=Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean);rows.push({id:'LOG_'+result.operationId,action:pickup?(undo?'RETIRADA CANCELADA':'RETIRADA DE PROMOÇÃO CONFIRMADA'):'DADOS DO GANHADOR COMPLETADOS',targetId:p.id,winnerId:w.id,origin:'RECEPÇÃO',operatorName:'RECEPÇÃO',createdAt:new Date().toISOString()});return rows.slice(-2500);},undefined,false)]);
+  await Promise.allSettled([firebaseRef.update({updatedAt:firebase.database.ServerValue.TIMESTAMP,savedAt:new Date().toISOString(),source:'RECEPCAO'}),firebaseRef.child('auditLog').transaction(value=>{const rows=Array.isArray(value)?value.filter(Boolean):Object.values(value||{}).filter(Boolean);rows.push({id:'LOG_'+result.operationId,action:pickup?(undo?'RETIRADA CANCELADA':currentRow.expired?'RETIRADA TARDIA DE PROMOÇÃO CONFIRMADA':'RETIRADA DE PROMOÇÃO CONFIRMADA'):'DADOS DO GANHADOR COMPLETADOS',targetId:p.id,winnerId:w.id,origin:'RECEPÇÃO',operatorName:'RECEPÇÃO',createdAt:new Date().toISOString()});return rows.slice(-2500);},undefined,false)]);
   return true;
 }
 async function saveReceptionWinnerFields(){
@@ -1416,10 +1429,8 @@ async function saveReceptionWinnerFields(){
   finally{receptionProfileSaving=false;if(button){button.disabled=false;button.textContent='SALVAR DADOS DO GANHADOR';}}
 }
 function pickupButton(row){
-  if((row.source==='promo'||row.promoResultId)&&row.expired&&!row.deliveredAt)
-    return '<div class="pickupWrap"><div class="expiredStamp">PRAZO ENCERRADO<br>COTA DISPONÍVEL PARA NOVOS SORTEIOS</div></div>';
   if(row.profileManaged&&!row.profileReady&&!row.deliveredAt)return `<div class="pickupWrap"><button class="pickupBtn profilePending" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date)}">COMPLETAR DADOS</button></div>`;
-  if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">FORA DO PRAZO DE RETIRADA<br>AINDA NÃO RETIRADO</div><button class="pickupBtn expiredPickup" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA</button></div>`;
+  if(row.expired) return `<div class="pickupWrap"><div class="expiredStamp">FORA DO PRAZO DE RETIRADA<br>AINDA NÃO RETIRADO</div><button class="pickupBtn expiredPickup" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CONFIRMAR RETIRADA TARDIA</button></div>`;
   const done=!!row.deliveredAt;
   if(done){
     return `<div class="pickupWrap"><span class="pickupStatus done">RETIRADO ${esc(row.deliveredAtLabel||'')}</span><button class="undoPickupBtn" type="button" data-source="${esc(row.source)}" data-id="${esc(row.id)}" data-winner-index="${esc(row.winnerIndex)}" data-occurrence-key="${esc(row.occurrenceKey||'')}" data-date="${esc(row.date||'')}">CANCELAR RETIRADA</button></div>`;
@@ -1429,10 +1440,6 @@ function pickupButton(row){
 }
 function setPickup(row,undo=false){
   const liveRow=typeof findReceptionRow==='function'?(findReceptionRow(row)||row):row;
-  if(!undo&&(liveRow?.source==='promo'||liveRow?.promoResultId)&&liveRow.expired&&!liveRow.deliveredAt){
-    showReceptionToast('PRAZO ENCERRADO. O INGRESSO VOLTOU AO SALDO PROMOCIONAL.',true);
-    return Promise.resolve(false);
-  }
   const actual=row.source==='promo'?findReceptionRow(row):row;if(actual?.profileManaged){if(!undo&&!actual.profileReady){showReceptionToast('COMPLETE OS DADOS OBRIGATÓRIOS ANTES DA RETIRADA.',true);return Promise.resolve(false);}return receptionCommitPromoProfile(actual,null,{pickup:true,undo}).then(()=>{render();refreshOpenReceptionSheet();return true;}).catch(error=>{showReceptionToast(error.message,true);throw error;});}
   selectMonthForDate(row.date||$('dateFilter').value||todayISO());
   const now=new Date();
@@ -1538,12 +1545,12 @@ function rowFromButton(btn){
 }
 let activeReceptionRow=null; let pickupBusy=false;
 function findReceptionRow(ref){return allResultRows().find(r=>r.source===ref.source&&String(r.id)===String(ref.id)&&(ref.winnerId?String(r.winnerId)===String(ref.winnerId):String(r.winnerIndex)===String(ref.winnerIndex))&&String(r.occurrenceKey||'')===String(ref.occurrenceKey||'')&&String(r.date||'')===String(ref.date||''));}
-function deadlineStatusText(row){if(row.deliveredAt)return `RETIRADO · ${row.deliveredAtLabel||''}`;if(row.expired)return `VENCIDO · ${row.deadlineLabel||''}`;if(row.deadlineClass==='today')return `VENCE HOJE · ${row.deadlineLabel||''}`;if(row.deadlineClass==='tomorrow')return `VENCE AMANHÃ · ${row.deadlineLabel||''}`;return row.deadlineLabel||'NO PRAZO';}
+function deadlineStatusText(row){if(row.deliveredAt&&row.deliveredLate)return 'RETIRADO FORA DO PRAZO · '+(row.deliveredAtLabel||'');if(row.deliveredAt)return `RETIRADO · ${row.deliveredAtLabel||''}`;if(row.expired)return `VENCIDO · ${row.deadlineLabel||''}`;if(row.deadlineClass==='today')return `VENCE HOJE · ${row.deadlineLabel||''}`;if(row.deadlineClass==='tomorrow')return `VENCE AMANHÃ · ${row.deadlineLabel||''}`;return row.deadlineLabel||'NO PRAZO';}
 function openReceptionSheet(row){
   activeReceptionRow={source:row.source,id:row.id,winnerIndex:row.winnerIndex,winnerId:row.winnerId||'',occurrenceKey:row.occurrenceKey||'',date:row.date||''};
   const status=rowStatus(row), statusClass=status==='RETIRADO'?'done':status==='VENCIDO'?'expired':status==='VENCE_HOJE'?'today':'pending';
   const action=row.profileManaged&&!row.profileReady&&!row.deliveredAt?`<button class="pickupSheetAction" type="button" disabled>COMPLETE OS DADOS PARA CONFIRMAR A RETIRADA</button>`:row.deliveredAt?`<button class="pickupSheetAction" type="button" disabled>RETIRADA JÁ REGISTRADA</button>`:`<button class="pickupSheetAction" id="sheetConfirmPickup" type="button">CONFIRMAR RETIRADA</button>`;
-  $('receptionModalBody').innerHTML=`<h3 class="pickupSheetName" id="receptionModalName">${esc(row.result)}</h3><div class="pickupSheetGrid"><div class="pickupSheetField"><span>PRÊMIO</span><strong>${esc(row.title)}${row.quantity?` · ${row.quantity} UNID.`:''}</strong></div><div class="pickupSheetField"><span>GANHOU EM</span><strong>${esc(formatBR(row.date))} · ${esc(row.time)} · ${esc(row.sub)}</strong></div><div class="pickupSheetField"><span>PRAZO PARA RETIRADA</span><strong>${esc(row.deadlineLabel||'--')}</strong></div></div><div class="pickupSheetStatus ${statusClass}">${esc(deadlineStatusText(row))}</div>${receptionProfileFieldsHtml(row)}${action}`;
+  $('receptionModalBody').innerHTML=`<h3 class="pickupSheetName" id="receptionModalName">${esc(row.result)}</h3><div class="pickupSheetGrid"><div class="pickupSheetField"><span>PRÊMIO</span><strong>${esc(row.title)}${row.quantity?` · ${row.quantity} UNID.`:''}</strong></div><div class="pickupSheetField"><span>GANHOU EM</span><strong>${esc(formatBR(row.date))} · ${esc(row.time)} · ${esc(row.sub)}</strong></div><div class="pickupSheetField"><span>PRAZO PARA RETIRADA</span><strong>${esc(row.deadlineLabel||'--')}</strong></div></div><div class="pickupSheetStatus ${statusClass}">${esc(deadlineStatusText(row))}</div>${row.expired&&!row.deliveredAt?'<p class="receptionLateWarning">RETIRADA FORA DO PRAZO. ESTA BAIXA PODE REDUZIR UMA COTA JÁ LIBERADA PARA NOVOS SORTEIOS. CONFIRA O SALDO DO PRÊMIO.</p>':''}${receptionProfileFieldsHtml(row)}${row.expired&&!row.deliveredAt?action.replace('>CONFIRMAR RETIRADA</button>','>CONFIRMAR RETIRADA TARDIA</button>'):action}`;
   $('receptionModal').hidden=false;
 }
 function closeReceptionSheet(){if(pickupBusy||receptionProfileSaving)return;receptionProfileDirty=false;receptionProfileBaseline=null;$('receptionModal').hidden=true;activeReceptionRow=null;}

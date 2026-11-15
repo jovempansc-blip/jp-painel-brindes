@@ -1,0 +1,24 @@
+{
+  "base_sha": "876c6fbdf395925753c21ea0ea21aaea41b34887",
+  "scope": "permit overdue pickup, flag late delivery, re-commit stock, retain duplicate guard",
+  "qa_pass": 39,
+  "firebase_written": false,
+  "files": [
+    {
+      "path": "preview_recepcao.html",
+      "sha256": "e3626c7e2eeacfed6fe83f7d541535449052e51b15b4df21e6b73b946d6f895a"
+    },
+    {
+      "path": "QA/test_pilot_promo_expiry_20261115.cjs",
+      "sha256": "570be29a476583c9472c6fa53a4f0ff276b5b8c87725aafa23ca7d4f98b6da80"
+    },
+    {
+      "path": "QA/test_late_pickup_20261115.cjs",
+      "sha256": "d45799a2fc00d47af41ca85b1f42b566bc72ad543e0884dc7cf13f4b92fa7f88"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_RETIRADA_TARDIA_20261115.md",
+      "sha256": "ea4bc944d00ffaaff874a6b6836462822ba97fba9c1271bbec0676a49c817bc2"
+    }
+  ]
+}

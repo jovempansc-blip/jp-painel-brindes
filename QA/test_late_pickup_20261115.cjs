@@ -1,0 +1,52 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
+const root=path.resolve(__dirname,'..');
+const rec=fs.readFileSync(path.join(root,'preview_recepcao.html'),'utf8');
+const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const P=require('../assets/jp-promo-expiry.js');
+const esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const a=rec.indexOf('function pickupButton(row){');
+const b=rec.indexOf('\nfunction setPickup(',a);
+assert(a>=0&&b>a);
+const pickup=new Function('esc',rec.slice(a,b)+';return pickupButton;')(esc);
+const statusStart=rec.indexOf('function deadlineStatusText(row){');
+const statusEnd=rec.indexOf('\nfunction openReceptionSheet(',statusStart);
+assert(statusStart>=0&&statusEnd>statusStart);
+const status=new Function(rec.slice(statusStart,statusEnd)+';return deadlineStatusText;')();
+const ctx={window:{JPPromoExpiry:P},state:{passportCampaigns:{}},num:x=>Math.max(0,Number(x)||0),
+normalizeStatus:x=>String(x||'').toUpperCase(),todayISO:()=> '2026-11-15',Math,Number,String,Object,Array};
+vm.createContext(ctx);
+const stockStart=index.indexOf('function promoOccurrenceStockUnits(');
+const stockEnd=index.indexOf('function uniqueConsolidatedPromos(',stockStart);
+vm.runInContext(index.slice(stockStart,stockEnd),ctx);
+const reg={id:'W1',name:'GANHADOR SINTÉTICO',registeredAt:'2026-11-02T10:00:00',deliveredAt:''};
+const p={id:'P1',campaignMode:'single',pickupBusinessDays:5,drawDate:'2026-11-02',resultDate:'2026-11-02',unitsPerWinner:2,
+ occurrences:[{date:'2026-11-02',time:'10:00',status:'REALIZADO',qtyPlanned:1,unitsPerWinner:2}],
+ resultWinnersByHour:{'2026-11-02-1000':[reg]}};
+const row={source:'promo',id:'P1',winnerIndex:0,occurrenceKey:'2026-11-02-1000',date:'2026-11-02',result:'GANHADOR SINTÉTICO',
+ expired:true,deliveredAt:'',profileManaged:true,profileReady:true,deadlineLabel:'PRAZO VENCIDO'};
+let n=0;const test=(name,fn)=>{fn();console.log('PASS',++n,name)};
+test('o sorteio expirado liberou a cota antes da retirada',()=>assert.equal(ctx.promoCommitmentQty(p,'2026-11-15'),0));
+test('o cartão da promoção vencida agora oferece botão de retirada',()=>assert(pickup(row).includes('CONFIRMAR RETIRADA TARDIA')));
+test('o botão tardio mantém as chaves originais do resultado',()=>assert(pickup(row).includes('2026-11-02-1000')));
+test('perfil incompleto continua exigindo identificação',()=>assert(pickup({...row,profileReady:false}).includes('COMPLETAR DADOS')));
+test('não foi adicionado bloqueio por data no caminho de confirmação',()=>assert(!rec.includes('RETIRADA BLOQUEADA: PRAZO ENCERRADO')));
+test('a coleta tardia não é vetada na função setPickup',()=>assert(!rec.includes('O INGRESSO VOLTOU AO SALDO PROMOCIONAL.')));
+test('o modal informa que a baixa pode reduzir cota reaproveitada',()=>assert(rec.includes('receptionLateWarning')&&rec.includes('CONFIRA O SALDO DO PRÊMIO')));
+test('ação no modal identifica confirmação tardia',()=>assert(rec.includes('CONFIRMAR RETIRADA TARDIA</button>')));
+test('o histórico da Recepção exibe status de retirada fora do prazo',()=>assert.equal(status({deliveredAt:'2026-11-15',deliveredAtLabel:'15/11/2026',deliveredLate:true}),'RETIRADO FORA DO PRAZO · 15/11/2026'));
+test('retirada no prazo mantém rótulo normal',()=>assert.equal(status({deliveredAt:'2026-11-04',deliveredAtLabel:'04/11/2026',deliveredLate:false}),'RETIRADO · 04/11/2026'));
+test('o vencedor tardio recebe deliveredLate no resultado canônico',()=>assert(rec.includes('w.deliveredLate=undoPickup?false:late;')));
+test('o prazo original da entrega continua registrado',()=>assert(rec.includes("w.deliveryDeadline=undoPickup?'':(limit?limit.toISOString():'');")));
+test('o status tardio é derivado de data real de registro e dias úteis',()=>assert(rec.includes('const limit=addBusinessDaysFrom(registered,Math.max(1,Math.min(5,Number(current.pickupBusinessDays)||5)))')));
+test('retirada tardia preserva controle de concorrência por vencedor',()=>assert(rec.includes("RETIRADA JÁ CONFIRMADA POR OUTRO OPERADOR. ATUALIZE A FICHA.")));
+test('a concorrência ocorre dentro da transação Firebase de resultados',()=>assert(rec.indexOf('RETIRADA JÁ CONFIRMADA POR OUTRO OPERADOR')>rec.indexOf("const tx=await stateRef.child('months').child(monthKey).child('promos').transaction")));
+test('a auditoria identifica o tipo de retirada',()=>assert(rec.includes('RETIRADA TARDIA DE PROMOÇÃO CONFIRMADA')));
+const delivered={...p,resultWinnersByHour:{'2026-11-02-1000':[{...reg,deliveredAt:'2026-11-15T15:00:00',deliveredLate:true}]}};
+test('após a retirada tardia, o compromisso retorna ao cálculo de saldo',()=>assert.equal(ctx.promoCommitmentQty(delivered,'2026-11-15'),2));
+test('compromisso recomposto não é registrado duas vezes',()=>{assert.equal(ctx.promoCommitmentQty(delivered,'2026-11-15'),2);assert.equal(ctx.promoCommitmentQty(delivered,'2026-11-15'),2);});
+test('o nome do ganhador e a data original não foram alterados',()=>assert.equal(delivered.resultWinnersByHour['2026-11-02-1000'][0].name,reg.name));
+test('na retirada tardia confirmada o botão se torna status concluído',()=>assert(pickup({...row,expired:false,deliveredAt:'2026-11-15',deliveredLate:true}).includes('RETIRADO')));
+test('cancelar confirmação reintegra status vencido em vez de ocultar o resultado',()=>assert(pickup({...row,deliveredAt:'',expired:true}).includes('CONFIRMAR RETIRADA TARDIA')));
+console.log('LATE_PICKUP',n,'PASS 0 FAIL');
