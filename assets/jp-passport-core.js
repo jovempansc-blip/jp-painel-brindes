@@ -113,13 +113,65 @@
   return true;
  }
  function validBeneficiary(b){
-  return normalize(b?.name).split(' ').filter(Boolean).length>=2&&validateCpf(b?.cpf);
+  return normalize(b?.name).split(' ').filter(Boolean).length>=2&&(!String(b?.cpf||'').trim()||validateCpf(b?.cpf));
  }
  function transition(old,next,{allowUndo=false}={}){
   if(old?.status==='UTILIZADO'&&!allowUndo)return {ok:false,reason:'INGRESSO JÁ UTILIZADO: ALTERAÇÃO BLOQUEADA.'};
   if(next?.status==='UTILIZADO'&&!validBeneficiary(next))return {ok:false,reason:'IDENTIFICAÇÃO COMPLETA OBRIGATÓRIA ANTES DA BAIXA.'};
-  if(['IDENTIFICADO','UTILIZADO'].includes(next?.status)&&!validBeneficiary(next))return {ok:false,reason:'NOME COMPLETO E CPF VÁLIDO OBRIGATÓRIOS.'};
+  if(['IDENTIFICADO','UTILIZADO'].includes(next?.status)&&!validBeneficiary(next))return {ok:false,reason:'NOME COMPLETO OBRIGATÓRIO. CPF OPCIONAL DEVE SER VÁLIDO SE INFORMADO.'};
   return {ok:true};
  }
- return Object.freeze({segments,units,pair,list,capKey,normalize,reservations,capacity,lookupPromo,lookupDist,plannedWinners,winnerRows,commitments,validateLink,assertDistributionChange,validateCpf,validBeneficiary,transition});
+
+ // Mesma identidade determinística utilizada pela Recepção desde a primeira versão do Passaporte.
+ const encode=x=>Array.from(String(x||'')).map(c=>c.codePointAt(0).toString(16)).join('-');
+ function ticketId(promoId,link,winnerId,seat){
+  if(!promoId||!link?.monthKey||!link?.distributionId||!winnerId||!Number.isSafeInteger(Number(seat))||Number(seat)<1)return '';
+  return encode([promoId,link.monthKey,link.distributionId,winnerId,seat].join('|'));
+ }
+ function reconcilePassport({promoId,config={},winners=[],tickets={},months={},passportCampaigns={}}={}){
+  const people=list(winners).filter(w=>w?.id),events=list(config?.events);
+  const rights=Math.max(1,Math.min(12,Math.floor(Number(config.rights)||2)));
+  const byWinner=people.map(w=>({id:w.id,name:w.name,used:0,identified:0,pending:0,total:0,events:[]}));
+  const summary={eventCount:events.length,winnerCount:people.length,rights,allocated:0,entitlements:0,used:0,identified:0,
+   pending:0,unassigned:0,unallocated:0,errors:[]};
+  const byEvent=events.map(link=>{
+   const allocated=units(link.units),required=people.length*rights;
+   const event={id:capKey(link.monthKey,link.distributionId),date:link.date||'',distributionId:link.distributionId,
+    segment:link.segment,reservationId:link.reservationId||'',allocated,required,
+    used:0,identified:0,unassigned:0,pending:0,unallocated:Math.max(0,allocated-required)};
+   summary.allocated+=allocated;summary.entitlements+=required;
+   // Comparação somente leitura com a Distribuição Geral e TODAS as campanhas.
+   const dist=lookupDist(months,link.monthKey,link.distributionId);
+   if(Object.keys(months).length&&!dist)
+    summary.errors.push('PRÊMIO '+link.distributionId+' NÃO ENCONTRADO NA COMPETÊNCIA '+link.monthKey+'.');
+   if(dist){
+    const total=capacity(dist,link.segment),claimed=commitments({passportCampaigns},link.monthKey,link.distributionId,link.segment);
+    event.distributionCapacity=total;event.totalCommitted=claimed;event.freeCapacity=Math.max(0,total-claimed);
+    if(claimed>total)summary.errors.push('SEGMENTO '+link.segment+' DO EVENTO '+link.distributionId+' EXCEDE A COTA FÍSICA.');
+    if(link.segment==='reservado'&&link.reservationId){
+     const reserve=reservations(dist).find(r=>r.id===link.reservationId);
+     const occupied=commitments({passportCampaigns},link.monthKey,link.distributionId,link.segment,link.reservationId);
+     if(!reserve||occupied>reserve.units)summary.errors.push('RESERVA '+link.reservationId+' DO EVENTO '+link.distributionId+' POSSUI COMPROMISSO EXCEDENTE.');
+    }
+   }
+   if(required>allocated)summary.errors.push('EVENTO '+link.distributionId+': '+required+' INGRESSOS DE DIREITO E '+allocated+' RESERVADOS.');
+   for(const person of byWinner){
+    const progress={eventId:event.id,used:0,identified:0,unassigned:0};
+    for(let seat=1;seat<=rights;seat++){
+     const id=ticketId(promoId,link,person.id,seat),record=tickets[id]||{},status=record.status||'A DEFINIR';
+     const kind=status==='UTILIZADO'?'used':status==='IDENTIFICADO'?'identified':'unassigned';
+     progress[kind]++;event[kind]++;
+     person[kind==='unassigned'?'pending':kind]++;person.total++;
+    }
+    person.events.push(progress);
+   }
+   event.pending=required-event.used;
+   summary.used+=event.used;summary.identified+=event.identified;summary.unassigned+=event.unassigned;
+   summary.unallocated+=event.unallocated;summary.pending+=event.pending;
+   return event;
+  });
+  if(summary.used>summary.allocated)summary.errors.push('BAIXAS SUPERIORES AO TOTAL RESERVADO.');
+  return {summary,byWinner,byEvent};
+ }
+ return Object.freeze({segments,units,pair,list,capKey,normalize,reservations,capacity,lookupPromo,lookupDist,plannedWinners,winnerRows,commitments,validateLink,assertDistributionChange,validateCpf,validBeneficiary,transition,ticketId,reconcilePassport});
 });

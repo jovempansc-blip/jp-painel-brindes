@@ -134,31 +134,46 @@ function eventLine(link){
   +'<button class="jpRcpBtn" data-jp-unlink="'+esc(C.capKey(link.monthKey,link.distributionId))+'" '+(!enabledMeta()||winners(getPromo(selected)).length?'disabled':'')+'>DESVINCULAR</button></div>';
 }
 const maskCpf=v=>String(v||'').replace(/\D/g,'').length===11?'***.***.***-'+String(v).replace(/\D/g,'').slice(-2):'';
-function seatKey(link,w,index){return encode([selected,link.monthKey,link.distributionId,w.id,index].join('|'));}
+function seatKey(link,w,index){return C.ticketId(selected,link,w.id,index);}
 function nominal(cfg){
  const ww=winners(getPromo(selected)),links=list(cfg.events),rights=Number(cfg.rights)||2;
  if(!ww.length)return '<div class="jpRcpWarning">REGISTRE O GANHADOR OFICIAL DA PROMOÇÃO NO ESTÚDIO ANTES DE INDICAR DESTINATÁRIOS.</div>';
  if(ww.some(w=>!w.id))return '<div class="jpRcpWarning">RESULTADO LEGADO SEM IDENTIFICADOR INDIVIDUAL. É NECESSÁRIO CONCILIAR ANTES DO CADASTRO.</div>';
- let html='<div class="jpRcpPanelTitle" style="margin-top:14px"><h3>CONTROLE NOMINAL POR EVENTO</h3></div>';
- if(!privateAllowed)html+='<div class="jpRcpWarning">CPFs E TRANSFERÊNCIAS BLOQUEADOS. EXIGE LOGIN, REGRAS PRIVADAS NO FIREBASE E HOMOLOGAÇÃO DE SEGURANÇA.</div>';
+ const report=C.reconcilePassport({promoId:selected,config:cfg,winners:ww,tickets:privateAllowed?privateData.tickets||{}:{},months:state.months||{},passportCampaigns:passports});
+ let html='<div class="jpRcpPanelTitle" style="margin-top:14px"><h3>RESUMO DO PASSAPORTE</h3></div>'+
+  '<div class="jpRcpSummaryGrid">'+
+   '<div><small>SHOWS VINCULADOS</small><strong>'+report.summary.eventCount+'</strong></div>'+
+   '<div><small>COTA RESERVADA</small><strong>'+report.summary.allocated+'</strong></div>'+
+   '<div><small>DIREITOS DOS GANHADORES</small><strong>'+report.summary.entitlements+'</strong></div>'+
+   '<div><small>RETIRADAS CONFIRMADAS</small><strong>'+(privateAllowed?report.summary.used:'—')+'</strong></div></div>'+
+  '<div class="jpRcpWinnerOverview">'+report.byWinner.map(w=>
+   '<div class="jpRcpWinnerSummary"><strong>'+esc(w.name)+'</strong><span>'+w.total+' INGRESSOS · '+
+   (privateAllowed?w.used+' UTILIZADOS · '+w.pending+' PENDENTES':'DADOS NOMINAIS RESTRITOS')+'</span></div>'
+  ).join('')+'</div>';
+ if(report.summary.errors.length)html+='<div class="jpRcpWarning">'+report.summary.errors.map(esc).join(' ')+'</div>';
+ html+='<div class="jpRcpPanelTitle" style="margin-top:14px"><h3>INGRESSOS POR EVENTO</h3><small class="jpRcpSmall">ABRA CADA SHOW PARA IDENTIFICAR OU CONFIRMAR A RETIRADA</small></div>';
+ if(!privateAllowed)html+='<div class="jpRcpWarning">CADASTRO NOMINAL E BAIXAS PROTEGIDOS. EXIGE LOGIN E REGRAS PRIVADAS HOMOLOGADAS NO FIREBASE.</div>';
  for(const link of links){
   const item=inventory().find(x=>x.month===link.monthKey&&x.d.id===link.distributionId);
-  html+='<div class="jpRcpEvent"><h4>'+esc(item?.name||link.distributionId)+' · '+esc(dateText(item?.date||link.date))+'</h4>';
+  const count=report.byEvent.find(r=>r.id===C.capKey(link.monthKey,link.distributionId))||{};
+  html+='<details class="jpRcpEvent"><summary><strong>'+esc(item?.name||link.distributionId)+'</strong> · '+esc(dateText(item?.date||link.date))+
+   ' <span class="jpRcpEventProgress">'+Number(count.allocated||0)+' RESERVADOS · '+
+   (privateAllowed?Number(count.used||0)+' RETIRADOS':'BAIXAS RESTRITAS')+'</span></summary>';
   for(const w of ww){
    html+='<p class="jpRcpSmall">GANHADOR PRINCIPAL: <strong>'+esc(w.name)+'</strong></p>';
    for(let seat=1;seat<=rights;seat++){
     const key=seatKey(link,w,seat),record=privateAllowed?privateData.tickets?.[key]||{}:{},fixed=record.status==='UTILIZADO',disabled=!privateAllowed||fixed;
-    html+='<div class="jpRcpBeneficiary" data-jp-seat="'+esc(key)+'">'
-      +'<span class="jpRcpLabel jpRcpTag">ING. '+seat+'</span>'
+    html+='<div class="jpRcpBeneficiary" data-jp-seat="'+esc(key)+'" title="IDENTIFICADOR CANÔNICO: '+esc(key)+'">'
+      +'<span class="jpRcpLabel jpRcpTag">ING. '+seat+'<small class="jpRcpTicketId">ID '+esc(key.slice(-15))+'</small></span>'
       +'<div class="jpRcpField"><label>NOME COMPLETO</label><input data-jp-name autocomplete="off" value="'+esc(record.name||'')+'" '+(disabled?'disabled':'')+' placeholder="BENEFICIÁRIO"></div>'
-      +'<div class="jpRcpField"><label>CPF</label><input data-jp-cpf autocomplete="off" inputmode="numeric" maxlength="14" placeholder="'+(privateAllowed?maskCpf(record.cpf):'ACESSO RESTRITO')+'" '+(disabled?'disabled':'')+' value=""></div>'
+      +'<div class="jpRcpField"><label>CPF (OPCIONAL)</label><input data-jp-cpf autocomplete="off" inputmode="numeric" maxlength="14" placeholder="'+(privateAllowed?maskCpf(record.cpf):'ACESSO RESTRITO')+'" '+(disabled?'disabled':'')+' value=""></div>'
       +'<span class="jpRcpStatus jpRcpTag">'+esc(record.status||'A DEFINIR')+'</span>'
       +'<div class="jpRcpActions"><button class="jpRcpBtn" data-jp-seat-save="'+esc(key)+'" '+(disabled?'disabled':'')+'>SALVAR</button>'
       +(record.status==='UTILIZADO'?'<span class="jpRcpDone">RETIRADA CONFIRMADA</span>':
         '<button class="jpRcpBtn primary" data-jp-seat-use="'+esc(key)+'" '+(privateAllowed&&record.status==='IDENTIFICADO'?'':'disabled title="AGUARDANDO SEGURANÇA PRIVADA DO FIREBASE"')+'>CONFIRMAR RETIRADA</button>')+'</div></div>';
    }
   }
-  html+='</div>';
+  html+='</details>';
  }
  return html;
 }
@@ -299,13 +314,21 @@ async function writeSeat(key,used=false){
    failure='';current=current||{tickets:{},audit:{}};
    const latest=current.tickets?.[key]||{};
    if(Number(latest.revision||0)!==rev||latest.status==='UTILIZADO'){failure='REGISTRO ALTERADO POR OUTRO OPERADOR OU JÁ UTILIZADO.';return;}
-   const record={...latest,...next,revision:rev+1,winnerId:where.w.id,linkId:where.l.id,seat:where.seat,
+   const record={...latest,...next,ticketId:key,revision:rev+1,winnerId:where.w.id,linkId:where.l.id,seat:where.seat,
     updatedAt:now,updatedBy:op.uid,operationId, ...(used?{usedAt:now,usedBy:op.uid}:{})};
    current.tickets={...(current.tickets||{}),[key]:record};
    const transferred=!!latest.name&&C.normalize(latest.name)!==C.normalize(name);
    current.audit={...(current.audit||{}),[operationId]:{id:operationId,action:used?'BAIXA':transferred?'TRANSFERÊNCIA':'IDENTIFICAÇÃO',
     key,revision:rev+1,uid:op.uid,at:now,prevStatus:latest.status||'A DEFINIR',status:next.status,
     previousName:latest.name||'',currentName:name}};
+   // Auditoria imutável na MESMA transação da entrega no nó privado.
+   // Não gera segunda reserva, não altera saldo da distribuição e não expõe beneficiários.
+   current.ticketLedger={...(current.ticketLedger||{}),[operationId]:{
+    operationId,ticketId:key,promoId:activeId,monthKey:where.l.monthKey,
+    distributionId:where.l.distributionId,reservationId:where.l.reservationId||'',segment:where.l.segment,
+    winnerId:where.w.id,seat:where.seat,physicalUnits:1,operation:used?'RETIRADA':transferred?'TRANSFERENCIA':'IDENTIFICACAO',
+    previousStatus:latest.status||'A DEFINIR',status:next.status,actor:op.uid,clientAt:now
+   }};
    return current;
   },undefined,false);
   if(!tx?.committed)throw Error(failure||'GRAVAÇÃO NOMINAL NÃO CONFIRMADA.');

@@ -1,0 +1,62 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const C=require('../assets/jp-passport-core.js');
+const root=path.resolve(__dirname,'..');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+let passed=0;
+const check=(name,fn)=>{fn();passed++;console.log('PASS',passed,name)};
+const winner=[{id:'W1',name:'PESSOA UM'},{id:'W2',name:'PESSOA DOIS'}];
+const link={id:'E1',monthKey:'2026-12',distributionId:'SHOW1',segment:'reservado',reservationId:'RS1',units:4,date:'2026-12-26'};
+const cfg={promoId:'PROMO1',rights:2,events:[link]};
+const months={'2026-12':{distributions:[{id:'SHOW1',prizeType:'ingresso',reservas:[{id:'RS1',qty:3,unit:'pair'}]}]}};
+const passportCampaigns={P1:cfg};
+const id=(w,seat)=>C.ticketId('PROMO1',link,w,seat);
+check('CPF opcional vazio não impede cadastro com nome completo',()=>assert(C.validBeneficiary({name:'PESSOA DE TESTE',cpf:''})));
+check('CPF opcional preenchido e válido é aceito',()=>assert(C.validBeneficiary({name:'PESSOA DE TESTE',cpf:'52998224725'})));
+check('CPF inválido preenchido é recusado',()=>assert(!C.validBeneficiary({name:'PESSOA DE TESTE',cpf:'12345678901'})));
+check('Nome incompleto continua bloqueado',()=>assert(!C.validBeneficiary({name:'PESSOA',cpf:''})));
+check('baixa é aceita com nome completo e CPF vazio',()=>assert(C.transition({status:'IDENTIFICADO'},{status:'UTILIZADO',name:'PESSOA DE TESTE',cpf:''}).ok));
+check('não admite reutilização de ingresso retirado',()=>assert(!C.transition({status:'UTILIZADO'},{status:'UTILIZADO',name:'PESSOA DE TESTE',cpf:''}).ok));
+check('chave de ingresso mantém o cálculo legado da Recepção',()=>{
+ const legacy=Array.from(['PROMO1','2026-12','SHOW1','W1',1].join('|')).map(ch=>ch.codePointAt(0).toString(16)).join('-');
+ assert.equal(id('W1',1),legacy);
+});
+check('mesmo ganhador em eventos distintos tem IDs distintos',()=>assert.notEqual(id('W1',1),C.ticketId('PROMO1',{...link,distributionId:'SHOW2'},'W1',1)));
+check('mesmo evento e assento de ganhadores distintos tem IDs distintos',()=>assert.notEqual(id('W1',1),id('W2',1)));
+check('ingresso 1 e 2 do mesmo ganhador têm IDs distintos',()=>assert.notEqual(id('W1',1),id('W1',2)));
+const tickets={[id('W1',1)]:{status:'UTILIZADO'},[id('W1',2)]:{status:'IDENTIFICADO'}};
+const report=C.reconcilePassport({promoId:'PROMO1',config:cfg,winners:winner,tickets,months,passportCampaigns});
+check('conciliação usa 4 direitos sem reserva física duplicada',()=>{assert.equal(report.summary.entitlements,4);assert.equal(report.summary.allocated,4);});
+check('conciliação distingue retirado e apenas identificado',()=>{assert.equal(report.summary.used,1);assert.equal(report.summary.identified,1);});
+check('conciliação distingue dois ingressos não identificados',()=>assert.equal(report.summary.unassigned,2));
+check('conciliação sinaliza três ingressos ainda a utilizar',()=>assert.equal(report.summary.pending,3));
+check('conciliação compara o saldo físico de seis ingressos',()=>{assert.equal(report.byEvent[0].distributionCapacity,6);assert.equal(report.byEvent[0].freeCapacity,2);});
+check('conciliação não grava nada na Distribuição Geral',()=>{assert.equal(JSON.stringify(months).includes('UTILIZADO'),false);assert(!read('assets/jp-passport-core.js').includes('firebaseRef'));});
+check('detecta um compromisso maior que o estoque do segmento',()=>{
+ const other={P2:{promoId:'PROMO2',rights:2,events:[{...link,units:4}]}};
+ const bad=C.reconcilePassport({promoId:'PROMO1',config:cfg,winners:winner,tickets,months,passportCampaigns:{...passportCampaigns,...other}});
+ assert(bad.summary.errors.some(e=>e.includes('EXCEDE A COTA FÍSICA')));
+});
+check('detecta quando faltam direitos reservados para os ganhadores',()=>{
+ const bad=C.reconcilePassport({promoId:'PROMO1',config:{...cfg,events:[{...link,units:2}]},winners:winner,tickets,months,passportCampaigns});
+ assert(bad.summary.errors.some(e=>e.includes('DIREITO')));
+});
+check('ledger e status do ingresso integram a mesma transação privada',()=>{
+ const js=read('assets/jp-reception-passport.js');
+ assert(js.includes('const tx=await recordRef.transaction(current=>'));
+ assert(js.includes('current.ticketLedger={'));
+ assert(js.includes('ticketId:key,revision:rev+1'));
+});
+check('CPF opcional é indicado na ficha',()=>assert(read('assets/jp-reception-passport.js').includes('CPF (OPCIONAL)')));
+check('no modo não autenticado, resumo de retiradas fica restrito',()=>assert(read('assets/jp-reception-passport.js').includes("privateAllowed?report.summary.used:'—'")));
+check('aba de retiradas por show é recolhível',()=>assert(read('assets/jp-reception-passport.js').includes("<details class=\"jpRcpEvent\"")));
+check('filtro Próximos 3 dias existe na Recepção',()=>assert(read('preview_recepcao.html').includes("PROXIMOS_3_DIAS','PRÓXIMOS 3 DIAS'")));
+check('Recepção abre priorizando obrigações pendentes',()=>assert(read('preview_recepcao.html').includes("let receptionStatusFilter='PENDENTE'")));
+check('filtro de vencimento não inclui ingressos já retirados',()=>assert(read('preview_recepcao.html').includes('if(row.deliveredAt||row.expired||')));
+check('nenhuma flag de segurança Firebase foi liberada',()=>{
+ const js=read('assets/jp-reception-passport.js');
+ assert(js.includes('window.JP_PASSPORT_PRIVATE_RULES_HOMOLOGATED===true'));
+ assert(js.includes('if(!privateAllowed||privateId!==selected||!enabledPrivate())'));
+});
+console.log('JP_PASSPORT_OPTIM',passed,'PASS 0 FAIL');

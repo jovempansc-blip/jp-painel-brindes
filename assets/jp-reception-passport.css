@@ -45,3 +45,20 @@
 
 /* Ancora o botão de opções à promoção correspondente. */
 .receptionCampaign summary{position:relative}
+
+/* JP A02 — resumo compacto dos passaportes, padrão visual Recepção. */
+.jpRcpSummaryGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.jpRcpSummaryGrid>div{min-width:0;border:1px solid #dfe5eb;background:#f5f7fa;border-radius:9px;padding:10px 12px}
+.jpRcpSummaryGrid small{display:block;font-size:9px;color:#7c8a9a;font-weight:800}
+.jpRcpSummaryGrid strong{display:block;font-size:23px;color:#31475f;margin-top:3px}
+.jpRcpWinnerOverview{display:grid;gap:7px;margin:12px 0}
+.jpRcpWinnerSummary{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:10px 12px;border:1px solid #e0e7ed;border-radius:9px;background:#fbfcfd}
+.jpRcpWinnerSummary strong{font-size:11px;color:#394c63}
+.jpRcpWinnerSummary span{font-size:10px;color:#74889a;font-weight:750}
+details.jpRcpEvent{border:1px solid #e0e6ec;border-radius:10px;background:#fff;padding:9px 12px;margin-bottom:7px}
+details.jpRcpEvent>summary{cursor:pointer;font-size:11px;font-weight:800;color:#3c5369;padding:5px 0}
+details.jpRcpEvent[open]>summary{border-bottom:1px solid #e5ebef;margin-bottom:8px}
+.jpRcpTicketId{display:block;font-size:8px;font-weight:650;color:#8d99a7;margin-top:3px;overflow-wrap:anywhere}
+@media(max-width:760px){.jpRcpSummaryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.jpRcpWinnerSummary{align-items:start;flex-direction:column}}
+
+.jpRcpEventProgress{display:inline-block;float:right;color:#74889a;font-weight:750;font-size:9px;margin-left:9px}
