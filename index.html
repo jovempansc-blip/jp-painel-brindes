@@ -3827,7 +3827,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 </style>
 <link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
 <link rel="stylesheet" href="assets/jp-promo-externa.css?v=AV58_1_44_IMPL_HML_20261111">
-<link rel="stylesheet" href="assets/jp-promo-passport-links.css?v=JP_LINKS_20261113">
+<link rel="stylesheet" href="assets/jp-promo-passport-links.css?v=JP_MODOS_STAGE1_20261114">
 
 <style id="jp-distribution-visual-fit-20261111">
 /* HOTFIX VISUAL — Distribuição Geral / detalhada.
@@ -4820,11 +4820,12 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
             <section class="promoFormSection" data-promo-only="1">
               <div class="promoFormSectionTitle"><strong>PRÊMIO E SORTEIO</strong><span>VÍNCULO DIRETO COM A DISTRIBUIÇÃO</span></div>
               <div class="formGrid">
+                <div class="field full jpPromoModeField" data-promo-only="1"><label for="promoCampaignMode">MODALIDADE DA PROMOÇÃO</label><select class="control" id="promoCampaignMode"><option value="single">PROMOÇÃO ÚNICA · UM PRÊMIO OU EVENTO</option><option value="passport">PASSAPORTE · INGRESSOS PARA VÁRIOS EVENTOS</option></select><div class="uploadHint">DEFINE A ABA DA RECEPÇÃO. OS INGRESSOS DOS EVENTOS SEGUEM AS COTAS DA DISTRIBUIÇÃO.</div></div>
                 <div class="field wide"><label>PRÊMIO VINCULADO À DISTRIBUIÇÃO</label><select class="control" id="promoDistributionId" required><option value="">SELECIONE O PRÊMIO DISTRIBUÍDO</option></select></div>
                 <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
                 <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SELECIONE O PRÊMIO"></div>
                 <div class="promoDistributionGuide"><strong>REGRA:</strong> A PROMOÇÃO RESERVA O PRÊMIO DIRETAMENTE DA DISTRIBUIÇÃO. O SALDO NÃO É DUPLICADO E O SISTEMA BLOQUEIA QUANDO A QUANTIDADE NECESSÁRIA FOR MAIOR QUE A DISPONÍVEL.</div>
-                <div class="field full jpPromoLinkEntry" data-promo-only="1">
+                <div class="field full jpPromoLinkEntry" id="jpPromoLinkEntry" data-promo-only="1" hidden>
                   <div><strong>PASSAPORTE MULTIEVENTOS · VÍNCULOS DE SHOWS</strong>
                     <span id="jpPromoPassportSummary">VINCULE SHOWS EXISTENTES NA DISTRIBUIÇÃO GERAL, COM SEGMENTO E RESERVA ESPECÍFICOS.</span></div>
                   <button type="button" id="jpPromoLinkEventsBtn">VINCULAR / EDITAR EVENTOS</button>
@@ -14463,6 +14464,8 @@ function clearPromoForm(){
   promoEditorShowTab('content');
   promoEditorTogglePreview(false);
   $('promoForm').reset();
+  if($('promoCampaignMode'))$('promoCampaignMode').value='single';
+  promoModeVisibility();
   promoRotationReset();
   promoWinnerRegistrationSetForm();
   $('promoId').value='';
@@ -14763,6 +14766,8 @@ function editPromo(pid){
   promoWinnerRegistrationSetForm(p);
   $('promoDrawerTitle').textContent='EDITAR PROMOÇÃO';
   $('promoId').value=p.id;
+  if($('promoCampaignMode'))$('promoCampaignMode').value=promoActualCampaignMode(p);
+  promoModeVisibility();
   if($('promoHasLinkedPauta')) $('promoHasLinkedPauta').value=p.hasLinkedPauta?'yes':'no';
   if($('promoLinkedPromotionId')) $('promoLinkedPromotionId').value=p.linkedPromotionId||'';
   jpPopulateParentPromoOptions();
@@ -14907,9 +14912,20 @@ function generatePromoOccurrences(p,existing={}){
     const winners=Math.max(1,num(p.winnersPerDraw||p.qtyPerDraw)||1),units=Math.max(1,num(p.unitsPerWinner)||1); return {...old,id:old.id||promoOccurrenceKey(p,date,time),date,time,qtyPlanned:winners,unitsPerWinner:units,unitsPlanned:winners*units,actualQty:num(old.actualQty)||0,status:old.status||'AGENDADO',updatedAt:new Date().toISOString()};
   });
 }
+function promoActualCampaignMode(p){
+ const linked=Object.values(state.passportCampaigns||{}).find(x=>x?.promoId===p?.id);
+ const count=Array.isArray(linked?.events)?linked.events.length:0;
+ return p?.campaignMode==='passport'||count?'passport':'single';
+}
+function promoModeVisibility(){
+ const passport=$('promoCampaignMode')?.value==='passport';
+ const section=$('jpPromoLinkEntry');if(section)section.hidden=!passport;
+}
+$('promoCampaignMode')?.addEventListener('change',promoModeVisibility);
 function promoDraftFromForm(){
   return {
     id:$('promoId')?.value||'__NOVO__',
+    campaignMode:$('promoCampaignMode')?.value||'single',
     distributionId:$('promoDistributionId')?.value||'',
     segmentKey:$('promoSegmentKey')?.value||'',
     kind:$('promoKind')?.value||'promo',
@@ -15157,6 +15173,13 @@ function validatePromoFormExplicit(){
   if(!textNorm($('promoDescription')?.value||'')) return promoValidationFail('promoDescription','INFORME O TEXTO PARA O LOCUTOR.');
   if($('promoKind')?.value==='pauta'&&$('promoTextRotationEnabled')?.checked&&(promoRotationDraft.length<1||promoRotationDraft.some(v=>!textNorm(v.text)))) return promoValidationFail('promoDescription','PREENCHA TODAS AS VERSÕES DO RODÍZIO (PELO MENOS DUAS).');
   if(isPromo){
+    const target=$('promoId')?.value;
+    const linked=Object.values(state.passportCampaigns||{}).some(x=>x?.promoId===target&&Array.isArray(x.events)&&x.events.length);
+    if(linked&&$('promoCampaignMode')?.value==='single')
+      return promoValidationFail('promoCampaignMode','HÁ EVENTOS VINCULADOS. DESVINCULE OS EVENTOS ANTES DE MUDAR PARA PROMOÇÃO ÚNICA.');
+    const old=target?consolidatedPromoById(target):null;
+    if(old&&promoActualCampaignMode(old)!==($('promoCampaignMode')?.value||'single')&&promoAllWinnerObjects(old).length)
+      return promoValidationFail('promoCampaignMode','HÁ GANHADORES CONFIRMADOS. A MODALIDADE NÃO PODE SER ALTERADA SEM REGULARIZAÇÃO.');
     if(!$('promoLocal')?.value) return promoValidationFail('promoLocal','SELECIONE O CANAL DA PROMOÇÃO.');
     if(!$('promoDistributionId')?.value) return promoValidationFail('promoDistributionId','SELECIONE O PRÊMIO VINCULADO À DISTRIBUIÇÃO.');
     if(!$('promoSegmentKey')?.value) return promoValidationFail('promoSegmentKey','SELECIONE O SEGMENTO DA DISTRIBUIÇÃO.');
@@ -15193,6 +15216,7 @@ $('promoForm').addEventListener('submit',async e=>{
   const p={
     ...clone(existing),
     id:idVal,
+    campaignMode:isPromo?($('promoCampaignMode')?.value||'single'):'single',
     startDate,
     drawDate:isPromo?drawDate:startDate,
     endDate,

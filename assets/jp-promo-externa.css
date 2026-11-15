@@ -128,3 +128,24 @@
 .jpExtFormFeedback{min-height:0;border-radius:7px;color:#627d8b;font-size:10px;line-height:1.4}
 .jpExtFormFeedback:not(:empty){padding:8px 10px;background:#f0f5f8;border:1px solid #e0e9ef}
 .jpExtFormFeedback[data-error="true"]{background:#f7eff1;color:#955d6b;border-color:#e9d9de}
+
+/* Paleta operacional Recepção / Promo Externa — primeira etapa aprovada pelo Board. */
+.jpExtStudio{background:#f5f7fa!important;color:#26384e!important;font-family:Inter,'Segoe UI',Arial,sans-serif!important}
+.jpExtStudioHeader,.jpExtStudioPanel{border:1px solid #e2e7ee!important;background:rgba(255,255,255,.97)!important;box-shadow:0 3px 18px #26384e08!important}
+.jpExtStudioHeader h1{color:#526a83!important}
+.jpExtRibbon{background:#f3f6fa!important;border:1px solid #e2e7ee!important;color:#61758c!important}
+.jpExtStudioPanel h2,.jpExtPanelHeader h2,.jpExtActionTile strong,.jpExtActionInfo strong{color:#26384e!important}
+.jpExtSmallNote,.jpExtEyebrow,.jpExtActionInfo small{color:#7b8798!important}
+.jpExtActionTile{background:#fafbfd!important;border-color:#e2e7ee!important}
+.jpExtActionTile.active{background:#edf3fa!important;border-color:#b8cee2!important;box-shadow:inset 3px 0 0 #8aa8c4!important}
+.jpExtActionBalance,.jpExtStatusPill{background:#effaf5!important;border:1px solid #ccebd8!important;color:#42705b!important}
+.jpExtStudioKpi{background:#f8fafc!important;border-color:#dfe5ec!important}
+.jpExtStudioKpi:last-child{background:#effaf5!important;border-color:#dce9e1!important}
+.jpExtStudioKpi strong{color:#283d56!important}
+.jpExtStudioKpi:last-child strong{color:#42705b!important}
+.jpExtSearchField,.jpExtFields input{border-color:#dfe5ec!important;background:#fff!important;color:#344b63!important}
+.jpExtFields input:focus-visible,.jpExtSearchField:focus-visible{outline:2px solid #91aec5!important}
+.jpExtSave{background:#283d56!important;border-color:#283d56!important;color:#fff!important}
+.jpExtSave:hover{background:#355370!important}
+.jpExtInfoNote{background:#eef4fa!important;border-color:#dce6f0!important;color:#5b7287!important}
+.jpExtWinnerTable th{background:#f3f6fa!important;color:#64748b!important}

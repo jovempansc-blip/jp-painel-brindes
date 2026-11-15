@@ -13,7 +13,7 @@ const privatePath='jp-painel-brindes/passportPrivate';
 const enabledMeta=()=>window.JP_PASSPORT_METADATA_RULES_HOMOLOGATED===true;
 const enabledPrivate=()=>window.JP_PASSPORT_PRIVATE_RULES_HOMOLOGATED===true;
 const note=(s,bad=false)=>typeof showReceptionToast==='function'?showReceptionToast(s,bad):window.alert(s);
-let pins={},passports={},tab='ativas',year=new Date().getFullYear(),selected='',menuId='',busy=false,privateAllowed=false,privateData={},privateId='',privateListener=null;
+let pins={},passports={},tab='ativas',historyMonth=todayISO().slice(0,7),selected='',menuId='',busy=false,privateAllowed=false,privateData={},privateId='',privateListener=null;
 async function identity(){
  const u=user();if(!u)throw Error('LOGIN AUTENTICADO É OBRIGATÓRIO.');
  const token=await u.getIdTokenResult(true),claims=token?.claims||{};
@@ -25,25 +25,28 @@ const getPromo=id=>promos().find(p=>p.id===id)||null;
 const isPinned=id=>!!pins[encode(id)]?.pinned;
 const config=id=>passports[encode(id)]||null;
 const winners=p=>C.winnerRows(p);
+const isPassport=p=>p?.campaignMode==='passport'||list(config(p?.id)?.events).length>0;
+const historyOf=p=>String(p?.endDate||p?.drawDate||p?.startDate||'').slice(0,7);
+const historyEligible=p=>{const end=String(p?.endDate||p?.drawDate||'').slice(0,10);return !!end&&end<=todayISO();};
 function closeMenu(){const x=el('jpRcpMenu');if(x)x.hidden=true;}
 function menu(id,x,y){
  const host=el('jpRcpMenu');if(!host||!getPromo(id))return;menuId=id;
  host.innerHTML='<button type="button" data-jp-action="pin">'+(isPinned(id)?'DESAFIXAR':'FIXAR NO PAINEL')+'</button>'
   +'<button type="button" data-jp-action="open">ABRIR FICHA</button>'
   +'<button type="button" data-jp-action="history">VER NO HISTÓRICO</button>'
-  +'<button type="button" data-jp-action="passport">CONFIGURAR PASSAPORTE</button>';
+  +(isPassport(getPromo(id))?'<button type="button" data-jp-action="passport">ABRIR PASSAPORTE / EVENTOS</button>':'');
  host.style.left=Math.max(6,Math.min(x,innerWidth-186))+'px';
  host.style.top=Math.max(6,Math.min(y,innerHeight-164))+'px';host.hidden=false;
 }
 function updateTabs(){
  document.querySelectorAll('#jpRcpTabs [data-jp-tab]').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.jpTab===tab)));
- const y=el('jpRcpYear');if(y)y.hidden=tab!=='historico';
+ const month=el('jpRcpMonth');if(month)month.hidden=tab!=='historico';
 }
 function activate(next){
  if(!['ativas','fixadas','historico','passaportes'].includes(next))return;
  tab=next;updateTabs();rerender();
 }
-function yearOf(p){return String(p.startDate||p.drawDate||p.resultDate||p.createdAt||'').slice(0,4);}
+function monthOf(p){return historyOf(p);}
 function row(p){
  const id=esc(p.id),names=winners(p).map(w=>w.name).join(' · ');
  const dates=[p.startDate||p.drawDate||p.resultDate,p.endDate].filter(Boolean).map(dateText).join(' — ');
@@ -52,7 +55,7 @@ function row(p){
   +'<div><strong>'+esc(promoTitle(p))+'</strong><small>'+esc(dates)+'</small></div>'
   +'<div class="jpRcpMid"><span class="jpRcpTag '+(isPinned(p.id)?'pin':'')+'">'+(isPinned(p.id)?'FIXADA':'CAMPANHA')+'</span><small>'+events.length+' EVENTO(S) VINCULADO(S)</small></div>'
   +'<div class="jpRcpMid"><strong>'+esc(names||'RESULTADO PENDENTE')+'</strong></div>'
-  +'<div class="jpRcpActions"><button class="jpRcpBtn" data-jp-open="'+id+'">ABRIR</button><button class="jpRcpBtn" data-jp-menu="'+id+'" aria-label="Opções">⋮</button></div>'
+  +'<div class="jpRcpActions"><button class="jpRcpBtn" data-jp-open="'+id+'">'+(isPassport(p)?'EVENTOS / BAIXAS':'VER RETIRADAS')+'</button><button class="jpRcpBtn" data-jp-menu="'+id+'" aria-label="Opções">⋮</button></div>'
   +'<div data-jp-result="'+id+'" hidden></div></div>';
 }
 function alternative(){
@@ -62,8 +65,8 @@ function alternative(){
  if(labels)labels.hidden=true;
  let data=promos();
  if(tab==='fixadas')data=data.filter(p=>isPinned(p.id));
- if(tab==='historico')data=data.filter(p=>yearOf(p)===String(year));
- if(tab==='passaportes')data=data.filter(p=>p.id);
+ if(tab==='historico')data=data.filter(p=>historyOf(p)===historyMonth&&historyEligible(p));
+ if(tab==='passaportes')data=data.filter(isPassport);
  const search=safe(el('searchFilter')?.value).toUpperCase();
  data=data.filter(p=>(promoTitle(p)+' '+winners(p).map(w=>w.name).join(' ')).toUpperCase().includes(search));
  data.sort((a,b)=>String(b.startDate||b.drawDate||'').localeCompare(String(a.startDate||a.drawDate||'')));
@@ -72,8 +75,8 @@ function alternative(){
  return true;
 }
 function active(rows){
- const original=receptionActiveCampaigns(todayISO(),rows),ids=new Set(original.map(x=>x.p.id));
- return [...promos().filter(p=>isPinned(p.id)&&!ids.has(p.id)).map(p=>receptionCampaignState(p,rows,todayISO())),...original];
+ const original=receptionActiveCampaigns(todayISO(),rows).filter(x=>!isPassport(x.p)),ids=new Set(original.map(x=>x.p.id));
+ return [...promos().filter(p=>!isPassport(p)&&isPinned(p.id)&&!ids.has(p.id)).map(p=>receptionCampaignState(p,rows,todayISO())),...original];
 }
 function rerender(){
  const rows=typeof allResultRows==='function'?allResultRows():[];
@@ -151,7 +154,8 @@ function nominal(cfg){
       +'<div class="jpRcpField"><label>CPF</label><input data-jp-cpf autocomplete="off" inputmode="numeric" maxlength="14" placeholder="'+(privateAllowed?maskCpf(record.cpf):'ACESSO RESTRITO')+'" '+(disabled?'disabled':'')+' value=""></div>'
       +'<span class="jpRcpStatus jpRcpTag">'+esc(record.status||'A DEFINIR')+'</span>'
       +'<div class="jpRcpActions"><button class="jpRcpBtn" data-jp-seat-save="'+esc(key)+'" '+(disabled?'disabled':'')+'>SALVAR</button>'
-      +(privateAllowed&&record.status==='IDENTIFICADO'?'<button class="jpRcpBtn primary" data-jp-seat-use="'+esc(key)+'">BAIXA</button>':'')+'</div></div>';
+      +(record.status==='UTILIZADO'?'<span class="jpRcpDone">RETIRADA CONFIRMADA</span>':
+        '<button class="jpRcpBtn primary" data-jp-seat-use="'+esc(key)+'" '+(privateAllowed&&record.status==='IDENTIFICADO'?'':'disabled title="AGUARDANDO SEGURANÇA PRIVADA DO FIREBASE"')+'>CONFIRMAR RETIRADA</button>')+'</div></div>';
    }
   }
   html+='</div>';
@@ -313,17 +317,23 @@ async function writeSeat(key,used=false){
 function results(id){
  const p=getPromo(id),host=Array.from(document.querySelectorAll('[data-jp-result]')).find(x=>x.dataset.jpResult===id);
  if(!p||!host){note('CONSULTE OS RESULTADOS NA LISTA PRINCIPAL.',true);return;}
- host.innerHTML='<div class="jpRcpEditor"><div class="jpRcpPanelTitle"><h3>'+esc(promoTitle(p))+'</h3></div>'+
-  (winners(p).map(w=>'<div class="jpRcpEventLine"><strong>'+esc(w.name)+'</strong><span>'+esc(w.slot)+'</span></div>').join('')||'<div class="jpRcpEmpty">SEM RESULTADOS CADASTRADOS.</div>')+'</div>';
+ const rows=(typeof allResultRows==='function'?allResultRows():[]).filter(r=>
+  (r.source==='promo'&&r.id===id)||(r.source==='item'&&r.promoResultId===id));
+ const unique=new Map();
+ rows.forEach(r=>{const k=[r.source,r.id,r.date,r.occurrenceKey,r.winnerIndex].join('|');if(!unique.has(k))unique.set(k,r);});
+ host.innerHTML='<div class="jpRcpEditor"><div class="jpRcpPanelTitle"><h3>CONFIRMAÇÃO DE RETIRADAS · '+esc(promoTitle(p))+'</h3></div>'+
+  (unique.size?[...unique.values()].map(r=>receptionCampaignWinnerHtml(r)).join(''):
+    '<div class="jpRcpEmpty">SEM RESULTADOS CADASTRADOS NESTA PROMOÇÃO.</div>')+'</div>';
  host.hidden=!host.hidden;
 }
+
 function build(){
  const area=el('receptionCampaignList')?.closest('.receptionCampaignSection'),header=area?.querySelector('.receptionCampaignHeading');
  if(!area||!header)return;
  const bar=document.createElement('div');bar.id='jpRcpTabs';bar.className='jpReceptionTabs';
  bar.innerHTML=['ativas','fixadas','historico','passaportes'].map(x=>
- '<button class="jpReceptionTab" role="tab" aria-selected="'+(x==='ativas')+'" data-jp-tab="'+x+'">'+x.toUpperCase()+'</button>').join('')+
- '<select id="jpRcpYear" class="jpReceptionYear" hidden aria-label="Ano do histórico">'+Array.from({length:8},(_,i)=>new Date().getFullYear()-i).map(y=>'<option value="'+y+'">'+y+'</option>').join('')+'</select>';
+ '<button class="jpReceptionTab" role="tab" aria-selected="'+(x==='ativas')+'" data-jp-tab="'+x+'">'+({ativas:'PROMOÇÕES',fixadas:'FIXADAS',historico:'HISTÓRICO',passaportes:'PASSAPORTES'}[x])+'</button>').join('')+
+ '<input type="month" id="jpRcpMonth" class="jpReceptionYear" value="'+historyMonth+'" hidden aria-label="Mês do histórico">';
  header.insertAdjacentElement('afterend',bar);
  const labels=area.querySelector('.receptionCampaignLabels');if(labels)labels.id='receptionCampaignLabels';
  const editor=document.createElement('div');editor.id='jpRcpEditor';editor.className='jpRcpEditor';editor.hidden=true;area.appendChild(editor);
@@ -337,10 +347,10 @@ document.addEventListener('click',e=>{
  const op=e.target.closest('[data-jp-action]');
  if(op){e.preventDefault();e.stopImmediatePropagation();const target=menuId;closeMenu();
   if(op.dataset.jpAction==='pin')pin(target);
-  else if(op.dataset.jpAction==='history'){year=Number(yearOf(getPromo(target)))||new Date().getFullYear();const y=el('jpRcpYear');if(y)y.value=year;activate('historico');}
-  else if(op.dataset.jpAction==='passport')openPassport(target);else results(target);return;}
+  else if(op.dataset.jpAction==='history'){historyMonth=monthOf(getPromo(target))||historyMonth;const field=el('jpRcpMonth');if(field)field.value=historyMonth;activate('historico');}
+  else if(op.dataset.jpAction==='passport'&&isPassport(getPromo(target)))openPassport(target);else results(target);return;}
  const open=e.target.closest('[data-jp-open]');
- if(open){e.preventDefault();e.stopImmediatePropagation();if(config(open.dataset.jpOpen))openPassport(open.dataset.jpOpen);else results(open.dataset.jpOpen);return;}
+ if(open){e.preventDefault();e.stopImmediatePropagation();if(isPassport(getPromo(open.dataset.jpOpen)))openPassport(open.dataset.jpOpen);else results(open.dataset.jpOpen);return;}
  const close=e.target.closest('[data-jp-close]');if(close){e.preventDefault();e.stopImmediatePropagation();selected='';disconnectPrivate();el('jpRcpEditor').hidden=true;return;}
  const add=e.target.closest('[data-jp-link]');if(add){e.preventDefault();e.stopImmediatePropagation();link();return;}
  const remove=e.target.closest('[data-jp-unlink]');if(remove){e.preventDefault();e.stopImmediatePropagation();unlink(remove.dataset.jpUnlink);return;}
@@ -354,7 +364,7 @@ document.addEventListener('contextmenu',e=>{
  menu(card.dataset.jpPromo||card.dataset.receptionCampaign,e.clientX,e.clientY);
 },true);
 document.addEventListener('change',e=>{
- if(e.target.id==='jpRcpYear'){year=Number(e.target.value)||year;rerender();}
+ if(e.target.id==='jpRcpMonth'&&/^\d{4}-(0[1-9]|1[0-2])$/.test(e.target.value)){historyMonth=e.target.value;rerender();}
  if(['jpRcpSelectEvent','jpRcpSegment','jpRcpReservation','jpRcpQty','jpRcpRights'].includes(e.target.id))refreshReservation();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});

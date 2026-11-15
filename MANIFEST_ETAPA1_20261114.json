@@ -1,0 +1,41 @@
+{
+  "base_sha": "a420790ea5445d10c8408211c16dbdbbf0c56f7e",
+  "scope": "Board approved stage one only",
+  "qa_passed": 50,
+  "firebase_write_enabled": false,
+  "automatic_stock_return_enabled": false,
+  "files": [
+    {
+      "path": "index.html",
+      "sha256": "3d7151aff54fef65c2cc72f5e01aaaac44568057f3926158a8ad42baaa19d305"
+    },
+    {
+      "path": "preview_recepcao.html",
+      "sha256": "331707588953960ef695513710142dde930e7fbed023dad006bd85b313ac2e82"
+    },
+    {
+      "path": "promo_externa.html",
+      "sha256": "fc9c42d023bf9f60d9f39f1d2d19d423e2b517de84ed1849623fff3d3a09f87c"
+    },
+    {
+      "path": "assets/jp-reception-passport.js",
+      "sha256": "305b41325d08b8fbdb1820ba46499b6ced6f56625796d96b7750242909e3e8a0"
+    },
+    {
+      "path": "assets/jp-promo-externa.css",
+      "sha256": "02f4de5625f0a116e81b3b95c730e295cef59ff3bb9d7ca4014880fbc23892ce"
+    },
+    {
+      "path": "assets/jp-promo-passport-links.css",
+      "sha256": "7a35ed0881ca4bf2bd9c63d37f243198c5d87391ded9d13b8f1ac07e1948a7d3"
+    },
+    {
+      "path": "QA/test_reception_stage1_20261114.cjs",
+      "sha256": "dc58177d437f49a92993c44c6d4c08abeb96ca62a00d14af131598a8bfc2a641"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_ETAPA1_20261114.md",
+      "sha256": "d65733eccffaf00b9eda1abec20b56a25ffb1a7e3c87b9ecf993b9837c1da338"
+    }
+  ]
+}

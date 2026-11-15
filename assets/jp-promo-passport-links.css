@@ -29,3 +29,7 @@
 .jpPassportEmpty{text-align:center;padding:20px;border:1px dashed #e0e8ef;color:#8393a0;font-size:10px;margin:12px 0}
 @media(max-width:760px){.jpPassportForm{grid-template-columns:1fr 1fr}.jpPassportEvent{grid-column:1/-1}.jpPassportReservation{grid-column:1/-1}.jpPassportActions{grid-column:1/-1}.jpPassportDialog{padding:12px}.jpPassportLinkedRow{grid-template-columns:1fr auto}.jpPassportLinkedRow button{grid-column:1/-1;justify-self:start}}
 
+
+/* Primeira etapa: mostra o editor de eventos somente em Passaportes. */
+#jpPromoLinkEntry[hidden]{display:none!important}
+.jpPromoModeField select{max-width:420px;min-height:36px}
