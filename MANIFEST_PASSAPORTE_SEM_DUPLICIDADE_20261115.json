@@ -1,0 +1,29 @@
+{
+  "baseline": "d8cb2681c08e6e9bf77c1ee4816219a4b709584f",
+  "scope": "No duplicate Passport primary reservation",
+  "qa_passed": 92,
+  "firebase_rules_changed": false,
+  "private_data_writes_enabled": false,
+  "files": [
+    {
+      "path": "index.html",
+      "sha256": "6ab80921b97bf0073cec260cb6702f306d017b1df701317ee81faa0733543bb7"
+    },
+    {
+      "path": "assets/jp-promo-passport-links.css",
+      "sha256": "bd333ed23a751bdb630c8de4bc83f05a1e6d15cbff1325e15c4d76da48c2cf93"
+    },
+    {
+      "path": "QA/test_passport_no_double_reservation_20261115.cjs",
+      "sha256": "5658fdf3556b381ac8ace56612e2d8e6373c336197183d2b9b87d17937e6eb00"
+    },
+    {
+      "path": "QA/test_distribution_passport_compat_20261115.cjs",
+      "sha256": "839cf527af85abcde076e5f75d95b549c2bf46465e6af213895931e5403e1d02"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_PASSAPORTE_SEM_DUPLICIDADE_20261115.md",
+      "sha256": "eb72ba451355a1745af260126af12fe6818dd891808bd1ec0fb288276a3bf85a"
+    }
+  ]
+}

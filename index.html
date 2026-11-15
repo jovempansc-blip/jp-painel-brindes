@@ -3827,7 +3827,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 </style>
 <link rel="stylesheet" href="assets/jp-forms-125.css?v=AV58_1_25">
 <link rel="stylesheet" href="assets/jp-promo-externa.css?v=AV58_1_44_IMPL_HML_20261111">
-<link rel="stylesheet" href="assets/jp-promo-passport-links.css?v=JP_MODOS_STAGE1_20261114">
+<link rel="stylesheet" href="assets/jp-promo-passport-links.css?v=JP_PASSAPORTE_SEM_DUPLICIDADE_20261115">
 
 <style id="jp-distribution-visual-fit-20261111">
 /* HOTFIX VISUAL — Distribuição Geral / detalhada.
@@ -4821,10 +4821,10 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
               <div class="promoFormSectionTitle"><strong>PRÊMIO E SORTEIO</strong><span>VÍNCULO DIRETO COM A DISTRIBUIÇÃO</span></div>
               <div class="formGrid">
                 <div class="field full jpPromoModeField" data-promo-only="1"><label for="promoCampaignMode">MODALIDADE DA PROMOÇÃO</label><select class="control" id="promoCampaignMode"><option value="single">PROMOÇÃO ÚNICA · UM PRÊMIO OU EVENTO</option><option value="passport">PASSAPORTE · INGRESSOS PARA VÁRIOS EVENTOS</option></select><div class="uploadHint">DEFINE A ABA DA RECEPÇÃO. OS INGRESSOS DOS EVENTOS SEGUEM AS COTAS DA DISTRIBUIÇÃO.</div></div>
-                <div class="field wide"><label>PRÊMIO VINCULADO À DISTRIBUIÇÃO</label><select class="control" id="promoDistributionId" required><option value="">SELECIONE O PRÊMIO DISTRIBUÍDO</option></select></div>
-                <div class="field"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
-                <div class="field"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SELECIONE O PRÊMIO"></div>
-                <div class="promoDistributionGuide"><strong>REGRA:</strong> A PROMOÇÃO RESERVA O PRÊMIO DIRETAMENTE DA DISTRIBUIÇÃO. O SALDO NÃO É DUPLICADO E O SISTEMA BLOQUEIA QUANDO A QUANTIDADE NECESSÁRIA FOR MAIOR QUE A DISPONÍVEL.</div>
+                <div class="field wide" data-jp-primary="1"><label>PRÊMIO VINCULADO À DISTRIBUIÇÃO</label><select class="control" id="promoDistributionId" required><option value="">SELECIONE O PRÊMIO DISTRIBUÍDO</option></select></div>
+                <div class="field" data-jp-primary="1"><label>SEGMENTO DA DISTRIBUIÇÃO</label><select class="control" id="promoSegmentKey"><option value="">SELECIONE</option><option value="ar">RÁDIO</option><option value="rs">REDES SOCIAIS</option><option value="app">APP</option><option value="rua">EXTERNA</option><option value="camarote">CAMAROTE</option><option value="camarim">CAMARIM</option><option value="reservado">RESERVADO</option></select></div>
+                <div class="field" data-jp-primary="1"><label>SALDO DO SEGMENTO</label><input class="control" id="promoSegmentBalance" readonly value="SELECIONE O PRÊMIO"></div>
+                <div class="promoDistributionGuide" data-jp-primary="1"><strong>REGRA:</strong> A PROMOÇÃO RESERVA O PRÊMIO DIRETAMENTE DA DISTRIBUIÇÃO. O SALDO NÃO É DUPLICADO E O SISTEMA BLOQUEIA QUANDO A QUANTIDADE NECESSÁRIA FOR MAIOR QUE A DISPONÍVEL.</div>
                 <div class="field full jpPromoLinkEntry" id="jpPromoLinkEntry" data-promo-only="1" hidden>
                   <div><strong>PASSAPORTE MULTIEVENTOS · VÍNCULOS DE SHOWS</strong>
                     <span id="jpPromoPassportSummary">VINCULE SHOWS EXISTENTES NA DISTRIBUIÇÃO GERAL, COM SEGMENTO E RESERVA ESPECÍFICOS.</span></div>
@@ -14920,6 +14920,8 @@ function promoActualCampaignMode(p){
 function promoModeVisibility(){
  const passport=$('promoCampaignMode')?.value==='passport';
  const section=$('jpPromoLinkEntry');if(section)section.hidden=!passport;
+ document.querySelectorAll('[data-jp-primary="1"]').forEach(field=>{field.hidden=passport;});
+ const primary=$('promoDistributionId');if(primary)primary.required=!passport;
 }
 $('promoCampaignMode')?.addEventListener('change',promoModeVisibility);
 function promoDraftFromForm(){
@@ -14988,8 +14990,15 @@ document.addEventListener('change',event=>{
 function promoOccurrenceStockUnits(o,p={}){const winners=Math.max(1,num(o?.qtyPlanned)||num(p?.winnersPerDraw)||num(p?.qtyPerDraw)||1),units=Math.max(1,num(o?.unitsPerWinner)||num(p?.unitsPerWinner)||1);return Math.max(1,num(o?.unitsPlanned)||winners*units);}
 function promoForecastQty(p){ return (p?.occurrences||[]).filter(o=>normalizeStatus(o.status)!=='CANCELADO').reduce((sum,o)=>sum+promoOccurrenceStockUnits(o,p),0); }
 function promoUsedQty(p){ return (p?.occurrences||[]).filter(o=>normalizeStatus(o.status)==='REALIZADO').reduce((sum,o)=>sum+promoOccurrenceStockUnits(o,p),0); }
+function promoHasPassportLinks(p){
+ const linked=Object.values(state.passportCampaigns||{}).some(c=>
+   c?.promoId===p?.id&&Array.isArray(c.events)&&c.events.length>0);
+ return p?.campaignMode==='passport'||linked;
+}
 function promoCommitmentQty(p,referenceDate=todayISO()){
-  const ended=!!(p?.endDate||p?.drawDate) && String(p.endDate||p.drawDate)<String(referenceDate);
+ // O Passaporte não reserva o prêmio-base de novo; os shows vinculados comprometem suas próprias cotas.
+ if(promoHasPassportLinks(p))return 0;
+ const ended=!!(p?.endDate||p?.drawDate) && String(p.endDate||p.drawDate)<String(referenceDate);
   return (p?.occurrences||[]).reduce((sum,o)=>{const status=normalizeStatus(o.status);if(status==='CANCELADO')return sum;if(status==='REALIZADO')return sum+promoOccurrenceStockUnits(o,p);return ended?sum:sum+promoOccurrenceStockUnits(o,p);},0);
 }
 function uniqueConsolidatedPromos(){
@@ -15181,8 +15190,8 @@ function validatePromoFormExplicit(){
     if(old&&promoActualCampaignMode(old)!==($('promoCampaignMode')?.value||'single')&&promoAllWinnerObjects(old).length)
       return promoValidationFail('promoCampaignMode','HÁ GANHADORES CONFIRMADOS. A MODALIDADE NÃO PODE SER ALTERADA SEM REGULARIZAÇÃO.');
     if(!$('promoLocal')?.value) return promoValidationFail('promoLocal','SELECIONE O CANAL DA PROMOÇÃO.');
-    if(!$('promoDistributionId')?.value) return promoValidationFail('promoDistributionId','SELECIONE O PRÊMIO VINCULADO À DISTRIBUIÇÃO.');
-    if(!$('promoSegmentKey')?.value) return promoValidationFail('promoSegmentKey','SELECIONE O SEGMENTO DA DISTRIBUIÇÃO.');
+    if($('promoCampaignMode')?.value!=='passport'&&!$('promoDistributionId')?.value) return promoValidationFail('promoDistributionId','SELECIONE O PRÊMIO VINCULADO À DISTRIBUIÇÃO.');
+    if($('promoCampaignMode')?.value!=='passport'&&!$('promoSegmentKey')?.value) return promoValidationFail('promoSegmentKey','SELECIONE O SEGMENTO DA DISTRIBUIÇÃO.');
     if(!$('promoDrawDate')?.value) return promoValidationFail('promoDrawDate','INFORME A DATA DO SORTEIO.');
     if(!$('promoDrawTime')?.value) return promoValidationFail('promoDrawTime','INFORME O HORÁRIO DO SORTEIO.');
     if(!slotParts($('promoDrawTime').value))return promoValidationFail('promoDrawTime','SELECIONE UM HORÁRIO VÁLIDO, COM MINUTOS 00 OU 30.');
@@ -15212,7 +15221,7 @@ $('promoForm').addEventListener('submit',async e=>{
   const drawDate=$('promoDrawDate').value;
   const endDate=$('promoEndDate')?.value||drawDate;
   if(endDate<startDate){ alert('A DATA DE ENCERRAMENTO NÃO PODE SER ANTERIOR AO INÍCIO.'); return; }
-  const kind=$('promoKind')?.value||'promo',isPromo=kind==='promo'; if(isPromo&&(drawDate<startDate||drawDate>endDate)){ alert('A DATA DO PRIMEIRO SORTEIO PRECISA ESTAR DENTRO DO PERÍODO DA PROMOÇÃO.'); return; }
+  const kind=$('promoKind')?.value||'promo',isPromo=kind==='promo',isPassport=isPromo&&$('promoCampaignMode')?.value==='passport'; if(isPromo&&(drawDate<startDate||drawDate>endDate)){ alert('A DATA DO PRIMEIRO SORTEIO PRECISA ESTAR DENTRO DO PERÍODO DA PROMOÇÃO.'); return; }
   const p={
     ...clone(existing),
     id:idVal,
@@ -15228,8 +15237,8 @@ $('promoForm').addEventListener('submit',async e=>{
     unitsPerWinner:Math.max(1,num($('promoUnitsPerWinner')?.value)||1),
     winnerRegistration:promoWinnerRegistrationFromForm(),
     resultProgram:isPromo?promoUpdateResultProgram():'',
-    distributionId:$('promoDistributionId')?.value||'',
-    segmentKey:$('promoSegmentKey')?.value||'',
+    distributionId:isPassport?(existing.distributionId||''):($('promoDistributionId')?.value||''),
+    segmentKey:isPassport?(existing.segmentKey||''):($('promoSegmentKey')?.value||''),
     kind,
     hasLinkedPauta:isPromo?$('promoHasLinkedPauta')?.value==='yes':false,
     linkedPromotionId:!isPromo?($('promoLinkedPromotionId')?.value||existing.linkedPromotionId||''):'',
@@ -15270,8 +15279,8 @@ $('promoForm').addEventListener('submit',async e=>{
   p.occurrences=isPromo?promoOccurrencesFromForm(p,existing):[];
   if(isPromo&&!p.occurrences.length){ alert('NÃO FOI POSSÍVEL GERAR A AGENDA DE SORTEIOS. CONFIRA AS DATAS.'); return; }
   if(isPromo&&p.occurrences.some(o=>o.date<p.startDate||o.date>p.endDate)){ alert('EXISTE SORTEIO FORA DO PERÍODO DA PROMOÇÃO.'); return; }
-  if(isPromo&&(!p.distributionId||!p.segmentKey)){alert('A PROMOÇÃO PRECISA SER VINCULADA AO PRÊMIO DA DISTRIBUIÇÃO E AO SEGMENTO CORRESPONDENTE.');return;} if(!isPromo){p.distributionId='';p.segmentKey='';} if(isPromo&&!promoUpdateResultProgram()){alert('NÃO FOI POSSÍVEL IDENTIFICAR O PROGRAMA DO SORTEIO NA GRADE OFICIAL. CONFIRA DATA, HORA, EMISSORA E A ABA PROGRAMAÇÃO.');return;}
-  if(isPromo&&p.distributionId){
+  if(isPromo&&!isPassport&&(!p.distributionId||!p.segmentKey)){alert('A PROMOÇÃO ÚNICA PRECISA SER VINCULADA AO PRÊMIO DA DISTRIBUIÇÃO E AO SEGMENTO CORRESPONDENTE.');return;} if(!isPromo){p.distributionId='';p.segmentKey='';} if(isPromo&&!promoUpdateResultProgram()){alert('NÃO FOI POSSÍVEL IDENTIFICAR O PROGRAMA DO SORTEIO NA GRADE OFICIAL. CONFIRA DATA, HORA, EMISSORA E A ABA PROGRAMAÇÃO.');return;}
+  if(isPromo&&!isPassport&&p.distributionId){
     if(!distributionCampaignCopies(p.distributionId).length){ alert('A DISTRIBUIÇÃO VINCULADA NÃO FOI ENCONTRADA.'); return; }
     const seg=promoSegmentStatus(p);
     if(seg&&seg.commitment>seg.available){ alert(`SALDO INSUFICIENTE NO SEGMENTO ${seg.label}.\n\nDISPONÍVEL PARA ESTA PROMOÇÃO: ${seg.available}\nCOMPROMETIDO PELOS SORTEIOS: ${seg.commitment}\n\nAUMENTE A QUANTIDADE NA ABA DISTRIBUIÇÃO.`); return; }
@@ -15282,7 +15291,7 @@ $('promoForm').addEventListener('submit',async e=>{
     const future=existingPromoResultItems(p.id).filter(({item})=>item.date>=todayISO()&&!promoResultItemHasOutcome(item)).length;
     if(!confirm(`ALTERAR O SEGMENTO DA PROMOÇÃO?\n\n${DESTINATION_LABELS[oldSegment]||oldSegment||'NÃO DEFINIDO'} → ${DESTINATION_LABELS[newSegment]||newSegment||'NÃO DEFINIDO'}\n\n${future} RESULTADO(S) FUTURO(S) PODERÃO SER RECONCILIADOS.\nGANHADORES E RESULTADOS CONFIRMADOS PERMANECEM INTACTOS.`))return;
   }
-  if(isPromo){
+  if(isPromo&&!isPassport){
     for(const key of promoMonthKeys(p).filter(key=>key>=state.currentMonth)){
       const monthCommitment=promoCommitmentQtyForMonth(p,key);
       if(!monthCommitment)continue;

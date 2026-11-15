@@ -33,3 +33,6 @@
 /* Primeira etapa: mostra o editor de eventos somente em Passaportes. */
 #jpPromoLinkEntry[hidden]{display:none!important}
 .jpPromoModeField select{max-width:420px;min-height:36px}
+
+/* Passaporte não usa uma segunda reserva do prêmio-base. */
+[data-jp-primary="1"][hidden]{display:none!important}

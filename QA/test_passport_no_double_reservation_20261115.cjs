@@ -1,0 +1,42 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const root=path.resolve(__dirname,'..');
+const index=fs.readFileSync(path.join(root,'index.html'),'utf8');
+const css=fs.readFileSync(path.join(root,'assets/jp-promo-passport-links.css'),'utf8');
+let passed=0;const test=(name,fn)=>{fn();console.log('PASS',++passed,name)};
+const start=index.indexOf('function promoOccurrenceStockUnits('),end=index.indexOf('function uniqueConsolidatedPromos(',start);
+assert(start>=0&&end>start,'canonical stock function missing');
+const source=index.slice(start,end);
+const state={passportCampaigns:{}};
+const ctx={state,num:x=>Math.max(0,Number(x)||0),normalizeStatus:x=>String(x||'').toUpperCase(),
+ todayISO:()=> '2026-11-15',Number,Math,String,Object,Array};
+vm.createContext(ctx);vm.runInContext(source,ctx);
+const base={id:'PR1',campaignMode:'single',drawDate:'2026-11-14',endDate:'2026-11-20',
+ occurrences:[{date:'2026-11-14',time:'10:00',qtyPlanned:2,unitsPerWinner:2,status:'PENDENTE'}]};
+test('Única mantém compromisso de 4 ingressos',()=>assert.equal(ctx.promoCommitmentQty(base),4));
+test('Única realizada conserva compromisso de 4',()=>assert.equal(ctx.promoCommitmentQty({...base,occurrences:[{...base.occurrences[0],status:'REALIZADO'}]}),4));
+test('Única cancelada libera compromisso',()=>assert.equal(ctx.promoCommitmentQty({...base,occurrences:[{...base.occurrences[0],status:'CANCELADO'}]}),0));
+test('Passaporte com modalidade explícita não duplica compromisso base',()=>assert.equal(ctx.promoCommitmentQty({...base,campaignMode:'passport'}),0));
+test('Passaporte realizado também não duplica cota do show vinculado',()=>assert.equal(ctx.promoCommitmentQty({...base,campaignMode:'passport',occurrences:[{...base.occurrences[0],status:'REALIZADO'}]}),0));
+test('Passaporte antigo com links e campo single não duplica',()=>{
+ state.passportCampaigns={old:{promoId:'PR1',events:[{distributionId:'D1',monthKey:'2026-12',segment:'reservado',units:2}]}};
+ assert.equal(ctx.promoCommitmentQty(base),0);
+});
+test('Promoção de ID diferente não perde estoque por link de outro',()=>assert.equal(ctx.promoCommitmentQty({...base,id:'PR_OTHER'}),4));
+test('Passaporte legado sem eventos ainda não compromete prêmio-base',()=>assert.equal(ctx.promoCommitmentQty({...base,id:'PR_EMPTY',campaignMode:'passport'}),0));
+state.passportCampaigns={};
+test('contabilização física é determinística',()=>{const before=JSON.stringify(base);ctx.promoCommitmentQty(base);ctx.promoCommitmentQty(base);assert.equal(JSON.stringify(base),before)});
+test('UI exige prêmio-base apenas em promoções Únicas',()=>assert(index.includes("if($('promoCampaignMode')?.value!=='passport'&&!$('promoDistributionId')?.value)")));
+test('UI exige segmento-base apenas em promoções Únicas',()=>assert(index.includes("if($('promoCampaignMode')?.value!=='passport'&&!$('promoSegmentKey')?.value)")));
+test('Formulário limpa required para passaporte',()=>assert(index.includes('primary.required=!passport')));
+test('Campos físicos primários ocultos em Passaporte',()=>assert(index.includes("querySelectorAll('[data-jp-primary=\"1\"]')")&&css.includes('[data-jp-primary="1"][hidden]{display:none!important}')));
+test('Editor mantém botão SHOWS para vincular eventos',()=>assert(index.includes('VINCULAR / EDITAR EVENTOS')));
+test('Novo Passaporte não gera distribuição-base fictícia',()=>assert(index.includes("distributionId:isPassport?(existing.distributionId||'')")));
+test('Novo Passaporte não gera segmento-base fictício',()=>assert(index.includes("segmentKey:isPassport?(existing.segmentKey||'')")));
+test('Edição legado preserva referência original do sorteio',()=>assert(index.includes("(existing.distributionId||'')")&&index.includes("(existing.segmentKey||'')")));
+test('Validação de segmento exige vínculo para Promoção Única',()=>assert(index.includes('if(isPromo&&!isPassport&&(!p.distributionId||!p.segmentKey))')));
+test('Estoque da Distribuição é conferido somente para Promoção Única',()=>assert(index.includes('if(isPromo&&!isPassport&&p.distributionId)')));
+test('Verificação de cota mensal ocorre somente para Promoção Única',()=>assert(index.includes('if(isPromo&&!isPassport){\n    for(const key of promoMonthKeys')));
+test('Não altera a gestão de permissões Firebase',()=>assert(!index.includes('JP_EXT_SECURE_BANK_VERIFIED = true')));
+test('Cache bust garante CSS novo',()=>assert(index.includes('JP_PASSAPORTE_SEM_DUPLICIDADE_20261115')));
+console.log('JP_PASSPORT_STOCK_NO_DOUBLE',passed,'PASS 0 FAIL');
