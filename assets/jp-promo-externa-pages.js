@@ -6,7 +6,7 @@
  function connection(state){
   const dot=element('jpExtLogin');if(!dot||role!=='studio')return;
   dot.dataset.connection=state;
-  const label={'connecting':'CONECTANDO AO FIREBASE','connected':'FIREBASE CONECTADO. CLIQUE PARA AUTENTICAR','offline':'FIREBASE DESCONECTADO. CLIQUE PARA AUTENTICAR'}[state]||'FIREBASE';
+  const label={'connecting':'CONECTANDO AO FIREBASE','connected':'FIREBASE CONECTADO','offline':'FIREBASE DESCONECTADO'}[state]||'FIREBASE';
   dot.title=label;dot.setAttribute('aria-label',label);
  }
  const config=window.JP_EXT_FIREBASE_CONFIG;
@@ -35,7 +35,9 @@
    element('jpExtUnit').textContent=selectedAction?.deliveryUnit==='pair'?'PARES':'UNIDADES';
    element('jpExtUsed').textContent=selectedAction?String(selectedAction.consumed/C.multiplier(selectedAction.deliveryUnit)):'0';
    element('jpExtAllocated').textContent=selectedAction?String(selectedAction.quantity):'0';
-   element('jpExtSubmit').disabled=!selectedAction||!store||busy;
+   const protectedWritesAvailable=window.JP_EXT_SECURE_BANK_VERIFIED===true&&!!window.firebase?.auth?.()?.currentUser?.uid;
+   element('jpExtSubmit').disabled=!selectedAction||!store||busy||!protectedWritesAvailable;
+   element('jpExtSubmit').title=protectedWritesAvailable?'CADASTRAR GANHADOR':'GRAVAÇÃO NOMINAL AGUARDANDO REGRAS PRIVADAS HOMOLOGADAS DO FIREBASE';
    const winnerSearch=(element('jpExtWinnerSearch')?.value||'').toUpperCase();
    const rows=(selectedAction?.winners||[]).filter(w=>(bankRecords['EXTERNA_'+w.id]?.name||'').toUpperCase().includes(winnerSearch))
       .sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0));
@@ -97,7 +99,9 @@
      element('jpExtStatusFilter').addEventListener('change',renderReception);
      element('jpExtReception').addEventListener('click',handleReception);
    }
-   element('jpExtLogin').addEventListener('click',async()=>{
+   // A Promo Externa é de acesso direto, sem botão/diálogo de login.
+   // O painel separado da Recepção Externa mantém o fluxo original.
+   if(role!=='studio')element('jpExtLogin')?.addEventListener('click',async()=>{
      try{const provider=new window.firebase.auth.GoogleAuthProvider();await window.firebase.auth().signInWithPopup(provider);show('SESSÃO AUTENTICADA.');}
      catch(error){show('FALHA NA AUTENTICAÇÃO: '+error.message,true);}
    });
@@ -114,7 +118,7 @@
      store=new DB(window.firebase.database(app),{auth:window.firebase.auth(app),secureBankVerified:window.JP_EXT_SECURE_BANK_VERIFIED===true});
      store.onMonths(value=>{months=value;role==='studio'?renderStudio():renderReception();},e=>show('FALHA DE LEITURA NO FIREBASE: '+e.message,true));
      window.firebase.auth().onAuthStateChanged(user=>{
-       element('jpExtAuthState').textContent=user?'CONECTADO: '+(user.email||user.uid):'NÃO AUTENTICADO — ENTRE COM CONTA AUTORIZADA';
+       if(element('jpExtAuthState'))element('jpExtAuthState').textContent=role==='studio'?(user?'FIREBASE CONECTADO; SESSÃO PREEXISTENTE':'FIREBASE CONECTADO; CADASTRO NOMINAL PROTEGIDO'):(user?'CONECTADO: '+(user.email||user.uid):'NÃO AUTENTICADO — ENTRE COM CONTA AUTORIZADA');
        if(bankListener){bankListener.off('value');bankListener=null;}
        bankRecords={};
        if(user){
