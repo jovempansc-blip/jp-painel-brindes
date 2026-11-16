@@ -1,0 +1,37 @@
+{
+  "baseline": "5af500fe19e17ee168f6166f67ecff4d22b25fef",
+  "scope": "Fifth tab compact titular and companion full names/phone/CPF indicator",
+  "tests_passed": 36,
+  "firebase_rules_modified": false,
+  "firebase_data_written": false,
+  "files": [
+    {
+      "path": "preview_recepcao.html",
+      "sha256": "700b620b5629f2f81a6c40c15c9e713395111355fe9754af5623f117d5492673"
+    },
+    {
+      "path": "assets/jp-reception-passport.js",
+      "sha256": "b6766b317fba42d12a9980778ada707f406e7a43a848f37cfa66c77700da7f72"
+    },
+    {
+      "path": "assets/jp-reception-passport.css",
+      "sha256": "a6c82f9479ac43b81bbc03064130ec053f7932768594047865facd98f5c8b0b5"
+    },
+    {
+      "path": "assets/jp-promo-externa-reception-bridge.js",
+      "sha256": "3f2fe247923b159fe1151c8183b19a1cddfd92275376c0597ea4249e00da5d7a"
+    },
+    {
+      "path": "QA/test_compact_external_reception_20261116.cjs",
+      "sha256": "22a20a5f2880f5ac60971a2f1c3aec88dfc08513e072fb3df179a6ba4768416d"
+    },
+    {
+      "path": "QA/test_companion_reception_20261116.cjs",
+      "sha256": "24f078313c62e33e338dd29027f68b15d1aa5990a6e9e886d03f34e811818d91"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_PROMO_EXTERNA_LISTA_COMPACTA_20261116.md",
+      "sha256": "b2423c9b0468348ee73a5ada72882f640e570b18f25fa8f0d4855541d51c48a8"
+    }
+  ]
+}

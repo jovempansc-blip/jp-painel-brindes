@@ -47,9 +47,16 @@ function menu(id,x,y){
 function updateTabs(){
  document.querySelectorAll('#jpRcpTabs [data-jp-tab]').forEach(x=>x.setAttribute('aria-selected',String(x.dataset.jpTab===tab)));
  const month=el('jpRcpMonth');if(month)month.hidden=tab!=='historico';
+ const external=tab==='externa',section=el('jpExternalReceptionSection'),list=el('receptionCampaignList'),labels=el('receptionCampaignLabels');
+ if(section)section.hidden=!external;
+ if(list)list.hidden=external;
+ if(labels&&external)labels.hidden=true;
+ const heading=list?.closest('.receptionCampaignSection')?.querySelector('.receptionCampaignHeading h2');
+ if(heading)heading.textContent=external?'PROMO EXTERNA · GANHADORES E RETIRADAS':'PROMOÇÕES · RESULTADOS E RETIRADAS';
+ if(external)window.JPExternalReceptionBridge?.render?.();
 }
 function activate(next){
- if(!['ativas','fixadas','historico','passaportes'].includes(next))return;
+ if(!['ativas','fixadas','historico','passaportes','externa'].includes(next))return;
  tab=next;updateTabs();rerender();
 }
 function monthOf(p){return historyOf(p);}
@@ -66,6 +73,13 @@ function row(p){
 }
 function alternative(){
  if(tab==='ativas'){const labels=el('receptionCampaignLabels');if(labels)labels.hidden=false;return false;}
+ if(tab==='externa'){
+  const count=el('receptionCampaignCount');
+  const badge=el('jpExternalReceptionCount');
+  if(count)count.textContent=badge?.textContent||'0 A RETIRAR';
+  const list=el('receptionCampaignList');if(list)list.innerHTML='';
+  return true;
+ }
  const area=el('receptionCampaignList'),counter=el('receptionCampaignCount'),labels=el('receptionCampaignLabels');
  if(!area||!counter)return false;
  if(labels)labels.hidden=true;
@@ -360,8 +374,8 @@ function build(){
  const area=el('receptionCampaignList')?.closest('.receptionCampaignSection'),header=area?.querySelector('.receptionCampaignHeading');
  if(!area||!header)return;
  const bar=document.createElement('div');bar.id='jpRcpTabs';bar.className='jpReceptionTabs';
- bar.innerHTML=['ativas','fixadas','historico','passaportes'].map(x=>
- '<button class="jpReceptionTab" role="tab" aria-selected="'+(x==='ativas')+'" data-jp-tab="'+x+'">'+({ativas:'PROMOÇÕES',fixadas:'FIXADAS',historico:'HISTÓRICO',passaportes:'PASSAPORTES'}[x])+'</button>').join('')+
+ bar.innerHTML=['ativas','fixadas','historico','passaportes','externa'].map(x=>
+ '<button class="jpReceptionTab" role="tab" aria-selected="'+(x==='ativas')+'" data-jp-tab="'+x+'">'+({ativas:'PROMOÇÕES',fixadas:'FIXADAS',historico:'HISTÓRICO',passaportes:'PASSAPORTES',externa:'PROMO EXTERNA'}[x])+'</button>').join('')+
  '<input type="month" id="jpRcpMonth" class="jpReceptionYear" value="'+historyMonth+'" hidden aria-label="Mês do histórico">';
  header.insertAdjacentElement('afterend',bar);
  const labels=area.querySelector('.receptionCampaignLabels');if(labels)labels.id='receptionCampaignLabels';

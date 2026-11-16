@@ -62,3 +62,43 @@ details.jpRcpEvent[open]>summary{border-bottom:1px solid #e5ebef;margin-bottom:8
 @media(max-width:760px){.jpRcpSummaryGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.jpRcpWinnerSummary{align-items:start;flex-direction:column}}
 
 .jpRcpEventProgress{display:inline-block;float:right;color:#74889a;font-weight:750;font-size:9px;margin-left:9px}
+
+/* JP A02/A06 - Promo Externa: lista administrativa compacta na quinta aba.
+   Um registro por faixa; titular na primeira linha e acompanhante na segunda.
+   Títulos de campanha aparecem uma única vez por grupo. */
+#jpExternalReceptionSection.jpExternalReceptionEmbedded{padding:0!important;margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important}
+#jpExternalReceptionRows{max-height:568px;overflow-y:auto;overscroll-behavior:contain;padding:0 4px 3px 0;scrollbar-gutter:stable}
+.jpExtCompactGroup{margin:0 0 10px;border:1px solid #e3e9f0;border-radius:11px;background:#fff;overflow:hidden}
+.jpExtCompactGroupHeading{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:9px 12px;background:#f3f6fa;border-bottom:1px solid #e2e8ef}
+.jpExtCompactGroupHeading strong{color:#29405b;font-size:10px;font-weight:900;line-height:1.3}
+.jpExtCompactGroupHeading small{color:#738297;font-size:9px;font-weight:700}
+.jpExtCompactGroupHeading>span{margin-left:auto;font-size:9px;color:#6a4d23;background:#fff4e8;padding:4px 8px;border-radius:30px;font-weight:800}
+.jpExtCompactRow{display:grid;grid-template-columns:minmax(0,1fr) 172px 151px;column-gap:11px;align-items:center;padding:8px 11px;border-bottom:1px solid #e7ecf2;background:#fff;min-height:54px}
+.jpExtCompactRow:last-child{border-bottom:0}
+.jpExtCompactRow:hover{background:#fbfcfe}
+.jpExtCompactPeople{display:grid;gap:3px;min-width:0}
+.jpExtCompactPersonLine{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:8px;row-gap:2px;min-width:0;font-size:10px;line-height:1.4}
+.jpExtCompactRole{width:78px;flex:0 0 78px;color:#79889a;font-size:8px;letter-spacing:.035em;font-weight:900}
+.jpExtCompactName{color:#2b3d52;font-size:10px;font-weight:900;overflow-wrap:anywhere}
+.jpExtCompactContact,.jpExtCompactCpf{color:#65768a;font-size:9px;font-weight:650;white-space:nowrap}
+.jpExtCompactState{min-width:0;display:grid;gap:3px;text-align:left}
+.jpExtCompactState strong{font-size:10px;color:#364b62;font-weight:900}
+.jpExtCompactState span{font-size:9px;color:#47755c;font-weight:800}
+.jpExtCompactState .jpExtCompactPending{color:#9c6027}
+.jpExtCompactState small{font-size:8px;color:#8c9aab}
+.jpExtCompactRow .jpExtCompactAction{width:100%;max-width:151px;min-height:32px;padding:6px 9px;font-size:9px!important;line-height:1.2;justify-self:end;white-space:normal}
+@media(max-width:980px){
+ .jpExtCompactRow{grid-template-columns:minmax(0,1fr) 135px;row-gap:7px}
+ .jpExtCompactRow .jpExtCompactAction{grid-column:2;max-width:135px}
+ .jpExtCompactState{grid-column:2;grid-row:1}
+ .jpExtCompactPeople{grid-row:1 / span 2}
+}
+@media(max-width:620px){
+ #jpExternalReceptionRows{max-height:510px;scrollbar-gutter:auto;padding-right:0}
+ .jpExtCompactGroupHeading{padding:9px}
+ .jpExtCompactRow{grid-template-columns:minmax(0,1fr);gap:7px;padding:10px}
+ .jpExtCompactRole{flex-basis:71px;width:71px}
+ .jpExtCompactPeople{grid-row:auto}
+ .jpExtCompactState{grid-row:auto;grid-column:1;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+ .jpExtCompactRow .jpExtCompactAction{grid-column:1;max-width:none;justify-self:stretch}
+}

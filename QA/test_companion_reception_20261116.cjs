@@ -32,9 +32,9 @@ test('módulo aparece na Recepção principal',()=>assert.equal(section.hidden,f
 test('a promoção fictícia aparece no painel',()=>assert(host.innerHTML.includes('AÇÃO FICTÍCIA')));
 test('o ganhador fictício aparece no painel',()=>assert(host.innerHTML.includes('PESSOA FICTÍCIA')));
 test('o acompanhante aparece na Recepção principal com o mesmo titular',()=>assert(host.innerHTML.includes('ACOMPANHANTE FICTÍCIO')));
-test('CPF do acompanhante não é exposto em texto puro na Recepção',()=>assert(!host.innerHTML.includes('52998224725')&&host.innerHTML.includes('CPF DO ACOMPANHANTE: CADASTRADO')));
+test('CPF do acompanhante não é exposto em texto puro na Recepção',()=>assert(!host.innerHTML.includes('52998224725')&&host.innerHTML.includes('CPF: CADASTRADO')));
 test('o botão de retirada é exibido ao conciliar registro',()=>assert(host.innerHTML.includes('CONFIRMAR RETIRADA')));
-test('a versão nova está importada na Recepção',()=>assert(html.includes('jp-promo-externa-reception-bridge.js?v=JP_ACOMPANHANTE_20261116')));
+test('a versão nova está importada na Recepção',()=>assert(html.includes('jp-promo-externa-reception-bridge.js?v=JP_EXTERNA_LISTA_COMPACTA_20261116')));
 (async()=>{
  await host.handlers.click({target:{closest(selector){return selector==='[data-ext-pickup],[data-ext-sync]'?{dataset:{extPickup:'W_SYNTHETIC'},disabled:false,textContent:''}:null;}}});
  test('retirada chama um único fluxo canônico',()=>assert.equal(pickups,1));
