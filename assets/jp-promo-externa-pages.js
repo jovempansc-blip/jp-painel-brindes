@@ -89,12 +89,26 @@
    const rows=(selectedAction?.winners||[]).filter(w=>[bankRecords['EXTERNA_'+w.id]?.name,bankRecords['EXTERNA_'+w.id]?.companion?.name].join(' ').toUpperCase().includes(winnerSearch))
       .sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0));
    const tb=element('jpExtWinners');
-   if(tb)tb.innerHTML=rows.map(w=>
-      '<tr><td><strong>'+esc(bankRecords['EXTERNA_'+w.id]?.name||'IDENTIFICAÇÃO PENDENTE')+'</strong>'+companionInfo(bankRecords['EXTERNA_'+w.id],w.deliveryUnit==='pair')+
-        (w.deliveryUnit==='pair'&&w.status==='AGUARDANDO_RETIRADA'?
-        '<button type="button" class="jpExtCompanionEditBtn" data-edit-companion="'+esc(w.id)+'">EDITAR ACOMPANHANTE</button>':'')+
-        '</td><td>'+w.quantity+' '+(w.deliveryUnit==='pair'?'PAR':'IND.')+'</td><td>'+esc(asBR(w.registeredAtMs))+'</td><td>'+(w.bankStatus==='CONFIRMADO'?esc(w.status):'BANCO PENDENTE')+'</td></tr>'
-   ).join('')||'<tr><td colspan="4" class="jpExtEmpty">NENHUM GANHADOR PARA ESTA BUSCA.</td></tr>';
+   if(tb)tb.innerHTML=rows.map(w=>{
+     const person=bankRecords['EXTERNA_'+w.id]||{};
+     const state=w.bankStatus==='CONFIRMADO'?w.status:'BANCO PENDENTE';
+     const statusLabel=state==='AGUARDANDO_RETIRADA'?'AGUARDANDO RETIRADA':
+       state==='RETIRADO'?'RETIRADO':state==='CANCELADO'?'CANCELADO':state;
+     const statusClass=state==='RETIRADO'?'delivered':state==='AGUARDANDO_RETIRADA'?'pending':'attention';
+     return '<tr class="jpExtWinnerRecord">'+
+       '<td class="jpExtRecordIdentity"><strong>'+esc(person.name||'IDENTIFICAÇÃO PENDENTE')+'</strong>'+
+         (person.phone?'<small class="jpExtRecordPersonContact">TEL. TITULAR: '+esc(person.phone)+'</small>':'')+
+         companionInfo(person,w.deliveryUnit==='pair')+
+         (w.deliveryUnit==='pair'&&w.status==='AGUARDANDO_RETIRADA'?
+           '<button type="button" class="jpExtCompanionEditBtn" data-edit-companion="'+esc(w.id)+'">EDITAR ACOMPANHANTE</button>':'')+
+       '</td>'+
+       '<td class="jpExtRecordMetaCell jpExtRecordQty" data-label="PREMIAÇÃO"><strong>'+
+         esc(w.quantity+' '+(w.deliveryUnit==='pair'?'PAR'+(Number(w.quantity)===1?'':'ES'):'UNIDADE'+(Number(w.quantity)===1?'':'S')))+
+       '</strong></td>'+
+       '<td class="jpExtRecordMetaCell jpExtRecordWhen" data-label="CADASTRADO"><time>'+esc(asBR(w.registeredAtMs))+'</time></td>'+
+       '<td class="jpExtRecordMetaCell jpExtRecordStatus" data-label="SITUAÇÃO"><span class="jpExtRecordStatusPill '+statusClass+'">'+esc(statusLabel)+'</span></td>'+
+     '</tr>';
+   }).join('')||'<tr><td colspan="4" class="jpExtEmpty">NENHUM GANHADOR PARA ESTA BUSCA.</td></tr>';
  }
  function renderReception(){let winners=allWinners();const query=(element('jpExtSearch')?.value||'').toUpperCase();const status=element('jpExtStatusFilter')?.value||'PENDENTE';
    winners=winners.filter(w=>status==='TODOS'||(status==='PENDENTE'?w.status==='AGUARDANDO_RETIRADA':w.status===status));

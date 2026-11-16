@@ -167,3 +167,42 @@
 .jpExtCompanionCancel,.jpExtCompanionEditBtn{border:1px solid #d2dce6;border-radius:7px;background:#f5f8fb;color:#566c83;font-size:10px;font-weight:750;padding:7px 10px;cursor:pointer}
 .jpExtCompanionEditBtn{display:block;margin-top:7px}
 .jpExtCompanionCancel:hover,.jpExtCompanionEditBtn:hover{background:#e8f0f7}
+
+
+/* JP Promo Externa — registros da ação: colunas legíveis, sem texto comprimido. */
+.jpExtRecordsScroll{max-height:520px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;min-width:0}
+.jpExtWinnerTable{width:100%;table-layout:fixed;border-collapse:collapse}
+.jpExtWinnerTable th{font-size:9px;white-space:normal;line-height:1.35;text-align:left;padding:11px 9px!important}
+.jpExtWinnerTable td{vertical-align:middle;text-align:left;padding:12px 9px!important;overflow-wrap:anywhere;font-size:10px;line-height:1.4}
+.jpExtWinnerTable .jpExtWinnerRecord>td{border-bottom:1px solid #e8edf2}
+.jpExtWinnerTable .jpExtRecordIdentity{min-width:0}
+.jpExtWinnerTable .jpExtRecordIdentity>strong{font-size:11px;line-height:1.4;font-weight:900;color:#2d4056;display:block}
+.jpExtWinnerTable .jpExtRecordPersonContact{display:block;margin:3px 0 0;color:#748599;font-size:9px;font-weight:650}
+.jpExtWinnerTable .jpExtWinnerPersonDetails{font-size:9px;line-height:1.45;color:#62778d;margin-top:3px}
+.jpExtWinnerTable .jpExtRecordMetaCell{color:#445a71;font-weight:750;font-size:10px}
+.jpExtWinnerTable .jpExtRecordQty strong{font-size:10px;font-weight:900;white-space:normal}
+.jpExtWinnerTable .jpExtRecordWhen time{font-size:9px;font-weight:750;white-space:normal}
+.jpExtRecordStatusPill{display:inline-block;border:1px solid #e2e7ee;background:#f5f7fb;color:#53697d;border-radius:7px;padding:5px 7px;font-size:9px;font-weight:850;line-height:1.3;white-space:normal;overflow-wrap:normal;word-break:normal}
+.jpExtRecordStatusPill.pending{background:#fdf5e9;color:#936b33;border-color:#f1e1cb}
+.jpExtRecordStatusPill.delivered{background:#edf8f2;color:#467558;border-color:#d4eadb}
+.jpExtRecordStatusPill.attention{background:#f7f0f2;color:#8e6174;border-color:#eadddf}
+.jpExtRecordIdentity .jpExtCompanionEditBtn{margin-top:7px;max-width:180px;width:auto;padding:6px 10px;font-size:9px}
+@media(max-width:690px){
+ .jpExtRecordsScroll{max-height:540px;overflow-y:auto;overflow-x:hidden;padding:0 2px}
+ .jpExtWinnerTable,.jpExtWinnerTable tbody{width:100%;display:block}
+ .jpExtWinnerTable colgroup,.jpExtWinnerTable thead{display:none}
+ .jpExtWinnerTable .jpExtWinnerRecord{display:grid;grid-template-columns:minmax(84px,.65fr) minmax(0,1.35fr);row-gap:0;border-bottom:1px solid #e5ebf1;padding:8px 0 10px;background:#fff}
+ .jpExtWinnerTable .jpExtWinnerRecord:nth-child(even){background:#fbfcfe}
+ .jpExtWinnerTable .jpExtWinnerRecord>td{border:0!important;min-width:0;padding:5px 10px!important}
+ .jpExtWinnerTable .jpExtWinnerRecord>.jpExtRecordIdentity{grid-column:1/-1;padding:9px 10px 10px!important}
+ .jpExtWinnerTable .jpExtWinnerRecord>.jpExtRecordQty{grid-column:1}
+ .jpExtWinnerTable .jpExtWinnerRecord>.jpExtRecordWhen{grid-column:2}
+ .jpExtWinnerTable .jpExtWinnerRecord>.jpExtRecordStatus{grid-column:1/-1;padding-top:8px!important}
+ .jpExtWinnerTable .jpExtRecordMetaCell:before{content:attr(data-label);display:block;color:#8593a4;font-size:8px;font-weight:900;letter-spacing:.025em;margin-bottom:3px}
+ .jpExtWinnerTable .jpExtRecordStatus{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid #eff2f5!important}
+ .jpExtWinnerTable .jpExtRecordStatus:before{margin:0}
+ .jpExtWinnerTable .jpExtRecordStatusPill{font-size:9px;padding:5px 8px}
+ .jpExtWinnerTable .jpExtRecordIdentity>strong{font-size:11px}
+ .jpExtWinnerTable .jpExtRecordIdentity .jpExtWinnerPersonDetails{line-height:1.4}
+ .jpExtWinnerTable .jpExtEmpty{display:block;text-align:center;padding:13px}
+}

@@ -1,0 +1,29 @@
+{
+  "baseline": "040c85a4b33e5cddc863499e1e4e16d9b6f2c844",
+  "scope": "Responsive Studio records only; no CPF change on public Reception",
+  "qa_passed": 48,
+  "firebase_rules_changed": false,
+  "firebase_records_written": false,
+  "files": [
+    {
+      "path": "promo_externa.html",
+      "sha256": "b7b46c2a164edb7858ef61b7ed6fdde5786081a9058a3946cceba39ca779f8d7"
+    },
+    {
+      "path": "assets/jp-promo-externa-pages.js",
+      "sha256": "fcfaee94a2fddef85b676d70a071b1b1e02ae9c364f8ccbeae4d97c4acb946e9"
+    },
+    {
+      "path": "assets/jp-promo-externa.css",
+      "sha256": "2bb6b1a552838d84f0750860631158f82fdd8ba1d4cd640e2622d327dfd932a1"
+    },
+    {
+      "path": "QA/test_responsive_records_20261116.cjs",
+      "sha256": "203fd31f00dd3e7339246c62da357f2671e7dfc61e2a58b3b9628f6cfcd7b16b"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_REGISTROS_RESPONSIVOS_20261116.md",
+      "sha256": "0e981cd91eec9c49443a74453e6f66c8c3d4c30eae258db9e40043c9381f030e"
+    }
+  ]
+}
