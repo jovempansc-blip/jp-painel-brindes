@@ -36,7 +36,7 @@
     if(count)count.textContent=pending.length+' A RETIRAR';
     const selected=pending.filter(w=>{
       const person=people['EXTERNA_'+w.id];
-      return !query||[w.action,w.prize,person?.name,w.id].join(' ').toUpperCase().includes(query);
+      return !query||[w.action,w.prize,person?.name,person?.companion?.name,w.id].join(' ').toUpperCase().includes(query);
     });
     setVisible(selected.length>0);
     if(!selected.length){host.textContent='';return;}
@@ -45,7 +45,11 @@
       const text=verified?'AGUARDANDO RETIRADA':'PENDENTE DE CONCILIAÇÃO';
       return '<div class="receptionCampaign" data-ext-winner="'+safe(w.id)+'" style="padding:12px;margin:8px 0;display:grid;grid-template-columns:minmax(130px,1fr) minmax(130px,1fr) minmax(145px,1fr) auto;gap:12px;align-items:center">'
        +'<div><strong>'+safe(w.action)+'</strong><small>'+safe(w.prize)+'</small></div>'
-       +'<div><strong>'+safe(record?.name||'IDENTIFICAÇÃO PENDENTE')+'</strong><small>'+safe(stamp(w.registeredAtMs))+'</small></div>'
+       +'<div><strong>'+safe(record?.name||'IDENTIFICAÇÃO PENDENTE')+'</strong>'+
+         (w.unit==='pair'?'<small>ACOMPANHANTE: '+safe(record?.companion?.name||'A DEFINIR')+'</small>':'')+
+         (w.unit==='pair'&&record?.companion?.phone?'<small>CONTATO: '+safe(record.companion.phone)+'</small>':'')+
+         (w.unit==='pair'&&record?.companion?.cpf?'<small>CPF DO ACOMPANHANTE: CADASTRADO</small>':'')+
+         '<small>'+safe(stamp(w.registeredAtMs))+'</small></div>'
        +'<div>'+safe(w.quantity)+' '+(w.unit==='pair'?'PAR(ES)':'UNIDADE(S)')+'<small>'+safe(text)+'</small></div>'
        +(verified?'<button type="button" class="pickupBtn" data-ext-pickup="'+safe(w.id)+'"'+(busy?' disabled':'')+'>CONFIRMAR RETIRADA</button>'
           :'<button type="button" class="pickupBtn" data-ext-sync="'+safe(w.id)+'"'+(busy?' disabled':'')+'>CONCILIAR BANCO</button>')

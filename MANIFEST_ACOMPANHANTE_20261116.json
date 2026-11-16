@@ -1,0 +1,52 @@
+{
+  "scope": "Board-approved companion fields in Promo Externa and Reception, add/edit/clear within existing paired winner ID",
+  "qa_pass": 50,
+  "firebase_rules_changed": false,
+  "firebase_real_data_written": false,
+  "files": [
+    {
+      "path": "promo_externa.html",
+      "sha256": "d562769fec7f8e9c13e040efe65470158c04da71d82d09a7f03a7a482286b31d"
+    },
+    {
+      "path": "recepcao_externa.html",
+      "sha256": "dadcaff115fd8d0e2cd8826e30f7738a20368dace93f4554135030ac3f31ec65"
+    },
+    {
+      "path": "preview_recepcao.html",
+      "sha256": "3c88294de75c5fc2c1d3e25fb3ad0e02cb23b009f4e0cdf787e3d5d2c9a7ba20"
+    },
+    {
+      "path": "assets/jp-promo-externa-core.js",
+      "sha256": "720467d013bb1028dbd30a1f1040ccd865181c19062859a9a36e772a4255dca5"
+    },
+    {
+      "path": "assets/jp-promo-externa-firebase.js",
+      "sha256": "06bfec566009bb2b752c9a38cd61a92426a85fc1244346469b7c1d0a740e2ae3"
+    },
+    {
+      "path": "assets/jp-promo-externa-pages.js",
+      "sha256": "ba5bdc8dd3b2e473ae4b77828986f594f387f871a599002c45cea2d332acbac4"
+    },
+    {
+      "path": "assets/jp-promo-externa-reception-bridge.js",
+      "sha256": "980465370f63f1322a5b6218df36d0a7c4704383e35edc12a6f9e99a9e8c0527"
+    },
+    {
+      "path": "assets/jp-promo-externa.css",
+      "sha256": "2950723054dc6dcc46bacadb3190743d26eb316c8f2dc39bb151fed934acc829"
+    },
+    {
+      "path": "QA/test_companion_20261116.cjs",
+      "sha256": "24c31178131135ada0ed8f2a1b97c6b51f8cfe250666df081c071d025291509d"
+    },
+    {
+      "path": "QA/test_companion_reception_20261116.cjs",
+      "sha256": "4edc6f7b3679391cd3e5beea68458ff7a65e1d5d4893689b60dcdb9b719979ee"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_ACOMPANHANTE_PROMO_EXTERNA_20261116.md",
+      "sha256": "7f1eba682b20f2b52a0754ba367880ae409391d5293663619279b8cda3c007d4"
+    }
+  ]
+}

@@ -149,3 +149,21 @@
 .jpExtSave:hover{background:#355370!important}
 .jpExtInfoNote{background:#eef4fa!important;border-color:#dce6f0!important;color:#5b7287!important}
 .jpExtWinnerTable th{background:#f3f6fa!important;color:#64748b!important}
+
+/* Companion block — compact and compatible with the official muted Reception palette. */
+.jpExtCompanionFields{min-width:0;border:1px solid #dce6ee;background:#f7fafc;border-radius:10px;margin:2px 0 0;padding:12px 13px 11px}
+.jpExtCompanionFields[hidden]{display:none!important}
+.jpExtCompanionFields legend{font-size:10px;font-weight:800;letter-spacing:.035em;color:#657d91;padding:0 5px}
+.jpExtCompanionGrid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,.85fr);gap:10px}
+.jpExtCompanionFields p{margin:8px 0 0;font-size:10px;color:#718397;line-height:1.4}
+.jpExtCompanionFields label{min-width:0}
+.jpExtWinnerPersonDetails{display:block;font-size:10px;color:#647b8f;margin-top:4px}
+@media(max-width:800px){.jpExtCompanionGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.jpExtCompanionGrid label:first-child{grid-column:1/-1}}
+@media(max-width:480px){.jpExtCompanionGrid{grid-template-columns:minmax(0,1fr)}.jpExtCompanionGrid label:first-child{grid-column:auto}}
+
+.jpExtCompanionEditorActions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.jpExtCompanionEditorActions[hidden]{display:none!important}
+.jpExtCompanionEditorActions .jpExtSave{min-width:0;font-size:11px;padding:8px 12px}
+.jpExtCompanionCancel,.jpExtCompanionEditBtn{border:1px solid #d2dce6;border-radius:7px;background:#f5f8fb;color:#566c83;font-size:10px;font-weight:750;padding:7px 10px;cursor:pointer}
+.jpExtCompanionEditBtn{display:block;margin-top:7px}
+.jpExtCompanionCancel:hover,.jpExtCompanionEditBtn:hover{background:#e8f0f7}

@@ -54,6 +54,14 @@
      const bankRoot=this.db.ref(this.bankPath);
      const pendingRef=bankRoot.child('pendingExternal/EXTERNA_'+winnerId);
      const name=C.fullName(payload.name),phone=C.digits(payload.phone),cpf=C.cpfDigits(payload.cpf);
+     const month=await this.month(payload.month);
+     const distribution=C.entries(month?.distributions).find(d=>d?.id===payload.distributionId);
+     const matchingAction=distribution?.externalActions?.[payload.actionId];
+     assert(!!matchingAction,'AÇÃO EXTERNA NÃO ENCONTRADA.');
+     const companion=C.companionDetails(payload.companion);
+     assert(!companion||matchingAction.deliveryUnit==='pair',
+       'ACOMPANHANTE É PERMITIDO APENAS EM PRÊMIOS ENTREGUES COMO PAR.');
+     assert(!companion||companion.name!==name,'O NOME DO ACOMPANHANTE PRECISA SER DIFERENTE DO GANHADOR.');
      assert(C.cpfValid(payload.cpf),'CPF INFORMADO É INVÁLIDO. CONFIRA OS DÍGITOS.');
      assert(name.length>=5&&phone.length>=10,'NOME COMPLETO E TELEFONE COM DDD SÃO OBRIGATÓRIOS.');
      // Read protected winnerBank records to avoid repeated names/phones in same action.
@@ -63,16 +71,16 @@
      assert(!already,'OUVINTE JÁ CONSTA COMO GANHADOR DESTA AÇÃO.');
      // Secure bank subtree is the ONLY place where name/phone are stored.
      await pendingRef.set({id:winnerId,actionId:payload.actionId,distributionId:payload.distributionId,
-       month:payload.month,name,phone,...(cpf?{cpf}:{}),status:'PENDENTE',registeredAtMs:this.serverTimestamp(),operator});
+       month:payload.month,name,phone,...(cpf?{cpf}:{}),...(companion?{companion}:{}),status:'PENDENTE',registeredAtMs:this.serverTimestamp(),operator});
      let x;
-     try{x=await this.tx(payload.month,payload.distributionId,rows=>C.registerWinner(rows,{...payload,cpf:undefined,id:winnerId},
+     try{x=await this.tx(payload.month,payload.distributionId,rows=>C.registerWinner(rows,{...payload,cpf:undefined,companion:undefined,id:winnerId},
        {operator,serverTimestamp:this.serverTimestamp(),day:C.nowDay()}));}
      catch(err){try{await pendingRef.remove();}catch(_){/* QA reconciliation log required */}throw err;}
      const action=x.dist.externalActions?.[payload.actionId];const winner=action?.winners?.[winnerId];
      assert(winner&&winner.status==='AGUARDANDO_RETIRADA','GANHADOR NÃO CONFERIU APÓS GRAVAR.');
      let bankError=null;
      try{
-       const record=C.bankRecord({...winner,name,phone},{...action,prize:x.dist.prize||x.dist.title},
+       const record=C.bankRecord({...winner,name,phone,companion},{...action,prize:x.dist.prize||x.dist.title},
          C.nowDay(Number(winner.registeredAtMs)||Date.now()));
        record.actionId=payload.actionId;
        if(cpf)record.cpf=cpf; // private winnerBank/records only; not public distributions
@@ -82,7 +90,35 @@
        await this.tx(payload.month,payload.distributionId,rows=>C.setBankStatus(rows,{...payload,winnerId,status:'CONFIRMADO'}));
        await pendingRef.remove();
      }catch(err){bankError=err;}
-     return{...winner,name,bankSynced:!bankError,bankError:bankError?.message||''};
+     return{...winner,name,companion,bankSynced:!bankError,bankError:bankError?.message||''};
+   }
+   async updateCompanion(payload,operator){
+     this.checkAuth();
+     const month=await this.month(payload.month);
+     const d=C.entries(month?.distributions).find(x=>x?.id===payload.distributionId);
+     const action=d?.externalActions?.[payload.actionId];
+     const winner=action?.winners?.[payload.winnerId];
+     assert(winner&&winner.status!=='CANCELADO','GANHADOR NÃO ENCONTRADO OU CADASTRO CANCELADO.');
+     assert(action.deliveryUnit==='pair','ACOMPANHANTE SÓ PODE SER DEFINIDO PARA PAR DE INGRESSOS.');
+     const companion=C.companionDetails(payload.companion);
+     const bank=this.db.ref(this.bankPath+'/records/EXTERNA_'+winner.id);
+     const operationId=C.newId('EXTCOMP');
+     const tx=await bank.transaction(prev=>{
+       if(!prev||prev.sourceId!==winner.id)return;
+       if(companion&&C.fullName(prev.name)===companion.name)return;
+       if(prev.companionAudit?.[operationId])return prev;
+       const old=prev.companion?.name||'';
+       return {...prev,companion:companion||null,
+         companionRevision:Number(prev.companionRevision||0)+1,
+         companionUpdatedAtMs:this.serverTimestamp(),companionUpdatedBy:String(operator||'OPERADOR PILOTO').slice(0,100),
+         companionAudit:{...(prev.companionAudit||{}),[operationId]:{
+           operationId,action:'ATUALIZAÇÃO DE ACOMPANHANTE',previousName:old,currentName:companion?.name||'',
+           actor:String(operator||'OPERADOR PILOTO').slice(0,100),atMs:this.serverTimestamp()
+         }}
+       };
+     },undefined,false);
+     assert(tx.committed,'ALTERAÇÃO DO ACOMPANHANTE NÃO CONFIRMADA NO BANCO CENTRAL.');
+     return tx.snapshot?.val()||{companion};
    }
    async retryBankSync(payload){
      this.checkAuth();const month=await this.month(payload.month);
@@ -93,7 +129,7 @@
      const existing=(await bank.child('records/'+id).get()).val();
      const pending=(await bank.child('pendingExternal/'+id).get()).val();
      assert(existing||(pending&&pending.name&&pending.phone),'REGISTRO PENDENTE SEM IDENTIFICAÇÃO NO BANCO PROTEGIDO. ESCALAR AO SUPERVISOR.');
-     const record=existing||{...C.bankRecord({...w,name:pending.name,phone:pending.phone},{...a,prize:d.prize||d.title},
+     const record=existing||{...C.bankRecord({...w,name:pending.name,phone:pending.phone,companion:pending.companion&&a.deliveryUnit==='pair'?C.companionDetails(pending.companion):null},{...a,prize:d.prize||d.title},
        C.nowDay(Number(w.registeredAtMs)||Date.now())),actionId:a.id};
      if(pending?.cpf&&C.cpfValid(pending.cpf)&&!record.cpf)record.cpf=C.cpfDigits(pending.cpf);
      const t=await bank.child('records/'+id).transaction(prev=>prev||record,undefined,false);

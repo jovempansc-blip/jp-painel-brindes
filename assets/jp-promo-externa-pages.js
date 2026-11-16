@@ -10,7 +10,7 @@
   dot.title=label;dot.setAttribute('aria-label',label);
  }
  const config=window.JP_EXT_FIREBASE_CONFIG;
- let store,months={},bankRecords={},bankListener=null,selected='',busy=false;
+ let store,months={},bankRecords={},bankListener=null,selected='',busy=false,editingCompanion=null;
  const asBR=n=>Number(n)?new Date(Number(n)).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'AGUARDANDO CONFIRMAÇÃO';
  const show=(text,error=false)=>{const x=element('jpExtMessage');if(x){x.textContent=text;x.dataset.error=error?'true':'false';}};
  function operatorName(){
@@ -19,14 +19,61 @@
   return (value||person?.displayName||person?.email||'').slice(0,100);
  }
  function active(){return C.flatten(months,true,C.nowDay()).sort((a,b)=>a.title.localeCompare(b.title,'pt-BR'));}
- function allWinners(){const list=[];C.flatten(months).forEach(a=>a.winners.forEach(w=>list.push({...w,name:bankRecords['EXTERNA_'+w.id]?.name||'IDENTIFICAÇÃO PENDENTE',phone:bankRecords['EXTERNA_'+w.id]?.phone||'',action:a.title,prize:a.prize,month:a.distributionMonth,deliveryUnit:a.deliveryUnit})));
+ function companionInfo(rec,isPair){
+  if(!isPair)return '';
+  const c=rec?.companion||null;
+  if(!c?.name)return '<small class="jpExtWinnerPersonDetails">ACOMPANHANTE: A DEFINIR</small>';
+  return '<small class="jpExtWinnerPersonDetails">ACOMPANHANTE: '+esc(c.name)+'</small>'+
+    (c.phone?'<small class="jpExtWinnerPersonDetails">CONTATO: '+esc(c.phone)+'</small>':'')+
+    (c.cpf?'<small class="jpExtWinnerPersonDetails">CPF DO ACOMPANHANTE: CADASTRADO</small>':'');
+ }
+ function clearCompanionFields(){['jpExtCompanionName','jpExtCompanionPhone','jpExtCompanionCpf'].forEach(id=>{if(element(id))element(id).value='';});}
+ function allWinners(){const list=[];C.flatten(months).forEach(a=>a.winners.forEach(w=>list.push({...w,name:bankRecords['EXTERNA_'+w.id]?.name||'IDENTIFICAÇÃO PENDENTE',phone:bankRecords['EXTERNA_'+w.id]?.phone||'',companion:bankRecords['EXTERNA_'+w.id]?.companion||null,action:a.title,prize:a.prize,month:a.distributionMonth,deliveryUnit:a.deliveryUnit})));
   return list.sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0));}
+ function beginCompanionEdit(id){
+   const action=active().find(a=>a.id===selected);
+   const winner=action?.winners.find(w=>w.id===id);
+   if(!winner||winner.deliveryUnit!=='pair')return show('SELECIONE UM GANHADOR COM PAR DE INGRESSOS.',true);
+   const rec=bankRecords['EXTERNA_'+id];
+   if(!rec)return show('CONCILIE O BANCO DE GANHADORES ANTES DE EDITAR O ACOMPANHANTE.',true);
+   editingCompanion={month:action.distributionMonth,distributionId:action.distributionId,actionId:action.id,winnerId:id,name:rec.name||''};
+   element('jpExtCompanionName').value=rec.companion?.name||'';
+   element('jpExtCompanionPhone').value=rec.companion?.phone||'';
+   element('jpExtCompanionCpf').value=rec.companion?.cpf||'';
+   renderStudio();
+   element('jpExtCompanionFields')?.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+ }
+ function cancelCompanionEdit(){
+   editingCompanion=null;clearCompanionFields();renderStudio();
+ }
+ async function saveCompanionEdit(){
+   if(!editingCompanion||busy||!store)return;
+   busy=true;renderStudio();show('SALVANDO ACOMPANHANTE NO FIREBASE...');
+   try{
+    const companion=C.companionDetails({
+      name:element('jpExtCompanionName').value,phone:element('jpExtCompanionPhone').value,cpf:element('jpExtCompanionCpf').value
+    });
+    const current=editingCompanion;
+    const record=await store.updateCompanion({...current,companion},operatorName()||'PROMO EXTERNA · ESTÚDIO');
+    bankRecords['EXTERNA_'+current.winnerId]=record;
+    editingCompanion=null;clearCompanionFields();
+    show('ACOMPANHANTE ATUALIZADO NO MESMO CADASTRO E DISPONÍVEL NA RECEPÇÃO.');
+   }catch(error){show('ACOMPANHANTE NÃO SALVO: '+error.message,true);}
+   finally{busy=false;renderStudio();}
+ }
  function renderStudio(){const actions=active();const selectedAction=actions.find(a=>a.id===selected)||actions[0];selected=selectedAction?.id||'';
    const actionSearch=(element('jpExtActionSearch')?.value||'').toUpperCase();
    const list=element('jpExtActions');
    if(list)list.innerHTML=actions.filter(a=>(a.title+' '+a.prize).toUpperCase().includes(actionSearch)).map(a=>
     '<button class="jpExtActionTile '+(a.id===selected?'active':'')+'" type="button" data-action="'+esc(a.id)+'"><strong>'+esc(a.title)+'</strong><small>'+esc(a.prize)+'</small><small>'+esc(a.startsOn||'')+' — '+esc(a.endsOn||'')+'</small><span class="jpExtActionBalance">SALDO '+a.remaining/C.multiplier(a.deliveryUnit)+'</span></button>'
    ).join('')||'<div class="jpExtEmpty">NENHUMA AÇÃO ENCONTRADA.</div>';
+   const companionFields=element('jpExtCompanionFields');
+   if(companionFields)companionFields.hidden=selectedAction?.deliveryUnit!=='pair';
+   if(element('jpExtCompanionEditorActions'))element('jpExtCompanionEditorActions').hidden=!editingCompanion;
+   if(element('jpExtSaveCompanion'))element('jpExtSaveCompanion').disabled=busy;
+   if(element('jpExtCompanionHint'))element('jpExtCompanionHint').textContent=editingCompanion?
+     'EDITANDO ACOMPANHANTE DE '+editingCompanion.name+'. SALVAR NÃO DESCONTA NOVOS INGRESSOS.':
+     'Preencha o acompanhante quando já estiver definido. O segundo ingresso faz parte do mesmo par e não consome nova cota.';
    element('jpExtSelected').textContent=selectedAction?.title||'NENHUMA AÇÃO ATIVA';
    element('jpExtPrize').textContent=selectedAction?.prize||'—';
    if(element('jpExtPeriod'))element('jpExtPeriod').textContent=selectedAction?[selectedAction.startsOn,selectedAction.endsOn].filter(Boolean).join(' — '):'—';
@@ -36,27 +83,30 @@
    element('jpExtUsed').textContent=selectedAction?String(selectedAction.consumed/C.multiplier(selectedAction.deliveryUnit)):'0';
    element('jpExtAllocated').textContent=selectedAction?String(selectedAction.quantity):'0';
    const protectedWritesAvailable=window.JP_EXT_PILOT_MODE===true||(window.JP_EXT_SECURE_BANK_VERIFIED===true&&!!window.firebase?.auth?.()?.currentUser?.uid);
-   element('jpExtSubmit').disabled=!selectedAction||!store||busy||!protectedWritesAvailable;
+   element('jpExtSubmit').disabled=!selectedAction||!store||busy||!protectedWritesAvailable||!!editingCompanion;
    element('jpExtSubmit').title=protectedWritesAvailable?'CADASTRAR GANHADOR · AMBIENTE PILOTO':'CADASTRO INDISPONÍVEL';
    const winnerSearch=(element('jpExtWinnerSearch')?.value||'').toUpperCase();
-   const rows=(selectedAction?.winners||[]).filter(w=>(bankRecords['EXTERNA_'+w.id]?.name||'').toUpperCase().includes(winnerSearch))
+   const rows=(selectedAction?.winners||[]).filter(w=>[bankRecords['EXTERNA_'+w.id]?.name,bankRecords['EXTERNA_'+w.id]?.companion?.name].join(' ').toUpperCase().includes(winnerSearch))
       .sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0));
    const tb=element('jpExtWinners');
    if(tb)tb.innerHTML=rows.map(w=>
-      '<tr><td><strong>'+esc(bankRecords['EXTERNA_'+w.id]?.name||'IDENTIFICAÇÃO PENDENTE')+'</strong></td><td>'+w.quantity+' '+(w.deliveryUnit==='pair'?'PAR':'IND.')+'</td><td>'+esc(asBR(w.registeredAtMs))+'</td><td>'+(w.bankStatus==='CONFIRMADO'?esc(w.status):'BANCO PENDENTE')+'</td></tr>'
+      '<tr><td><strong>'+esc(bankRecords['EXTERNA_'+w.id]?.name||'IDENTIFICAÇÃO PENDENTE')+'</strong>'+companionInfo(bankRecords['EXTERNA_'+w.id],w.deliveryUnit==='pair')+
+        (w.deliveryUnit==='pair'&&w.status==='AGUARDANDO_RETIRADA'?
+        '<button type="button" class="jpExtCompanionEditBtn" data-edit-companion="'+esc(w.id)+'">EDITAR ACOMPANHANTE</button>':'')+
+        '</td><td>'+w.quantity+' '+(w.deliveryUnit==='pair'?'PAR':'IND.')+'</td><td>'+esc(asBR(w.registeredAtMs))+'</td><td>'+(w.bankStatus==='CONFIRMADO'?esc(w.status):'BANCO PENDENTE')+'</td></tr>'
    ).join('')||'<tr><td colspan="4" class="jpExtEmpty">NENHUM GANHADOR PARA ESTA BUSCA.</td></tr>';
  }
  function renderReception(){let winners=allWinners();const query=(element('jpExtSearch')?.value||'').toUpperCase();const status=element('jpExtStatusFilter')?.value||'PENDENTE';
    winners=winners.filter(w=>status==='TODOS'||(status==='PENDENTE'?w.status==='AGUARDANDO_RETIRADA':w.status===status));
-   if(query)winners=winners.filter(w=>(w.name+' '+w.action+' '+w.prize).toUpperCase().includes(query));
+   if(query)winners=winners.filter(w=>[w.name,w.companion?.name,w.action,w.prize].join(' ').toUpperCase().includes(query));
    element('jpExtPending').textContent=String(allWinners().filter(w=>w.status==='AGUARDANDO_RETIRADA').length);
    element('jpExtDelivered').textContent=String(allWinners().filter(w=>w.status==='RETIRADO').length);
    element('jpExtReception').innerHTML=winners.map(w=>{
      const pending=w.bankStatus!=='CONFIRMADO';
-     return `<tr><td><strong>${esc(w.name)}</strong><small>${esc(w.action)}</small></td><td>${esc(w.prize)}</td><td>${w.quantity} ${w.deliveryUnit==='pair'?'PAR':'IND.'}</td><td>${esc(asBR(w.registeredAtMs))}</td><td>${w.status==='RETIRADO'?`RETIRADO EM ${esc(asBR(w.deliveredAtMs))}`:pending?'AGUARDANDO BANCO CENTRAL':'AGUARDANDO RETIRADA'}</td><td>${w.status==='AGUARDANDO_RETIRADA'?(pending?`<button type="button" class="jpExtButton" data-sync="${esc(w.id)}">CONCILIAR</button>`:`<button type="button" class="jpExtButton" data-pickup="${esc(w.id)}">DAR BAIXA</button>`):'—'}</td></tr>`;
+     return `<tr><td><strong>${esc(w.name)}</strong>${companionInfo(w,w.deliveryUnit==='pair')}<small>${esc(w.action)}</small></td><td>${esc(w.prize)}</td><td>${w.quantity} ${w.deliveryUnit==='pair'?'PAR':'IND.'}</td><td>${esc(asBR(w.registeredAtMs))}</td><td>${w.status==='RETIRADO'?`RETIRADO EM ${esc(asBR(w.deliveredAtMs))}`:pending?'AGUARDANDO BANCO CENTRAL':'AGUARDANDO RETIRADA'}</td><td>${w.status==='AGUARDANDO_RETIRADA'?(pending?`<button type="button" class="jpExtButton" data-sync="${esc(w.id)}">CONCILIAR</button>`:`<button type="button" class="jpExtButton" data-pickup="${esc(w.id)}">DAR BAIXA</button>`):'—'}</td></tr>`;
    }).join('')||'<tr><td colspan="6" class="jpExtEmpty">NENHUM REGISTRO PARA ESTE FILTRO.</td></tr>';
  }
- async function handleRegistration(ev){ev.preventDefault();if(busy)return;
+ async function handleRegistration(ev){ev.preventDefault();if(busy||editingCompanion)return;
    const action=active().find(a=>a.id===selected),name=element('jpExtWinnerName').value,phone=element('jpExtPhone').value,cpf=C.cpfDigits(element('jpExtCpf')?.value||'');
    if(!action)return show('SELECIONE UMA AÇÃO ATIVA.',true);
    if(!C.cpfValid(element('jpExtCpf')?.value||''))return show('CPF INVÁLIDO. CORRIJA OS DÍGITOS OU DEIXE O CAMPO EM BRANCO.',true);
@@ -64,10 +114,15 @@
    const operator=operatorName()||'PROMO EXTERNA · ESTÚDIO';
    busy=true;renderStudio();show('SALVANDO E VALIDANDO O GANHADOR NO FIREBASE...');
    try{
-     const result=await store.registerWinner({month:action.distributionMonth,distributionId:action.distributionId,actionId:action.id,name,phone,quantity:1,cpf},operator);
+     const companion=action.deliveryUnit==='pair'?C.companionDetails({
+       name:element('jpExtCompanionName')?.value||'',
+       phone:element('jpExtCompanionPhone')?.value||'',
+       cpf:element('jpExtCompanionCpf')?.value||''
+     }):null;
+     const result=await store.registerWinner({month:action.distributionMonth,distributionId:action.distributionId,actionId:action.id,name,phone,quantity:1,cpf,companion},operator);
      if(result.bankSynced){show('GANHADOR GRAVADO EM '+asBR(result.registeredAtMs)+' E ENVIADO À RECEPÇÃO.');}
      else{show('CADASTRO SALVO NO PRÊMIO, MAS O BANCO CENTRAL NÃO CONFIRMOU. A RECEPÇÃO BLOQUEARÁ A ENTREGA ATÉ A CONCILIAÇÃO. '+result.bankError,true);}
-     element('jpExtWinnerName').value='';element('jpExtPhone').value='';if(element('jpExtCpf'))element('jpExtCpf').value='';
+     element('jpExtWinnerName').value='';element('jpExtPhone').value='';if(element('jpExtCpf'))element('jpExtCpf').value='';clearCompanionFields();
    }catch(error){show('CADASTRO NÃO CONFIRMADO: '+error.message,true);}
    finally{busy=false;renderStudio();}
  }
@@ -87,12 +142,17 @@
    finally{busy=false;renderReception();}
  }
  function attachUI(){if(role==='studio'){
-     element('jpExtActions').addEventListener('click',ev=>{const x=ev.target.closest('[data-action]');if(x){selected=x.dataset.action;renderStudio();}});
+     element('jpExtActions').addEventListener('click',ev=>{const x=ev.target.closest('[data-action]');if(x){if(selected!==x.dataset.action)cancelCompanionEdit();selected=x.dataset.action;renderStudio();}});
      element('jpExtWinnerForm').addEventListener('submit',handleRegistration);
-     element('jpExtCpf')?.addEventListener('input',e=>{
+     element('jpExtWinners')?.addEventListener('click',ev=>{
+       const b=ev.target.closest('[data-edit-companion]');if(b&&!busy)beginCompanionEdit(b.dataset.editCompanion);
+     });
+     element('jpExtSaveCompanion')?.addEventListener('click',saveCompanionEdit);
+     element('jpExtCancelCompanion')?.addEventListener('click',cancelCompanionEdit);
+     ['jpExtCpf','jpExtCompanionCpf'].forEach(id=>element(id)?.addEventListener('input',e=>{
       const d=C.cpfDigits(e.target.value);
       e.target.value=d.slice(0,3)+(d.length>3?'.'+d.slice(3,6):'')+(d.length>6?'.'+d.slice(6,9):'')+(d.length>9?'-'+d.slice(9,11):'');
-     });
+     }));
      element('jpExtActionSearch')?.addEventListener('input',renderStudio);
      element('jpExtWinnerSearch')?.addEventListener('input',renderStudio);
    }else{

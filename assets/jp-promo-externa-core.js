@@ -37,6 +37,18 @@
     result[target.index]=fn(target.data);
     return result;
   }
+  function companionDetails(value){
+   const input=value&&typeof value==='object'?value:{};
+   const name=fullName(input.name),phone=digits(input.phone),cpf=cpfDigits(input.cpf);
+   if(!name&&!phone&&!cpf)return null;
+   validation(name.length>=5&&name.split(' ').filter(Boolean).length>=2,'COMPANION_NAME_INVALID',
+     'INFORME O NOME COMPLETO DO ACOMPANHANTE OU DEIXE OS CAMPOS EM BRANCO.');
+   validation(!phone||(phone.length>=10&&phone.length<=13),'COMPANION_PHONE_INVALID',
+     'TELEFONE DO ACOMPANHANTE INVÁLIDO. INFORME O DDD OU DEIXE EM BRANCO.');
+   validation(cpfValid(input.cpf),'COMPANION_CPF_INVALID',
+     'CPF DO ACOMPANHANTE INVÁLIDO. CORRIJA OU DEIXE EM BRANCO.');
+   return{name,...(phone?{phone}:{}),...(cpf?{cpf}:{})};
+  }
   const externalUnit=d=>unit(d?.ticketUnits?.rua||d?.ticketDefaultUnit);
   function quotaUnits(d){const q=integer(d?.rua);validation(Number.isFinite(q),'QUOTA_INVALID','COTA EXTERNA INVÁLIDA.');return q*multiplier(externalUnit(d));}
   const actions=d=>Object.values(d?.externalActions||{}).filter(a=>a&&a.status!=='CANCELADA');
@@ -137,10 +149,10 @@
   function bankRecord(winner,action,day=nowDay()){
     return{id:'EXTERNA_'+winner.id,name:winner.name,date:day,program:'PROMO EXTERNA · '+action.title,
       prize:action.prize||'',personKey:fullName(winner.name).replace(/\s+/g,'_'),prizeKey:fullName(action.prize||'').replace(/\s+/g,'_'),
-      source:'PROMO_EXTERNA',sourceRef:winner.sourceRef,sourceId:winner.id,phone:digits(winner.phone),quantity:winner.quantity,
+      source:'PROMO_EXTERNA',sourceRef:winner.sourceRef,sourceId:winner.id,phone:digits(winner.phone),quantity:winner.quantity,...(winner.companion?{companion:clone(winner.companion)}:{}),
       createdAtMs:winner.registeredAtMs,createdAt:new Date(Number(winner.registeredAtMs)||Date.now()).toISOString()};
   }
-  return{clone,entries,integer,unit,multiplier,fullName,digits,cpfDigits,cpfValid,nowDay,newId,dayValid,externalUnit,quotaUnits,actions,
+  return{clone,entries,integer,unit,multiplier,fullName,digits,cpfDigits,cpfValid,companionDetails,nowDay,newId,dayValid,externalUnit,quotaUnits,actions,
     actionReservedUnits,remainingUnallocated,consumedUnits,balanceUnits,visible,createAction,registerWinner,
     setBankStatus,registerPickup,cancelWinner,flatten,bankRecord,withDistribution};
 });
