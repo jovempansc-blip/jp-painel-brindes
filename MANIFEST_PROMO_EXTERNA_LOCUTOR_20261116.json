@@ -1,0 +1,24 @@
+{
+  "scope": "Remove hidden/required locutor identity from Promo Externa saving; fixed system-origin audit",
+  "qa_passed": 32,
+  "firebase_data_modified": false,
+  "firebase_rules_modified": false,
+  "files": [
+    {
+      "path": "promo_externa.html",
+      "sha256": "c4485ef86c8a982f5e4fc4fdab6a269b89fe8e7a8568d345b403498709c8cb47"
+    },
+    {
+      "path": "assets/jp-promo-externa-pages.js",
+      "sha256": "eaac923795893ed6fcc7dcafac68c3d9ebeb15601ab1c2c7f4a389e2560202e3"
+    },
+    {
+      "path": "QA/test_promo_externa_locutor_20261116.cjs",
+      "sha256": "fa00cfc60ea377e4a56f569105d89c1ed6413e987107fac116b569f319773cd8"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_PROMO_EXTERNA_LOCUTOR_20261116.md",
+      "sha256": "4d14d737fbc5d51971d804294c81c8ec8a4063b15194faf4e7180f7a20fc6355"
+    }
+  ]
+}

@@ -60,7 +60,8 @@
    const action=active().find(a=>a.id===selected),name=element('jpExtWinnerName').value,phone=element('jpExtPhone').value,cpf=C.cpfDigits(element('jpExtCpf')?.value||'');
    if(!action)return show('SELECIONE UMA AÇÃO ATIVA.',true);
    if(!C.cpfValid(element('jpExtCpf')?.value||''))return show('CPF INVÁLIDO. CORRIJA OS DÍGITOS OU DEIXE O CAMPO EM BRANCO.',true);
-   const operator=operatorName();if(!operator)return show('INFORME A IDENTIFICAÇÃO DO LOCUTOR.',true);
+   // O link do estúdio identifica a origem; não exige nome individual do locutor.
+   const operator=operatorName()||'PROMO EXTERNA · ESTÚDIO';
    busy=true;renderStudio();show('SALVANDO E VALIDANDO O GANHADOR NO FIREBASE...');
    try{
      const result=await store.registerWinner({month:action.distributionMonth,distributionId:action.distributionId,actionId:action.id,name,phone,quantity:1,cpf},operator);
