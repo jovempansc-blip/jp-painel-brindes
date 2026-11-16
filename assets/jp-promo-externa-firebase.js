@@ -92,6 +92,45 @@
      }catch(err){bankError=err;}
      return{...winner,name,companion,bankSynced:!bankError,bankError:bankError?.message||''};
    }
+   async updateWinnerProfile(payload,operator){
+     this.checkAuth();
+     const month=await this.month(payload.month);
+     const distribution=C.entries(month?.distributions).find(d=>d?.id===payload.distributionId);
+     const action=distribution?.externalActions?.[payload.actionId];
+     const winner=action?.winners?.[payload.winnerId];
+     assert(winner&&winner.status!=='CANCELADO','GANHADOR NÃO ENCONTRADO OU CADASTRO CANCELADO.');
+     const name=C.fullName(payload.name),phone=C.digits(payload.phone),cpf=C.cpfDigits(payload.cpf);
+     assert(name.length>=5&&name.split(' ').length>=2,'INFORME NOME E SOBRENOME DO TITULAR.');
+     assert(phone.length>=10&&phone.length<=13,'TELEFONE DO TITULAR INVÁLIDO. INFORME DDD.');
+     assert(C.cpfValid(payload.cpf),'CPF DO TITULAR INVÁLIDO.');
+     const companion=action.deliveryUnit==='pair'?C.companionDetails(payload.companion):null;
+     assert(!companion||companion.name!==name,'ACOMPANHANTE DEVE SER DIFERENTE DO TITULAR.');
+     assert(!companion?.cpf||!cpf||companion.cpf!==cpf,'CPF DO ACOMPANHANTE DEVE SER DIFERENTE DO TITULAR.');
+     const bankRoot=this.db.ref(this.bankPath);
+     const existing=(await bankRoot.child('records').get()).val()||{};
+     const duplicate=C.entries(existing).some(item=>item?.sourceId!==winner.id&&
+       item?.actionId===payload.actionId&&item?.deliveryStatus!=='CANCELADO'&&
+       (C.fullName(item.name)===name||C.digits(item.phone)===phone));
+     assert(!duplicate,'JÁ EXISTE OUTRO GANHADOR COM ESTE NOME OU TELEFONE NA AÇÃO.');
+     const operationId=C.newId('EXTPROFILE'),bank=bankRoot.child('records/EXTERNA_'+winner.id);
+     const result=await bank.transaction(prev=>{
+       if(!prev||prev.sourceId!==winner.id)return;
+       if(prev.profileAudit?.[operationId])return prev;
+       const actor=String(operator||'PROMO EXTERNA').slice(0,100);
+       return {...prev,name,phone,cpf:cpf||null,companion:companion||null,
+         profileVersion:Number(prev.profileVersion||0)+1,
+         profileUpdatedBy:actor,profileUpdatedAtMs:this.serverTimestamp(),
+         profileAudit:{...(prev.profileAudit||{}),[operationId]:{
+           operationId,action:'EDIÇÃO COMPLETA DO CADASTRO',actor,
+           previousName:prev.name||'',currentName:name,
+           previousCompanion:prev.companion?.name||'',currentCompanion:companion?.name||'',
+           atMs:this.serverTimestamp()
+         }}
+       };
+     },undefined,false);
+     assert(result.committed,'ALTERAÇÃO NÃO CONFIRMADA NO BANCO CENTRAL.');
+     return result.snapshot?.val()||{name,phone,cpf,companion};
+   }
    async updateCompanion(payload,operator){
      this.checkAuth();
      const month=await this.month(payload.month);

@@ -147,7 +147,7 @@ const test=(title,fn)=>Promise.resolve().then(fn).then(()=>{cases++;console.log(
   const js=require('node:fs').readFileSync(require('node:path').resolve(__dirname,'../assets/jp-promo-externa-pages.js'),'utf8');
   assert(html.includes('jpExtCompanionName')&&html.includes('jpExtSaveCompanion')&&html.includes('jpExtCancelCompanion'));
   assert(js.includes("companionFields.hidden=selectedAction?.deliveryUnit!=='pair'"));
-  assert(js.includes('data-edit-companion')&&js.includes('store.updateCompanion('));
+  assert(js.includes('data-edit-companion')&&js.includes('store.updateWinnerProfile('));
  });
  console.log('SUMMARY',cases,'/',24,'PASS');
 })().catch(e=>{console.error('FAIL',e.stack||e);process.exit(1)});

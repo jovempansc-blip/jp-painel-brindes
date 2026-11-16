@@ -33,32 +33,41 @@
  function beginCompanionEdit(id){
    const action=active().find(a=>a.id===selected);
    const winner=action?.winners.find(w=>w.id===id);
-   if(!winner||winner.deliveryUnit!=='pair')return show('SELECIONE UM GANHADOR COM PAR DE INGRESSOS.',true);
+   if(!winner)return show('SELECIONE UM GANHADOR CADASTRADO.',true);
    const rec=bankRecords['EXTERNA_'+id];
    if(!rec)return show('CONCILIE O BANCO DE GANHADORES ANTES DE EDITAR O ACOMPANHANTE.',true);
    editingCompanion={month:action.distributionMonth,distributionId:action.distributionId,actionId:action.id,winnerId:id,name:rec.name||''};
+   element('jpExtWinnerName').value=rec.name||'';
+   element('jpExtPhone').value=rec.phone||'';
+   element('jpExtCpf').value=rec.cpf||'';
    element('jpExtCompanionName').value=rec.companion?.name||'';
    element('jpExtCompanionPhone').value=rec.companion?.phone||'';
    element('jpExtCompanionCpf').value=rec.companion?.cpf||'';
    renderStudio();
-   element('jpExtCompanionFields')?.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+   element('jpExtWinnerForm')?.scrollIntoView?.({behavior:'smooth',block:'start'});
  }
  function cancelCompanionEdit(){
-   editingCompanion=null;clearCompanionFields();renderStudio();
+   editingCompanion=null;clearCompanionFields();
+   element('jpExtWinnerName').value='';element('jpExtPhone').value='';element('jpExtCpf').value='';
+   renderStudio();
  }
  async function saveCompanionEdit(){
    if(!editingCompanion||busy||!store)return;
-   busy=true;renderStudio();show('SALVANDO ACOMPANHANTE NO FIREBASE...');
+   busy=true;renderStudio();show('SALVANDO ALTERAÇÕES NO FIREBASE...');
    try{
-    const companion=C.companionDetails({
-      name:element('jpExtCompanionName').value,phone:element('jpExtCompanionPhone').value,cpf:element('jpExtCompanionCpf').value
-    });
-    const current=editingCompanion;
-    const record=await store.updateCompanion({...current,companion},operatorName()||'PROMO EXTERNA · ESTÚDIO');
-    bankRecords['EXTERNA_'+current.winnerId]=record;
-    editingCompanion=null;clearCompanionFields();
-    show('ACOMPANHANTE ATUALIZADO NO MESMO CADASTRO E DISPONÍVEL NA RECEPÇÃO.');
-   }catch(error){show('ACOMPANHANTE NÃO SALVO: '+error.message,true);}
+     const current=editingCompanion;
+     const action=active().find(a=>a.id===current.actionId);
+     const companion=action?.deliveryUnit==='pair'?C.companionDetails({
+       name:element('jpExtCompanionName').value,phone:element('jpExtCompanionPhone').value,cpf:element('jpExtCompanionCpf').value
+     }):null;
+     const record=await store.updateWinnerProfile({...current,
+       name:element('jpExtWinnerName').value,phone:element('jpExtPhone').value,
+       cpf:element('jpExtCpf').value,companion},operatorName()||'PROMO EXTERNA · ESTÚDIO');
+     bankRecords['EXTERNA_'+current.winnerId]=record;
+     editingCompanion=null;clearCompanionFields();
+     element('jpExtWinnerName').value='';element('jpExtPhone').value='';element('jpExtCpf').value='';
+     show('CADASTRO ATUALIZADO NO MESMO REGISTRO E DISPONÍVEL NA RECEPÇÃO.');
+   }catch(error){show('ALTERAÇÃO NÃO SALVA: '+error.message,true);}
    finally{busy=false;renderStudio();}
  }
  function renderStudio(){const actions=active();const selectedAction=actions.find(a=>a.id===selected)||actions[0];selected=selectedAction?.id||'';
@@ -69,10 +78,10 @@
    ).join('')||'<div class="jpExtEmpty">NENHUMA AÇÃO ENCONTRADA.</div>';
    const companionFields=element('jpExtCompanionFields');
    if(companionFields)companionFields.hidden=selectedAction?.deliveryUnit!=='pair';
-   if(element('jpExtCompanionEditorActions'))element('jpExtCompanionEditorActions').hidden=!editingCompanion;
+   if(element('jpExtCompanionEditorActions'))element('jpExtCompanionEditorActions').hidden=true;
    if(element('jpExtSaveCompanion'))element('jpExtSaveCompanion').disabled=busy;
    if(element('jpExtCompanionHint'))element('jpExtCompanionHint').textContent=editingCompanion?
-     'EDITANDO ACOMPANHANTE DE '+editingCompanion.name+'. SALVAR NÃO DESCONTA NOVOS INGRESSOS.':
+     'EDITANDO CADASTRO DE '+editingCompanion.name+'. ALTERAÇÕES NÃO DESCONTAM NOVOS INGRESSOS.':
      'Preencha o acompanhante quando já estiver definido. O segundo ingresso faz parte do mesmo par e não consome nova cota.';
    element('jpExtSelected').textContent=selectedAction?.title||'NENHUMA AÇÃO ATIVA';
    element('jpExtPrize').textContent=selectedAction?.prize||'—';
@@ -83,8 +92,10 @@
    element('jpExtUsed').textContent=selectedAction?String(selectedAction.consumed/C.multiplier(selectedAction.deliveryUnit)):'0';
    element('jpExtAllocated').textContent=selectedAction?String(selectedAction.quantity):'0';
    const protectedWritesAvailable=window.JP_EXT_PILOT_MODE===true||(window.JP_EXT_SECURE_BANK_VERIFIED===true&&!!window.firebase?.auth?.()?.currentUser?.uid);
-   element('jpExtSubmit').disabled=!selectedAction||!store||busy||!protectedWritesAvailable||!!editingCompanion;
-   element('jpExtSubmit').title=protectedWritesAvailable?'CADASTRAR GANHADOR · AMBIENTE PILOTO':'CADASTRO INDISPONÍVEL';
+   element('jpExtSubmit').disabled=!selectedAction||!store||busy||!protectedWritesAvailable;
+   element('jpExtSubmit').title=editingCompanion?'SALVAR ALTERAÇÕES DO CADASTRO':protectedWritesAvailable?'CADASTRAR GANHADOR · AMBIENTE PILOTO':'CADASTRO INDISPONÍVEL';
+   element('jpExtSubmit').textContent=editingCompanion?'SALVAR ALTERAÇÕES DO CADASTRO':'SALVAR GANHADOR E ENVIAR À RECEPÇÃO';
+   if(element('jpExtCancelFullEdit'))element('jpExtCancelFullEdit').hidden=!editingCompanion;
    const winnerSearch=(element('jpExtWinnerSearch')?.value||'').toUpperCase();
    const rows=(selectedAction?.winners||[]).filter(w=>[bankRecords['EXTERNA_'+w.id]?.name,bankRecords['EXTERNA_'+w.id]?.companion?.name].join(' ').toUpperCase().includes(winnerSearch))
       .sort((a,b)=>Number(b.registeredAtMs||0)-Number(a.registeredAtMs||0));
@@ -99,8 +110,8 @@
        '<td class="jpExtRecordIdentity"><strong>'+esc(person.name||'IDENTIFICAÇÃO PENDENTE')+'</strong>'+
          (person.phone?'<small class="jpExtRecordPersonContact">TEL. TITULAR: '+esc(person.phone)+'</small>':'')+
          companionInfo(person,w.deliveryUnit==='pair')+
-         (w.deliveryUnit==='pair'&&w.status==='AGUARDANDO_RETIRADA'?
-           '<button type="button" class="jpExtCompanionEditBtn" data-edit-companion="'+esc(w.id)+'">EDITAR ACOMPANHANTE</button>':'')+
+         (w.status!=='CANCELADO'?
+           '<button type="button" class="jpExtCompanionEditBtn" data-edit-companion="'+esc(w.id)+'">EDITAR CADASTRO</button>':'')+
        '</td>'+
        '<td class="jpExtRecordMetaCell jpExtRecordQty" data-label="PREMIAÇÃO"><strong>'+
          esc(w.quantity+' '+(w.deliveryUnit==='pair'?'PAR'+(Number(w.quantity)===1?'':'ES'):'UNIDADE'+(Number(w.quantity)===1?'':'S')))+
@@ -120,7 +131,7 @@
      return `<tr><td><strong>${esc(w.name)}</strong>${companionInfo(w,w.deliveryUnit==='pair')}<small>${esc(w.action)}</small></td><td>${esc(w.prize)}</td><td>${w.quantity} ${w.deliveryUnit==='pair'?'PAR':'IND.'}</td><td>${esc(asBR(w.registeredAtMs))}</td><td>${w.status==='RETIRADO'?`RETIRADO EM ${esc(asBR(w.deliveredAtMs))}`:pending?'AGUARDANDO BANCO CENTRAL':'AGUARDANDO RETIRADA'}</td><td>${w.status==='AGUARDANDO_RETIRADA'?(pending?`<button type="button" class="jpExtButton" data-sync="${esc(w.id)}">CONCILIAR</button>`:`<button type="button" class="jpExtButton" data-pickup="${esc(w.id)}">DAR BAIXA</button>`):'—'}</td></tr>`;
    }).join('')||'<tr><td colspan="6" class="jpExtEmpty">NENHUM REGISTRO PARA ESTE FILTRO.</td></tr>';
  }
- async function handleRegistration(ev){ev.preventDefault();if(busy||editingCompanion)return;
+ async function handleRegistration(ev){ev.preventDefault();if(busy)return;if(editingCompanion)return saveCompanionEdit();
    const action=active().find(a=>a.id===selected),name=element('jpExtWinnerName').value,phone=element('jpExtPhone').value,cpf=C.cpfDigits(element('jpExtCpf')?.value||'');
    if(!action)return show('SELECIONE UMA AÇÃO ATIVA.',true);
    if(!C.cpfValid(element('jpExtCpf')?.value||''))return show('CPF INVÁLIDO. CORRIJA OS DÍGITOS OU DEIXE O CAMPO EM BRANCO.',true);
@@ -158,6 +169,7 @@
  function attachUI(){if(role==='studio'){
      element('jpExtActions').addEventListener('click',ev=>{const x=ev.target.closest('[data-action]');if(x){if(selected!==x.dataset.action)cancelCompanionEdit();selected=x.dataset.action;renderStudio();}});
      element('jpExtWinnerForm').addEventListener('submit',handleRegistration);
+     element('jpExtCancelFullEdit')?.addEventListener('click',cancelCompanionEdit);
      element('jpExtWinners')?.addEventListener('click',ev=>{
        const b=ev.target.closest('[data-edit-companion]');if(b&&!busy)beginCompanionEdit(b.dataset.editCompanion);
      });

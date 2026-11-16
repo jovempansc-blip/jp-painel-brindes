@@ -1,0 +1,39 @@
+{
+  "baseline": "85bf260bc2332ee7ab72c893d588af313d0944a3",
+  "scope": "Full winner/companion data edits same record, preserve stock",
+  "qa_distinct_cases": 53,
+  "additional_repeated_regression": 24,
+  "public_full_cpf_display_changed": false,
+  "layout_reflow_changed": false,
+  "firebase_live_writes": false,
+  "files": [
+    {
+      "path": "promo_externa.html",
+      "sha256": "48f7c2ab12c09b820bbd70153a49a8a0a301316b95a6cbb75c3c5f30b3bd19f1"
+    },
+    {
+      "path": "assets/jp-promo-externa-pages.js",
+      "sha256": "43b7a9e466a8543e140556d2ecbdbf4766a264f0e716fc86dd5ea86cffaa2fbd"
+    },
+    {
+      "path": "assets/jp-promo-externa-firebase.js",
+      "sha256": "6206aa3ec664331fcdac952c55ec98306c68709ab78f01c076e54cc42b95334c"
+    },
+    {
+      "path": "QA/test_full_winner_profile_20261116.cjs",
+      "sha256": "2de71ef41131098cbb038af3bcf46a22445492930857504e7c7b65418348e13c"
+    },
+    {
+      "path": "QA/test_companion_20261116.cjs",
+      "sha256": "f0359b74ff13fa25923be0837755b55e7b3e34377490aff5c99b48e156a77526"
+    },
+    {
+      "path": "QA/test_responsive_records_20261116.cjs",
+      "sha256": "2fa865f736331754fee6f79e9cbb2eeaf9f24a658ef0272e2907e03659a29964"
+    },
+    {
+      "path": "LEIA_PRIMEIRO_EDICAO_INTEGRAL_20261116.md",
+      "sha256": "2da22672b0aba0724704fb0f9ae2ed6d40381f87b4e3c1ddba1a063fff0f605d"
+    }
+  ]
+}

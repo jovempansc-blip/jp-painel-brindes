@@ -17,7 +17,7 @@ test('situação é exibida por indicador visual compacto',()=>assert(pages.incl
 test('nome completo do titular continua visível',()=>assert(pages.includes("esc(person.name||'IDENTIFICAÇÃO PENDENTE')")));
 test('telefone do titular permanece identificado separadamente',()=>assert(pages.includes('TEL. TITULAR:')));
 test('nome e contato do acompanhante permanecem abaixo do titular',()=>assert(pages.includes('companionInfo(person,w.deliveryUnit')));
-test('edição de acompanhante permanece por registro, sem criar nova premiação',()=>assert(pages.includes('data-edit-companion')&&pages.includes("store.updateCompanion(")));
+test('edição de acompanhante permanece por registro, sem criar nova premiação',()=>assert(pages.includes('data-edit-companion')&&pages.includes("store.updateWinnerProfile(")));
 test('quantidade informa unidade ou par de ingressos',()=>assert(pages.includes("w.deliveryUnit==='pair'?'PAR'")));
 test('data e hora continuam sendo derivadas do registro existente',()=>assert(pages.includes('asBR(w.registeredAtMs)')));
 test('a busca mantém suporte ao nome do acompanhante',()=>assert(pages.includes("bankRecords['EXTERNA_'+w.id]?.companion?.name")));
@@ -29,6 +29,6 @@ test('mobile não cria rolagem horizontal',()=>assert(css.includes('overflow-x:h
 test('nenhuma alteração de estoque ou retirada nesta entrega',()=>assert(!pages.includes('const newReservationForLayout')));
 test('Recepção permanece com o mesmo controlador de registro e retirada',()=>assert(reception.includes('data-ext-pickup')&&reception.includes('engine.pickup(payload,operator.trim())')));
 test('CPF integral não foi exposto adicionalmente na Recepção pública',()=>assert(reception.includes("cpf?'CADASTRADO':'NÃO INFORMADO'")));
-test('a página inclui versão nova do controlador para evitar cache antigo',()=>assert(html.includes('jp-promo-externa-pages.js?v=JP_STUDIO_REGISTROS_LIMPOS_20261116')));
+test('a página inclui versão nova do controlador para evitar cache antigo',()=>assert(html.includes('jp-promo-externa-pages.js?v=JP_EDICAO_COMPLETA_20261116')));
 test('a página inclui versão nova do CSS para evitar cache antigo',()=>assert(html.includes('jp-promo-externa.css?v=JP_STUDIO_REGISTROS_LIMPOS_20261116')));
 console.log('JP_EXT_RESPONSIVE_RECORDS',n,'PASS 0 FAIL');
