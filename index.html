@@ -4985,6 +4985,12 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
 .jpActionHelpClose{width:32px;height:32px;border:1px solid #dce4eb;border-radius:10px;background:#fff;font-size:20px;line-height:1;color:#5c6775;cursor:pointer}
 .jpActionHelpBody{padding:18px;font-size:12px;line-height:1.65;text-transform:none;color:#566476}.jpActionHelpBody p{margin:0 0 12px}.jpActionHelpBody p:last-child{margin-bottom:0}
 .jpActionHelpFoot{padding:12px 17px;border-top:1px solid #e7ebf1;display:flex;justify-content:flex-end}
+
+.firebaseDistributionPreview{padding:13px 15px;background:#f7f9fc;border:1px solid #e4eaf1;border-radius:9px;color:#52667e;font-size:11px;}
+.firebaseDistributionPreview strong{display:block;color:#334861;font-size:11px;margin-bottom:6px;}
+.firebaseDistributionPreview span{display:block;line-height:1.5;}
+.firebaseDistributionPreviewRow{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e6ebf2;padding:9px 0;font-size:11px;font-weight:700;}
+.firebaseDistributionPreviewRow small{white-space:nowrap;color:#718196;font-size:10px;}
 </style>
 <!-- AV58.1.26 · Ajuda do catálogo acessível por clique, toque e teclado -->
 <dialog id="prizeCatalogHelpDialog" class="jpActionHelpDialog" aria-labelledby="prizeCatalogHelpTitle">
@@ -5659,39 +5665,118 @@ function scheduleFirebaseRetry(delay=3000){
     if(!firebaseConnected || !firebaseServerLoaded) firebaseBootstrapRead(true);
   },delay);
 }
+// JP A08 - leitura preliminar de distribuições: consulta sem liberar gravações.
+let firebaseDistributionPreview={monthKey:'',rows:[],loaded:false};
+let firebaseBootstrapPromise=null;
+function renderFirebaseDistributionPreview(){
+  const key=$('monthInput')?.value||state.currentMonth||currentCalendarMonth();
+  const matched=firebaseDistributionPreview.loaded&&firebaseDistributionPreview.monthKey===key;
+  const input=norm($('distSearchInput')?.value||'');
+  const source=matched?firebaseDistributionPreview.rows:[];
+  const rows=source.filter(d=>{
+    const life=distributionLifecycleStatusForMonth(d,key);
+    if(distributionLifecycleFilter==='ended'&&life.key!=='ended')return false;
+    if(distributionLifecycleFilter==='active'&&life.key==='ended')return false;
+    return !input||norm([d.prize,d.title,d.description,d.show,d.name].filter(Boolean).join(' ')).includes(input);
+  });
+  const message=matched
+    ?'<strong>'+rows.length+' DISTRIBUIÇÃO(ÕES) LOCALIZADA(S) · SOMENTE CONSULTA</strong><span>A BASE COMPLETA AINDA ESTÁ SINCRONIZANDO. EDIÇÃO, PROGRAMAÇÃO E GRAVAÇÃO PERMANECEM BLOQUEADAS ATÉ A CONFIRMAÇÃO DO FIREBASE.</span>'
+    :'<strong>CARREGANDO DISTRIBUIÇÕES DO FIREBASE...</strong><span>NENHUM CADASTRO FOI APAGADO. AGUARDE A SINCRONIZAÇÃO DO MÊS.</span>';
+  const preview=matched?rows.slice(0,50).map(d=>{
+    const prize=esc(distributionLabel(d));
+    const end=esc(formatBR(distEndDate(d)||''));
+    return '<div class="firebaseDistributionPreviewRow"><span>'+prize+'</span><small>ATÉ '+end+'</small></div>';
+  }).join(''):'';
+  const content='<div class="monthDataNotice firebaseDistributionPreview"><div>'+message+'</div>'+preview+'</div>';
+  const compact=$('distCompactTable'),detail=$('distTable');
+  if(compact)compact.innerHTML='<tr><td colspan="7">'+content+'</td></tr>';
+  if(detail)detail.innerHTML='<tr><td colspan="15">'+content+'</td></tr>';
+}
+async function firebasePrimeCurrentDistributions(){
+  if(!firebaseRef||firebaseServerLoaded)return;
+  const key=$('monthInput')?.value||currentCalendarMonth();
+  const snapshot=await firebaseRef.child('months').child(key).child('distributions').get();
+  if(firebaseServerLoaded)return;
+  firebaseDistributionPreview={monthKey:key,rows:firebaseList(snapshot.val()),loaded:true};
+  if(activeView==='distribuicao')renderFirebaseDistributionPreview();
+  updateSyncStatus('saving','DISTRIBUIÇÕES LOCALIZADAS · SINCRONIZANDO BASE');
+}
+// Carrega nós grandes separadamente; nunca habilita gravar antes de todos concluírem.
+// A fonte oficial permanece o Firebase. Não usa dados de cache local.
+async function firebaseReadCompleteStateByNodes(){
+  const root=firebaseRef;
+  const smallKeys=['currentMonth','schedules','programSchedules','prizeCatalog','trash',
+    'pendingOps','publishedPrograms','programVersions','systemMeta','receptionCampaignPins',
+    'savedAt','updatedAt','source','user','version'];
+  const jobs=[
+    root.child('months').get().then(snapshot=>['months',snapshot.val()]),
+    root.child('auditLog').get().then(snapshot=>['auditLog',snapshot.val()]),
+    ...smallKeys.map(key=>root.child(key).get().then(snapshot=>[key,snapshot.val()]))
+  ];
+  const values=Object.fromEntries(await Promise.all(jobs));
+  if(values.months&&typeof values.months==='object')return values;
+  // Compatibilidade com instâncias que ainda usam o esquema legado /state.
+  const legacy=await root.child('state').get();
+  if(legacy.val()?.months)return {state:legacy.val()};
+  return values;
+}
 async function firebaseBootstrapRead(force=false){
-  if(!firebaseReady || !firebaseRef || firebaseBootstrapInFlight) return;
-  if(!force && firebaseConnected && firebaseServerLoaded) return;
-  firebaseBootstrapInFlight=true;
-  const bootstrapStarted=jpFirebaseNow();
-  let bootstrapOK=false;
-  updateSyncStatus('saving',firebaseServerLoaded?'RECONECTANDO':'CONECTANDO');
-  try{
-    if(firebaseDatabase && typeof firebaseDatabase.goOnline==='function') firebaseDatabase.goOnline();
-    const snapshot=await Promise.race([
-      firebaseRef.get(),
-      new Promise((_,reject)=>setTimeout(()=>reject(new Error('TEMPO ESGOTADO AO CONECTAR AO FIREBASE.')),9000))
-    ]);
-    firebaseApplySnapshot(snapshot,'bootstrap');
-    bootstrapOK=true;
-    startGranularFirebaseListeners();
-    clearTimeout(firebaseRetryTimer);
-    if(firebasePendingSave && firebaseServerLoaded) queueApiSave(100);
-  }catch(error){
-    console.warn('FIREBASE BOOTSTRAP ERROR',error);
-    if(navigator.onLine===false){
-      firebaseConnected=false;
-      firebaseConnectionKnown=true;
-      updateSyncStatus('offline','FIREBASE OFFLINE');
-    }else{
-      firebaseConnected=false;
+  if(!firebaseReady||!firebaseRef)return null;
+  if(firebaseBootstrapInFlight)return firebaseBootstrapPromise;
+  // Após a hidratação completa, listeners granulares se reconectam sozinhos.
+  // Uma verificação pequena não precisa baixar novamente 33 MB.
+  if(firebaseServerLoaded){
+    if(!force)return true;
+    try{
+      await firebaseRef.child('savedAt').get();
+      firebaseMarkServerActivity('FIREBASE ONLINE');
+      return true;
+    }catch(error){
+      console.warn('FIREBASE CONNECTION PROBE ERROR',error);
       updateSyncStatus('saving','RECONECTANDO');
       scheduleFirebaseRetry(2500);
+      return false;
     }
-  }finally{
-    jpFirebaseMeasure('carregamento_inicial',bootstrapStarted,bootstrapOK);
-    firebaseBootstrapInFlight=false;
   }
+  firebaseBootstrapInFlight=true;
+  const bootstrapStarted=jpFirebaseNow();
+  firebaseBootstrapPromise=(async()=>{
+    let succeeded=false;
+    updateSyncStatus('saving','CONECTANDO E CARREGANDO BASE OFICIAL');
+    // Preview de dados já existentes; não modifica state nem firebaseBaselineState.
+    const preliminary=firebasePrimeCurrentDistributions().catch(error=>{
+      console.warn('FIREBASE DISTRIBUTION PREVIEW ERROR',error);
+    });
+    try{
+      if(firebaseDatabase&&typeof firebaseDatabase.goOnline==='function')firebaseDatabase.goOnline();
+      // Não usar timeout de 9 s em uma base de mais de 30 MB.
+      // Mantém a operação única em andamento para não duplicar downloads após timeout.
+      const full=await firebaseReadCompleteStateByNodes();
+      firebaseApplySnapshot({val:()=>full},'bootstrap-segmentado');
+      succeeded=!!firebaseServerLoaded;
+      if(!succeeded)throw new Error('A BASE COMPLETA NÃO FOI VALIDADA.');
+      startGranularFirebaseListeners();
+      clearTimeout(firebaseRetryTimer);
+      if(firebasePendingSave&&firebaseServerLoaded)queueApiSave(100);
+      return true;
+    }catch(error){
+      console.error('FIREBASE BOOTSTRAP SEGMENTADO ERROR',error);
+      if(navigator.onLine===false){
+        firebaseConnected=false;firebaseConnectionKnown=true;
+        updateSyncStatus('offline','FIREBASE OFFLINE · DISTRIBUIÇÕES EM CONSULTA');
+      }else{
+        firebaseConnected=false;
+        updateSyncStatus('error','NÃO FOI POSSÍVEL SINCRONIZAR A BASE COMPLETA');
+        scheduleFirebaseRetry(5000);
+      }
+      return false;
+    }finally{
+      await preliminary;
+      jpFirebaseMeasure('carregamento_inicial_segmentado',bootstrapStarted,succeeded);
+      firebaseBootstrapInFlight=false;firebaseBootstrapPromise=null;
+    }
+  })();
+  return firebaseBootstrapPromise;
 }
 function initFirebaseSync(){
   if(firebaseStarted) return;
@@ -7100,11 +7185,13 @@ function normalizeChannel(value){
 }
 function normalizePanelState(data,options={}){
   if(!data || !data.months) return data;
-  data.schedules ||= [];
-  data.programSchedules ||= [];
-  data.auditLog ||= [];
-  data.trash ||= [];
-  data.pendingOps ||= [];
+  // Firebase representa exclusões individuais em listas como entradas null.
+  // Remova lacunas apenas no estado em memória; nunca grave esta normalização automaticamente.
+  data.schedules=firebaseList(data.schedules);
+  data.programSchedules=firebaseList(data.programSchedules);
+  data.auditLog=firebaseList(data.auditLog);
+  data.trash=firebaseList(data.trash);
+  data.pendingOps=firebaseList(data.pendingOps);
   data.publishedPrograms ||= {};
   data.programVersions ||= {};
   data.systemMeta ||= {};
@@ -7127,8 +7214,12 @@ function normalizePanelState(data,options={}){
   });
   data.schedules ||= [];
   data.schedules.forEach(s=>{ s.type=normalizeScheduleType(s.type); s.status=legacyStatusToScheduleMeta(s); s.pending=normalizeSchedulePending(s.pending||s.pendencia||s.status); s.destination=normalizeScheduleDestination(s.destination); s.station ||= 'JP1017'; s.notes=textNorm(s.notes||''); });
-  Object.entries(data.months).forEach(([monthKey,m])=>{
-    (m.items || []).forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
+  Object.entries(data.months).forEach(([monthKey,entry])=>{
+    const m=entry&&typeof entry==='object'?entry:(data.months[monthKey]={label:monthKey});
+    m.items=firebaseList(m.items);
+    m.promos=firebaseList(m.promos);
+    m.distributions=firebaseList(m.distributions);
+    m.items.forEach(i=>{ i.status = normalizeStatus(i.status); i.channel = normalizeChannel(i.channel); });
     (m.promos || []).forEach(p=>{ p.status = normalizeStatus(p.status); });
     (m.distributions || []).forEach(d=>{
       if(d.reservado === undefined) d.reservado = num(d.clientes) + num(d.outros);
@@ -9888,6 +9979,10 @@ function distributionPrizeIdentityHtml(d){
   </div>`;
 }
 function renderDistribuicao(){
+  if(!firebaseServerLoaded){
+    renderFirebaseDistributionPreview();
+    return;
+  }
   // A remote Firebase refresh cannot erase a half-typed inline edit.
   const editingField=document.activeElement?.closest?.('.distInlineNum');
   const editingDraft=editingField && editingField.dataset.distStopRestore!=='1'
