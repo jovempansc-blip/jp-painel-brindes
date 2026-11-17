@@ -1,0 +1,53 @@
+{
+  "revision_base": "dc35fb0eb2cc3e688baedbb06258290e4d0efab2",
+  "board_authorized_scope": "Atualização do Estúdio 101.7 junto com correção do OMR",
+  "qa_studio_pass": 33,
+  "qa_omr_pass": 26,
+  "qa_total_pass": 59,
+  "firebase_rules_changed": false,
+  "firebase_live_records_modified": false,
+  "delete_action_automatic": false,
+  "known_residual_risk": "OMR planning still uses potentially large monthly Firebase snapshots",
+  "files": [
+    {
+      "path": "painel_pauta_estudio_jovem_pan_GITHUB_API.html",
+      "sha256": "8b3ea83d90018b12e39bdc3d9253251eadebaf7a807968c6038bba8580927689"
+    },
+    {
+      "path": "merchan_radios.html",
+      "sha256": "b3f85ea9c3e1f98f3675283e0df7455303b53ad08c20a08dd1c221afe063951e"
+    },
+    {
+      "path": "QA/test_studio_winner_hotfix_20261116.cjs",
+      "sha256": "242474e870df83fe2d7b20b2cb790e48993a189043856298c086c4e7d1819f37"
+    },
+    {
+      "path": "QA/test_winner_save_configured_20261116.cjs",
+      "sha256": "0ec01252289baeab43947fdcba1dca275b70962a650b857427cbf20133b9a473"
+    },
+    {
+      "path": "QA/test_studio_winner_adjustments_20261116.cjs",
+      "sha256": "975c456e0c34fc8c1cec86e3e8bf9fabc3c40c14aeab7b33deac765b2fe66cd3"
+    },
+    {
+      "path": "QA/test_studio_confirm_receipt_20261116.cjs",
+      "sha256": "332e3a87d38e4ca7088e497c64bd1c4e014d56119abadfebaca527c1cddc28f4"
+    },
+    {
+      "path": "QA/test_omr_exact_row_delete_20261116.cjs",
+      "sha256": "4efcbf4285f55087b9b6cd3187dd1d845ae9d908a59168cf47b47f810db458bb"
+    },
+    {
+      "path": "QA/test_omr_connection_gate_20261116.cjs",
+      "sha256": "867be7ab402e49cbd15c95fe4d0c05025ae598c1ed4dbc4dc808efc9f98798e5"
+    },
+    {
+      "path": "QA/test_omr_sparse_months_20261116.cjs",
+      "sha256": "58ccf4f9110ffcf4ebaff51710d7a4848e2eb83f34accb18deda3545319638e5"
+    },
+    {
+      "path": "QA/LEIA_PRIMEIRO_PUBLICACAO_CONJUNTA_20261116.md",
+      "sha256": "75cf9ca000ab5e4a2c5de6bc78e2905944939928436c945ac96137e8242bbabf"
+    }
+  ]
+}
