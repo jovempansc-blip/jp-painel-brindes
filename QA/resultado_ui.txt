@@ -1,0 +1,63 @@
+[
+  {
+    "test": "Recepção: cadastro de um nome e confirmação visual",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Recepção: telefone pode ser incluído depois",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Recepção: não grava nome vazio",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Recepção: offline não indica sucesso",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Recepção: rejeição simulada não indica sucesso",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Recepção: recusa resposta sem nome persistido",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Distribuição: abre modal e seleciona prêmio vinculado",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Distribuição: salva ocorrência selecionada em memória sintética",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Distribuição: aceita promoção de competência anterior",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Distribuição: bloqueia cadastro com nome incompleto",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Distribuição: offline não grava nem indica sucesso",
+    "status": "PASS",
+    "detail": ""
+  },
+  {
+    "test": "Distribuição: rejeição simulada preserva o formulário",
+    "status": "PASS",
+    "detail": ""
+  }
+]
+SIMULAÇÃO NAVEGADOR: 12 PASS, 0 FAIL

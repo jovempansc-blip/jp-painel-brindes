@@ -1,0 +1,21 @@
+{
+  "total": 15,
+  "tests": [
+    "vigente",
+    "encerrou ontem",
+    "encerra hoje",
+    "futura",
+    "arquivada ainda no prazo",
+    "encerramento forçado",
+    "histórico encerrado ontem",
+    "histórico fim hoje",
+    "histórico arquivada",
+    "fixada encerrada não vaza para promoções",
+    "validação result/result/name/",
+    "validação result/result/phone/",
+    "validação pickup/result/phone/",
+    "validação result/result/name/ACOMPANHANTE 1",
+    "validação pickup/result/name/ACOMPANHANTE 1"
+  ]
+}
+ 

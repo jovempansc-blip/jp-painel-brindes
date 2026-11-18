@@ -1,0 +1,13 @@
+test_distribution_entry (test_patch_contract.CandidateContract.test_distribution_entry) ... ok
+test_fails_closed_on_unknown_version (test_patch_contract.CandidateContract.test_fails_closed_on_unknown_version) ... ok
+test_history (test_patch_contract.CandidateContract.test_history) ... ok
+test_offline_apply_and_backup (test_patch_contract.CandidateContract.test_offline_apply_and_backup) ... ok
+test_reception (test_patch_contract.CandidateContract.test_reception) ... ok
+test_studio_single (test_patch_contract.CandidateContract.test_studio_single) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.004s
+
+OK
+Aplicação local sobre CÓPIA concluída; backup em /tmp/tmpps13y58a/.jp-backup-revisao-20261118
+CANDIDATO NÃO HOMOLOGADO: validar JS, testes e Firebase de testes antes de propor publicação.
