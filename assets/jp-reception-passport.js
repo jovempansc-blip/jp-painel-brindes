@@ -33,7 +33,12 @@ const config=id=>passports[encode(id)]||null;
 const winners=p=>C.winnerRows(p);
 const isPassport=p=>p?.campaignMode==='passport'||list(config(p?.id)?.events).length>0;
 const historyOf=p=>String(p?.endDate||p?.drawDate||p?.startDate||'').slice(0,7);
-const historyEligible=p=>{const end=String(p?.endDate||p?.drawDate||'').slice(0,10);return (!!end&&end<todayISO())||!!p?.opecForceEnded||!!p?.opecArchived;};
+const historyEligible=p=>{
+ const end=String(p?.endDate||p?.drawDate||'').slice(0,10);
+ const occurrences=typeof receptionCampaignOccurrences==='function'?receptionCampaignOccurrences(p):[];
+ const allDone=occurrences.length>0&&occurrences.every(o=>o.done);
+ return (!!end&&end<todayISO())||!!p?.opecForceEnded||!!p?.opecArchived||allDone;
+};
 function closeMenu(){const x=el('jpRcpMenu');if(x)x.hidden=true;}
 function menu(id,x,y){
  const host=el('jpRcpMenu');if(!host||!getPromo(id))return;menuId=id;

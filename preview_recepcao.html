@@ -925,7 +925,7 @@ function receptionCampaignState(p,allRows=[],date=todayISO()){
   // Cada confirmação retira apenas o próprio ganhador da frente; histórico permanece.
   // Depois do último sorteio, a promoção só desaparece após TODAS as retiradas.
   const complete=allDone&&winners.length>0&&!pending.length;
-  const ended=!!p.opecForceEnded||!!p.opecArchived||(end&&end<date);
+  const ended=allDone||!!p.opecForceEnded||!!p.opecArchived||(end&&end<date);
   // A vigência define a aba, não o prazo individual de retirada.
   const visible=receptionCampaignVisible(p)&&!nonOperational&&inPeriod&&!ended;
   return {p,occurrences,winners,pending,allDone,ended,inPeriod,visible,expired:pending.some(r=>r.expired)};
