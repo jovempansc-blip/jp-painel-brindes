@@ -33,7 +33,7 @@ const config=id=>passports[encode(id)]||null;
 const winners=p=>C.winnerRows(p);
 const isPassport=p=>p?.campaignMode==='passport'||list(config(p?.id)?.events).length>0;
 const historyOf=p=>String(p?.endDate||p?.drawDate||p?.startDate||'').slice(0,7);
-const historyEligible=p=>{const end=String(p?.endDate||p?.drawDate||'').slice(0,10);return !!end&&end<=todayISO();};
+const historyEligible=p=>{const end=String(p?.endDate||p?.drawDate||'').slice(0,10);return (!!end&&end<todayISO())||!!p?.opecForceEnded||!!p?.opecArchived;};
 function closeMenu(){const x=el('jpRcpMenu');if(x)x.hidden=true;}
 function menu(id,x,y){
  const host=el('jpRcpMenu');if(!host||!getPromo(id))return;menuId=id;
@@ -95,8 +95,8 @@ function alternative(){
  return true;
 }
 function active(rows){
- const original=receptionActiveCampaigns(todayISO(),rows).filter(x=>!isPassport(x.p)),ids=new Set(original.map(x=>x.p.id));
- return [...promos().filter(p=>!isPassport(p)&&isPinned(p.id)&&!ids.has(p.id)).map(p=>receptionCampaignState(p,rows,todayISO())),...original];
+ // Fixadas encerradas continuam na visão FIXADAS/HISTÓRICO, mas não na aba PROMOÇÕES.
+ return receptionActiveCampaigns(todayISO(),rows).filter(x=>!isPassport(x.p)&&x.inPeriod&&!x.ended);
 }
 function rerender(){
  const rows=typeof allResultRows==='function'?allResultRows():[];
@@ -364,9 +364,16 @@ function results(id){
   (r.source==='promo'&&r.id===id)||(r.source==='item'&&r.promoResultId===id));
  const unique=new Map();
  rows.forEach(r=>{const k=[r.source,r.id,r.date,r.occurrenceKey,r.winnerIndex].join('|');if(!unique.has(k))unique.set(k,r);});
+ const pending=typeof receptionCampaignOccurrences==='function'
+  ?receptionCampaignOccurrences(p).filter(o=>o.pending&&o.winners.length<o.qtyPlanned):[];
+ const forms=pending.map(o=>'<div class="campaignWinnerEmpty">RESULTADO INCOMPLETO · '+esc(dateText(o.date))+' · '+esc(o.time)+
+  '<div class="receptionWinnerQuickForm" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">'+
+  '<input data-reception-winner-name type="text" maxlength="140" placeholder="NOME DO GANHADOR" aria-label="Nome do ganhador" style="flex:2;min-width:180px;padding:8px">'+
+  '<input data-reception-winner-phone type="tel" maxlength="22" placeholder="TELEFONE (OPCIONAL)" aria-label="Telefone do ganhador" style="flex:1;min-width:150px;padding:8px">'+
+  '<button type="button" class="jpRcpBtn" data-reception-create-winner="'+esc(p.id)+'" data-reception-date="'+esc(o.date)+'" data-reception-time="'+esc(o.time)+'">SALVAR GANHADOR</button></div></div>').join('');
  host.innerHTML='<div class="jpRcpEditor"><div class="jpRcpPanelTitle"><h3>CONFIRMAÇÃO DE RETIRADAS · '+esc(promoTitle(p))+'</h3></div>'+
-  (unique.size?[...unique.values()].map(r=>receptionCampaignWinnerHtml(r)).join(''):
-    '<div class="jpRcpEmpty">SEM RESULTADOS CADASTRADOS NESTA PROMOÇÃO.</div>')+'</div>';
+  (unique.size?[...unique.values()].map(r=>receptionCampaignWinnerHtml(r)).join(''):'')+
+  (forms||(!unique.size?'<div class="jpRcpEmpty">SEM RESULTADOS CADASTRADOS NESTA PROMOÇÃO.</div>':''))+'</div>';
  host.hidden=!host.hidden;
 }
 
