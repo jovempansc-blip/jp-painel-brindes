@@ -1,0 +1,114 @@
+{
+  "passed": 27,
+  "total": 27,
+  "tests": [
+    {
+      "name": "Rodapé criado dentro do cartão do título",
+      "passed": true
+    },
+    {
+      "name": "Título original preservado",
+      "passed": true
+    },
+    {
+      "name": "Pauta mantida fora do rodapé",
+      "passed": true
+    },
+    {
+      "name": "Sem segundo cartão extra",
+      "passed": true
+    },
+    {
+      "name": "Ícone de ingresso preservado",
+      "passed": true
+    },
+    {
+      "name": "Ícone de relógio preservado",
+      "passed": true
+    },
+    {
+      "name": "Contagem visível no rodapé",
+      "passed": true
+    },
+    {
+      "name": "10 minutos informa 10 MIN",
+      "passed": true
+    },
+    {
+      "name": "06 minutos informa 06 MIN",
+      "passed": true
+    },
+    {
+      "name": "05 minutos inicia pulso suave",
+      "passed": true
+    },
+    {
+      "name": "No horário mostra RESULTADO AGORA",
+      "passed": true
+    },
+    {
+      "name": "Após 1 minuto mantém PENDENTE",
+      "passed": true
+    },
+    {
+      "name": "Resultado salvo exibe CONFIRMADO",
+      "passed": true
+    },
+    {
+      "name": "Prêmio B selecionado recebe confirmação independente",
+      "passed": true
+    },
+    {
+      "name": "Prêmio A não herda a confirmação de B",
+      "passed": true
+    },
+    {
+      "name": "09H30 recebe PRÊMIO DA MEIA HORA",
+      "passed": true
+    },
+    {
+      "name": "09H recebe PRÊMIO DA HORA",
+      "passed": true
+    },
+    {
+      "name": "Pauta virtual não recebe rodapé de sorteio",
+      "passed": true
+    },
+    {
+      "name": "Sem erros de execução do addon",
+      "passed": true
+    },
+    {
+      "name": "Layout 375 px sem barra horizontal",
+      "passed": true
+    },
+    {
+      "name": "Instalador injeta CSS e JS sem tocar na lógica",
+      "passed": true
+    },
+    {
+      "name": "Instalador idempotente",
+      "passed": true
+    },
+    {
+      "name": "Função render original permanece intacta",
+      "passed": true
+    },
+    {
+      "name": "Instalador salva cópia temporária sem erro",
+      "passed": true
+    },
+    {
+      "name": "Instalador cria backup do HTML",
+      "passed": true
+    },
+    {
+      "name": "Instalador copia os dois assets",
+      "passed": true
+    },
+    {
+      "name": "Não há escrita nem consulta ao Firebase no addon",
+      "passed": true
+    }
+  ]
+}
