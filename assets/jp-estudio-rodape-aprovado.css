@@ -114,3 +114,50 @@
   .jpRaffleFooter .jpRaffleRight svg{width:18px;flex-basis:18px}
   .jpRaffleFooter .jpRaffleRight strong{font-size:clamp(9px,2.6vw,16px)}
 }
+
+/* JP BOARD ROOM — HOTFIX 24/11/2026: pilha vertical no cartão oficial.
+   Não altera navegação, dados, temporização ou gravação. */
+.studioMainColumn .pautaBody > .titleBox.jpRaffleTitle,
+.pautaBody > .titleBox.jpRaffleTitle {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  justify-content:center!important;
+  gap:0!important;
+  min-width:0!important;
+  padding:0!important;
+  container-type:inline-size;
+}
+.studioMainColumn .pautaBody > .titleBox.jpRaffleTitle > .jpMultiTitleTag,
+.pautaBody > .titleBox.jpRaffleTitle > .jpMultiTitleTag {
+  order:0!important;flex:0 0 auto!important;
+  width:min(72%, 660px)!important;max-width:calc(100% - 20px)!important;
+  margin:9px auto 0!important;align-self:center!important;
+}
+.jpRaffleTitle > .jpMultiTitleTag > b {white-space:nowrap;}
+.studioMainColumn .pautaBody > .titleBox.jpRaffleTitle > .title,
+.pautaBody > .titleBox.jpRaffleTitle > .title {
+  order:1!important;flex:0 0 auto!important;min-width:0!important;
+  width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+  white-space:normal!important;overflow-wrap:anywhere;
+}
+.studioMainColumn .pautaBody > .titleBox.jpRaffleTitle > .jpRaffleFooter,
+.pautaBody > .titleBox.jpRaffleTitle > .jpRaffleFooter {
+  order:2!important;flex:0 0 auto!important;align-self:stretch!important;
+  width:calc(100% - 14px)!important;max-width:none!important;min-width:0!important;
+  box-sizing:border-box!important;margin:0 7px 10px!important;
+}
+.jpRaffleTitle > .jpRaffleFooter > .jpRaffleLeft {box-sizing:border-box;min-width:0;justify-content:center;}
+.jpRaffleTitle > .jpRaffleFooter > .jpRaffleRight {box-sizing:border-box;min-width:0;transform:none;padding-right:7px;padding-left:16px;}
+@container (max-width:560px){
+  .jpRaffleTitle > .jpRaffleFooter > .jpRaffleLeft{font-size:clamp(9px,2.45cqw,14px);gap:5px;padding:0 8px;flex-basis:46%;}
+  .jpRaffleTitle > .jpRaffleFooter > .jpRaffleRight{font-size:clamp(9px,2.25cqw,14px);gap:4px;padding:0 5px 0 12px;}
+  .jpRaffleTitle > .jpRaffleFooter > .jpRaffleLeft svg,.jpRaffleTitle > .jpRaffleFooter > .jpRaffleRight svg{width:18px;height:18px;flex-basis:18px;}
+  .jpRaffleTitle > .jpRaffleFooter > .jpRaffleRight strong{font-size:clamp(10px,2.55cqw,16px);}
+  .jpRaffleTitle > .jpMultiTitleTag {width:94%!important;gap:5px;}
+}
+@container (max-width:390px){
+  .jpRaffleTitle > .jpRaffleFooter > .jpRaffleLeft,.jpRaffleTitle > .jpRaffleFooter > .jpRaffleRight{white-space:normal;line-height:1.16;}
+  .jpRaffleTitle > .jpRaffleFooter > .jpRaffleRight strong{white-space:nowrap;}
+  .jpRaffleTitle > .jpMultiTitleTag > b{white-space:normal;}
+}
