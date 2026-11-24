@@ -9167,18 +9167,27 @@ function periodRotationTargetSlot(periodSlots,dateIndex,pass,seed){
 function periodIcon(key){
   return key === 'manha' ? '☀' : key === 'tarde' ? '☼' : '☾';
 }
+function jpBoardPrizeKey(i){return String(i?.distributionId||'').trim()?'D:'+String(i.distributionId).trim():'T:'+String(i?.title||i?.prize||'').trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ');}
+function jpBoardSlotCanAdd(item,others){return others.length<2&&!others.some(o=>jpBoardPrizeKey(o)===jpBoardPrizeKey(item));}
+function jpBoardSlotInfo(i){
+  if(normalizeChannel(i.channel)!=='RÁDIO'||normalizeStatus(i.status)==='CANCELADO')return {conflicts:[],shared:false,index:0};
+  const others=radioSlotConflicts(i.date,i.slot,i.id,itemStation(i));
+  const group=[i,...others].sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||''))||String(a.id).localeCompare(String(b.id)));
+  const shared=others.length===1&&jpBoardSlotCanAdd(i,others);
+  return {conflicts:shared?[]:others,shared,index:group.findIndex(o=>o.id===i.id)+1};
+}
 function renderProgramCard(i){
   const d=distributionForProgramItem(i);
   const resolvedProgram=programFromSchedule(i.date,i.slot,itemStation(i))||norm(i.program||'');
   const cardTitle=i.title||d?.title||distributionLabel(d)||'SEM TÍTULO CADASTRADO';
   const cardSubtitle=resolvedProgram;
   const promoResultBadge=i.sourceType==='promo-result'?`<span class="badge blue" title="RESULTADO PROGRAMADO PARA SER ENTREGUE NO AR">RESULTADO</span>`:'';
-  const radioConflict=normalizeChannel(i.channel)==='RÁDIO'?radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)):[];
+  const jpSlotInfo=jpBoardSlotInfo(i);const radioConflict=jpSlotInfo.conflicts;
   const rotationConflict=(normalizeChannel(i.channel)==='RÁDIO'&&d)?samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)):[];
   const hasConflict=radioConflict.length||rotationConflict.length;
-  const radioConflictBadge=radioConflict.length?`<span class="badge red" title="HORÁRIO JÁ OCUPADO POR ${esc(conflictLabel(radioConflict))}">CONFLITO</span>`:'';
+  const radioConflictBadge=radioConflict.length?`<span class="badge red" title="HORÁRIO JÁ OCUPADO POR ${esc(conflictLabel(radioConflict))}">CONFLITO</span>`:jpSlotInfo.shared?`<span class="badge blue" title="DOIS PRÊMIOS DISTINTOS NESTE HORÁRIO">${jpSlotInfo.index} DE 2</span>`:'';
   const rotationInfo=rotationConflict.length?`<span class="programInfoIcon" tabindex="0" role="img" aria-label="${esc(samePrizeRepeatLabel(rotationConflict))}" title="${esc(samePrizeRepeatLabel(rotationConflict))}">i</span>`:'';
-  const conflictNote=radioConflict.length?`<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`:'';
+  const conflictNote=radioConflict.length?`<span class="programConflictNote">HORÁRIO OCUPADO: ${esc(conflictLabel(radioConflict))}</span>`:jpSlotInfo.shared?'<span class="programConflictNote" style="color:#65788e">SORTEIO DUPLO · 2 PRÊMIOS NESTE HORÁRIO</span>':'';
   const remapBtn=hasConflict?`<button type="button" class="actionIcon warn programActionIconOnly" title="REMANEJAR PARA HORÁRIO LIVRE" aria-label="REMANEJAR PARA HORÁRIO LIVRE" data-program-action="remap" data-item-id="${esc(i.id)}" onclick="return programActionClick(event,'remap','${esc(i.id)}')" onpointerdown="event.stopPropagation()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8a4 4 0 0 1 4 4v1"></path><path d="m15 9 4 3-4 3"></path><path d="M17 17H9a4 4 0 0 1-4-4v-1"></path></svg></button>`:'';
   const movable=!['REALIZADO','CANCELADO'].includes(itemEffectiveStatus(i))&&i.sourceType!=='promo-result'&&normalizeChannel(i.channel)==='RÁDIO';
   const effectiveStatus=itemEffectiveStatus(i);
@@ -9200,7 +9209,7 @@ function renderProgramacao(){
   const rows=filteredItems(),board=$('programWeekly');if(!board)return;
   const selectedWeek=$('weekFilter')?.value||'',range=$('weeklyRangeLabel');
   if(range)range.textContent=selectedWeek||'TODAS AS SEMANAS';
-  const alerts=rows.filter(i=>{if(normalizeChannel(i.channel)!=='RÁDIO')return false;const d=distributionForProgramItem(i);return radioSlotConflicts(i.date,i.slot,i.id,itemStation(i)).length||((d&&samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)).length)||0);}).length;
+  const alerts=rows.filter(i=>{if(normalizeChannel(i.channel)!=='RÁDIO')return false;const d=distributionForProgramItem(i);return jpBoardSlotInfo(i).conflicts.length||((d&&samePrizeRepeatConflicts(d,i.date,i.slot,[],i.id,itemStation(i)).length)||0);}).length;
   const realized=rows.filter(i=>itemEffectiveStatus(i)==='REALIZADO').length;
   const summary=$('programWeeklySummary');if(summary)summary.textContent=`${rows.length} ${rows.length===1?'ITEM':'ITENS'} · ${alerts} ${alerts===1?'ALERTA':'ALERTAS'} · ${realized} REALIZADO${realized===1?'':'S'}`;
   let dates=selectedWeek?weekDatesForLabel(selectedWeek):[...new Set(rows.map(i=>i.date).filter(Boolean))].sort();
@@ -11081,8 +11090,8 @@ function itemScheduleOptionsForStationDate(date,station){
       const end=scheduleEndMinutes(p);
       if(!name || !start || end<=start) return;
       const matchesDate = date ? dayMatchesRule(date,scheduleDays(p)) : true;
-      const first=Math.ceil(start/60)*60;
-      for(let minute=first; minute<end; minute+=60){
+      const first=Math.ceil(start/30)*30;
+      for(let minute=first; minute<end; minute+=30){
         if(minute<6*60 || minute>22*60) continue;
         const slot=slotFromMinutes(minute);
         out.push({
@@ -11332,7 +11341,7 @@ $('itemForm').addEventListener('submit',e=>{
   }
   if(item.channel === 'RÁDIO'){
     const occupied=radioSlotConflicts(item.date,item.slot,item.id,item.station);
-    if(occupied.length){
+    if(occupied.length&&!jpBoardSlotCanAdd(item,occupied)){
       const originalSlot=normalizeSlot(item.slot);
       const halfSlot=halfHourSlotFor(originalSlot);
       const halfOccupied=halfSlot ? radioSlotConflicts(item.date,halfSlot,item.id,item.station) : [];
@@ -15664,7 +15673,7 @@ window.addEventListener('focus',()=>{if(!firebaseConnected||!firebaseServerLoade
 <!-- AV-57.6.6.16 · PROGRAMAÇÃO COM ARRASTE + BOTÕES UNIFICADOS + SAVE PROMO EXPLÍCITO -->
 <script src="assets/distribution-unprogram-ui.js?v=AV58_1_10"></script>
 <div class="jpManualDialog" id="jpManualQtyDialog" hidden><section class="jpManualDialogCard" role="dialog" aria-modal="true" aria-labelledby="jpManualQtyTitle"><h3 id="jpManualQtyTitle">PROGRAMAR PRÊMIO</h3><p id="jpManualQtyHint">DEFINA A QUANTIDADE.</p><label for="jpManualQtyInput">QUANTIDADE A PROGRAMAR</label><input type="number" id="jpManualQtyInput" min="1" step="1" value="1"><div class="jpManualDialogActions"><button type="button" id="jpManualQtyCancel" class="jpManualBtn">CANCELAR</button><button type="button" id="jpManualQtyConfirm" class="jpManualBtn primary">ADICIONAR</button></div></section></div>
-<script src="assets/prog-manual.js?v=AV58_1_45_RETRO_DATAS_20261112"></script>
+<script src="assets/prog-manual.js?v=JP_BOARD_DUPLO_EXCLUSAO_20261124"></script>
 <script src="assets/jp-promo-externa-core.js?v=AV58_1_44_IMPL_HML_20261111"></script>
 <script src="assets/jp-promo-externa-firebase.js?v=AV58_HOTFIX_EXT_ACTIONS_20261113"></script>
 <script src="assets/jp-promo-externa-main.js?v=AV58_HOTFIX_EXT_ACTIONS_20261113"></script>
