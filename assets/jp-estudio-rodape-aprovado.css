@@ -1,0 +1,116 @@
+/* JP BOARD ROOM — ESPECIFICAÇÃO VISUAL APROVADA EM 23/11/2026
+   A faixa integra o cartão original do título; não cria cartão separado.
+   Classe aplicada somente a cartões de prêmio/sorteio elegíveis. */
+.studioMainColumn .pautaBody > .titleBox.jpRaffleTitle,
+.pautaBody > .titleBox.jpRaffleTitle {
+  padding:0!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,#f4f6fa 0%,#f9fafc 100%)!important;
+  border:1px solid #dfe5ee!important;
+  border-left:3px solid #ce536d!important;
+  border-radius:15px!important;
+  box-shadow:0 2px 7px rgba(18,28,45,.025)!important;
+}
+.studioMainColumn .pautaBody > .titleBox.jpRaffleTitle > .title,
+.pautaBody > .titleBox.jpRaffleTitle > .title {
+  width:100%!important;
+  max-width:100%!important;
+  margin:0!important;
+  padding:13px 12px 14px!important;
+  text-align:center!important;
+  color:#0d1423!important;
+  font-family:"LEMON MILK Bold","LEMON MILK","Arial Black","Segoe UI",Arial,sans-serif!important;
+  font-size:clamp(22px,2.8vw,38px)!important;
+  line-height:1.35!important;
+  font-weight:950!important;
+  letter-spacing:-.045em!important;
+}
+.jpRaffleTitle > .jpRaffleFooter {
+  position:relative;
+  margin:0 7px 10px;
+  height:37px;
+  min-height:37px;
+  border:1px solid #f1e2e5;
+  border-radius:11px;
+  overflow:hidden;
+  background:linear-gradient(90deg,#ffe8ed 35%,#fff0f2 100%);
+  display:flex;
+  align-items:center;
+  box-shadow:0 5px 12px rgba(228,34,65,.08);
+  font-family:"Segoe UI",Arial,sans-serif;
+}
+.jpRaffleFooter .jpRaffleLeft {
+  z-index:1;
+  position:relative;
+  flex:0 0 43.8%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:0 16px;
+  color:#fff;
+  font-weight:900;
+  font-size:14px;
+  line-height:1;
+  white-space:nowrap;
+  isolation:isolate;
+}
+.jpRaffleFooter .jpRaffleLeft::before {
+  content:"";
+  position:absolute;
+  inset:0 -12px 0 0;
+  background:linear-gradient(150deg,#ff4057,#ec001e 75%);
+  clip-path:polygon(0 0,100% 0,94% 100%,0 100%);
+  z-index:-1;
+}
+.jpRaffleFooter .jpRaffleLeft svg {
+  display:block;
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  stroke:#fff;
+}
+.jpRaffleFooter .jpRaffleRight {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  flex:1;
+  gap:9px;
+  padding:0 8px 0 22px;
+  transform:translateX(-6px);
+  color:#202838;
+  font-weight:900;
+  font-size:14px;
+  white-space:nowrap;
+}
+.jpRaffleFooter .jpRaffleRight svg {
+  display:block;
+  stroke:#e4002f;
+  width:23px;
+  height:23px;
+  flex:0 0 23px;
+}
+.jpRaffleFooter .jpRaffleRight strong {
+  color:#d81235;
+  font-size:16px;
+  font-weight:950;
+}
+/* Só a sombra varia quando faltam cinco minutos; não muda a geometria. */
+.jpRaffleFooter.jpRaffleSoon {animation:jpRaffleGlow 2.2s ease-in-out infinite}
+.jpRaffleFooter.jpRaffleDone .jpRaffleRight strong {color:#288353}
+.jpRaffleFooter.jpRaffleLate .jpRaffleRight strong {color:#ab2644}
+@keyframes jpRaffleGlow {
+  0%,100%{box-shadow:0 5px 12px rgba(228,34,65,.07)}
+  50%{box-shadow:0 5px 15px rgba(228,34,65,.19)}
+}
+@media (prefers-reduced-motion:reduce){.jpRaffleFooter.jpRaffleSoon{animation:none!important}}
+@media (max-width:540px) {
+  .studioMainColumn .pautaBody > .titleBox.jpRaffleTitle > .title,
+  .pautaBody > .titleBox.jpRaffleTitle > .title{font-size:clamp(14px,3.7vw,23px)!important}
+  .jpRaffleFooter .jpRaffleLeft{font-size:clamp(9px,2.4vw,14px);gap:5px;padding-left:8px;flex-basis:46%}
+  .jpRaffleFooter .jpRaffleLeft svg{width:19px;flex-basis:19px}
+  .jpRaffleFooter .jpRaffleRight{font-size:clamp(8px,2.25vw,13px);gap:4px;padding:0 2px 0 9px;transform:translateX(-2px)}
+  .jpRaffleFooter .jpRaffleRight svg{width:18px;flex-basis:18px}
+  .jpRaffleFooter .jpRaffleRight strong{font-size:clamp(9px,2.6vw,16px)}
+}
