@@ -15,14 +15,39 @@
   // Após gravar no Firebase, tornam-se históricos imutáveis como os demais.
   const unsavedRetroDraft=i=>!!(i?.manualRetroactive&&i?.manualCreated&&draft&&!draft.originalsMap?.has(i.id));
   const locked=i=>!!(i&&(['REALIZADO','NO AR'].includes(String(i.status||'').toUpperCase())||i.resultAt||i.winnerName||(i.winnerNames||[]).length||i.resultName||i.deliveredAt||i.sourceType==='promo-result'||(i.date<iso()&&!unsavedRetroDraft(i))||(i.date===iso()&&slotOrder(i.slot)<(new Date().getHours()+new Date().getMinutes()/60)&&!unsavedRetroDraft(i))));
+  // JP BOARD: a hora transcorrida não comprova realização. Edição/movimento históricos seguem protegidos.
+  const hasOutcome=i=>!!(i&&(['REALIZADO','PARCIAL'].includes(String(i.status||'').toUpperCase())||i.resultAt||i.winnerName||rows(i.winnerNames).some(Boolean)||i.resultName||rows(i.resultWinners).some(Boolean)||i.deliveredAt||rows(i.winnerDeliveries).some(Boolean)||i.winnerOperationId||i.sourceType==='promo-result'||i.promoId));
+  const hasReuse=i=>!!(i&&(i.returnedReuse||i.returnedFrom||rows(i.returnSourceIds).length||i.reuseStatus||i.returnTransferId||i.reusedItemId));
+  const canRemove=i=>!!(i&&!hasOutcome(i)&&!hasReuse(i));
+  function manualPrizeStatus(i){
+    if(i.deliveredAt||rows(i.winnerDeliveries).some(w=>w?.deliveredAt))return 'RETIRADO';
+    if(hasOutcome(i)){const n=rows(i.winnerNames).filter(Boolean).length||String(i.winnerName||'').split(',').filter(v=>v.trim()).length;return n>0&&n<Math.max(1,qty(i.winnerCapacity||i.qty))?'RESULTADO PARCIAL':n||i.resultAt?'REALIZADO':'RESULTADO A CONFERIR / BLOQUEADO';}
+    if(hasReuse(i))return 'VÍNCULO DE SOBRA / BLOQUEADO';
+    const now=new Date(),t=slotOrder(i.slot),h=now.getHours()+now.getMinutes()/60+now.getSeconds()/3600;
+    if(i.date<iso())return 'NÃO SORTEADO';
+    if(i.date>iso()||t>h)return 'PROGRAMADO';
+    const next=officialSlots(i.date,itemStation(i)).map(slotOrder).filter(n=>n>t).sort((a,b)=>a-b)[0];
+    return h<Math.min(t+.5,next??Infinity)?'NO AR':'NÃO SORTEADO';
+  }
+  function validPrizeSlots(before,after){
+    const keys=new Set(after.filter(i=>{const old=before.find(o=>o.id===i.id);return !old||slot(old.slot)!==slot(i.slot)||old.distributionId!==i.distributionId;}).map(i=>slot(i.slot)));
+    for(const k of keys){const group=after.filter(i=>slot(i.slot)===k);if(group.length>2||new Set(group.map(jpBoardPrizeKey)).size!==group.length)return 'HORÁRIO '+k+': MÁXIMO DE DOIS PRÊMIOS DISTINTOS. ESCOLHA OUTRO HORÁRIO.';}
+    return '';
+  }
+  function canPlacePrize(i,to,excludeId=''){return jpBoardSlotCanAdd(i,draft.items.filter(o=>o.id!==excludeId&&slot(o.slot)===slot(to)));}
+  function bankAllowsRemoval(bank,removed){
+    if(!bank||bank.initialized!==true)return false;
+    const refs=new Set(removed.map(i=>'ITEM:'+i.id));
+    return !rows(bank.records).some(w=>refs.has(String(w?.sourceRef||'')));
+  }
   let mode='grade',date=iso(),station='JP1017',draft=null,busy=false,pending=null;
   let prizeQuery='',pautaQuery='',merchanQuery='',manualTab='prizes';
   function countryDate(d){return d.split('-').reverse().join('/');}
-  function officialSlots(dateKey,stationKey){
+  function officialSlots(dateKey,stationKey,stepMinutes=30){
     const set=new Set(),w=new Date(`${dateKey}T12:00:00`).getDay();
     (typeof programSchedules==='function'?programSchedules():[]).filter(p=>sameStation(p.station||'JP1017',stationKey)&&dayValuesFromRule(scheduleDays(p)).includes(w)).forEach(p=>{
-      const first=Math.ceil(scheduleStartMinutes(p)/60)*60,stop=scheduleEndMinutes(p);
-      for(let min=first;min<stop&&min<1440;min+=60){set.add(`${String(Math.floor(min/60)).padStart(2,'0')}H`);}
+      const first=Math.ceil(scheduleStartMinutes(p)/stepMinutes)*stepMinutes,stop=scheduleEndMinutes(p);
+      for(let min=first;min<stop&&min<1440;min+=stepMinutes){set.add(`${String(Math.floor(min/60)).padStart(2,'0')}H${min%60===30?'30':''}`);}
       const start=scheduleStartMinutes(p);if(start%60===30)set.add(`${String(Math.floor(start/60)).padStart(2,'0')}H30`);
     });
     const m=state.months?.[dateKey.slice(0,7)];
@@ -112,7 +137,7 @@
     const pautas=draft.pautas.filter(p=>slot(p.slot)===s);
     return [...entries.map(i=>{
       const d=prizes().find(d=>d.id===i.distributionId),title=i.title||i.prize||distributionLabel(d)||'PRÊMIO';
-      return `<div class="jpManualEntry" data-card="${clean(i.id)}" draggable="${!locked(i)}" data-drag-type="item" data-drag-id="${clean(i.id)}"><span class="icon">♔</span><div><strong>${clean(title)}</strong><small>PRÊMIO · ${qty(i.qty)} ${qty(i.qty)===1?'UNIDADE':'UNIDADES'}${locked(i)?' · REALIZADO / BLOQUEADO':''}</small></div><div class="jpManualEntryActions"><button type="button" data-edit-qty="${clean(i.id)}" ${locked(i)?'disabled':''} aria-label="EDITAR QUANTIDADE">QTD</button><button type="button" data-remove-item="${clean(i.id)}" ${locked(i)?'disabled':''} aria-label="REMOVER PRÊMIO">×</button></div></div>`;
+      return `<div class="jpManualEntry" data-card="${clean(i.id)}" draggable="${!locked(i)}" data-drag-type="item" data-drag-id="${clean(i.id)}"><span class="icon">♔</span><div><strong>${clean(title)}</strong><small>PRÊMIO · ${qty(i.qty)} ${qty(i.qty)===1?'UNIDADE':'UNIDADES'} · ${clean(manualPrizeStatus(i))}</small></div><div class="jpManualEntryActions"><button type="button" data-edit-qty="${clean(i.id)}" ${locked(i)?'disabled':''} aria-label="EDITAR QUANTIDADE">QTD</button><button type="button" data-remove-item="${clean(i.id)}" ${canRemove(i)?'':'disabled'} aria-label="REMOVER PRÊMIO">×</button></div></div>`;
     }),...pautas.map(p=>{
       const promo=promoPool().find(x=>x.id===p.promoId);return `<div class="jpManualEntry pauta" data-card="${clean(p.key)}" draggable="${!pautaAlreadyRead(p.promoId,p.slot)}" data-drag-type="assigned-pauta" data-drag-id="${clean(p.key)}"><span class="icon">♧</span><div><strong>${clean(promo?.name||promo?.title||'PAUTA')}</strong><small>${['merchan','merchandising'].includes(String(promo?.kind||'').toLowerCase())?'MERCHAN':'PAUTA PROMOCIONAL'} · LEITURA MANUAL</small></div><button type="button" data-remove-pauta="${clean(p.key)}" ${pautaAlreadyRead(p.promoId,p.slot)?'disabled':''} aria-label="REMOVER PAUTA">×</button></div>`;
     })].join('');
@@ -180,11 +205,12 @@
     return order<(now.getHours()+now.getMinutes()/60+now.getSeconds()/3600);
   }
   function add(type,idValue,to){
-    if(!officialSlots(date,station).includes(to))return reject('ESSE HORÁRIO NÃO PERTENCE À GRADE OFICIAL.');
+    if(!officialSlots(date,station,['pauta','assigned-pauta'].includes(type)?60:30).includes(to))return reject('ESSE HORÁRIO NÃO PERTENCE À GRADE OFICIAL PARA ESTE TIPO DE ITEM.');
     if(date<iso()&&type!=='prize')return reject('EM DATAS PASSADAS É PERMITIDA APENAS A INCLUSÃO DE NOVOS PRÊMIOS NA PROG MANUAL. PAUTAS, MERCHANS E REMANEJAMENTOS HISTÓRICOS CONTINUAM BLOQUEADOS.');
     if(manualSlotIsPast(type,date,to)&&type!=='prize')return reject('NÃO É PERMITIDO INSERIR PAUTAS, MERCHANS OU REMANEJAMENTOS EM HORÁRIOS ANTERIORES. A REGULARIZAÇÃO RETROATIVA É EXCLUSIVA PARA NOVOS PRÊMIOS.');
     if(type==='prize'){
       const d=prizes().find(d=>d.id===idValue);if(!d||balance(d)<1||!state.months?.[date.slice(0,7)]?.distributions?.some(x=>x.id===idValue))return reject('PRÊMIO SEM SALDO OU SEM COTA CONFIGURADA NESTE MÊS.');
+      if(!canPlacePrize({distributionId:d.id,title:prizeTitle(d)},to))return reject('MÁXIMO DE DOIS PRÊMIOS DISTINTOS NO MESMO HORÁRIO.');
       pending={type,idValue,to,retroactive:manualSlotIsPast(type,date,to)};showQtyDialog(d);return true;
     }
     if(type==='pauta'){
@@ -195,6 +221,7 @@
     }
     if(type==='item'){
       const item=draft.items.find(i=>i.id===idValue);if(!item||locked(item))return reject('ITEM REALIZADO OU BLOQUEADO NÃO PODE SER MOVIDO.');
+      if(!canPlacePrize(item,to,item.id))return reject('MÁXIMO DE DOIS PRÊMIOS DISTINTOS NO MESMO HORÁRIO.');
       item.slot=to;item.program=programFromSchedule(date,to,station);item.updatedAt=new Date().toISOString();item.manualOverride=true;paint();return true;
     }
     if(type==='assigned-pauta'){
@@ -215,6 +242,7 @@
     if(!pending)return;
     const d=prizes().find(x=>x.id===pending.idValue),amount=Number(el('jpManualQtyInput').value),max=d?balance(d):0;
     if(!Number.isSafeInteger(amount)||amount<1||amount>max)return reject(`INFORME UMA QUANTIDADE ENTRE 1 E ${max}.`);
+    if(!d||!canPlacePrize({distributionId:d.id,title:prizeTitle(d)},pending.to))return reject('MÁXIMO DE DOIS PRÊMIOS DISTINTOS NO MESMO HORÁRIO.');
     let retroReason='';
     if(pending.retroactive){
       if(date>iso())return reject('REGULARIZAÇÃO RETROATIVA EXIGE DATA OU HORÁRIO JÁ PASSADO.');
@@ -270,7 +298,7 @@
         if(!Number.isSafeInteger(next)||next<1||next>max)return reject(`USE UMA QUANTIDADE ENTRE 1 E ${max}.`);
         i.qty=next;i.updatedAt=new Date().toISOString();i.manualOverride=true;paint();return;
       }
-      const remove=e.target.closest('[data-remove-item]');if(remove){const item=draft.items.find(i=>i.id===remove.dataset.removeItem);if(item&&!locked(item)&&confirm('REMOVER ESTA PROGRAMAÇÃO?')){draft.items=draft.items.filter(i=>i.id!==item.id);paint();}return;}
+      const remove=e.target.closest('[data-remove-item]');if(remove){const item=draft.items.find(i=>i.id===remove.dataset.removeItem);if(item&&canRemove(item)&&confirm('REMOVER ESTA PROGRAMAÇÃO SEM RESULTADO? A EXCLUSÃO E A LIBERAÇÃO DE SALDO SERÃO VALIDADAS AO SALVAR.')){draft.items=draft.items.filter(i=>i.id!==item.id);paint();}return;}
       const removeP=e.target.closest('[data-remove-pauta]');if(removeP){const target=draft.pautas.find(p=>p.key===removeP.dataset.removePauta);if(!target||pautaAlreadyRead(target.promoId,target.slot))return reject('LEITURA REALIZADA: USE O HISTÓRICO PARA CONFERIR.');draft.pautas=draft.pautas.filter(p=>p.key!==removeP.dataset.removePauta);paint();return;}
       const src=e.target.closest('.jpManualStockRow');if(src){if(src.classList.contains('disabled'))return;const choices=officialSlots(date,station),answer=prompt(`EM QUAL HORÁRIO PROGRAMAR?\n${choices.join(' · ')}`,choices[0]||'');if(answer!==null){const chosen=slot(answer);add(src.dataset.dragType,src.dataset.dragId,chosen);}return;}
     });
@@ -342,6 +370,7 @@
     const itemsChanged=JSON.stringify(desiredItems)!==JSON.stringify(baseItems);
     const pautasChanged=JSON.stringify(desiredPautas)!==JSON.stringify(basePautas);
     const originalById=new Map(baseItems.map(i=>[i.id,i])),plannedById=new Map(desiredItems.map(i=>[i.id,i]));
+    const removed=baseItems.filter(i=>!plannedById.has(i.id));
     const touchedPrizeIds=new Set();
     for(const id of new Set([...originalById.keys(),...plannedById.keys()])){
       const before=originalById.get(id),after=plannedById.get(id);
@@ -381,7 +410,7 @@
         }
         verifiedCrossMonth.set(promoId,snapshotPromoForManualMonth(trusted,source.sourceMonth,targetMonth));
       }
-      const tx=await monthRef.transaction(month=>{
+      const applyMonth=month=>{
         if(!month||typeof month!=='object'||Array.isArray(month)){
           failure='COMPETÊNCIA '+targetMonth+' AINDA NÃO CADASTRADA NO FIREBASE. CADASTRE A DISTRIBUIÇÃO DO MÊS ANTES DE PROGRAMAR.';
           return;
@@ -405,7 +434,9 @@
         // Alterações de pauta/merchan não regravam nem revalidam prêmios já distribuídos.
         // Isso preserva programação automática e resultados existentes.
         const itemIds=new Set(baseItems.map(i=>i.id));
-        const revised=itemsChanged?[...storedItems.filter(i=>!itemIds.has(i.id)),...desiredItems]:storedItems;
+        const revised=itemsChanged?[...storedItems.filter(i=>!itemIds.has(i.id)),...cloneJSON(desiredItems)]:storedItems;
+        if(removed.some(i=>!canRemove(storedItems.find(o=>o.id===i.id)))){failure='RESULTADO OU VÍNCULO EXISTENTE: EXCLUSÃO BLOQUEADA.';return;}
+        if(itemsChanged&&(failure=validPrizeSlots(baseItems,desiredItems)))return;
         for(const id of touchedPrizeIds){
           const remote=currentPrizeSet.get(id);
           if(!remote){failure='PRÊMIO SEM SNAPSHOT NESTE MÊS. CONFIRA A DISTRIBUIÇÃO GERAL.';return;}
@@ -454,10 +485,10 @@
         // Mesmo que um rascunho seja manipulado, uma competência passada não
         // pode alterar/excluir histórico existente nem acrescentar pautas.
         if(date<iso()){
-          const originalKept=baseItems.every(before=>desiredItems.some(after=>after.id===before.id&&JSON.stringify(after)===JSON.stringify(before)));
+          const originalKept=baseItems.every(before=>{const after=plannedById.get(before.id);return after?JSON.stringify(after)===JSON.stringify(before):canRemove(before);});
           const onlyNewRetro=desiredItems.filter(i=>!originalById.has(i.id)).every(i=>i.manualRetroactive&&i.manualCreated&&i.sourceType==='manual');
           if(!originalKept||!onlyNewRetro||pautasChanged){
-            failure='DATA PASSADA: APENAS NOVOS PRÊMIOS JUSTIFICADOS SÃO PERMITIDOS. RESULTADOS E PROGRAMAÇÕES HISTÓRICAS EXISTENTES NÃO PODEM SER ALTERADOS.';return;
+            failure='DATA PASSADA: SOMENTE INCLUSÃO RETROATIVA JUSTIFICADA OU EXCLUSÃO DE PRÊMIO SEM RESULTADO. EDIÇÕES E PAUTAS HISTÓRICAS CONTINUAM BLOQUEADAS.';return;
           }
         }
         if(retroEntries.length){
@@ -467,6 +498,7 @@
           audit.source='PROG_MANUAL_REGULARIZACAO_RETROATIVA';
           audit.retroactiveEntries=retroEntries.map(i=>({id:i.id,date:i.date,slot:i.slot,distributionId:i.distributionId,qty:i.qty,reason:i.manualRetroactiveReason,registeredAt:i.manualRetroactiveRegisteredAt}));
         }
+        if(removed.length){audit.removedItems=removed.map(cloneJSON);audit.removalReason='DESPROGRAMAÇÃO SEM RESULTADO · BANCO DE GANHADORES CONFERIDO';}
         month.manualProgramHistory=[...rows(month.manualProgramHistory),audit].slice(-300);
         if(itemsChanged)month.items=revised;
         const touched=new Set(changedPromoIds);
@@ -477,7 +509,24 @@
           return {...p,manualReadAssignments:[...other,...mine],updatedAt:new Date().toISOString()};
         });
         return month;
-      },undefined,false);
+      };
+      // Para exclusões, estado e Banco de Ganhadores são validados sob uma única
+      // transação no ancestral comum. Sem permissão ou banco inicializado, falha fechada.
+      let tx;
+      if(removed.length){
+        if(typeof firebaseRef==='undefined'||!firebaseRef?.parent||typeof firebaseUsesWrappedState==='undefined')throw new Error('RAIZ COMUM DO FIREBASE INDISPONÍVEL. EXCLUSÃO NÃO REALIZADA.');
+        const sharedRoot=firebaseRef.parent;
+        const initial=(await sharedRoot.get()).val();
+        if(!bankAllowsRemoval(initial?.winnerBank,removed))throw new Error('BANCO DE GANHADORES INDISPONÍVEL OU RESULTADO JÁ VINCULADO. EXCLUSÃO BLOQUEADA.');
+        tx=await sharedRoot.transaction(scope=>{
+          if(!scope||!bankAllowsRemoval(scope.winnerBank,removed)){failure='BANCO DE GANHADORES ALTERADO OU INDISPONÍVEL. EXCLUSÃO BLOQUEADA.';return;}
+          const actualState=firebaseUsesWrappedState===true?scope.state?.state:scope.state;
+          if(!actualState?.months?.[targetMonth]){failure='ESTRUTURA OFICIAL NÃO CONFERIU. EXCLUSÃO BLOQUEADA.';return;}
+          const next=applyMonth(actualState.months[targetMonth]);if(!next)return;
+          actualState.months[targetMonth]=next;
+          return scope;
+        },undefined,false);
+      }else tx=await monthRef.transaction(applyMonth,undefined,false);
       if(!tx?.committed)throw new Error(failure||'ALTERAÇÃO NÃO CONFIRMADA. O BANCO PERMANECE PRESERVADO.');
       // Verify server readback after transaction ACK: a success toast is not enough.
       const checked=await monthRef.get(),verifiedMonth=checked.val();
