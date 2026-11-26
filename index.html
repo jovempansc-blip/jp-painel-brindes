@@ -218,6 +218,7 @@ tr:hover td.distPrizeCell{background:#f2f4f8}
 .textStyleEditor .miniField span{font-size:8px;color:#717b8b;letter-spacing:.06em}
 .textStyleEditor select,.textStyleEditor input{min-height:30px;border:1px solid #dce2eb;border-radius:10px;background:#fff;padding:6px 8px;font:800 11px/1 Inter,Arial,sans-serif;color:var(--ink)}
 .textStyleEditor input[type=color]{padding:3px}
+#distForm .jpDistAlignField{grid-column:1/-1}
 #promoDrawer .textStyleEditor{grid-template-columns:minmax(130px,1fr) 72px 50px}
 .promoReadSchedule{border:1px solid #e4e8ef;border-radius:14px;background:#f8f9fc;padding:10px 11px}
 .promoReadScheduleTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
@@ -4488,6 +4489,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
               <label class="miniField"><span>FONTE DO TÍTULO</span><select id="distTitleFont"></select></label>
               <label class="miniField"><span>TAMANHO</span><input id="distTitleSize" type="number" min="10" max="42" step="1"></label>
               <label class="miniField"><span>COR</span><input id="distTitleColor" type="color"></label>
+              <label class="miniField jpDistAlignField"><span>ALINHAMENTO NO ESTÚDIO</span><select id="distTitleAlign"><option value="left">ESQUERDA</option><option value="center" selected>CENTRO</option><option value="right">DIREITA</option><option value="justify">JUSTIFICADO</option></select></label>
             </div>
           </div>
           <div class="field"><label id="distTotalLabel">TOTAL UNITÁRIO DO PRÊMIO</label><input class="control" type="number" min="0" step="1" id="distTotal" value="0"><span class="ticketFormHint" id="distTotalHint">NO NOVO CADASTRO, INFORME O ESTOQUE FÍSICO TOTAL. O SISTEMA DIVIDE A COTA ENTRE OS MESES DA VIGÊNCIA.</span></div>
@@ -4555,6 +4557,7 @@ body.programDragActive #view-programacao .programCard.programDropCardTarget{outl
               <label class="miniField"><span>FONTE DA DESCRIÇÃO</span><select id="distDescFont"></select></label>
               <label class="miniField"><span>TAMANHO</span><input id="distDescSize" type="number" min="9" max="32" step="1"></label>
               <label class="miniField"><span>COR</span><input id="distDescColor" type="color"></label>
+              <label class="miniField jpDistAlignField"><span>ALINHAMENTO NO ESTÚDIO</span><select id="distDescAlign"><option value="left">ESQUERDA</option><option value="center" selected>CENTRO</option><option value="right">DIREITA</option><option value="justify">JUSTIFICADO</option></select></label>
             </div>
           </div>
         </div>
@@ -12528,17 +12531,18 @@ function openRadioPlanner(distId){
   }
   openDrawer('radioPlannerDrawer');
 }
-function syncDistributionToLinkedRadioItems(d){
-  if(!d) return;
-  monthData().items.forEach(i=>{
-    if(i.distributionId===d.id && normalizeChannel(i.channel)==='RÁDIO'){
-      i.prize=distributionLabel(d);
-      i.title=d.title || distributionLabel(d);
-      i.notes=d.description || d.notes || '';
-      i.titleStyle=d.titleStyle || defaultPromoTextStyle('title');
-      i.descriptionStyle=d.descriptionStyle || defaultPromoTextStyle('desc');
-    }
-  });
+function syncDistributionToLinkedRadioItems(d,allMonths=false){
+  if(!d)return;
+  const months=allMonths?Object.values(state.months||{}):[monthData()];
+  months.forEach(m=>firebaseList(m?.items).forEach(i=>{
+    if(i.distributionId!==d.id||normalizeChannel(i.channel)!=='RÁDIO'||i.sourceType==='promo-result'||['REALIZADO','ENTREGUE','CANCELADO','PARCIAL'].includes(norm(i.status))||i.resultAt||i.winnerName||firebaseList(i.winnerNames).length||i.resultName||i.deliveredAt||firebaseList(i.winnerDeliveries).length||i.winnerOperationId||i.returnedReuse||i.returnedFrom)return;
+    i.prize=distributionLabel(d);
+    i.title=d.title||distributionLabel(d);
+    i.notes=d.description??d.notes??'';
+    i.description=d.description??d.notes??'';
+    i.titleStyle=clone(d.titleStyle||defaultPromoTextStyle('title'));
+    i.descriptionStyle=clone(d.descriptionStyle||defaultPromoTextStyle('desc'));
+  }));
 }
 function saveRadioPlanner(){
   const d=distributionById(radioPlannerDistId); if(!d) return;
@@ -13388,7 +13392,7 @@ function eventVersionData(){
     if(drawEnd<drawStart)throw new Error(`O FIM DO SORTEIO É ANTERIOR AO INÍCIO NA VERSÃO ${index+1}.`);
     if(drawEnd>eventDate)throw new Error(`O SORTEIO DA VERSÃO ${index+1} TERMINA APÓS A DATA DE UTILIZAÇÃO.`);
     if(!Number.isSafeInteger(units)||units<factor||units%factor)throw new Error(`VERSÃO ${index+1}: A QUANTIDADE DEVE SER INTEIRA E COMPATÍVEL COM O MODO ${mode==='pair'?'PAR (MÚLTIPLO DE 2)':'INDIVIDUAL'}.`);
-    return {title,eventDate,drawStart,drawEnd,units,description:textNorm(row.description)};
+    return {title,eventDate,drawStart,drawEnd,units,description:jpDistReadingText(row.description)};
   });
   const uniqueness=new Set();
   if(eventLinkGroupId){
@@ -13404,7 +13408,7 @@ function eventVersionData(){
 function eventVersionDistribution(draft,version,index,groupId,data){
   const useDate=formatBR(version.eventDate);
   const title=`${data.eventName} — ${version.title} (${useDate})`;
-  const base=textNorm($('distDescription')?.value||'');
+  const base=jpDistReadingText($('distDescription')?.value||'');
   const description=`DATA DE UTILIZAÇÃO DO PRÊMIO: ${useDate}\n${version.description||base}`.trim();
   const stamp=new Date().toISOString();
   return {id:id('DST'),date:version.drawStart,show:data.eventName,prize:title,title,description,notes:description,titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),startDate:version.drawStart,endDate:version.drawEnd,total:version.units,prizeType:$('distPrizeType')?.value||'ingresso',ticketDefaultUnit:data.mode,ticketUnits:{ar:data.mode},rotationSlots:[],radioDailyLimit:1,app:0,camarote:0,camarim:0,rua:0,ar:version.units/data.factor,rs:0,reservado:0,reservadoReal:0,reservas:[],reservadoNote:'',clientes:0,outros:0,eventGroupId:groupId,eventGroupName:data.eventName,eventDate:version.eventDate,eventVersionTitle:version.title,eventVersionIndex:index+1,eventMode:'dated',eventStockScope:'individual',createdAt:stamp,updatedAt:stamp};
@@ -13624,7 +13628,9 @@ function distributionSaveComparable(record){
     end:String(r.endDate||r.finishDate||r.finalDate||r.end||''),
     prize:String(r.prize||''),
     title:String(r.title||''),
-    description:String(r.description||r.notes||''),
+    description:String(r.description??r.notes??''),
+    titleStyle:jpDistReadingStyleComparable(r.titleStyle,'title'),
+    descriptionStyle:jpDistReadingStyleComparable(r.descriptionStyle,'desc'),
     delivery:String(r.ticketDefaultUnit||'unit'),
     prizeType:String(r.prizeType||'brinde'),
     channels:['app','camarote','camarim','rua','ar','rs'].map(key=>num(r[key])),
@@ -13738,7 +13744,7 @@ async function saveDistributionFromForm(generate=false){
   if(!prize){ alert('INFORME O PRÊMIO.'); return null; }
   if(startDate && endDate && endDate < startDate){ alert('A DATA DE TÉRMINO NÃO PODE SER ANTERIOR À DATA DE INÍCIO.'); return null; }
   const destValues=collectDistDestinationValues(existing);
-  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:norm($('distTitle').value),description:textNorm($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoReal:destValues.reservadoReal||0,reservas:destValues.reservas||[],reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:textNorm($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
+  const d={id:idVal,date:startDate,show:norm($('distShow').value)||prize,prize,startDate,endDate,title:jpDistReadingText($('distTitle').value).trim(),description:jpDistReadingText($('distDescription').value),titleStyle:promoStyleFromForm('distTitle','title'),descriptionStyle:promoStyleFromForm('distDesc','desc'),total:num($('distTotal').value),prizeType:$('distPrizeType')?.value||existing.prizeType||'brinde',ticketDefaultUnit:$('distTicketDefaultUnit')?.value||existing.ticketDefaultUnit||'unit',ticketUnits:destValues.ticketUnits||{},rotationSlots:selectedRotationSlots('dist'),radioDailyLimit:Math.max(1,Math.min(3,num($('distDailyLimit')?.value)||1)),app:destValues.app,camarote:destValues.camarote,camarim:destValues.camarim,rua:destValues.rua,ar:destValues.ar,rs:destValues.rs,reservado:destValues.reservado,reservadoReal:destValues.reservadoReal||0,reservas:destValues.reservas||[],reservadoNote:destValues.reservadoNote||'',clientes:0,outros:0,notes:jpDistReadingText($('distDescription').value),createdAt:existing.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()};
   // Preserva o vínculo entre as versões ao editar apenas uma delas.
   if(existing.eventGroupId){['eventGroupId','eventGroupName','eventDate','eventVersionTitle','eventVersionIndex','eventMode','eventStockScope'].forEach(key=>d[key]=existing[key]);}
   // PROMO EXTERNA: preserve action/winner history across edits of the parent prize.
@@ -13769,8 +13775,8 @@ async function saveDistributionFromForm(generate=false){
     const hasConfirmed=Object.values(state.months||{}).some(m=>(m.items||[]).some(i=>i.distributionId===existing.id&&(
       norm(i.status)==='REALIZADO'||i.resultAt||i.winnerName||(i.winnerNames||[]).length
     )));
-    if(hasConfirmed&&(d.prize!==existing.prize||d.title!==existing.title||d.description!==existing.description||d.startDate!==existing.startDate||d.endDate!==existing.endDate)){
-      alert('ESTA VERSÃO POSSUI RESULTADOS CONFIRMADOS. NÃO ALTERE TÍTULO, DESCRIÇÃO OU DATAS DO SORTEIO. OS GANHADORES E O HISTÓRICO SERÃO PRESERVADOS.');return null;
+    if(hasConfirmed&&(d.prize!==existing.prize||d.startDate!==existing.startDate||d.endDate!==existing.endDate)){
+      alert('ESTA VERSÃO POSSUI RESULTADOS CONFIRMADOS. NÃO ALTERE A IDENTIDADE DO PRÊMIO NEM AS DATAS DO SORTEIO. O TEXTO E A FORMATAÇÃO PODEM SER ATUALIZADOS.');return null;
     }
   }
   if(wasNew && num(d.total)>=0 && consumedReal>num(d.total)){ alert(`DISTRIBUIÇÃO INICIAL MAIOR QUE O ESTOQUE FÍSICO.\n\nESTOQUE TOTAL: ${num(d.total)}\nMODO: ${distributionDeliveryLabel(d)}\nDISTRIBUÍVEL: ${availablePackages}\nDISTRIBUÍDO: ${distributedPackages}\nCONSUMIDO REAL: ${consumedReal}`); return null; }
@@ -13824,11 +13830,7 @@ async function saveDistributionFromForm(generate=false){
   const ledger=distributionStockLedger(d.id);
   distributionCampaignCopies(d.id).forEach(({d:copy})=>copy.stockLedger=clone(ledger));
   rememberPrizeCatalog(d);
-  if(!existing.eventGroupId)syncDistributionToLinkedRadioItems(d);
-  else Object.values(state.months||{}).forEach(m=>(m.items||[]).forEach(i=>{
-    if(i.distributionId!==d.id||norm(i.status)==='REALIZADO'||i.resultAt||i.winnerName||(i.winnerNames||[]).length)return;
-    i.prize=distributionLabel(d);i.title=d.title||distributionLabel(d);i.notes=d.description||d.notes||'';
-  }));
+  syncDistributionToLinkedRadioItems(d,!!existing.eventGroupId);
   const savedMonth=distributionByIdForMonth(d.id,state.currentMonth)||d;
   const monthStock=distributionMonthStockStatus(savedMonth,state.currentMonth),globalStock=distributionCampaignGlobalBalance(savedMonth);
   const deficitNotes=[];
@@ -14132,12 +14134,27 @@ function defaultPromoTextStyle(type){
     ? {font:'Segoe UI',size:15,color:'#171c26'}
     : {font:'Segoe UI',size:11,color:'#566171'};
 }
+function jpDistReadingAlign(v){return ['left','center','right','justify'].includes(v)?v:'center';}
+function jpDistReadingText(v){return String(v??'').replace(/\r\n?/g,'\n').toUpperCase();}
+function jpDistReadingStyleComparable(s,type){
+ const d=defaultPromoTextStyle(type),v=s||d;
+ return {font:safePromoFont(v.font||d.font),size:safePromoSize(v.size,type==='title'?10:9,type==='title'?42:32,d.size),color:safePromoHex(v.color,d.color).toLowerCase(),align:jpDistReadingAlign(v.align)};
+}
+function jpDistReadingPreview(prefix,type){
+ const el=$(type==='title'?'distTitle':'distDescription');if(!el)return;
+ const s=promoStyleFromForm(prefix,type);
+ el.style.setProperty('font-family',`'${s.font}', Arial, sans-serif`,'important');
+ el.style.setProperty('font-size',`${s.size}px`,'important');
+ el.style.setProperty('color',s.color,'important');
+ el.style.setProperty('text-align',s.align,'important');
+}
 function promoStyleFromForm(prefix,type){
   const d=defaultPromoTextStyle(type);
   return {
     font:safePromoFont($(prefix+'Font')?.value || d.font),
     size:safePromoSize($(prefix+'Size')?.value, type==='title'?10:9, type==='title'?42:32, d.size),
-    color:safePromoHex($(prefix+'Color')?.value,d.color)
+    color:safePromoHex($(prefix+'Color')?.value,d.color),
+    ...($(prefix+'Align')?{align:jpDistReadingAlign($(prefix+'Align').value)}:{})
   };
 }
 function setPromoStyleControls(prefix,style,type){
@@ -14147,6 +14164,7 @@ function setPromoStyleControls(prefix,style,type){
   if($(prefix+'Font')) $(prefix+'Font').value=safePromoFont(s.font || d.font);
   if($(prefix+'Size')) $(prefix+'Size').value=safePromoSize(s.size,type==='title'?10:9,type==='title'?42:32,d.size);
   if($(prefix+'Color')) $(prefix+'Color').value=safePromoHex(s.color,d.color);
+  if($(prefix+'Align')){$(prefix+'Align').value=jpDistReadingAlign(s.align);jpDistReadingPreview(prefix,type);}
 }
 function applyPromoTextStyle(el,style,type){
   if(!el) return;
@@ -14992,7 +15010,8 @@ document.addEventListener('change',e=>{
   if(e.target.closest('#promoProgramChoices')){const prior=promoAV57ProgramConfigsFromForm();promoAV57RenderProgramHours(prior);applyProgramHoursToPromo();updatePromoPreview();}
   if(e.target.closest('#promoProgramHours')){applyProgramHoursToPromo();updatePromoPreview();}
 });
-['itemTitleFont','itemTitleSize','itemTitleColor','itemDescFont','itemDescSize','itemDescColor','distTitleFont','distTitleSize','distTitleColor','distDescFont','distDescSize','distDescColor'].forEach(id=>bind(id,'input',()=>{}));
+['itemTitleFont','itemTitleSize','itemTitleColor','itemDescFont','itemDescSize','itemDescColor'].forEach(id=>bind(id,'input',()=>{}));
+['distTitle','distDesc'].forEach(prefix=>['Font','Size','Color','Align'].forEach(suffix=>{const update=()=>jpDistReadingPreview(prefix,prefix==='distTitle'?'title':'desc');bind(prefix+suffix,'input',update);bind(prefix+suffix,'change',update);}));
 
 function populatePromoDistributionSelect(){
   const sel=$('promoDistributionId'); if(!sel) return;

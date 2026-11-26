@@ -3783,7 +3783,7 @@ function inlineTextStyle(style,type){
   const d=defaultTextStyle(type), s=style||d;
   return `font-family:'${safeFont(s.font||d.font)}', Arial, sans-serif;font-size:${safeSize(s.size,type==='title'?18:12,type==='title'?64:36,d.size)}px;color:${safeHex(s.color,d.color)};font-weight:${s.bold?1000:(type==='title'?950:650)}`;
 }
-function itemTitle(i){return upper(i.title||distributionById(i.distributionId)?.title||i.prize||'SEM TÍTULO CADASTRADO');}
+function itemTitle(i){const d=studioOfficialReadingDistribution(i);return upper(d?.title||d?.prize||i.title||distributionById(i.distributionId)?.title||i.prize||'SEM TÍTULO CADASTRADO');}
 function studioPrizeCatalogKey(value){
   return upper(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,220);
 }
@@ -3809,6 +3809,35 @@ function itemTitleStyle(i){return i.titleStyle||distributionById(i.distributionI
 function itemDescStyle(i){
   const dist=distributionById(i?.distributionId),catalog=studioPrizeCatalogEntry(i);
   return i?.descriptionStyle||dist?.descriptionStyle||catalog?.descriptionStyle||defaultTextStyle('desc');
+}
+function studioOfficialReadingDistribution(i){
+ if(!i?.distributionId||i.__virtual||i.sourceType==='promo-result')return null;
+ const preferred=String(i.date||'').slice(0,7);
+ const list=Object.entries(state.months||{}).flatMap(([monthKey,m])=>studioRows(m?.distributions).filter(d=>String(d.id)===String(i.distributionId)).map(d=>({monthKey,d})));
+ list.sort((a,b)=>(Date.parse(b.d.updatedAt||b.d.monthlyUpdatedAt)||0)-(Date.parse(a.d.updatedAt||a.d.monthlyUpdatedAt)||0)||Number(b.monthKey===preferred)-Number(a.monthKey===preferred));
+ return list[0]?.d||null;
+}
+function studioReadingText(i,type){
+ const d=studioOfficialReadingDistribution(i);
+ if(type==='title')return String(d?.title||d?.prize||itemTitle(i));
+ if(d&&Object.prototype.hasOwnProperty.call(d,'description'))return String(d.description??'');
+ if(d&&Object.prototype.hasOwnProperty.call(d,'notes'))return String(d.notes??'');
+ return itemDesc(i);
+}
+function studioReadingInlineStyle(i,type){
+ const d=studioOfficialReadingDistribution(i),s=d?.[type==='title'?'titleStyle':'descriptionStyle'];
+ if(!s)return inlineTextStyle(type==='title'?itemTitleStyle(i):itemDescStyle(i),type);
+ const defaults=defaultTextStyle(type),align=['left','center','right','justify'].includes(s.align)?s.align:'center';
+ return `font-family:'${safeFont(s.font||defaults.font)}', Arial, sans-serif!important;font-size:${safeSize(s.size,type==='title'?10:9,type==='title'?42:32,defaults.size)}px!important;color:${safeHex(s.color,defaults.color)}!important;text-align:${align}!important;width:100%!important;max-width:100%!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;text-transform:none!important;`;
+}
+function studioRefreshVisibleReading(){
+ const i=currentDisplayItem;if(!i||i.__virtual)return;
+ const title=document.querySelector('#pautaPanel [data-jp-official-reading="title"]'),desc=document.querySelector('#pautaPanel [data-jp-official-reading="desc"]');
+ for(const [el,type] of [[title,'title'],[desc,'desc']])if(el){
+   const next=studioReadingText(i,type),style=studioReadingInlineStyle(i,type);
+   if(el.textContent!==next)el.textContent=next;
+   if(el.getAttribute('style')!==style)el.setAttribute('style',style);
+ }
 }
 function itemDateTime(i){
   const date=i.date||'9999-12-31';
@@ -5657,7 +5686,7 @@ function jpMultiResultStatus(item){
   return count>=total?{done:true,label:'✓ CONFIRMADO'}:count?{done:false,label:`PARCIAL · ${count}/${total}`}:{done:false,label:'PENDENTE'};
 }
 function jpMultiShortName(item){
-  const full=upper(item.title||item.prize||'PRÊMIO');
+  const full=itemTitle(item);
   return full.replace(/^(?:PAR(?:ES)? DE INGRESSOS|INGRESSOS?|VALE[- ]INGRESSO)\s*[-–—:·]?\s+/u,'').trim()||full;
 }
 function jpMultiTitleMarkup(rows,item){
@@ -5671,7 +5700,7 @@ function studioMultiPrizeMarkup(rows,item){
   const group=studioSameSlotPrizes(rows,item);
   if(group.length<2)return '';
   const hour=esc(timeToHHMM(item.slot).replace(':','H'));
-  return `<nav class="studioMultiPrizes jpMultiV2" aria-label="PRÊMIOS DESTE HORÁRIO"><span class="jpMultiHeading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 10 3l4 4a2 2 0 0 0 3 3l4 4-7 7-4-4a2 2 0 0 0-3-3z"/><path d="m11 9 4 4"/></svg>${hour} · ${group.length} PRÊMIOS NESTE HORÁRIO</span>${group.map((i,index)=>{const status=jpMultiResultStatus(i);return `<button type="button" data-studio-select-prize="${esc(i.id)}" data-done="${status.done?'1':'0'}" class="jpMultiChoice ${i.id===item.id?'active':''}" title="${esc(upper(i.title||i.prize||'PRÊMIO'))}" aria-pressed="${i.id===item.id?'true':'false'}"><span class="jpMultiName">${index+1}º PRÊMIO · ${esc(jpMultiShortName(i))}</span><span class="jpMultiStatus">${esc(status.label)}</span></button>`;}).join('')}</nav>`;
+  return `<nav class="studioMultiPrizes jpMultiV2" aria-label="PRÊMIOS DESTE HORÁRIO"><span class="jpMultiHeading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10 10 3l4 4a2 2 0 0 0 3 3l4 4-7 7-4-4a2 2 0 0 0-3-3z"/><path d="m11 9 4 4"/></svg>${hour} · ${group.length} PRÊMIOS NESTE HORÁRIO</span>${group.map((i,index)=>{const status=jpMultiResultStatus(i);return `<button type="button" data-studio-select-prize="${esc(i.id)}" data-done="${status.done?'1':'0'}" class="jpMultiChoice ${i.id===item.id?'active':''}" title="${esc(itemTitle(i))}" aria-pressed="${i.id===item.id?'true':'false'}"><span class="jpMultiName">${index+1}º PRÊMIO · ${esc(jpMultiShortName(i))}</span><span class="jpMultiStatus">${esc(status.label)}</span></button>`;}).join('')}</nav>`;
 }
 function step(delta){
   const same=currentDisplayItem?studioSameSlotPrizes(allPrizeRows(),currentDisplayItem):[];
@@ -5782,6 +5811,7 @@ function studioHourlyRowsForDisplay(rows){
     :rows;
 }
 function render(){
+  if($('winnerModal')?.classList.contains('show')){studioRefreshVisibleReading();renderStudioDateStamp();return;}
   if(studioResultSaving)return;
   const editingPromo=currentPromoForRead();
   if(editingPromo&&currentDisplayItem?.promoId===editingPromo.id&&studioResultContextMatchesItem(currentDisplayItem)&&shouldShowPromoResultBox(editingPromo,currentDisplayItem)){
@@ -5843,8 +5873,8 @@ function render(){
     ` : isVirtual ? `
       <div class="emptyStudioBox"><strong>SEM PAUTA PARA ESTE HORÁRIO</strong><span>NENHUM PRÊMIO, PROMOÇÃO OU MERCHAN CADASTRADO PARA ${manual?'ESTA DATA E HORÁRIO':'AGORA'}.</span></div>
     ` : `
-      <div class="titleBox">${jpMultiTitleMarkup(rows,item)}<h1 class="title" style="${inlineTextStyle(itemTitleStyle(item),'title')}">${esc(itemTitle(item))}</h1></div>
-      <div class="descBox"><p class="desc" style="${inlineTextStyle(itemDescStyle(item),'desc')}">${esc(itemDesc(item))}</p></div>
+      <div class="titleBox">${jpMultiTitleMarkup(rows,item)}<h1 class="title" data-jp-official-reading="title" style="${studioReadingInlineStyle(item,'title')}">${esc(studioReadingText(item,'title'))}</h1></div>
+      <div class="descBox"><p class="desc" data-jp-official-reading="desc" style="${studioReadingInlineStyle(item,'desc')}">${esc(studioReadingText(item,'desc'))}</p></div>
       ${winnerBlock || studioResultCountdownBox(item)}
       <div class="pautaActions"><button class="winnerBtn" id="markWinnerBtn" type="button" aria-label="${item.winnerName ? 'GANHADOR REGISTRADO' : 'INDICAR GANHADOR'}" title="${item.winnerName ? 'GANHADOR REGISTRADO · BOTÃO DIREITO NO NOME PARA CORRIGIR' : 'INDICAR GANHADOR'}"><span class="trophy">🏆</span></button></div>
     `;
@@ -5975,7 +6005,7 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncStat
 setInterval(()=>{ if(!document.hidden) refreshStudioCountdownClocks(); },1000);
 setInterval(()=>{
   const hk=currentHourKey();
-  if(hk!==lastHourKey&&!studioReadContext&&!studioReadSaving&&!studioCampaignContext&&!studioResultSaving){
+  if(hk!==lastHourKey&&!studioReadContext&&!studioReadSaving&&!studioCampaignContext&&!studioResultSaving&&!$('winnerModal')?.classList.contains('show')){
     manual=false;
     selectedIndex=-1;
     selectedPromoId=null;
