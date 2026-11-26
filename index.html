@@ -13655,7 +13655,7 @@ async function verifyDistributionBeforeSave(distId){
     if(!expected && !found)continue;
     if(!expected && found)throw new Error('PRÊMIO ALTERADO EM OUTRO COMPUTADOR NO MÊS '+monthKey+'. RECARREGUE A FICHA.');
     if(expected && !found)throw new Error('PRÊMIO NÃO ENCONTRADO NO SERVIDOR NO MÊS '+monthKey+'.');
-    if(!distributionSamePersistedValue(expected,found) ||
+    if(!distributionSamePersistedValue(distributionConflictCanonical(expected,monthKey),distributionConflictCanonical(found,monthKey)) ||
         String(expected.updatedAt||'')!==String(found.updatedAt||'')){
       throw new Error('PRÊMIO ATUALIZADO EM OUTRO COMPUTADOR NO MÊS '+monthKey+'. RECARREGUE OS DADOS.');
     }
