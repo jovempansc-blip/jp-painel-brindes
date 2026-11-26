@@ -3825,10 +3825,7 @@ function studioReadingText(i,type){
  return itemDesc(i);
 }
 function studioReadingInlineStyle(i,type){
- const d=studioOfficialReadingDistribution(i),s=d?.[type==='title'?'titleStyle':'descriptionStyle'];
- if(!s)return inlineTextStyle(type==='title'?itemTitleStyle(i):itemDescStyle(i),type);
- const defaults=defaultTextStyle(type),align=['left','center','right','justify'].includes(s.align)?s.align:'center';
- return `font-family:'${safeFont(s.font||defaults.font)}', Arial, sans-serif!important;font-size:${safeSize(s.size,type==='title'?10:9,type==='title'?42:32,defaults.size)}px!important;color:${safeHex(s.color,defaults.color)}!important;text-align:${align}!important;width:100%!important;max-width:100%!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;text-transform:none!important;`;
+ return inlineTextStyle(type==='title'?itemTitleStyle(i):itemDescStyle(i),type);
 }
 function studioRefreshVisibleReading(){
  const i=currentDisplayItem;if(!i||i.__virtual)return;
@@ -5811,7 +5808,8 @@ function studioHourlyRowsForDisplay(rows){
     :rows;
 }
 function render(){
-  if($('winnerModal')?.classList.contains('show')){studioRefreshVisibleReading();renderStudioDateStamp();return;}
+  studioRefreshVisibleReading();
+  if($('winnerModal')?.classList.contains('show')){renderStudioDateStamp();return;}
   if(studioResultSaving)return;
   const editingPromo=currentPromoForRead();
   if(editingPromo&&currentDisplayItem?.promoId===editingPromo.id&&studioResultContextMatchesItem(currentDisplayItem)&&shouldShowPromoResultBox(editingPromo,currentDisplayItem)){
